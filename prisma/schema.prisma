@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String?
+  email       String?  @unique
+  avatar      String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  auth_accounts          AuthAccount[]
+  instagram_connections  InstagramConnection[]
+  scan_runs              ScanRun[]
+  vip_accounts           VipAccount[]
+  watchlist_accounts     WatchlistAccount[]
+  ignored_accounts       IgnoredAccount[]
+  action_logs            ActionLog[]
+  notifications          Notification[]
+  reports                Report[]
+
+  @@map("users")
+}
+
+model AuthAccount {
+  id                      String   @id @default(cuid())
+  user_id                 String
+  provider                String
+  provider_account_id     String
+  access_token_encrypted  String?
+  refresh_token_encrypted String?
+  expires_at              DateTime?
+  scopes                  String[] @default([])
+  created_at              DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, provider_account_id])
+  @@map("auth_accounts")
+}
+
+model InstagramConnection {
+  id                   String   @id @default(cuid())
+  user_id              String
+  instagram_user_id    String
+  username             String
+  account_type         String
+  profile_picture_url  String?
+  permissions          String[] @default([])
+  connection_status    String
+  last_synced_at       DateTime?
+
+  user      User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  profiles  InstagramProfile[]
+  scan_runs ScanRun[]
+
+  @@unique([user_id, instagram_user_id])
+  @@map("instagram_connections")
+}
+
+model InstagramProfile {
+  id                       String   @id @default(cuid())
+  instagram_connection_id  String
+  username                 String
+  full_name                String?
+  profile_picture_url      String?
+  bio                      String?
+  is_verified              Boolean?
+  is_private               Boolean?
+  followers_count          Int?
+  following_count          Int?
+  media_count              Int?
+  profile_url              String?
+  created_at               DateTime @default(now())
+
+  instagram_connection InstagramConnection @relation(fields: [instagram_connection_id], references: [id], onDelete: Cascade)
+
+  @@index([instagram_connection_id, username])
+  @@map("instagram_profiles")
+}
+
+model ScanRun {
+  id                       String    @id @default(cuid())
+  user_id                  String
+  instagram_connection_id  String
+  status                   String
+  started_at               DateTime  @default(now())
+  completed_at             DateTime?
+  followers_count          Int       @default(0)
+  following_count          Int       @default(0)
+  mutual_count             Int       @default(0)
+  not_following_back_count Int       @default(0)
+  fans_count               Int       @default(0)
+  suspicious_count         Int       @default(0)
+  account_health_score     Int       @default(0)
+  community_quality_score  Int       @default(0)
+  error_message            String?
+
+  user                   User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  instagram_connection   InstagramConnection @relation(fields: [instagram_connection_id], references: [id], onDelete: Cascade)
+  followers_snapshots    FollowersSnapshot[]
+  following_snapshots    FollowingSnapshot[]
+  relationship_results   RelationshipResult[]
+  reports                Report[]
+
+  @@map("scan_runs")
+}
+
+model FollowersSnapshot {
+  id          String   @id @default(cuid())
+  scan_run_id String
+  username    String
+  profile_data Json?
+  created_at  DateTime @default(now())
+
+  scan_run ScanRun @relation(fields: [scan_run_id], references: [id], onDelete: Cascade)
+
+  @@index([scan_run_id, username])
+  @@map("followers_snapshots")
+}
+
+model FollowingSnapshot {
+  id          String   @id @default(cuid())
+  scan_run_id String
+  username    String
+  profile_data Json?
+  created_at  DateTime @default(now())
+
+  scan_run ScanRun @relation(fields: [scan_run_id], references: [id], onDelete: Cascade)
+
+  @@index([scan_run_id, username])
+  @@map("following_snapshots")
+}
+
+model RelationshipResult {
+  id                String   @id @default(cuid())
+  scan_run_id        String
+  username           String
+  relationship_type  String
+  recommendation     String?
+  follow_back_score  Int      @default(0)
+  unfollow_score     Int      @default(0)
+  risk_score         Int      @default(0)
+  keep_score         Int      @default(0)
+  vip_probability    Int      @default(0)
+  reason             String?
+  created_at         DateTime @default(now())
+
+  scan_run ScanRun @relation(fields: [scan_run_id], references: [id], onDelete: Cascade)
+
+  @@index([scan_run_id, relationship_type])
+  @@map("relationship_results")
+}
+
+model VipAccount {
+  id         String   @id @default(cuid())
+  user_id    String
+  username   String
+  category   String
+  note       String?
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, username])
+  @@map("vip_accounts")
+}
+
+model WatchlistAccount {
+  id         String   @id @default(cuid())
+  user_id    String
+  username   String
+  reason     String?
+  note       String?
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, username])
+  @@map("watchlist_accounts")
+}
+
+model IgnoredAccount {
+  id         String   @id @default(cuid())
+  user_id    String
+  username   String
+  reason     String?
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, username])
+  @@map("ignored_accounts")
+}
+
+model ActionLog {
+  id            String   @id @default(cuid())
+  user_id       String
+  username      String
+  action_type   String
+  action_status String
+  source        String
+  created_at    DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, created_at])
+  @@map("action_logs")
+}
+
+model Notification {
+  id         String    @id @default(cuid())
+  user_id    String
+  type       String
+  title      String
+  message    String
+  read_at    DateTime?
+  created_at DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, read_at])
+  @@map("notifications")
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  user_id     String
+  scan_run_id String?
+  report_type String
+  file_url    String?
+  created_at  DateTime @default(now())
+
+  user     User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  scan_run ScanRun? @relation(fields: [scan_run_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id, report_type])
+  @@map("reports")
+}

@@ -1,0 +1,16 @@
+{
+  "name": "instawatcher",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "lint": "node scripts/check.mjs",
+    "check": "node scripts/check.mjs && node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "watch": "node --watch-path=src scripts/build.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
