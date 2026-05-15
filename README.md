@@ -17,6 +17,19 @@ npm install
 npm run dev
 ```
 
+אחרי הרצה תיפתח כתובת מקומית:
+
+```text
+http://127.0.0.1:4173
+```
+
+אפשר גם להריץ שרת לקבצים שנבנו מראש:
+
+```bash
+npm run build
+npm run serve
+```
+
 ## בדיקות
 
 ```bash

@@ -4,10 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/build.mjs && node --watch-path=src scripts/build.mjs",
+    "dev": "node scripts/serve.mjs",
     "build": "node scripts/build.mjs",
     "lint": "node scripts/check.mjs",
-    "check": "node scripts/check.mjs && node scripts/build.mjs"
+    "check": "node scripts/check.mjs && node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "watch": "node --watch-path=src scripts/build.mjs"
   },
   "dependencies": {},
   "devDependencies": {}
