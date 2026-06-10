@@ -1,6 +1,7 @@
 namespace LangFlipDesktop.Services;
 
 using System.Windows.Automation;
+using System.Windows.Forms;
 using LangFlipDesktop.Core.Interfaces;
 
 public class SelectedTextService : ISelectedTextService
@@ -108,7 +109,7 @@ public class SelectedTextService : ISelectedTextService
     {
         try
         {
-            System.Windows.Forms.SendKeys.SendWait(keys);
+            SendKeys.SendWait(keys);
         }
         catch
         {
