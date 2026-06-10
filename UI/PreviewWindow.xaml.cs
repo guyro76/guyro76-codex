@@ -1,6 +1,7 @@
 namespace LangFlipDesktop.UI;
 
 using System.Windows;
+using System.Windows.Forms;
 using LangFlipDesktop.Core.Models;
 
 public partial class PreviewWindow : Window
@@ -40,7 +41,7 @@ public partial class PreviewWindow : Window
     {
         try
         {
-            System.Windows.Forms.Clipboard.SetText(_actionResult.ResultText);
+            Clipboard.SetText(_actionResult.ResultText);
             MessageBox.Show("התוצאה הועתקה ללוח הזכרון", "קליקשפה", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch
