@@ -1,0 +1,78 @@
+name: Build Windows App
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - "claude/**"
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore LangFlipDesktop.csproj
+
+      - name: Publish (self-contained, no .NET install needed)
+        run: >
+          dotnet publish LangFlipDesktop.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish
+
+      - name: Create ZIP package
+        shell: pwsh
+        run: Compress-Archive -Path publish\* -DestinationPath LangFlip-Desktop-win-x64.zip
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LangFlip-Desktop-win-x64
+          path: LangFlip-Desktop-win-x64.zip
+
+      - name: Create GitHub Release (on version tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "קליקשפה LangFlip Desktop ${{ github.ref_name }}"
+          body: |
+            ## קליקשפה - LangFlip Desktop
+
+            אפליקציית Windows לתיקון שפת מקלדת (עברית ↔ אנגלית), תרגום ושיפור ניסוח.
+
+            ### 📥 התקנה
+            1. הורידו את הקובץ `LangFlip-Desktop-win-x64.zip`
+            2. חלצו את התיקייה (Extract All)
+            3. הפעילו את `LangFlipDesktop.exe`
+            4. זהו! לא צריך להתקין .NET — הכל כלול בקובץ.
+
+            ### 🧪 בדיקה מהירה
+            - פתחו פנקס רשימות, הקלידו `akuo`, סמנו ולחצו **Ctrl+Alt+H** → תקבלו `שלום`
+
+            ### ⌨️ קיצורי מקלדת
+            - `Ctrl+Alt+H` — הפוך לעברית
+            - `Ctrl+Alt+E` — הפוך לאנגלית
+            - `Ctrl+Alt+T` — תרגום (דורש מפתח OpenAI בהגדרות)
+            - `Ctrl+Alt+Space` — תפריט צף
+
+            ---
+            **© 2026 תוכנן ונבנה ע״י גיא רוזנברג — כל הזכויות שמורות**
+          files: LangFlip-Desktop-win-x64.zip

@@ -1,21 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <xsd:schema id="root" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="metadata" type="xsd:string" minOccurs="0" />
-          <xsd:element name="mimeType" type="xsd:string" minOccurs="0" />
-          <xsd:element name="assembly" type="xsd:string" minOccurs="0" />
-          <xsd:element name="data" name="data" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-          <xsd:element name="resheader" name="resheader" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-        </xsd:choice>
-        <xsd:attribute ref="xml:space" />
-        <xsd:attribute name="name" type="xsd:string" use="required" />
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
@@ -28,146 +12,55 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="AppName" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="AppName" xml:space="preserve">
     <value>קליקשפה</value>
   </data>
-  <data name="AppTitle" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="AppTitle" xml:space="preserve">
     <value>קליקשפה - LangFlip Desktop</value>
   </data>
-  <data name="AppSubtitle" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="AppSubtitle" xml:space="preserve">
     <value>מתקן, מתרגם ומשפר טקסט בכל מקום במחשב</value>
   </data>
-  <data name="Status_Active" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Status_Active" xml:space="preserve">
     <value>האפליקציה פעילה ברקע</value>
   </data>
-  <data name="Button_ConvertHebrew" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Button_ConvertHebrew" xml:space="preserve">
     <value>הפוך לעברית</value>
   </data>
-  <data name="Button_ConvertEnglish" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Button_ConvertEnglish" xml:space="preserve">
     <value>הפוך לאנגלית</value>
   </data>
-  <data name="Button_TranslateEnglish" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Button_TranslateEnglish" xml:space="preserve">
     <value>תרגם לאנגלית</value>
   </data>
-  <data name="Button_TranslateHebrew" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Button_TranslateHebrew" xml:space="preserve">
     <value>תרגם לעברית</value>
   </data>
-  <data name="Button_ImproveHebrew" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Button_ImproveHebrew" xml:space="preserve">
     <value>שפר ניסוח בעברית</value>
   </data>
-  <data name="Button_ImproveEnglish" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Button_ImproveEnglish" xml:space="preserve">
     <value>Improve English</value>
   </data>
-  <data name="Button_Settings" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>הגדרות</value>
-  </data>
-  <data name="Section_QuickActions" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>פעולות מהירות</value>
-  </data>
-  <data name="Section_ResultMode" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>מצב תוצאה</value>
-  </data>
-  <data name="Section_Shortcuts" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>קיצורי דרך</value>
-  </data>
-  <data name="Section_Privacy" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>פרטיות וביטחון</value>
-  </data>
-  <data name="ResultMode_Preview" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>הצג לפני החלפה</value>
-  </data>
-  <data name="ResultMode_Replace" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>החלף במקום</value>
-  </data>
-  <data name="ResultMode_Copy" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>העתק ללוח בלבד</value>
-  </data>
-  <data name="Shortcut_ConvertHebrew" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>Ctrl + Alt + H — הפוך לעברית</value>
-  </data>
-  <data name="Shortcut_ConvertEnglish" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>Ctrl + Alt + E — הפוך לאנגלית</value>
-  </data>
-  <data name="Shortcut_TranslateAuto" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>Ctrl + Alt + T — תרגום אוטומטי</value>
-  </data>
-  <data name="Shortcut_Improve" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>Ctrl + Alt + I — שיפור ניסוח</value>
-  </data>
-  <data name="Shortcut_FloatingMenu" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>Ctrl + Alt + Space — תפריט מהיר</value>
-  </data>
-  <data name="Privacy_KeyboardLocal" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>✓ תיקון מקלדת מתבצע מקומית בלבד</value>
-  </data>
-  <data name="Privacy_NoStorage" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>✓ טקסט לא נשמר כברירת מחדל</value>
-  </data>
-  <data name="Privacy_TextSelected" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>✓ תרגום שולח רק את הטקסט המסומן</value>
-  </data>
-  <data name="Privacy_NoPasswords" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>✓ לא עובדים על שדות סיסמה</value>
-  </data>
-  <data name="Error_NoTextSelected" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Error_NoTextSelected" xml:space="preserve">
     <value>לא זוהה טקסט מסומן.</value>
   </data>
-  <data name="Error_ReplaceFailedClipboard" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Error_ReplaceFailedClipboard" xml:space="preserve">
     <value>לא הצלחתי להחליף במקום, אז העתקתי את התוצאה ללוח.</value>
   </data>
-  <data name="Error_NoApiKey" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Error_NoApiKey" xml:space="preserve">
     <value>חסר API Key לתרגום.</value>
   </data>
-  <data name="Error_NoInternet" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Error_NoInternet" xml:space="preserve">
     <value>נראה שאין חיבור אינטרנט.</value>
   </data>
-  <data name="Error_UnsupportedApp" type="System.Resources.ResXString, System.Windows.Forms">
+  <data name="Error_UnsupportedApp" xml:space="preserve">
     <value>האפליקציה הזו לא מאפשרת החלפה ישירה. אפשר להדביק את התוצאה ידנית.</value>
   </data>
-  <data name="Notification_Copied" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>התוצאה הועתקה ללוח</value>
+  <data name="Notification_Copied" xml:space="preserve">
+    <value>התוצאה הועתקה ללוח. הדבק אותה במקום הרצוי.</value>
   </data>
-  <data name="Settings_Title" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>הגדרות - Settings</value>
-  </data>
-  <data name="Settings_General" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>הגדרות כלליות</value>
-  </data>
-  <data name="Settings_Provider" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>ספק תרגום</value>
-  </data>
-  <data name="Settings_Privacy" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>פרטיות וביטחון</value>
-  </data>
-  <data name="Settings_Design" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>עיצוב</value>
-  </data>
-  <data name="Tray_Active" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>פעיל - Active</value>
-  </data>
-  <data name="Tray_Inactive" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>לא פעיל - Inactive</value>
-  </data>
-  <data name="Tray_Exit" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>יציאה</value>
-  </data>
-  <data name="Preview_Title" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>תצוגה מקדימה</value>
-  </data>
-  <data name="Preview_Original" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>המקור:</value>
-  </data>
-  <data name="Preview_Result" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>התוצאה:</value>
-  </data>
-  <data name="Preview_Replace" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>החלף במקום</value>
-  </data>
-  <data name="Preview_Copy" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>העתק</value>
-  </data>
-  <data name="Preview_Cancel" type="System.Resources.ResXString, System.Windows.Forms">
-    <value>ביטול</value>
+  <data name="Copyright" xml:space="preserve">
+    <value>© 2026 תוכנן ונבנה ע״י גיא רוזנברג - כל הזכויות שמורות</value>
   </data>
 </root>

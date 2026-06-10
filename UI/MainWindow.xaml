@@ -7,9 +7,7 @@
         Background="#071426"
         Foreground="#FFFFFF"
         WindowStartupLocation="CenterScreen"
-        FlowDirection="RightToLeft"
-        AllowsTransparency="False"
-        Icon="pack://application:,,,/Assets/icon.ico">
+        FlowDirection="RightToLeft">
     <Window.Resources>
         <Style x:Key="GlassButton" TargetType="Button">
             <Setter Property="Background" Value="#1E3A5F" />

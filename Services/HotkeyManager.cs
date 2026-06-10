@@ -40,7 +40,7 @@ public class HotkeyManager
         RegisterHotkey(MOD_CTRL | MOD_ALT | MOD_SHIFT, VK_E, ActionType.TranslateToEnglish);   // Ctrl+Alt+Shift+E
         RegisterHotkey(MOD_CTRL | MOD_ALT | MOD_SHIFT, VK_H, ActionType.TranslateToHebrew);    // Ctrl+Alt+Shift+H
         RegisterHotkey(MOD_CTRL | MOD_ALT, VK_I, ActionType.ImproveEnglish);        // Ctrl+Alt+I
-        RegisterHotkey(MOD_CTRL | MOD_ALT, VK_SPACE, ActionType.ImproveEnglish);    // Ctrl+Alt+Space (floating menu)
+        RegisterHotkey(MOD_CTRL | MOD_ALT, VK_SPACE, ActionType.OpenFloatingMenu);  // Ctrl+Alt+Space
     }
 
     public void UnregisterAllHotkeys()

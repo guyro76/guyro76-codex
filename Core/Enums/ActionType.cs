@@ -7,5 +7,6 @@ public enum ActionType
     TranslateToEnglish,
     TranslateToHebrew,
     ImproveHebrew,
-    ImproveEnglish
+    ImproveEnglish,
+    OpenFloatingMenu
 }

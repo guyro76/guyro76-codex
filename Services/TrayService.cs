@@ -93,25 +93,23 @@ public class TrayService : IDisposable
         }
     }
 
-    private static Icon GetApplicationIcon()
+    private static System.Drawing.Icon GetApplicationIcon()
     {
         try
         {
-            // Try to load from embedded resource
-            // For now, create a simple blue circle icon
             var bitmap = new System.Drawing.Bitmap(16, 16);
             using (var g = System.Drawing.Graphics.FromImage(bitmap))
             {
-                g.Clear(System.Drawing.Color.White);
+                g.Clear(System.Drawing.Color.Transparent);
                 g.FillEllipse(
-                    new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(0x2563EB)),
+                    new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(255, 0x25, 0x63, 0xEB)),
                     0, 0, 16, 16);
             }
-            return Icon.FromHandle(bitmap.GetHicon());
+            return System.Drawing.Icon.FromHandle(bitmap.GetHicon());
         }
         catch
         {
-            return SystemIcons.Application;
+            return System.Drawing.SystemIcons.Application;
         }
     }
 

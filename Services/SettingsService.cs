@@ -129,7 +129,9 @@ public class SettingsService : ISettingsService
         {
             return value switch
             {
-                JsonElement element => element.GetString() ?? defaultValue,
+                JsonElement element => element.ValueKind == JsonValueKind.String
+                    ? element.GetString() ?? defaultValue
+                    : element.ToString(),
                 string strValue => strValue,
                 bool boolValue => boolValue.ToString(),
                 _ => value.ToString() ?? defaultValue
@@ -147,7 +149,7 @@ public class SettingsService : ISettingsService
 
         try
         {
-            var key = Encoding.UTF8.GetBytes("LangFlip2024SecureKey1234567890");
+            var key = Encoding.UTF8.GetBytes("LangFlip2026SecureKey12345678901");
             using var aes = Aes.Create();
             aes.Key = key;
             aes.Mode = CipherMode.CBC;
@@ -178,7 +180,7 @@ public class SettingsService : ISettingsService
 
         try
         {
-            var key = Encoding.UTF8.GetBytes("LangFlip2024SecureKey1234567890");
+            var key = Encoding.UTF8.GetBytes("LangFlip2026SecureKey12345678901");
             var buffer = Convert.FromBase64String(cipherText);
 
             using var aes = Aes.Create();

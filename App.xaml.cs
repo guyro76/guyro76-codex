@@ -47,6 +47,12 @@ public partial class App : Application
         _mainWindow = new MainWindow();
         _mainWindow.ActionRequested += MainWindow_ActionRequested;
         _mainWindow.ShowSettingsRequested += MainWindow_ShowSettingsRequested;
+        // Keep running in the background (tray) when the main window is closed
+        _mainWindow.Closing += (s, e) =>
+        {
+            e.Cancel = true;
+            _mainWindow.Hide();
+        };
         _mainWindow.Show();
     }
 
@@ -97,17 +103,16 @@ public partial class App : Application
             if (_selectedTextService == null || _actionService == null)
                 return;
 
+            if (action == ActionType.OpenFloatingMenu)
+            {
+                ShowFloatingMenu();
+                return;
+            }
+
             var selectedText = await _selectedTextService.GetSelectedTextAsync();
             if (string.IsNullOrEmpty(selectedText))
             {
                 ShowNotification("לא זוהה טקסט מסומן");
-                return;
-            }
-
-            if (action == ActionType.ImproveEnglish)
-            {
-                // Show floating menu instead
-                ShowFloatingMenu();
                 return;
             }
 

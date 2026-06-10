@@ -5,61 +5,42 @@ using LangFlipDesktop.Core.Models;
 
 public class KeyboardLayoutService : IKeyboardLayoutService
 {
-    private static readonly Dictionary<char, char> HebrewToEnglish = new()
-    {
-        // Top row
-        ('/', 'q'), ('\'', 'w'), ('ק', 'e'), ('ר', 'r'), ('א', 't'), ('ט', 'y'),
-        ('ו', 'u'), ('ן', 'i'), ('ם', 'o'), ('פ', 'p'),
-        // Middle row
-        ('ש', 'a'), ('ד', 's'), ('ג', 'd'), ('כ', 'f'), ('ע', 'g'), ('י', 'h'),
-        ('ח', 'j'), ('ל', 'k'), ('ך', 'l'),
-        // Bottom row
-        ('ז', 'z'), ('ס', 'x'), ('ב', 'c'), ('ה', 'v'), ('נ', 'b'), ('מ', 'n'), ('צ', 'm'),
-        // Numbers and symbols (preserved)
-        ('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5'),
-        ('6', '6'), ('7', '7'), ('8', '8'), ('9', '9'), ('0', '0'),
-        ('-', '-'), ('=', '='),
-        // Spaces and punctuation preserved
-        (' ', ' '), ('\n', '\n'), ('\t', '\t'),
-        (',', ','), ('.', '.'), ('!', '!'), ('?', '?'), (';', ';'), (':', ':'),
-    };
-
+    // Standard Israeli Hebrew keyboard layout mapped onto QWERTY positions.
     private static readonly Dictionary<char, char> EnglishToHebrew = new()
     {
         // Top row
-        ('q', '/'), ('w', '\''), ('e', 'ק'), ('r', 'ר'), ('t', 'א'), ('y', 'ט'),
-        ('u', 'ו'), ('i', 'ן'), ('o', 'ם'), ('p', 'פ'),
+        { 'q', '/' }, { 'w', '\'' }, { 'e', 'ק' }, { 'r', 'ר' }, { 't', 'א' }, { 'y', 'ט' },
+        { 'u', 'ו' }, { 'i', 'ן' }, { 'o', 'ם' }, { 'p', 'פ' },
         // Middle row
-        ('a', 'ש'), ('s', 'ד'), ('d', 'ג'), ('f', 'כ'), ('g', 'ע'), ('h', 'י'),
-        ('j', 'ח'), ('k', 'ל'), ('l', 'ך'),
+        { 'a', 'ש' }, { 's', 'ד' }, { 'd', 'ג' }, { 'f', 'כ' }, { 'g', 'ע' }, { 'h', 'י' },
+        { 'j', 'ח' }, { 'k', 'ל' }, { 'l', 'ך' }, { ';', 'ף' },
         // Bottom row
-        ('z', 'ז'), ('x', 'ס'), ('c', 'ב'), ('v', 'ה'), ('b', 'נ'), ('n', 'מ'), ('m', 'צ'),
-        // Numbers and symbols (preserved)
-        ('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5'),
-        ('6', '6'), ('7', '7'), ('8', '8'), ('9', '9'), ('0', '0'),
-        ('-', '-'), ('=', '='),
-        // Spaces and punctuation preserved
-        (' ', ' '), ('\n', '\n'), ('\t', '\t'),
-        (',', ','), ('.', '.'), ('!', '!'), ('?', '?'), (';', ';'), (':', ':'),
+        { 'z', 'ז' }, { 'x', 'ס' }, { 'c', 'ב' }, { 'v', 'ה' }, { 'b', 'נ' }, { 'n', 'מ' },
+        { 'm', 'צ' }, { ',', 'ת' }, { '.', 'ץ' },
     };
+
+    private static readonly Dictionary<char, char> HebrewToEnglish = BuildReverseMap();
+
+    private static Dictionary<char, char> BuildReverseMap()
+    {
+        var reverse = new Dictionary<char, char>();
+        foreach (var pair in EnglishToHebrew)
+        {
+            reverse[pair.Value] = pair.Key;
+        }
+        return reverse;
+    }
 
     public string ConvertToHebrew(string text)
     {
         if (string.IsNullOrEmpty(text))
             return text;
 
-        var result = new System.Text.StringBuilder();
+        var result = new System.Text.StringBuilder(text.Length);
         foreach (var ch in text)
         {
-            var lowerCh = char.ToLower(ch);
-            if (EnglishToHebrew.TryGetValue(lowerCh, out var hebrewChar))
-            {
-                result.Append(hebrewChar);
-            }
-            else
-            {
-                result.Append(ch);
-            }
+            var lowerCh = char.ToLowerInvariant(ch);
+            result.Append(EnglishToHebrew.TryGetValue(lowerCh, out var hebrewChar) ? hebrewChar : ch);
         }
         return result.ToString();
     }
@@ -69,18 +50,10 @@ public class KeyboardLayoutService : IKeyboardLayoutService
         if (string.IsNullOrEmpty(text))
             return text;
 
-        var result = new System.Text.StringBuilder();
+        var result = new System.Text.StringBuilder(text.Length);
         foreach (var ch in text)
         {
-            var lowerCh = char.ToLower(ch);
-            if (HebrewToEnglish.TryGetValue(lowerCh, out var englishChar))
-            {
-                result.Append(englishChar);
-            }
-            else
-            {
-                result.Append(ch);
-            }
+            result.Append(HebrewToEnglish.TryGetValue(ch, out var englishChar) ? englishChar : ch);
         }
         return result.ToString();
     }
