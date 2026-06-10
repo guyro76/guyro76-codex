@@ -115,7 +115,22 @@
 
             <!-- Settings Button -->
             <Button Content="הגדרות" Style="{StaticResource GlassButton}" Click="Button_Settings"
-                    Width="150" HorizontalAlignment="Center" Margin="0,16,0,32" />
+                    Width="150" HorizontalAlignment="Center" Margin="0,16,0,16" />
+
+            <!-- Copyright Footer -->
+            <Border Background="#0B1F4D" BorderBrush="#2563EB" BorderThickness="0,1,0,0" Padding="16,16,16,16" Margin="0,32,0,0">
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                    <TextBlock Text="קליקשפה v1.0"
+                               FontSize="13" FontWeight="Bold" Foreground="#38D5FF"
+                               TextAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBlock Text="© תוכנן ונבנה ע״י גיא רוזנברג 2026"
+                               FontSize="12" FontWeight="Bold" Foreground="#BDEFFF"
+                               TextAlignment="Center" Margin="0,0,0,4"/>
+                    <TextBlock Text="כל הזכויות שמורות ©"
+                               FontSize="11" Foreground="#4FFF00"
+                               TextAlignment="Center"/>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </Window>

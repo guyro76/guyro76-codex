@@ -110,6 +110,13 @@
                 <Button Content="שמור" Width="100" Background="#2563EB" Foreground="#FFFFFF" Padding="8" Margin="8" Click="Button_Save" />
                 <Button Content="ביטול" Width="100" Background="#333333" Foreground="#FFFFFF" Padding="8" Margin="8" Click="Button_Cancel" />
             </StackPanel>
+
+            <!-- Copyright Footer -->
+            <Border Background="#0B1F4D" BorderBrush="#2563EB" BorderThickness="0,1,0,0" Padding="12,12,12,12">
+                <TextBlock Text="© 2026 תוכנן ונבנה ע״י גיא רוזנברג - כל הזכויות שמורות"
+                           FontSize="10" FontWeight="Bold" Foreground="#4FFF00"
+                           TextAlignment="Center"/>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </Window>

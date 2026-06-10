@@ -67,5 +67,12 @@
             <Button Content="העתק" Style="{StaticResource PreviewButton}" Background="#4FFF00" Foreground="#000000" Click="Button_Copy" />
             <Button Content="ביטול" Style="{StaticResource PreviewButton}" Background="#333333" Click="Button_Cancel" />
         </StackPanel>
+
+        <!-- Copyright Footer -->
+        <Border Background="#0B1F4D" BorderBrush="#2563EB" BorderThickness="0,1,0,0" Padding="12,12,12,12">
+            <TextBlock Text="© 2026 תוכנן ונבנה ע״י גיא רוזנברג - כל הזכויות שמורות"
+                       FontSize="10" FontWeight="Bold" Foreground="#4FFF00"
+                       TextAlignment="Center"/>
+        </Border>
     </StackPanel>
 </Window>
