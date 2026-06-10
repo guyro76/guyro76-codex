@@ -20,6 +20,7 @@ public partial class App : Application
     private TranslationService? _translationService;
     private IActionService? _actionService;
     private HotkeyManager? _hotkeyManager;
+    private HotkeyWindowHelper? _hotkeyWindowHelper;
     private TrayService? _trayService;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -51,9 +52,12 @@ public partial class App : Application
 
     private void SetupHotkeys()
     {
-        var windowHandle = new System.Windows.Interop.WindowInteropHelper(_mainWindow!).Handle;
-        _hotkeyManager = new HotkeyManager(windowHandle);
+        _hotkeyManager = new HotkeyManager(new System.Windows.Interop.WindowInteropHelper(_mainWindow!).Handle);
         _hotkeyManager.HotkeyPressed += HotkeyManager_HotkeyPressed;
+
+        _hotkeyWindowHelper = new HotkeyWindowHelper(_mainWindow!);
+        _hotkeyWindowHelper.SetupHotkeys(_hotkeyManager);
+
         _hotkeyManager.RegisterDefaultHotkeys();
     }
 
@@ -190,6 +194,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _hotkeyWindowHelper?.Cleanup();
         _hotkeyManager?.UnregisterAllHotkeys();
         _trayService?.Dispose();
         base.OnExit(e);
