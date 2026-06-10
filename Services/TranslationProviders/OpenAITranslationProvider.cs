@@ -1,5 +1,6 @@
 namespace LangFlipDesktop.Services.TranslationProviders;
 
+using System.Net.Http;
 using LangFlipDesktop.Core.Interfaces;
 
 public class OpenAITranslationProvider : ITranslationProvider
