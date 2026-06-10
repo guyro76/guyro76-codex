@@ -48,11 +48,11 @@ jobs:
           name: LangFlip-Desktop-win-x64
           path: LangFlip-Desktop-win-x64.zip
 
-      - name: Create GitHub Release (on version tag)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "קליקשפה LangFlip Desktop ${{ github.ref_name }}"
+          tag_name: v1.0.0
+          name: "קליקשפה LangFlip Desktop v1.0.0"
           body: |
             ## קליקשפה - LangFlip Desktop
 

@@ -1,7 +1,6 @@
 namespace LangFlipDesktop.UI;
 
 using System.Windows;
-using System.Windows.Forms;
 using LangFlipDesktop.Core.Models;
 
 public partial class PreviewWindow : Window
