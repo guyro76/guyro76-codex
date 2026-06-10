@@ -2,6 +2,18 @@
 
 A professional Windows desktop application that fixes wrong keyboard-layout typing, translates text between Hebrew and English, and improves writing quality—all in real-time across your applications.
 
+---
+
+## 📥 **Download / הורדה**
+
+**👉 [להורדת הגרסה האחרונה — Download Latest Release](https://github.com/guyro76/guyro76-codex/releases/latest)**
+
+1. הורידו את `LangFlip-Desktop-win-x64.zip`
+2. חלצו את הקבצים (Extract All)
+3. הפעילו את `LangFlipDesktop.exe` — **לא צריך להתקין .NET, הכל כלול!**
+
+---
+
 **English**: LangFlip helps you work seamlessly across Hebrew and English by providing instant keyboard-layout correction, translation, and text improvement features accessible via global hotkeys, floating menus, and system tray integration.
 
 ---
