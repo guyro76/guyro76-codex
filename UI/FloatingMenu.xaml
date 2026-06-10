@@ -1,0 +1,63 @@
+<Window x:Class="LangFlipDesktop.UI.FloatingMenu"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Foreground="#FFFFFF"
+        Width="280"
+        Height="Auto"
+        ShowInTaskbar="False"
+        Topmost="True"
+        FlowDirection="RightToLeft">
+    <Window.Resources>
+        <Style x:Key="FloatingMenuButton" TargetType="Button">
+            <Setter Property="Background" Value="#1A3A5F" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#2563EB" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Opacity="0.95">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2563EB" />
+                                <Setter Property="BorderBrush" Value="#38D5FF" />
+                                <Setter Property="Opacity" Value="1" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="#0B1F4D" BorderBrush="#38D5FF" BorderThickness="1" CornerRadius="12" Padding="8"
+            Opacity="0.95">
+        <StackPanel Orientation="Vertical">
+            <!-- Header -->
+            <TextBlock Text="קליקשפה" FontSize="14" FontWeight="Bold" Foreground="#38D5FF"
+                       TextAlignment="Center" Margin="0,0,0,8" />
+
+            <!-- Buttons -->
+            <Button Content="הפוך לעברית" Style="{StaticResource FloatingMenuButton}" Click="Button_ConvertHebrew" />
+            <Button Content="הפוך לאנגלית" Style="{StaticResource FloatingMenuButton}" Click="Button_ConvertEnglish" />
+            <Button Content="תרגם לאנגלית" Style="{StaticResource FloatingMenuButton}" Click="Button_TranslateEnglish" />
+            <Button Content="תרגם לעברית" Style="{StaticResource FloatingMenuButton}" Click="Button_TranslateHebrew" />
+            <Button Content="שפר ניסוח בעברית" Style="{StaticResource FloatingMenuButton}" Click="Button_ImproveHebrew" />
+            <Button Content="Improve English" Style="{StaticResource FloatingMenuButton}" Click="Button_ImproveEnglish" />
+        </StackPanel>
+    </Border>
+</Window>
