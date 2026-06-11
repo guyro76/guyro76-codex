@@ -81,14 +81,16 @@ Write-Host "✅ Registering with Windows..." -ForegroundColor Yellow
 $UninstallPath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\LangFlipDesktop"
 $null = New-Item -Path $UninstallPath -Force -ErrorAction SilentlyContinue
 
+$DesktopPath = [Environment]::GetFolderPath("Desktop")
 $UninstallScript = "$InstallDir\Uninstall.ps1"
 $UninstallContent = @"
 # Uninstall script for LangFlip Desktop
 `$InstallDir = "$InstallDir"
+`$DesktopPath = [Environment]::GetFolderPath("Desktop")
 Stop-Process -Name "LangFlipDesktop" -ErrorAction SilentlyContinue -Force
 Remove-Item -Path `$InstallDir -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -Path "$StartMenuDir" -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "[Environment]::GetFolderPath('Desktop')\קליקשפה.lnk" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "`$DesktopPath\קליקשפה.lnk" -Force -ErrorAction SilentlyContinue
 Remove-Item -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\LangFlipDesktop" -Force -ErrorAction SilentlyContinue
 "@
 

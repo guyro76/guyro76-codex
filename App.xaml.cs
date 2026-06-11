@@ -182,7 +182,7 @@ public partial class App : Application
         _floatingMenu.ShowAtCursor();
     }
 
-    private void ShowPreviewWindow(Core.Models.ActionResult result)
+    private async void ShowPreviewWindow(Core.Models.ActionResult result)
     {
         // Close any existing preview window
         if (_previewWindow != null && _previewWindow.IsVisible)
@@ -194,7 +194,8 @@ public partial class App : Application
         if (_previewWindow.ShowDialog() == true)
         {
             // User clicked Replace
-            _ = _selectedTextService!.ReplaceSelectedTextAsync(result.ResultText);
+            await _selectedTextService!.ReplaceSelectedTextAsync(result.ResultText);
+            ShowNotification("הטקסט הוחלף בהצלחה");
         }
     }
 

@@ -70,9 +70,14 @@
 
         <!-- Copyright Footer -->
         <Border Background="#0B1F4D" BorderBrush="#2563EB" BorderThickness="0,1,0,0" Padding="12,12,12,12">
-            <TextBlock Text="© 2026 תוכנן ונבנה ע״י גיא רוזנברג - כל הזכויות שמורות"
-                       FontSize="10" FontWeight="Bold" Foreground="#4FFF00"
-                       TextAlignment="Center"/>
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                <TextBlock Text="© נבנה ותוכנן על ידי גיא רוזנברג 2026"
+                           FontSize="9" FontWeight="Bold" Foreground="#4FFF00"
+                           TextAlignment="Center" Margin="0,0,0,2"/>
+                <TextBlock Text="כל הזכויות שמורות ©"
+                           FontSize="8" Foreground="#BDEFFF"
+                           TextAlignment="Center"/>
+            </StackPanel>
         </Border>
     </StackPanel>
 </Window>

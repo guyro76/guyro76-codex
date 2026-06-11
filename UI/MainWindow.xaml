@@ -118,7 +118,7 @@
             <!-- Copyright Footer -->
             <Border Background="#0B1F4D" BorderBrush="#2563EB" BorderThickness="0,1,0,0" Padding="16,16,16,16" Margin="0,32,0,0">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                    <TextBlock Text="קליקשפה v1.0"
+                    <TextBlock Text="קליקשפה v1.0 | עדכון: 11.06.2026"
                                FontSize="13" FontWeight="Bold" Foreground="#38D5FF"
                                TextAlignment="Center" Margin="0,0,0,8"/>
                     <TextBlock Text="© נבנה ותוכנן על ידי גיא רוזנברג 2026"
