@@ -1,6 +1,7 @@
 namespace LangFlipDesktop;
 
 using System.Windows;
+using System.Diagnostics;
 using LangFlipDesktop.Core.Enums;
 using LangFlipDesktop.Core.Interfaces;
 using LangFlipDesktop.Services;
@@ -19,17 +20,43 @@ public partial class App : Application
     private ISelectedTextService? _selectedTextService;
     private TranslationService? _translationService;
     private IActionService? _actionService;
+    private IUpdateService? _updateService;
     private HotkeyManager? _hotkeyManager;
     private HotkeyWindowHelper? _hotkeyWindowHelper;
     private TrayService? _trayService;
+    private bool _allowClose = false;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Check for existing instance
+        if (!CheckSingleInstance())
+        {
+            Shutdown();
+            return;
+        }
+
         InitializeServices();
         SetupUI();
         SetupHotkeys();
         SetupTray();
+    }
+
+    private bool CheckSingleInstance()
+    {
+        var currentProcess = Process.GetCurrentProcess();
+        var otherInstances = Process.GetProcessesByName(currentProcess.ProcessName)
+            .Where(p => p.Id != currentProcess.Id)
+            .ToList();
+
+        if (otherInstances.Count > 0)
+        {
+            MessageBox.Show("קליקשפה כבר פעילה!", "קליקשפה", MessageBoxButton.OK, MessageBoxImage.Information);
+            return false;
+        }
+
+        return true;
     }
 
     private void InitializeServices()
@@ -40,6 +67,7 @@ public partial class App : Application
         _selectedTextService = new SelectedTextService(_clipboardService);
         _translationService = new TranslationService(_settingsService);
         _actionService = new ActionService(_keyboardService, _clipboardService, _settingsService, _translationService);
+        _updateService = new UpdateService();
     }
 
     private void SetupUI()
@@ -47,11 +75,13 @@ public partial class App : Application
         _mainWindow = new MainWindow();
         _mainWindow.ActionRequested += MainWindow_ActionRequested;
         _mainWindow.ShowSettingsRequested += MainWindow_ShowSettingsRequested;
-        // Keep running in the background (tray) when the main window is closed
         _mainWindow.Closing += (s, e) =>
         {
-            e.Cancel = true;
-            _mainWindow.Hide();
+            if (!_allowClose)
+            {
+                e.Cancel = true;
+                _mainWindow.Hide();
+            }
         };
         _mainWindow.Show();
     }
@@ -73,7 +103,14 @@ public partial class App : Application
         _trayService.ActionRequested += TrayService_ActionRequested;
         _trayService.ShowSettings += (s, e) => ShowSettingsWindow();
         _trayService.ShowMainWindow += (s, e) => ShowMainWindow();
-        _trayService.Exit += (s, e) => Shutdown();
+        _trayService.Exit += (s, e) => FullyExit();
+    }
+
+    private void FullyExit()
+    {
+        _allowClose = true;
+        _mainWindow?.Close();
+        Shutdown();
     }
 
     private async void MainWindow_ActionRequested(object? sender, ActionType action)
@@ -167,7 +204,7 @@ public partial class App : Application
 
     private void ShowSettingsWindow()
     {
-        _settingsWindow ??= new SettingsWindow(_settingsService!);
+        _settingsWindow ??= new SettingsWindow(_settingsService!, _updateService);
         _settingsWindow.Owner = _mainWindow;
         _settingsWindow.ShowDialog();
     }

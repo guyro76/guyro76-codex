@@ -105,6 +105,17 @@
                 </StackPanel>
             </Border>
 
+            <!-- Updates -->
+            <TextBlock Text="עדכונים" Style="{StaticResource SectionHeader}" />
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="גרסה נוכחית: 1.0.0" Foreground="#BDEFFF" Margin="8" FontSize="12" />
+                    <Button Content="בדוק עדכונים" Width="150" Background="#2563EB" Foreground="#FFFFFF"
+                            Padding="8" Margin="8" HorizontalAlignment="Left" Click="Button_CheckUpdates" />
+                    <TextBlock x:Name="UpdateStatusText" Text="" Foreground="#38D5FF" Margin="8" FontSize="11" />
+                </StackPanel>
+            </Border>
+
             <!-- Footer -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,32,0,16">
                 <Button Content="שמור" Width="100" Background="#2563EB" Foreground="#FFFFFF" Padding="8" Margin="8" Click="Button_Save" />
