@@ -13,6 +13,7 @@
     <Description>Professional Windows desktop app to fix keyboard layout typing, translate text between Hebrew and English, and improve writing quality.</Description>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Assets/app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
