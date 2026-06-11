@@ -121,11 +121,11 @@
                     <TextBlock Text="קליקשפה v1.0"
                                FontSize="13" FontWeight="Bold" Foreground="#38D5FF"
                                TextAlignment="Center" Margin="0,0,0,8"/>
-                    <TextBlock Text="© תוכנן ונבנה ע״י גיא רוזנברג 2026"
-                               FontSize="12" FontWeight="Bold" Foreground="#BDEFFF"
+                    <TextBlock Text="© נבנה ותוכנן על ידי גיא רוזנברג 2026"
+                               FontSize="12" FontWeight="Bold" Foreground="#4FFF00"
                                TextAlignment="Center" Margin="0,0,0,4"/>
                     <TextBlock Text="כל הזכויות שמורות ©"
-                               FontSize="11" Foreground="#4FFF00"
+                               FontSize="11" Foreground="#BDEFFF"
                                TextAlignment="Center"/>
                 </StackPanel>
             </Border>
