@@ -36,10 +36,18 @@ public class SelectedTextService : ISelectedTextService
                 return false;
 
             // Try to use ValuePattern to replace directly
-            if (element.TryGetCurrentPattern(ValuePattern.Pattern) is ValuePattern valuePattern)
+            object? pattern;
+            if (element.TryGetCurrentPattern(ValuePattern.Pattern, out pattern) && pattern is ValuePattern valuePattern)
             {
-                valuePattern.SetValue(newText);
-                return true;
+                try
+                {
+                    valuePattern.SetValue(newText);
+                    return true;
+                }
+                catch
+                {
+                    // Fallback if SetValue fails
+                }
             }
 
             // Fallback: delete selected text and paste new text
