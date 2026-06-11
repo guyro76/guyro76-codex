@@ -4,10 +4,24 @@ A professional Windows desktop application that fixes wrong keyboard-layout typi
 
 ---
 
-## 📥 **Download / הורדה**
+## 📥 **Download & Install / הורדה והתקנה**
 
 **👉 [להורדת הגרסה האחרונה — Download Latest Release](https://github.com/guyro76/guyro76-codex/releases/latest)**
 
+### **Option 1: Smart Installer (Recommended) — מומלץ**
+Download the ZIP file, then download the installer script:
+
+1. הורידו את `LangFlip-Desktop-win-x64.zip`
+2. הורידו את `Install-LangFlip.bat` (from this repo)
+3. שם את שניהם **באותה תיקייה**
+4. **הפעילו את `Install-LangFlip.bat` כ-Administrator** (right-click → Run as Administrator)
+5. זה אוטומטית:
+   - ❌ מסיר גרסה קודמת (אם קיימת)
+   - ✅ מתקין את הגרסה החדשה
+   - 🔗 יוצר קיצורים על שולחן העבודה ו-Start Menu
+   - 📋 רושם את האפליקציה ב-Add/Remove Programs
+
+### **Option 2: Manual / ידני**
 1. הורידו את `LangFlip-Desktop-win-x64.zip`
 2. חלצו את הקבצים (Extract All)
 3. הפעילו את `LangFlipDesktop.exe` — **לא צריך להתקין .NET, הכל כלול!**
