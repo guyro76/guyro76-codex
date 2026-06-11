@@ -2,6 +2,7 @@ namespace LangFlipDesktop.Services;
 
 using System.Windows.Automation;
 using System.Windows.Forms;
+using System.Windows.Automation.Text;
 using LangFlipDesktop.Core.Interfaces;
 
 public class SelectedTextService : ISelectedTextService
@@ -30,19 +31,32 @@ public class SelectedTextService : ISelectedTextService
     {
         try
         {
-            // Try Ctrl+V replacement after copying to clipboard
-            _clipboardService.SetClipboardText(newText);
-
-            // Simulate Ctrl+V
             var element = AutomationElement.FocusedElement;
-            if (element != null)
+            if (element == null)
+                return false;
+
+            // Try to use ValuePattern to replace directly
+            if (element.TryGetCurrentPattern(ValuePattern.Pattern) is ValuePattern valuePattern)
             {
-                await Task.Delay(50);
-                // This would need keyboard simulation, which requires user32.dll interop
-                // For now, just return true - the text is in clipboard
+                valuePattern.SetValue(newText);
                 return true;
             }
-            return false;
+
+            // Fallback: delete selected text and paste new text
+            var savedClipboard = _clipboardService.SaveAndClear();
+            _clipboardService.SetClipboardText(newText);
+            await Task.Delay(50);
+
+            // Delete selected text (Ctrl+X cuts it)
+            SendKey("^x");
+            await Task.Delay(50);
+
+            // Paste the new text (Ctrl+V)
+            SendKey("^v");
+            await Task.Delay(50);
+
+            _clipboardService.Restore(savedClipboard);
+            return true;
         }
         catch
         {

@@ -184,6 +184,12 @@ public partial class App : Application
 
     private void ShowPreviewWindow(Core.Models.ActionResult result)
     {
+        // Close any existing preview window
+        if (_previewWindow != null && _previewWindow.IsVisible)
+        {
+            _previewWindow.Close();
+        }
+
         _previewWindow = new PreviewWindow(result);
         if (_previewWindow.ShowDialog() == true)
         {
