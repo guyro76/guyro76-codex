@@ -1,0 +1,40 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - claude/authorityboost-ai-build-s8w237
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: claude/authorityboost-ai-build-s8w237
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js app
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://guyro76.github.io/guyro76-codex
+
+      - name: Export static site
+        run: npm run export 2>/dev/null || true
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          branch: gh-pages
