@@ -12,6 +12,8 @@ model User {
   emailVerified         DateTime?
   name                  String?
   image                 String?
+  password              String?     // For email/password auth
+  role                  String      @default("user") // user, admin
 
   niche                 String?
   audience              String?

@@ -3,6 +3,7 @@ import { Rubik, Heebo, Assistant } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Footer } from "./footer";
+import Link from "next/link";
 
 const rubik = Rubik({
   variable: "--font-rubik",
@@ -20,10 +21,29 @@ const assistant = Assistant({
 });
 
 export const metadata: Metadata = {
-  title: "AuthorityBoost AI",
-  description: "Transform knowledge into digital authority",
+  title: "AuthorityBoost AI - בנה סמכות דיגיטלית",
+  description:
+    "פלטפורמה מקיפה לבניית סמכות דיגיטלית, שיווק תוכן בתוך רשתות חברתיות והנהלת נוכחות מקצועית",
+  keywords: [
+    "סמכות דיגיטלית",
+    "שיווק תוכן",
+    "ניהול סושיאל",
+    "AI content",
+    "personal branding",
+  ],
   icons: {
     icon: "/favicon.ico",
+  },
+  authors: [{ name: "Giy Rozenberg" }],
+  creator: "Giy Rozenberg",
+  openGraph: {
+    type: "website",
+    locale: "he_IL",
+    url: "https://authorityboost.ai",
+    title: "AuthorityBoost AI - בנה סמכות דיגיטלית",
+    description:
+      "פלטפורמה מקיפה לבניית סמכות דיגיטלית וניהול נוכחות מקצועית",
+    siteName: "AuthorityBoost AI",
   },
 };
 
@@ -40,6 +60,14 @@ export default function RootLayout({
       className={`${rubik.variable} ${heebo.variable} ${assistant.variable} h-full antialiased scroll-smooth`}
     >
       <body className="min-h-full flex flex-col bg-slate-950 text-white">
+        <header className="border-b border-slate-800 bg-slate-900/50 px-4 py-3">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-lg font-bold hover:text-cyan-400 transition-colors"
+          >
+            🏠 <span>AuthorityBoost</span>
+          </Link>
+        </header>
         <Providers>{children}</Providers>
         <Footer />
       </body>
