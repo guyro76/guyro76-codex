@@ -7,11 +7,13 @@ using LangFlipDesktop.Services.TranslationProviders;
 public class TranslationService
 {
     private readonly ISettingsService _settingsService;
+    private readonly IKeyboardLayoutService _keyboardService;
     private ITranslationProvider? _currentProvider;
 
-    public TranslationService(ISettingsService settingsService)
+    public TranslationService(ISettingsService settingsService, IKeyboardLayoutService? keyboardService = null)
     {
         _settingsService = settingsService;
+        _keyboardService = keyboardService ?? new KeyboardLayoutService();
         InitializeProvider();
     }
 
@@ -30,46 +32,42 @@ public class TranslationService
 
     public async Task<string> TranslateToEnglishAsync(string text)
     {
-        if (_currentProvider == null)
-            throw new InvalidOperationException("No translation provider configured");
+        if (_currentProvider != null)
+            return await _currentProvider.TranslateAsync(text, "Hebrew", "English");
 
-        return await _currentProvider.TranslateAsync(text, "Hebrew", "English");
+        // Fallback: Use keyboard conversion if no provider configured
+        return _keyboardService.ConvertToEnglish(text);
     }
 
     public async Task<string> TranslateToHebrewAsync(string text)
     {
-        if (_currentProvider == null)
-            throw new InvalidOperationException("No translation provider configured");
+        if (_currentProvider != null)
+            return await _currentProvider.TranslateAsync(text, "English", "Hebrew");
 
-        return await _currentProvider.TranslateAsync(text, "English", "Hebrew");
+        // Fallback: Use keyboard conversion if no provider configured
+        return _keyboardService.ConvertToHebrew(text);
     }
 
     public async Task<string> ImproveHebrewAsync(string text)
     {
-        if (_currentProvider == null)
-            throw new InvalidOperationException("No translation provider configured");
+        if (_currentProvider != null)
+        {
+            return await _currentProvider.TranslateAsync(text, "Hebrew", "Hebrew");
+        }
 
-        // Use a specialized prompt for improvement
-        var improvedText = await _currentProvider.TranslateAsync(
-            text,
-            "Hebrew",
-            "Hebrew"
-        );
-        return improvedText;
+        // Fallback: Return text as-is when no provider (user needs to enable translation)
+        throw new InvalidOperationException("תיקון ניסוח דורש מפתח תרגום. אנא הגדר OpenAI או DeepL בהגדרות");
     }
 
     public async Task<string> ImproveEnglishAsync(string text)
     {
-        if (_currentProvider == null)
-            throw new InvalidOperationException("No translation provider configured");
+        if (_currentProvider != null)
+        {
+            return await _currentProvider.TranslateAsync(text, "English", "English");
+        }
 
-        // Use a specialized prompt for improvement
-        var improvedText = await _currentProvider.TranslateAsync(
-            text,
-            "English",
-            "English"
-        );
-        return improvedText;
+        // Fallback: Return text as-is when no provider (user needs to enable translation)
+        throw new InvalidOperationException("Improvement requires translation key. Please configure OpenAI or DeepL in settings");
     }
 
     public async Task<bool> TestProviderConnectionAsync()

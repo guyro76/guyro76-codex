@@ -65,7 +65,7 @@ public partial class App : Application
         _settingsService = new SettingsService();
         _keyboardService = new KeyboardLayoutService();
         _selectedTextService = new SelectedTextService(_clipboardService);
-        _translationService = new TranslationService(_settingsService);
+        _translationService = new TranslationService(_settingsService, _keyboardService);
         _actionService = new ActionService(_keyboardService, _clipboardService, _settingsService, _translationService);
         _updateService = new UpdateService();
     }

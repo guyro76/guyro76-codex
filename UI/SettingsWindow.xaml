@@ -55,13 +55,17 @@
                 <StackPanel Orientation="Vertical">
                     <TextBlock Text="בחר ספק:" Foreground="#FFFFFF" Margin="8" />
                     <ComboBox Foreground="#000000" Background="#FFFFFF" Margin="8" x:Name="ProviderCombo">
-                        <ComboBoxItem Content="אין (בלוקאלי בלבד)" />
+                        <ComboBoxItem Content="אין (השדות החינם בלבד: המרה)" />
                         <ComboBoxItem Content="OpenAI" />
                         <ComboBoxItem Content="DeepL" />
                         <ComboBoxItem Content="Google Cloud" />
                     </ComboBox>
 
-                    <TextBlock Text="API Key:" Foreground="#FFFFFF" Margin="8,8,8,2" />
+                    <TextBlock Text="ללא ספק:" Foreground="#4FFF00" Margin="8" FontSize="11" />
+                    <TextBlock Text="✓ המרה עברית ↔ אנגלית" Foreground="#BDEFFF" Margin="8" FontSize="10" />
+                    <TextBlock Text="✗ תרגום ושיפור ניסוח (דורש API)" Foreground="#FF6B6B" Margin="8" FontSize="10" />
+
+                    <TextBlock Text="API Key:" Foreground="#FFFFFF" Margin="8,16,8,2" />
                     <PasswordBox x:Name="ApiKeyBox" Foreground="#000000" Background="#FFFFFF" Margin="8,2,8,8" />
 
                     <Button Content="בדוק חיבור" Width="150" Background="#2563EB" Foreground="#FFFFFF"
