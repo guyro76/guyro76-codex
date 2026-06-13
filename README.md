@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 AuthorityBoost AI - Production Ready
 
-## Getting Started
+> Digital Authority Building Platform with AI-Powered Content Generation
 
-First, run the development server:
+---
 
+## ✨ Features
+
+### 🎨 Content Creation
+- **AI Carousel Generator** - 7-image carousels powered by Claude API
+- **Real Image Search** - Wikimedia Commons integration with validation
+- **Trending Content** - Google News & Wikipedia integration
+- **Real-time Preview** - See results as you create
+
+### 🔐 Authentication
+- Google OAuth 2.0
+- Apple OAuth (optional)
+- Email/Password with bcryptjs
+- Role-based access control
+
+### 👤 User Management
+- Comprehensive onboarding flow
+- Dashboard with metrics
+- Admin panel (guyro76@gmail.com)
+- User preferences (niche, audience, tone, platforms)
+
+### 🌍 Localization
+- Full RTL (Right-to-Left) Hebrew support
+- Responsive mobile design
+- Accessibility features
+- SEO optimized
+
+---
+
+## 🚀 Quick Deployment (15 minutes)
+
+### Run Deployment Script
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+./deploy.sh
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This will:
+- Generate your secure `NEXTAUTH_SECRET`
+- Verify your git branch
+- Create deployment configuration
+- Provide step-by-step checklist
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Then follow the checklist in the script output to:
+1. Create Supabase database
+2. Set up Google OAuth
+3. Get Claude API key
+4. Deploy to Vercel
+5. Configure environment variables
+6. Test production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🏗️ Architecture
 
-To learn more about Next.js, take a look at the following resources:
+### Stack
+- **Frontend**: Next.js 14+ (React, TypeScript)
+- **Backend**: Next.js API Routes
+- **Database**: PostgreSQL (Supabase)
+- **ORM**: Prisma with TypeScript
+- **Auth**: NextAuth.js with multiple providers
+- **AI**: Claude API (Anthropic)
+- **Hosting**: Vercel
+- **Styling**: Tailwind CSS (RTL support)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Pages
+```
+/                    - Landing page (login)
+/login              - Authentication page
+/onboarding         - User setup wizard
+/dashboard          - Main dashboard
+/content-factory    - Carousel creation
+/carousel/[id]      - Carousel viewer
+/admin              - Admin panel (guyro76@gmail.com only)
+/privacy            - Privacy policy
+/terms              - Terms of service
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🔐 Admin Access
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Email:** `guyro76@gmail.com`  
+**Password:** `caramel76`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 📱 Local Development
+
+```bash
+npm install
+npm run dev
+# Open http://localhost:3000
+```
+
+---
+
+## 📝 Documentation
+
+- **QUICK_DEPLOY.md** - 15-minute deployment checklist
+- **VERCEL_DEPLOY.md** - Vercel-specific guide
+- **PRODUCTION.md** - Production checklist
+- **DEPLOY_STEPS.txt** - Step-by-step instructions
+- **SETUP.md** - Development setup
+
+---
+
+## 🔒 Security
+
+- Passwords hashed with bcryptjs
+- Environment variables for secrets
+- HTTPS/SSL via Vercel
+- CORS configured
+- Input validation on forms
+- Role-based access control
+- Admin-only routes protected
+
+---
+
+## 📧 Support
+
+**Email:** guyro76@gmail.com
+
+---
+
+**© 2026 תוכנן ונבנה על ידי גיא רוזנברג - כל הזכויות שמורות**
+
+🚀 Production Ready - Deploy Now!
