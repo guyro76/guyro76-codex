@@ -100,13 +100,24 @@
                 </StackPanel>
             </Border>
 
+            <!-- Features Card -->
+            <TextBlock Text="🎉 כל הפונקציונליות בחינם" FontSize="14" FontWeight="Bold" Foreground="#4FFF00" Margin="16,16,16,8" />
+            <Border Style="{StaticResource StatusCard}">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="✓ המרה עברית ↔ אנגלית" Foreground="#4FFF00" Margin="8" FontSize="12" />
+                    <TextBlock Text="✓ תרגום עברית ↔ אנגלית" Foreground="#4FFF00" Margin="8" FontSize="12" />
+                    <TextBlock Text="✓ שיפור ניסוח בעברית ובאנגלית" Foreground="#4FFF00" Margin="8" FontSize="12" />
+                    <TextBlock Text="✓ כל דבר מתבצע מקומית - ללא עלויות!" Foreground="#BDEFFF" Margin="8" FontSize="12" FontWeight="Bold" />
+                </StackPanel>
+            </Border>
+
             <!-- Privacy Card -->
             <TextBlock Text="פרטיות וביטחון" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" Margin="16,16,16,8" />
             <Border Style="{StaticResource StatusCard}">
                 <StackPanel Orientation="Vertical">
-                    <TextBlock Text="✓ תיקון מקלדת מתבצע מקומית בלבד" Foreground="#4FFF00" Margin="8" FontSize="12" />
+                    <TextBlock Text="✓ כל משהו מתבצע בלוקאלי בלבד" Foreground="#4FFF00" Margin="8" FontSize="12" />
                     <TextBlock Text="✓ טקסט לא נשמר כברירת מחדל" Foreground="#4FFF00" Margin="8" FontSize="12" />
-                    <TextBlock Text="✓ תרגום שולח רק את הטקסט המסומן" Foreground="#4FFF00" Margin="8" FontSize="12" />
+                    <TextBlock Text="✓ אין שליחה לשרתים חיצוניים" Foreground="#4FFF00" Margin="8" FontSize="12" />
                     <TextBlock Text="✓ לא עובדים על שדות סיסמה" Foreground="#4FFF00" Margin="8" FontSize="12" />
                 </StackPanel>
             </Border>

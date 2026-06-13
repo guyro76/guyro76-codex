@@ -26,48 +26,40 @@ public class TranslationService
         {
             TranslationProvider.OpenAI => new OpenAITranslationProvider(apiKey),
             TranslationProvider.DeepL => new DeepLTranslationProvider(apiKey),
-            _ => null
+            _ => new LocalTranslationProvider() // Default to local/free translation
         };
     }
 
     public async Task<string> TranslateToEnglishAsync(string text)
     {
-        if (_currentProvider != null)
-            return await _currentProvider.TranslateAsync(text, "Hebrew", "English");
+        if (_currentProvider == null)
+            throw new InvalidOperationException("No translation provider available");
 
-        // Fallback: Use keyboard conversion if no provider configured
-        return _keyboardService.ConvertToEnglish(text);
+        return await _currentProvider.TranslateAsync(text, "Hebrew", "English");
     }
 
     public async Task<string> TranslateToHebrewAsync(string text)
     {
-        if (_currentProvider != null)
-            return await _currentProvider.TranslateAsync(text, "English", "Hebrew");
+        if (_currentProvider == null)
+            throw new InvalidOperationException("No translation provider available");
 
-        // Fallback: Use keyboard conversion if no provider configured
-        return _keyboardService.ConvertToHebrew(text);
+        return await _currentProvider.TranslateAsync(text, "English", "Hebrew");
     }
 
     public async Task<string> ImproveHebrewAsync(string text)
     {
-        if (_currentProvider != null)
-        {
-            return await _currentProvider.TranslateAsync(text, "Hebrew", "Hebrew");
-        }
+        if (_currentProvider == null)
+            throw new InvalidOperationException("No translation provider available");
 
-        // Fallback: Return text as-is when no provider (user needs to enable translation)
-        throw new InvalidOperationException("תיקון ניסוח דורש מפתח תרגום. אנא הגדר OpenAI או DeepL בהגדרות");
+        return await _currentProvider.TranslateAsync(text, "Hebrew", "Hebrew");
     }
 
     public async Task<string> ImproveEnglishAsync(string text)
     {
-        if (_currentProvider != null)
-        {
-            return await _currentProvider.TranslateAsync(text, "English", "English");
-        }
+        if (_currentProvider == null)
+            throw new InvalidOperationException("No translation provider available");
 
-        // Fallback: Return text as-is when no provider (user needs to enable translation)
-        throw new InvalidOperationException("Improvement requires translation key. Please configure OpenAI or DeepL in settings");
+        return await _currentProvider.TranslateAsync(text, "English", "English");
     }
 
     public async Task<bool> TestProviderConnectionAsync()
