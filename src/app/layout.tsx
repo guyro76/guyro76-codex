@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Rubik, Heebo, Assistant } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { Footer } from "./footer";
 
 const rubik = Rubik({
   variable: "--font-rubik",
@@ -40,6 +41,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-slate-950 text-white">
         <Providers>{children}</Providers>
+        <Footer />
       </body>
     </html>
   );

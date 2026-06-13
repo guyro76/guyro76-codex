@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function ContentFactoryPage() {
+function ContentFactoryForm() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -203,5 +203,15 @@ export default function ContentFactoryPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+import { Suspense } from "react";
+
+export default function ContentFactoryPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">טוען...</div>}>
+      <ContentFactoryForm />
+    </Suspense>
   );
 }
