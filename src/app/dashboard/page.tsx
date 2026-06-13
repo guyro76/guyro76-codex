@@ -1,14 +1,42 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import Link from "next/link";
+import { AppShell } from "@/components/AppShell";
+
+const PLATFORMS = [
+  {
+    name: "LinkedIn",
+    score: 92,
+    tip: "בנה סדרת דעה מקצועית שבועית",
+  },
+  {
+    name: "Instagram",
+    score: 84,
+    tip: "אחד את שפת הקרוסלות והריילסים",
+  },
+  {
+    name: "Facebook",
+    score: 81,
+    tip: "שלב יותר סיפור אישי וקהילה",
+  },
+  {
+    name: "TikTok",
+    score: 78,
+    tip: "פתח כל סרטון ב-Hook של 3 שניות",
+  },
+];
+
+const METRICS = [
+  { label: "עקביות", value: "91%", icon: "🎯" },
+  { label: "מעורבות", value: "6.8%", icon: "📊" },
+  { label: "צמיחת עוקבים", value: "18%+", icon: "📈" },
+];
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
-  const [showMenu, setShowMenu] = useState(false);
 
   if (status === "unauthenticated") {
     router.push("/");
@@ -17,163 +45,80 @@ export default function DashboardPage() {
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center bg-[#06060b] text-white">
         <div className="animate-pulse">טוען...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-slate-950">
-      {/* Sidebar */}
-      <div className="hidden md:flex w-64 bg-slate-900 border-l border-slate-800 flex-col">
-        <div className="p-6">
-          <h1 className="text-xl font-bold">
-            AuthorityBoost
-            <span className="text-cyan-400"> AI</span>
-          </h1>
-        </div>
+    <AppShell score={87}>
+      {/* Hero - Authority Command Center */}
+      <section className="rounded-3xl border border-white/5 bg-[#0e0e16] p-6 md:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row-reverse">
+          {/* Right: score + metrics */}
+          <div className="flex-1 text-right">
+            <p className="text-sm font-bold uppercase tracking-wide text-sky-300">
+              Authority Command Center
+            </p>
+            <h1 className="mt-2 text-5xl font-black leading-none md:text-6xl">
+              ציון סמכות 87/100
+            </h1>
+            <p className="mt-4 max-w-xl text-slate-400 ms-auto">
+              המערכת הופכת נתוני פרופיל, פעילות, טרנדים ותבניות הצלחה לתוכנית
+              צמיחה יומית.
+            </p>
 
-        <nav className="flex-1 px-4 space-y-2">
-          <NavLink href="/dashboard" label="דשבורד סמכות" />
-          <NavLink href="/content-factory" label="מפעל תוכן" />
-          <NavLink href="/content-search" label="חיפוש תוכן" />
-          <NavLink href="/brand-kit" label="Brand Kit" />
-          <NavLink href="/content-calendar" label="יומן תוכן" />
-          <NavLink href="/settings" label="הגדרות" />
-        </nav>
-
-        <div className="border-t border-slate-800 p-4">
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-medium transition-colors"
-          >
-            התנתקות
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="border-b border-slate-800 bg-slate-900 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">דשבורד סמכות</h2>
-            <div className="text-sm text-slate-400">
-              {session?.user?.name || session?.user?.email}
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {METRICS.map((m) => (
+                <div
+                  key={m.label}
+                  className="rounded-2xl border border-white/5 bg-[#06060b] p-5 text-center"
+                >
+                  <div className="text-2xl">{m.icon}</div>
+                  <p className="mt-2 text-sm text-slate-400">{m.label}</p>
+                  <p className="mt-1 text-3xl font-black">{m.value}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-auto p-6">
-          <div className="max-w-6xl mx-auto space-y-8">
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <StatCard
-                label="ציוני סמכות"
-                value="—"
-                desc="חובר כאשר תתחבר למערכות"
-              />
-              <StatCard
-                label="תוכנים שנוצרו"
-                value="0"
-                desc="מעולם לא נוצר תוכן עדיין"
-              />
-              <StatCard
-                label="עוקבים"
-                value="—"
-                desc="חובר כאשר תתחבר למערכות"
-              />
-            </div>
-
-            {/* CTA Section */}
-            <div className="bg-cyan-600/20 border border-cyan-500/30 rounded-lg p-8 text-center">
-              <h3 className="text-2xl font-bold mb-4">בואו נתחיל ליצור</h3>
-              <p className="text-slate-300 mb-6">
-                בחר ממה למתחיל: קרוסלה, פוסט, או רילס שמעוררת השראה.
+          {/* Left: today's task */}
+          <div className="flex w-full flex-col justify-between rounded-3xl bg-sky-300 p-6 text-slate-900 lg:w-72">
+            <div className="text-right">
+              <div className="text-2xl">🎯</div>
+              <p className="mt-3 text-sm font-semibold opacity-70">משימת היום</p>
+              <p className="mt-2 text-xl font-extrabold leading-snug">
+                פרסם טיפ אחד, הגב ל-10 מומחים והפוך פוסט לקרוסלה.
               </p>
-              <div className="flex flex-col md:flex-row gap-4 justify-center">
-                <Link
-                  href="/content-factory?type=carousel"
-                  className="px-8 py-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold transition-colors"
-                >
-                  ✨ צור קרוסלה
-                </Link>
-                <Link
-                  href="/content-factory?type=post"
-                  className="px-8 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 font-semibold transition-colors"
-                >
-                  📝 צור פוסט
-                </Link>
-              </div>
             </div>
-
-            {/* Quick Links */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <QuickLink
-                title="חיפוש תוכן"
-                desc="מצא טרנדים וחדשות רלוונטיות"
-                href="/content-search"
-              />
-              <QuickLink
-                title="בנה Brand Kit"
-                desc="צור זהות מותג אחידה"
-                href="/brand-kit"
-              />
-            </div>
+            <Link
+              href="/content-factory?type=carousel"
+              className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800"
+            >
+              צור תוכן <span aria-hidden>▷</span>
+            </Link>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      </section>
 
-function NavLink({ href, label }: { href: string; label: string }) {
-  return (
-    <a
-      href={href}
-      className="block px-4 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-    >
-      {label}
-    </a>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  desc,
-}: {
-  label: string;
-  value: string;
-  desc: string;
-}) {
-  return (
-    <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-      <p className="text-slate-400 text-sm mb-2">{label}</p>
-      <p className="text-3xl font-bold mb-2">{value}</p>
-      <p className="text-xs text-slate-500">{desc}</p>
-    </div>
-  );
-}
-
-function QuickLink({
-  title,
-  desc,
-  href,
-}: {
-  title: string;
-  desc: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-cyan-500/50 transition-colors"
-    >
-      <h4 className="font-bold mb-2">{title}</h4>
-      <p className="text-sm text-slate-400">{desc}</p>
-    </Link>
+      {/* Platform breakdown */}
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {PLATFORMS.map((p) => (
+          <div
+            key={p.name}
+            className="flex items-center justify-between rounded-3xl border border-white/5 bg-[#0e0e16] p-6"
+          >
+            <span className="rounded-full bg-[#06060b] px-3 py-1 text-sm font-bold text-slate-300">
+              {p.score}/100
+            </span>
+            <div className="text-right">
+              <h3 className="text-2xl font-black">{p.name}</h3>
+              <p className="mt-1 text-sm text-slate-400">{p.tip}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+    </AppShell>
   );
 }
