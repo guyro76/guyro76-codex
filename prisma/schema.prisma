@@ -1,0 +1,179 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                    String      @id @default(cuid())
+  email                 String      @unique
+  emailVerified         DateTime?
+  name                  String?
+  image                 String?
+
+  niche                 String?
+  audience              String?
+  tone                  String?
+  onboardingComplete    Boolean     @default(false)
+
+  accounts              Account[]
+  sessions              Session[]
+  projects              Project[]
+  brandKits             BrandKit[]
+  connections           Connection[]
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@map("users")
+}
+
+model Account {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type                  String
+  provider              String
+  providerAccountId     String
+  refresh_token         String?
+  access_token          String?
+  expires_at            Int?
+  token_type            String?
+  scope                 String?
+  id_token              String?
+  session_state         String?
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id                    String      @id @default(cuid())
+  sessionToken          String      @unique
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires               DateTime
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier            String
+  token                 String      @unique
+  expires               DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Connection {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  platform              String
+  status                String      @default("demo")
+  accessToken           String?
+  refreshToken          String?
+  lastSync              DateTime?
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@unique([userId, platform])
+  @@map("connections")
+}
+
+model Project {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type                  String
+  topic                 String
+  sourceTitle           String?
+  sourceUrl             String?
+  sourceSummary         String?
+
+  content               String?
+  images                ProjectImage[]
+  theme                 String?
+  platform              String?
+  format                String?
+  status                String      @default("draft")
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model ProjectImage {
+  id                    String      @id @default(cuid())
+  projectId             String
+  project               Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  url                   String
+  alt                   String?
+  source                String?
+  credit                String?
+  position              Int
+
+  createdAt             DateTime    @default(now())
+
+  @@index([projectId])
+  @@map("project_images")
+}
+
+model BrandKit {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  positioning           String?
+  bios                  Json?
+  pillars               Json?
+  ctas                  Json?
+  signaturePhrases      Json?
+  visualStyle           String?
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@unique([userId])
+  @@map("brand_kits")
+}
+
+model TrendItem {
+  id                    String      @id @default(cuid())
+
+  title                 String
+  summary               String?
+  url                   String?
+  source                String
+  sourceType            String
+  imageUrl              String?
+  publishedAt           DateTime?
+
+  createdAt             DateTime    @default(now())
+  expiresAt             DateTime
+
+  @@index([createdAt])
+  @@map("trends")
+}
+
+model SearchCache {
+  id                    String      @id @default(cuid())
+  query                 String
+  source                String
+  results               Json
+
+  createdAt             DateTime    @default(now())
+  expiresAt             DateTime
+
+  @@unique([query, source])
+  @@map("search_cache")
+}
