@@ -1,0 +1,97 @@
+🚀 DEPLOYMENT TO PRODUCTION - STEP BY STEP
+
+Your code is ready! Here's how to deploy to Vercel:
+
+═══════════════════════════════════════════════════════════
+
+STEP 1: Push Code to GitHub
+───────────────────────────────────────────────────────────
+✓ Branch is ready: claude/authorityboost-ai-build-s8w237
+✓ Already pushed to GitHub
+
+STEP 2: Create Vercel Project
+───────────────────────────────────────────────────────────
+1. Go to: https://vercel.com/dashboard
+2. Click "New Project"
+3. Import "guyro76-codex" repository
+4. Select branch: claude/authorityboost-ai-build-s8w237
+5. Click "Deploy"
+6. Wait 2-3 minutes for build to complete
+
+STEP 3: Get Required Credentials
+───────────────────────────────────────────────────────────
+
+A) SUPABASE DATABASE (PostgreSQL):
+   1. Go to: https://supabase.com
+   2. Create free project
+   3. Go to: Settings → Database
+   4. Copy full connection string (postgres://...)
+   5. Set as: DATABASE_URL
+
+B) GOOGLE OAUTH:
+   1. Go to: https://console.cloud.google.com
+   2. Create project "AuthorityBoost AI"
+   3. Search "Google+ API" and enable
+   4. Go to: Credentials → Create OAuth 2.0 Client ID
+   5. Type: Web application
+   6. Authorized Redirect URIs:
+      - http://localhost:3000/api/auth/callback/google
+      - https://your-vercel-domain/api/auth/callback/google
+   7. Copy: Client ID and Secret
+
+C) NEXTAUTH SECRET:
+   Run in terminal:
+   openssl rand -base64 32
+   Copy the output
+
+D) CLAUDE API KEY:
+   1. Go to: https://console.anthropic.com
+   2. Copy your API key
+
+STEP 4: Configure Vercel Environment Variables
+───────────────────────────────────────────────────────────
+In Vercel Dashboard → Settings → Environment Variables, add:
+
+DATABASE_URL=your_supabase_connection_string
+NEXTAUTH_SECRET=your_random_secret
+NEXTAUTH_URL=https://your-vercel-domain.vercel.app
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+ANTHROPIC_API_KEY=your_claude_api_key
+ADMIN_EMAIL=guyro76@gmail.com
+
+STEP 5: Test Production
+───────────────────────────────────────────────────────────
+1. Go to your Vercel deployment URL
+2. Test login with:
+   - Email: test@example.com
+   - Password: password123
+3. Or login with Google
+4. Visit /admin and login with:
+   - Email: guyro76@gmail.com
+   - Password: caramel76
+
+═══════════════════════════════════════════════════════════
+
+🎯 YOU'RE DONE!
+
+Your production app is live on Vercel!
+
+All features included:
+✅ Email/Password Login & Register
+✅ Google OAuth
+✅ Apple OAuth
+✅ Admin Panel
+✅ Content Factory
+✅ Privacy Policy & Terms
+✅ SEO Optimized
+✅ RTL Hebrew Support
+✅ Dark Mode
+✅ Mobile Responsive
+
+═══════════════════════════════════════════════════════════
+
+For more details, see:
+- SETUP.md (Development guide)
+- PRODUCTION.md (Production checklist)
+- AGENTS.md (Next.js info)
