@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-06-13T08:54:54Z",
+  "nextauth_secret": "krIVLMUH7slBN9j30DR2h5w99qwHH0/OLNhW4ae+eWw=",
+  "nextauth_url": "https://authorityboost-ai.vercel.app",
+  "admin_email": "guyro76@gmail.com",
+  "status": "ready_for_vercel",
+  "instructions": "1. Get DATABASE_URL from Supabase, 2. Get credentials from Google Cloud, 3. Get API key from Anthropic, 4. Add to Vercel Environment Variables, 5. Deploy"
+}
