@@ -7,45 +7,22 @@ on:
       - main
   workflow_dispatch:
 
-# Allow this workflow to publish to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Only one concurrent deployment; cancel in-progress runs
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Assemble static site
         run: |
           mkdir -p _site
           cp index.html _site/index.html
-          # Avoid Jekyll processing so the file is served as-is
           touch _site/.nojekyll
 
-      - name: Setup Pages (auto-enable)
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          cname: false
