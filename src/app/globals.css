@@ -81,7 +81,10 @@ input, textarea, select {
   font-family: var(--font-sans);
 }
 
-/* Links */
-a {
-  @apply text-cyan-400 hover:text-cyan-300 transition-colors;
+/* Links — scoped to the base layer so component utility classes
+   (e.g. an active nav item's text color) can override it. */
+@layer base {
+  a {
+    @apply text-cyan-400 hover:text-cyan-300 transition-colors;
+  }
 }

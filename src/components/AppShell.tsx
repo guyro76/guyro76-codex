@@ -65,8 +65,8 @@ export function AppShell({
                     href={item.href}
                     className={`flex items-center justify-end gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
                       active
-                        ? "bg-sky-300 text-slate-900"
-                        : "text-slate-300 hover:bg-white/5 hover:text-white"
+                        ? "bg-sky-400 font-bold text-slate-950"
+                        : "text-slate-200 hover:bg-white/5 hover:text-white"
                     }`}
                   >
                     <span>{item.label}</span>
