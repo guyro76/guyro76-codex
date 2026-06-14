@@ -19,6 +19,8 @@ function ContentFactoryForm() {
     platform: "instagram",
     objective: "בניית סמכות",
     theme: "midnight",
+    design: "modern",
+    contentType: "carousel",
   });
 
   if (status === "unauthenticated") {
@@ -81,6 +83,36 @@ function ContentFactoryForm() {
         </div>
 
         <form onSubmit={handleCreateCarousel} className="space-y-6">
+          {/* Content Type */}
+          <div>
+            <label className="block text-sm font-semibold mb-3">
+              סוג תוכן
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { value: "carousel", label: "קרוסלה", emoji: "📱" },
+                { value: "story", label: "סטורי", emoji: "🎬" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() =>
+                    setFormData({ ...formData, contentType: option.value })
+                  }
+                  disabled={loading}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    formData.contentType === option.value
+                      ? "border-cyan-500 bg-cyan-500/10"
+                      : "border-slate-700 bg-slate-900 hover:border-slate-600"
+                  } disabled:opacity-50`}
+                >
+                  <div className="text-2xl mb-1">{option.emoji}</div>
+                  <div className="text-sm font-medium">{option.label}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Topic */}
           <div>
             <label className="block text-sm font-semibold mb-2">
@@ -138,10 +170,60 @@ function ContentFactoryForm() {
             </select>
           </div>
 
+          {/* Design Templates */}
+          <div>
+            <label className="block text-sm font-semibold mb-3">
+              בחר עיצוב
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                {
+                  id: "modern",
+                  name: "Modern Pro",
+                  desc: "עיצוב מודרני מקצועי",
+                  colors: "bg-gradient-to-br from-cyan-600 to-blue-700",
+                },
+                {
+                  id: "minimal",
+                  name: "Clean Minimal",
+                  desc: "פשוט וברור",
+                  colors: "bg-gradient-to-br from-slate-700 to-slate-900",
+                },
+                {
+                  id: "bold",
+                  name: "Bold Impact",
+                  desc: "עיצוב עוזר ומשפיע",
+                  colors: "bg-gradient-to-br from-purple-600 to-pink-600",
+                },
+              ].map((template) => (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() =>
+                    setFormData({ ...formData, design: template.id })
+                  }
+                  disabled={loading}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    formData.design === template.id
+                      ? "border-cyan-500 ring-2 ring-cyan-500/50"
+                      : "border-slate-700 hover:border-slate-600"
+                  } disabled:opacity-50`}
+                >
+                  <div
+                    className={`${template.colors} h-20 rounded mb-3 flex items-center justify-center text-white font-bold text-sm`}
+                  >
+                    {template.name}
+                  </div>
+                  <p className="text-sm">{template.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Theme */}
           <div>
             <label className="block text-sm font-semibold mb-2">
-              ערכת עיצוב
+              צבע עיקרי
             </label>
             <select
               value={formData.theme}
@@ -189,17 +271,47 @@ function ContentFactoryForm() {
             disabled={loading}
             className="w-full py-3 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? "יוצר..." : "צור קרוסלה ✨"}
+            {loading
+              ? formData.contentType === "story"
+                ? "יוצר סטורי..."
+                : "יוצר קרוסלה..."
+              : formData.contentType === "story"
+              ? "צור סטורי 🎬"
+              : "צור קרוסלה ✨"}
           </button>
         </form>
 
         {/* Info Box */}
-        <div className="mt-8 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-          <p className="text-sm text-blue-200">
-            ℹ️ <strong>כיצד זה עובד:</strong> המערכת תחפש מקורות אמינים,
-            תכתוב 7 שקפים, תחפש תמונות רלוונטיות, ותבנה קרוסלה מוכנה להורדה
-            וביעוט.
-          </p>
+        <div className="mt-8 space-y-4">
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+            <p className="text-sm text-blue-200">
+              ℹ️ <strong>כיצד זה עובד:</strong>{" "}
+              {formData.contentType === "carousel"
+                ? "המערכת תחפש מקורות אמינים, תכתוב 7 שקפים, תחפש תמונות רלוונטיות, ותבנה קרוסלה מוכנה להורדה וביעוט."
+                : "המערכת תיצור סרטון סטורי בן 15 שניות עם אנימציות, טקסט, והוזמנות לפעולה."}
+            </p>
+          </div>
+
+          <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+            <p className="text-sm text-purple-200">
+              📐 <strong>גדלים אוטומטיים:</strong>
+              <br />
+              <span className="text-xs">
+                • Instagram:{" "}
+                {formData.contentType === "carousel"
+                  ? "1080x1350px (קרוסלה)"
+                  : "1080x1920px (סטורי)"}
+                <br />• Facebook:{" "}
+                {formData.contentType === "carousel"
+                  ? "1200x628px (קרוסלה)"
+                  : "1080x1920px (סטורי)"}
+                <br />• LinkedIn:{" "}
+                {formData.contentType === "carousel"
+                  ? "1200x627px (קרוסלה)"
+                  : "Not supported"}
+              </span>
+            </p>
+          </div>
         </div>
       </div>
     </div>

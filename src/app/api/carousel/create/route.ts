@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateCarouselContent } from "@/lib/claude";
 import { searchWikimediaImages, verifyImageUrl, isPlaceholderImage } from "@/lib/images";
+import { getDimensions, getTemplate } from "@/lib/carousel-config";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -32,6 +33,8 @@ export async function POST(req: NextRequest) {
       platform,
       objective,
       theme,
+      design = "modern",
+      contentType = "carousel",
       articles,
     } = body;
 
@@ -106,17 +109,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const dimensions = getDimensions(platform, contentType);
+    const templateData = getTemplate(design);
+
     // Create project in database
     const project = await prisma.project.create({
       data: {
         userId: user.id,
-        type: "carousel",
+        type: contentType === "story" ? "story" : "carousel",
         topic,
         platform,
-        format: "carousel",
+        format: contentType,
         theme: theme || "midnight",
         status: "draft",
-        content: JSON.stringify(carouselData.slides),
+        content: JSON.stringify({
+          slides: carouselData.slides,
+          design,
+          dimensions,
+          template: templateData,
+        }),
       },
     });
 
@@ -138,6 +149,11 @@ export async function POST(req: NextRequest) {
       slides: carouselData.slides,
       images: slideImages,
       theme: theme || "midnight",
+      design,
+      contentType,
+      dimensions,
+      template: templateData,
+      message: `${contentType === "story" ? "סטורי" : "קרוסלה"} נוצר בהצלחה!`,
     });
   } catch (error) {
     console.error("Carousel creation error:", error);
