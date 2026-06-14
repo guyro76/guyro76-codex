@@ -187,7 +187,9 @@ export default function LoginPage() {
         {/* OAuth Buttons */}
         <div className="space-y-2">
           <button
-            onClick={() => signIn("google", { callbackUrl: "/onboarding" })}
+            onClick={() =>
+              toast.message("התחברות עם Google — בקרוב. בינתיים השתמש באימייל וסיסמה 🙂")
+            }
             disabled={loading}
             className="w-full py-2 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold disabled:opacity-50 transition-colors flex items-center justify-center gap-3"
           >
@@ -201,7 +203,9 @@ export default function LoginPage() {
           </button>
 
           <button
-            onClick={() => signIn("apple", { callbackUrl: "/onboarding" })}
+            onClick={() =>
+              toast.message("התחברות עם Apple — בקרוב. בינתיים השתמש באימייל וסיסמה 🙂")
+            }
             disabled={loading}
             className="w-full py-2 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold disabled:opacity-50 transition-colors flex items-center justify-center gap-3"
           >
