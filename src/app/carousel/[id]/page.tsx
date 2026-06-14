@@ -317,19 +317,27 @@ export default function CarouselPage({ params }: { params: { id: string } }) {
         </p>
 
         {/* Actions */}
-        <div className="mt-8 flex gap-4">
+        <div className="mt-8 flex flex-col gap-3">
           <button
-            onClick={() => router.push("/content-factory")}
-            className="flex-1 py-2 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+            onClick={() => router.push(`/post-to-social/${params.id}`)}
+            className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold transition-colors"
           >
-            צור אחרת
+            🚀 פרסם לרשתות החברתיות
           </button>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="flex-1 py-2 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold transition-colors"
-          >
-            חזרה לדשבורד
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push("/content-factory")}
+              className="flex-1 py-2 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+            >
+              צור אחרת
+            </button>
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="flex-1 py-2 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 transition-colors"
+            >
+              חזרה לדשבורד
+            </button>
+          </div>
         </div>
       </div>
     </div>
