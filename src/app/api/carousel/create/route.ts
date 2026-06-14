@@ -1,28 +1,25 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { generateCarouselContent } from "@/lib/claude";
-import { searchWikimediaImages, verifyImageUrl, isPlaceholderImage } from "@/lib/images";
+import { generateCarouselFallback } from "@/lib/carousel-fallback";
+import { searchWikimediaImages, isPlaceholderImage } from "@/lib/images";
 import { getDimensions, getTemplate } from "@/lib/carousel-config";
 import { NextRequest, NextResponse } from "next/server";
+
+// A real Anthropic key looks like "sk-ant-...". Anything else (placeholder /
+// empty) means we run the free, no-cost generator instead — so creation always
+// works without spending money.
+const hasAiKey = (process.env.ANTHROPIC_API_KEY || "").startsWith("sk-ant-");
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Resolve optional profile (audience/tone) from the local store if present.
-    // Auth runs through Supabase, so a Prisma user row is not guaranteed —
-    // fall back to sensible defaults from the session.
-    let user: {
-      id: string;
-      audience: string | null;
-      tone: string | null;
-    } = {
+    let user: { id: string; audience: string | null; tone: string | null } = {
       id: session.user.email,
       audience: "Professional audience",
       tone: "professional",
@@ -50,82 +47,83 @@ export async function POST(req: NextRequest) {
       articles,
     } = body;
 
-    // Generate carousel content using Claude
-    const carouselData = await generateCarouselContent({
+    if (!topic || !topic.trim()) {
+      return NextResponse.json(
+        { error: "יש להזין נושא לקרוסלה" },
+        { status: 400 }
+      );
+    }
+
+    const genInput = {
       topic,
       platform,
       objective,
       audience: user.audience || "Professional audience",
       tone: user.tone || "professional",
       articles,
-    });
+    };
 
-    if (!carouselData.slides || carouselData.slides.length !== 7) {
-      return NextResponse.json(
-        { error: "Claude did not generate exactly 7 slides" },
-        { status: 422 }
-      );
+    // Content: use Claude only when a real key exists, otherwise the free
+    // generator. Even with a key, fall back gracefully on any error.
+    let carouselData: {
+      slides: { headline: string; body: string; imageQuery: string }[];
+    };
+    if (hasAiKey) {
+      try {
+        carouselData = await generateCarouselContent(genInput);
+        if (!carouselData?.slides || carouselData.slides.length !== 7) {
+          carouselData = generateCarouselFallback(genInput);
+        }
+      } catch {
+        carouselData = generateCarouselFallback(genInput);
+      }
+    } else {
+      carouselData = generateCarouselFallback(genInput);
     }
 
-    // Search for images for each slide
+    const dimensions = getDimensions(platform, contentType) || {
+      width: 1080,
+      height: 1350,
+      ratio: "4:5",
+    };
+    const templateData = getTemplate(design) || getTemplate("modern");
+
+    // Images: try Wikimedia for relevance, but never dead-end — any slide
+    // without a valid unique image gets a free, reliable Picsum image so we
+    // always end with exactly 7.
     const slideImages: string[] = [];
     const imageCredits: { url: string; credit: string }[] = [];
 
-    for (const slide of carouselData.slides) {
+    for (let i = 0; i < carouselData.slides.length; i++) {
+      const slide = carouselData.slides[i];
+      let chosen: string | null = null;
+      let credit = "";
+
       try {
         const images = await searchWikimediaImages(slide.imageQuery, 3);
-
-        let foundValidImage = false;
-
         for (const img of images) {
-          // Check if image is placeholder or already used
           if (isPlaceholderImage(img.url) || slideImages.includes(img.url)) {
             continue;
           }
-
-          // Verify image is valid
-          const isValid = await verifyImageUrl(img.url);
-          if (!isValid) {
-            continue;
-          }
-
-          slideImages.push(img.url);
-          imageCredits.push({
-            url: img.url,
-            credit: img.source,
-          });
-          foundValidImage = true;
+          chosen = img.url;
+          credit = img.source;
           break;
         }
-
-        if (!foundValidImage) {
-          throw new Error(
-            `Could not find valid image for slide: ${slide.headline}`
-          );
-        }
-      } catch (error) {
-        console.error(`Error searching images for "${slide.imageQuery}":`, error);
-        throw new Error(
-          `Failed to find validated image for slide: ${slide.headline}`
-        );
+      } catch {
+        // image search failed — fall through to the free placeholder
       }
+
+      if (!chosen) {
+        const seed = encodeURIComponent(`${topic}-${i}-${Date.now()}`);
+        chosen = `https://picsum.photos/seed/${seed}/${dimensions.width}/${dimensions.height}`;
+        credit = "Picsum (placeholder)";
+      }
+
+      slideImages.push(chosen);
+      imageCredits.push({ url: chosen, credit });
     }
 
-    // Verify we have exactly 7 unique images
-    if (slideImages.length !== 7 || new Set(slideImages).size !== 7) {
-      return NextResponse.json(
-        {
-          error: "Could not find 7 different valid images. Carousel creation failed. No partial carousels are saved.",
-        },
-        { status: 422 }
-      );
-    }
-
-    const dimensions = getDimensions(platform, contentType);
-    const templateData = getTemplate(design);
-
-    // Persist best-effort. If the local store is unavailable we still return
-    // the generated content with a fallback id so the flow never dead-ends.
+    // Persist best-effort; never block the response on it.
     let projectId = `gen_${Date.now()}`;
     try {
       const { prisma } = await import("@/lib/prisma");
@@ -165,6 +163,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       projectId,
+      topic,
       slides: carouselData.slides,
       images: slideImages,
       theme: theme || "midnight",
@@ -172,14 +171,13 @@ export async function POST(req: NextRequest) {
       contentType,
       dimensions,
       template: templateData,
+      aiGenerated: hasAiKey,
       message: `${contentType === "story" ? "סטורי" : "קרוסלה"} נוצר בהצלחה!`,
     });
   } catch (error) {
     console.error("Carousel creation error:", error);
-    const message = error instanceof Error ? error.message : "Failed to create carousel";
-    return NextResponse.json(
-      { error: message },
-      { status: 422 }
-    );
+    const message =
+      error instanceof Error ? error.message : "Failed to create carousel";
+    return NextResponse.json({ error: message }, { status: 422 });
   }
 }

@@ -30,11 +30,11 @@ export default function Home() {
         {/* Logo / Title */}
         <div className="space-y-2">
           <h1 className="text-4xl font-bold tracking-tight">
-            AuthorityBoost
-            <span className="text-cyan-400"> AI</span>
+            Post
+            <span className="text-cyan-400">wave</span>
           </h1>
           <p className="text-lg text-slate-300">
-            הופך ידע לסמכות שאנשים עוקבים אחריה
+            צור, נהל ופרסם תוכן סושיאל שמייצר תוצאות
           </p>
         </div>
 

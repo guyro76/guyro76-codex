@@ -77,10 +77,10 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-2">
-            AuthorityBoost
-            <span className="text-cyan-400"> AI</span>
+            Post
+            <span className="text-cyan-400">wave</span>
           </h1>
-          <p className="text-slate-400">בנה סמכות דיגיטלית</p>
+          <p className="text-slate-400">גל של תוכן סושיאל</p>
         </div>
 
         {/* Tabs */}

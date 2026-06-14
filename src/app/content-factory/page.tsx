@@ -58,6 +58,14 @@ function ContentFactoryForm() {
       const data = await response.json();
       setProgress(100);
 
+      // Stash the full result so the viewer renders it instantly without
+      // depending on server-side persistence (which is ephemeral on Vercel).
+      try {
+        sessionStorage.setItem(`carousel:${data.projectId}`, JSON.stringify(data));
+      } catch {
+        // sessionStorage unavailable — viewer will show a friendly fallback
+      }
+
       toast.success("הקרוסלה נוצרה בהצלחה!");
       router.push(`/carousel/${data.projectId}`);
     } catch (error) {

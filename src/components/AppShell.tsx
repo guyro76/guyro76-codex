@@ -101,7 +101,7 @@ export function AppShell({
             <div className="flex items-center gap-3 text-right">
               <div>
                 <p className="text-lg font-extrabold leading-tight">
-                  AuthorityBoost AI
+                  Post<span className="text-cyan-400">wave</span>
                 </p>
                 <p className="text-xs text-slate-400">
                   {name}

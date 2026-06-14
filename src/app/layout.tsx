@@ -21,9 +21,9 @@ const assistant = Assistant({
 });
 
 export const metadata: Metadata = {
-  title: "AuthorityBoost AI - בנה סמכות דיגיטלית",
+  title: "Postwave - צור, נהל ופרסם תוכן סושיאל",
   description:
-    "פלטפורמה מקיפה לבניית סמכות דיגיטלית, שיווק תוכן בתוך רשתות חברתיות והנהלת נוכחות מקצועית",
+    "פלטפורמה מקיפה ליצירה, ניהול ופרסום של תוכן שיווקי וסושיאל בכל הרשתות החברתיות",
   keywords: [
     "סמכות דיגיטלית",
     "שיווק תוכן",
@@ -39,11 +39,11 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "he_IL",
-    url: "https://authorityboost.ai",
-    title: "AuthorityBoost AI - בנה סמכות דיגיטלית",
+    url: "https://guyro76-codex.vercel.app",
+    title: "Postwave - צור, נהל ופרסם תוכן סושיאל",
     description:
-      "פלטפורמה מקיפה לבניית סמכות דיגיטלית וניהול נוכחות מקצועית",
-    siteName: "AuthorityBoost AI",
+      "פלטפורמה מקיפה ליצירה, ניהול ופרסום של תוכן שיווקי וסושיאל",
+    siteName: "Postwave",
   },
 };
 
@@ -65,7 +65,7 @@ export default function RootLayout({
             href="/"
             className="inline-flex items-center gap-2 text-lg font-bold hover:text-cyan-400 transition-colors"
           >
-            🏠 <span>AuthorityBoost</span>
+            🌊 <span>Post<span className="text-cyan-400">wave</span></span>
           </Link>
         </header>
         <Providers>{children}</Providers>

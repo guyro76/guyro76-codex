@@ -9,7 +9,7 @@ export default function TermsPage() {
             1. הסכמה לתנאים
           </h2>
           <p>
-            בשימוש ב-AuthorityBoost AI, אתה מסכים לתנאים אלו. אם אתה לא
+            בשימוש ב-Postwave, אתה מסכים לתנאים אלו. אם אתה לא
             מסכים, אנא אל תשתמש בשירות.
           </p>
         </section>
