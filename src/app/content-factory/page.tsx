@@ -5,6 +5,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+const CONTENT_TYPES: {
+  value: string;
+  label: string;
+  emoji: string;
+  soon?: boolean;
+}[] = [
+  { value: "carousel", label: "קרוסלה", emoji: "📱" },
+  { value: "story", label: "סטורי", emoji: "🎬" },
+  { value: "reels", label: "רילס", emoji: "🎞️", soon: true },
+  { value: "post", label: "פוסט", emoji: "✍️", soon: true },
+  { value: "presentation", label: "מצגת", emoji: "📊", soon: true },
+];
+
 function ContentFactoryForm() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -82,7 +95,7 @@ function ContentFactoryForm() {
     <div className="min-h-screen bg-slate-950 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">מפעל תוכן AI</h1>
+          <h1 className="text-4xl font-bold mb-2">מפעל תוכן</h1>
           <p className="text-slate-400">
             {type === "carousel"
               ? "צור קרוסלה מעוררת השראה עם 7 שקפים"
@@ -96,28 +109,40 @@ function ContentFactoryForm() {
             <label className="block text-sm font-semibold mb-3">
               סוג תוכן
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { value: "carousel", label: "קרוסלה", emoji: "📱" },
-                { value: "story", label: "סטורי", emoji: "🎬" },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() =>
-                    setFormData({ ...formData, contentType: option.value })
-                  }
-                  disabled={loading}
-                  className={`p-3 rounded-lg border-2 transition-all ${
-                    formData.contentType === option.value
-                      ? "border-cyan-500 bg-cyan-500/10"
-                      : "border-slate-700 bg-slate-900 hover:border-slate-600"
-                  } disabled:opacity-50`}
-                >
-                  <div className="text-2xl mb-1">{option.emoji}</div>
-                  <div className="text-sm font-medium">{option.label}</div>
-                </button>
-              ))}
+            <div className="grid grid-cols-3 gap-3">
+              {CONTENT_TYPES.map((option) => {
+                const selected = formData.contentType === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      if (option.soon) {
+                        toast.message(`${option.label} — בקרוב 🚀`);
+                        return;
+                      }
+                      setFormData({ ...formData, contentType: option.value });
+                    }}
+                    disabled={loading}
+                    className={`group relative overflow-hidden rounded-2xl border p-4 text-center backdrop-blur-xl transition-all disabled:opacity-50 ${
+                      selected
+                        ? "border-cyan-300/70 bg-cyan-400/10 shadow-[0_0_30px_-6px_rgba(34,211,238,0.55)] ring-1 ring-cyan-300/40"
+                        : "border-white/10 bg-white/[0.04] hover:border-white/25 hover:bg-white/[0.08]"
+                    } ${option.soon ? "opacity-70" : ""}`}
+                  >
+                    <span className="pointer-events-none absolute inset-x-0 -top-1/2 h-1/2 bg-gradient-to-b from-white/15 to-transparent blur-md" />
+                    {option.soon && (
+                      <span className="absolute right-2 top-2 rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                        בקרוב
+                      </span>
+                    )}
+                    <div className="relative mb-1 text-3xl">{option.emoji}</div>
+                    <div className="relative text-sm font-bold">
+                      {option.label}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -211,18 +236,19 @@ function ContentFactoryForm() {
                     setFormData({ ...formData, design: template.id })
                   }
                   disabled={loading}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`group relative overflow-hidden rounded-2xl border p-4 text-right backdrop-blur-xl transition-all disabled:opacity-50 ${
                     formData.design === template.id
-                      ? "border-cyan-500 ring-2 ring-cyan-500/50"
-                      : "border-slate-700 hover:border-slate-600"
-                  } disabled:opacity-50`}
+                      ? "border-cyan-300/70 ring-2 ring-cyan-400/40 shadow-[0_0_30px_-6px_rgba(34,211,238,0.5)]"
+                      : "border-white/10 bg-white/[0.04] hover:border-white/25 hover:bg-white/[0.08]"
+                  }`}
                 >
+                  <span className="pointer-events-none absolute inset-x-0 -top-1/2 h-1/2 bg-gradient-to-b from-white/15 to-transparent blur-md" />
                   <div
-                    className={`${template.colors} h-20 rounded mb-3 flex items-center justify-center text-white font-bold text-sm`}
+                    className={`${template.colors} relative mb-3 flex h-20 items-center justify-center rounded-xl text-sm font-bold text-white shadow-inner`}
                   >
                     {template.name}
                   </div>
-                  <p className="text-sm">{template.desc}</p>
+                  <p className="relative text-sm text-slate-300">{template.desc}</p>
                 </button>
               ))}
             </div>
@@ -277,15 +303,18 @@ function ContentFactoryForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="group relative w-full overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-l from-cyan-500/90 to-sky-500/90 py-3.5 px-4 font-bold text-white shadow-[0_8px_30px_-8px_rgba(34,211,238,0.6)] backdrop-blur-xl transition-all hover:from-cyan-400 hover:to-sky-400 hover:shadow-[0_10px_44px_-6px_rgba(34,211,238,0.85)] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading
-              ? formData.contentType === "story"
-                ? "יוצר סטורי..."
-                : "יוצר קרוסלה..."
-              : formData.contentType === "story"
-              ? "צור סטורי 🎬"
-              : "צור קרוסלה ✨"}
+            <span className="pointer-events-none absolute inset-x-0 -top-1/2 h-1/2 bg-gradient-to-b from-white/25 to-transparent blur-md" />
+            <span className="relative">
+              {loading
+                ? formData.contentType === "story"
+                  ? "יוצר סטורי..."
+                  : "יוצר קרוסלה..."
+                : formData.contentType === "story"
+                ? "צור סטורי 🎬"
+                : "צור קרוסלה ✨"}
+            </span>
           </button>
         </form>
 
