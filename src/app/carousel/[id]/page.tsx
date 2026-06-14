@@ -28,6 +28,111 @@ interface CarouselData {
   aiGenerated?: boolean;
 }
 
+// --- Client-side PNG rendering (no external service needed) ---
+
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string[] {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let line = "";
+  for (const w of words) {
+    const test = line ? `${line} ${w}` : w;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = w;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function renderSlideCanvas(opts: {
+  width: number;
+  height: number;
+  colors: string[];
+  headline: string;
+  body: string;
+  index: number;
+  total: number;
+}): HTMLCanvasElement {
+  const { width, height, colors, headline, body, index, total } = opts;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d")!;
+
+  const c = colors.length >= 3 ? colors : ["#06B6D4", "#0891B2", "#0E7490"];
+  const grad = ctx.createLinearGradient(0, 0, width, height);
+  grad.addColorStop(0, c[0]);
+  grad.addColorStop(0.55, c[1]);
+  grad.addColorStop(1, c[2]);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, width, height);
+
+  const margin = Math.round(width * 0.09);
+  const right = width - margin;
+  const maxW = width - margin * 2;
+
+  // slide counter (top-left)
+  ctx.textAlign = "left";
+  ctx.direction = "ltr";
+  ctx.font = `bold ${Math.round(width * 0.03)}px sans-serif`;
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.fillText(`${index + 1} / ${total}`, margin, margin + Math.round(width * 0.03));
+
+  // headline + body (RTL)
+  ctx.direction = "rtl";
+  ctx.textAlign = "right";
+
+  const hSize = Math.round(width * 0.075);
+  ctx.font = `800 ${hSize}px sans-serif`;
+  ctx.fillStyle = "#ffffff";
+  const hLines = wrapText(ctx, headline, maxW);
+
+  const bSize = Math.round(width * 0.042);
+  let y = Math.round(height * 0.4);
+  for (const ln of hLines) {
+    ctx.fillText(ln, right, y);
+    y += Math.round(hSize * 1.2);
+  }
+
+  y += Math.round(hSize * 0.5);
+  ctx.font = `500 ${bSize}px sans-serif`;
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  for (const ln of wrapText(ctx, body, maxW)) {
+    ctx.fillText(ln, right, y);
+    y += Math.round(bSize * 1.45);
+  }
+
+  // watermark (bottom-left)
+  ctx.direction = "ltr";
+  ctx.textAlign = "left";
+  ctx.font = `bold ${Math.round(width * 0.035)}px sans-serif`;
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.fillText("Postwave", margin, height - margin);
+
+  return canvas;
+}
+
+function downloadCanvas(canvas: HTMLCanvasElement, filename: string) {
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, "image/png");
+}
+
 export default function CarouselPage({ params }: { params: { id: string } }) {
   const { status } = useSession();
   const router = useRouter();
@@ -83,9 +188,32 @@ export default function CarouselPage({ params }: { params: { id: string } }) {
   const total = data.slides.length;
   const slide = data.slides[current];
   const image = data.images[current];
-  const ratio = data.dimensions
-    ? `${data.dimensions.width} / ${data.dimensions.height}`
-    : "4 / 5";
+  const dims = data.dimensions || { width: 1080, height: 1350, ratio: "4 / 5" };
+  const ratio = `${dims.width} / ${dims.height}`;
+  const colors = data.template?.colors || ["#06B6D4", "#0891B2", "#0E7490"];
+
+  const downloadOne = (i: number) => {
+    const s = data.slides[i];
+    const canvas = renderSlideCanvas({
+      width: dims.width,
+      height: dims.height,
+      colors,
+      headline: s.headline,
+      body: s.body,
+      index: i,
+      total,
+    });
+    downloadCanvas(canvas, `postwave-slide-${i + 1}.png`);
+  };
+
+  const downloadAll = async () => {
+    for (let i = 0; i < total; i++) {
+      downloadOne(i);
+      // small gap so the browser accepts the sequential downloads
+      await new Promise((r) => setTimeout(r, 350));
+    }
+    toast.success("כל 7 השקפים הורדו! מוכנים לפרסום בכל רשת.");
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 py-10 px-4 text-white">
@@ -162,14 +290,10 @@ export default function CarouselPage({ params }: { params: { id: string } }) {
           </button>
 
           <button
-            onClick={() =>
-              toast.message(
-                "הורדה כתמונה תתווסף בקרוב — בינתיים אפשר לצלם מסך של כל שקף"
-              )
-            }
+            onClick={() => downloadOne(current)}
             className="px-6 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold transition-colors"
           >
-            ⬇️ הורד
+            ⬇️ הורד שקף
           </button>
 
           <button
@@ -180,6 +304,17 @@ export default function CarouselPage({ params }: { params: { id: string } }) {
             הבא ←
           </button>
         </div>
+
+        {/* Download all */}
+        <button
+          onClick={downloadAll}
+          className="mt-6 w-full rounded-xl bg-gradient-to-l from-cyan-500 to-sky-500 py-3 font-bold text-white shadow-lg transition-transform hover:scale-[1.01]"
+        >
+          ⬇️ הורד את כל הקרוסלה (7 תמונות)
+        </button>
+        <p className="mt-2 text-center text-xs text-slate-500">
+          התמונות נשמרות במכשיר שלך — מוכנות להעלאה לכל רשת חברתית.
+        </p>
 
         {/* Actions */}
         <div className="mt-8 flex gap-4">

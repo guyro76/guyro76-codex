@@ -2,12 +2,13 @@
 
 import { AppShell } from "@/components/AppShell";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 const PLATFORMS = [
-  { name: "LinkedIn", connected: true },
-  { name: "Instagram", connected: true },
-  { name: "Facebook", connected: true },
-  { name: "TikTok", connected: true },
+  { name: "LinkedIn", icon: "in" },
+  { name: "Instagram", icon: "📷" },
+  { name: "Facebook", icon: "f" },
+  { name: "TikTok", icon: "♪" },
 ];
 
 export default function SettingsPage() {
@@ -46,23 +47,36 @@ export default function SettingsPage() {
 
       {/* Connected platforms */}
       <section className="rounded-3xl border border-white/5 bg-[#0e0e16] p-6 text-right">
-        <h2 className="text-xl font-black">ערוצים מחוברים</h2>
+        <h2 className="text-xl font-black">ערוצים חברתיים</h2>
+        <p className="mt-2 text-sm text-slate-400">
+          חיבור ישיר לפרסום אוטומטי — בקרוב. בינתיים: צור תוכן, הורד אותו
+          כתמונות, ופרסם בכל רשת בכמה שניות.
+        </p>
         <div className="mt-4 flex flex-col gap-3">
           {PLATFORMS.map((p) => (
             <div
               key={p.name}
               className="flex items-center justify-between rounded-2xl bg-[#06060b] p-4"
             >
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-bold ${
-                  p.connected
-                    ? "bg-emerald-400/10 text-emerald-400"
-                    : "bg-slate-500/10 text-slate-400"
-                }`}
+              <button
+                onClick={() =>
+                  toast.message(
+                    "חיבור ישיר לרשתות — בקרוב. בינתיים אפשר להוריד את התוכן ולפרסם ידנית 🙂"
+                  )
+                }
+                className="rounded-full bg-sky-400/10 px-4 py-1 text-xs font-bold text-sky-300 transition-colors hover:bg-sky-400/20"
               >
-                {p.connected ? "● מחובר" : "מנותק"}
+                התחבר
+              </button>
+              <span className="flex items-center gap-2 font-bold">
+                {p.name}
+                <span
+                  aria-hidden
+                  className="grid h-7 w-7 place-items-center rounded-lg bg-white/5 text-xs"
+                >
+                  {p.icon}
+                </span>
               </span>
-              <span className="font-bold">{p.name}</span>
             </div>
           ))}
         </div>
