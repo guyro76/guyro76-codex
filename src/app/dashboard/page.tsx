@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { DailyTip } from "@/components/DailyTip";
 
 const PLATFORMS = [
   {
@@ -100,6 +101,11 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
+      </section>
+
+      {/* Daily Tip */}
+      <section>
+        <DailyTip />
       </section>
 
       {/* Platform breakdown */}

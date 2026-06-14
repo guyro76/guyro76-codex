@@ -1,6 +1,5 @@
-import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import { supabaseSignUp } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,37 +19,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if user exists
-    const existing = await prisma.user.findUnique({
-      where: { email },
-    });
+    const result = await supabaseSignUp(
+      email,
+      password,
+      name || email.split("@")[0]
+    );
 
-    if (existing) {
+    if (!result.ok) {
       return NextResponse.json(
-        { error: "משתמש זה כבר קיים" },
+        { error: result.error || "שגיאה בהרשמה" },
         { status: 409 }
       );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name: name || email.split("@")[0],
-        password: hashedPassword,
-      },
-    });
-
     return NextResponse.json({
       success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
+      user: { email, name: name || email.split("@")[0] },
     });
   } catch (error) {
     console.error("Registration error:", error);
