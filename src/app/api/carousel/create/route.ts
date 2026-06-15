@@ -59,6 +59,8 @@ export async function POST(req: NextRequest) {
       design = "modern",
       contentType = "carousel",
       articles,
+      audience: bodyAudience,
+      tone: bodyTone,
     } = body;
 
     if (!topic || !topic.trim()) {
@@ -68,12 +70,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Prefer the Brand Kit values sent from the client, then the stored profile,
+    // then sensible defaults — so the user's brand identity shapes the content.
     const genInput = {
       topic,
       platform,
       objective,
-      audience: user.audience || "Professional audience",
-      tone: user.tone || "professional",
+      audience: bodyAudience || user.audience || "Professional audience",
+      tone: bodyTone || user.tone || "professional",
       articles,
     };
 

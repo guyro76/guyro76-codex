@@ -2,9 +2,10 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { saveContent } from "@/lib/content-store";
+import { getBrand } from "@/lib/brand-store";
 
 const CONTENT_TYPES: {
   value: string;
@@ -81,7 +82,21 @@ function ContentFactoryForm() {
     theme: "midnight",
     design: "modern",
     contentType: type,
+    audience: "",
+    tone: "",
   });
+
+  // Apply the saved Brand Kit identity as smart defaults (objective, audience,
+  // tone) so every piece matches the user's brand without re-entering it.
+  useEffect(() => {
+    const brand = getBrand();
+    setFormData((f) => ({
+      ...f,
+      objective: brand.objective || f.objective,
+      audience: brand.audience || f.audience,
+      tone: brand.tone || f.tone,
+    }));
+  }, []);
 
   const copy = TYPE_COPY[formData.contentType] || TYPE_COPY.carousel;
 
