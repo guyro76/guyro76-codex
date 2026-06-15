@@ -5,34 +5,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { DailyTip } from "@/components/DailyTip";
+import { Icon } from "@/components/Icons";
 
 const PLATFORMS = [
-  {
-    name: "LinkedIn",
-    score: 92,
-    tip: "בנה סדרת דעה מקצועית שבועית",
-  },
-  {
-    name: "Instagram",
-    score: 84,
-    tip: "אחד את שפת הקרוסלות והריילסים",
-  },
-  {
-    name: "Facebook",
-    score: 81,
-    tip: "שלב יותר סיפור אישי וקהילה",
-  },
-  {
-    name: "TikTok",
-    score: 78,
-    tip: "פתח כל סרטון ב-Hook של 3 שניות",
-  },
+  { name: "LinkedIn", score: 92, tip: "בנה סדרת דעה מקצועית שבועית", icon: "target" as const },
+  { name: "Instagram", score: 84, tip: "אחד את שפת הקרוסלות והריילסים", icon: "sparkles" as const },
+  { name: "Facebook", score: 81, tip: "שלב יותר סיפור אישי וקהילה", icon: "users" as const },
+  { name: "TikTok", score: 78, tip: "פתח כל סרטון ב-Hook של 3 שניות", icon: "rocket" as const },
 ];
 
 const METRICS = [
-  { label: "עקביות", value: "91%", icon: "🎯" },
-  { label: "מעורבות", value: "6.8%", icon: "📊" },
-  { label: "צמיחת עוקבים", value: "18%+", icon: "📈" },
+  { label: "עקביות", value: "91%", color: "text-pink-600" },
+  { label: "מעורבות", value: "6.8%", color: "text-violet-600" },
+  { label: "צמיחת עוקבים", value: "18%+", color: "text-sky-600" },
 ];
 
 export default function DashboardPage() {
@@ -55,17 +40,17 @@ export default function DashboardPage() {
   return (
     <AppShell score={87}>
       {/* Hero - Authority Command Center */}
-      <section className="rounded-3xl border border-white/5 bg-[#0e0e16] p-6 md:p-8">
+      <section className="glass rounded-3xl p-6 md:p-8">
         <div className="flex flex-col gap-6 lg:flex-row-reverse">
           {/* Right: score + metrics */}
           <div className="flex-1 text-right">
-            <p className="text-sm font-bold uppercase tracking-wide text-sky-300">
+            <p className="text-sm font-bold uppercase tracking-wide bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
               Authority Command Center
             </p>
-            <h1 className="mt-2 text-5xl font-black leading-none md:text-6xl">
+            <h1 className="mt-2 text-5xl font-black leading-none md:text-6xl text-gradient">
               ציון סמכות 87/100
             </h1>
-            <p className="mt-4 max-w-xl text-slate-400 ms-auto">
+            <p className="mt-4 max-w-xl text-slate-700 ms-auto">
               המערכת הופכת נתוני פרופיל, פעילות, טרנדים ותבניות הצלחה לתוכנית
               צמיחה יומית.
             </p>
@@ -74,30 +59,30 @@ export default function DashboardPage() {
               {METRICS.map((m) => (
                 <div
                   key={m.label}
-                  className="rounded-2xl border border-white/5 bg-[#06060b] p-5 text-center"
+                  className="glass rounded-2xl p-5 text-center"
                 >
-                  <div className="text-2xl">{m.icon}</div>
-                  <p className="mt-2 text-sm text-slate-400">{m.label}</p>
-                  <p className="mt-1 text-3xl font-black">{m.value}</p>
+                  <p className={`text-3xl font-black ${m.color}`}>{m.value}</p>
+                  <p className="mt-2 text-sm text-slate-600 font-semibold">{m.label}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Left: today's task */}
-          <div className="flex w-full flex-col justify-between rounded-3xl bg-sky-300 p-6 text-slate-900 lg:w-72">
+          <div className="flex w-full flex-col justify-between rounded-3xl bg-gradient-to-br from-pink-200 to-violet-200 p-6 shadow-lg lg:w-72">
             <div className="text-right">
-              <div className="text-2xl">🎯</div>
-              <p className="mt-3 text-sm font-semibold opacity-70">משימת היום</p>
-              <p className="mt-2 text-xl font-extrabold leading-snug">
+              <Icon name="target" size={28} className="text-pink-600" />
+              <p className="mt-3 text-sm font-semibold text-slate-700">משימת היום</p>
+              <p className="mt-2 text-xl font-extrabold leading-snug text-slate-800">
                 פרסם טיפ אחד, הגב ל-10 מומחים והפוך פוסט לקרוסלה.
               </p>
             </div>
             <Link
               href="/content-factory?type=carousel"
-              className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800"
+              className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 px-5 py-3 text-sm font-bold text-white transition-all hover:shadow-lg"
             >
-              צור תוכן <span aria-hidden>▷</span>
+              צור תוכן
+              <Icon name="rocket" size={16} />
             </Link>
           </div>
         </div>
@@ -105,33 +90,35 @@ export default function DashboardPage() {
 
       {/* Quick create — every content type one click away */}
       <section>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between">
           <Link
             href="/library"
-            className="rounded-lg border border-white/10 bg-white/[0.04] px-4 py-1.5 text-sm font-semibold text-slate-200 transition-colors hover:border-cyan-300/40 hover:text-cyan-300"
+            className="glass rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white/40 transition-colors"
           >
-            📚 הספרייה שלי
+            <Icon name="library" size={16} className="inline mr-2" />
+            הספרייה שלי
           </Link>
-          <h2 className="text-right text-lg font-bold text-slate-200">
+          <h2 className="text-right text-lg font-bold text-slate-800">
             צור תוכן חדש
           </h2>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {[
-            { type: "carousel", label: "קרוסלה", emoji: "📱" },
-            { type: "post", label: "פוסט", emoji: "✍️" },
-            { type: "presentation", label: "מצגת", emoji: "📊" },
-            { type: "reels", label: "רילס", emoji: "🎞️" },
-            { type: "story", label: "סטורי", emoji: "🎬" },
+            { type: "carousel", label: "קרוסלה", icon: "carousel" as const },
+            { type: "post", label: "פוסט", icon: "post" as const },
+            { type: "presentation", label: "מצגת", icon: "presentation" as const },
+            { type: "reels", label: "רילס", icon: "reels" as const },
+            { type: "story", label: "סטורי", icon: "story" as const },
           ].map((c) => (
             <Link
               key={c.type}
               href={`/content-factory?type=${c.type}`}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0e0e16] p-5 text-center transition-all hover:border-cyan-300/50 hover:bg-[#12121d]"
+              className="group glass rounded-2xl p-5 text-center transition-all hover:bg-white/50 hover:shadow-md"
             >
-              <span className="pointer-events-none absolute inset-x-0 -top-1/2 h-1/2 bg-gradient-to-b from-cyan-400/10 to-transparent blur-md" />
-              <div className="relative mb-2 text-3xl">{c.emoji}</div>
-              <div className="relative text-sm font-bold text-slate-100">
+              <div className="relative mb-3 flex justify-center">
+                <Icon name={c.icon} size={32} className="text-violet-600" />
+              </div>
+              <div className="relative text-sm font-bold text-slate-800">
                 {c.label}
               </div>
             </Link>
@@ -149,14 +136,17 @@ export default function DashboardPage() {
         {PLATFORMS.map((p) => (
           <div
             key={p.name}
-            className="flex items-center justify-between rounded-3xl border border-white/5 bg-[#0e0e16] p-6"
+            className="glass flex items-center justify-between rounded-3xl p-6 hover:bg-white/50 transition-all"
           >
-            <span className="rounded-full bg-[#06060b] px-3 py-1 text-sm font-bold text-slate-300">
-              {p.score}/100
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="glass rounded-full px-3 py-1 text-sm font-bold text-violet-600">
+                {p.score}/100
+              </span>
+              <Icon name={p.icon} size={24} className="text-pink-600" />
+            </div>
             <div className="text-right">
-              <h3 className="text-2xl font-black">{p.name}</h3>
-              <p className="mt-1 text-sm text-slate-400">{p.tip}</p>
+              <h3 className="text-2xl font-black text-slate-800">{p.name}</h3>
+              <p className="mt-1 text-sm text-slate-600">{p.tip}</p>
             </div>
           </div>
         ))}

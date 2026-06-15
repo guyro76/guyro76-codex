@@ -1,21 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f172a;
-  --foreground: #ffffff;
+  /* Bright, cheerful base — a sunrise/candy palette for a joyful content app */
+  --foreground: #1e1b4b; /* deep indigo ink, reads great on light glass */
+  --muted: #64748b;
 
-  /* AuthorityBoost Colors */
-  --primary: #06b6d4;
-  --primary-dark: #0891b2;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --slate-dark: #1e293b;
-  --slate-darker: #0f172a;
+  /* Happy accent gradients */
+  --grad-coral: linear-gradient(135deg, #fb7185 0%, #f472b6 100%);
+  --grad-sky: linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%);
+  --grad-violet: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%);
+  --grad-mint: linear-gradient(135deg, #34d399 0%, #2dd4bf 100%);
+  --grad-sunny: linear-gradient(135deg, #fbbf24 0%, #fb923c 100%);
 }
 
 @theme inline {
-  --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-rubik), var(--font-heebo), var(--font-assistant);
   --font-display: var(--font-rubik);
@@ -34,33 +32,70 @@ html[dir="rtl"] textarea {
   text-align: right;
 }
 
-/* Custom Scrollbar */
+/* Bright animated mesh-gradient background — the whole app sits on this */
+body {
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  background-color: #fef6fb;
+  background-image:
+    radial-gradient(at 12% 18%, rgba(251, 113, 133, 0.45) 0px, transparent 45%),
+    radial-gradient(at 85% 12%, rgba(56, 189, 248, 0.42) 0px, transparent 45%),
+    radial-gradient(at 78% 82%, rgba(167, 139, 250, 0.45) 0px, transparent 45%),
+    radial-gradient(at 18% 88%, rgba(52, 211, 153, 0.40) 0px, transparent 45%),
+    radial-gradient(at 50% 50%, rgba(251, 191, 36, 0.28) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Glass surfaces — frosted, bright, friendly */
+.glass {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 32px -8px rgba(76, 29, 149, 0.18);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 12px 40px -10px rgba(76, 29, 149, 0.22);
+}
+
+/* Happy gradient text helper */
+.text-gradient {
+  background: linear-gradient(120deg, #f43f5e 0%, #a855f7 50%, #0ea5e9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Custom Scrollbar — light + colorful */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--slate-dark);
+  background: rgba(255, 255, 255, 0.4);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 4px;
+  background: linear-gradient(180deg, #f472b6, #a78bfa);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-dark);
+  background: linear-gradient(180deg, #ec4899, #8b5cf6);
+  background-clip: padding-box;
 }
 
 /* Smooth Transitions */
 * {
   @apply transition-colors duration-200;
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
 }
 
 /* Headings */
@@ -81,10 +116,11 @@ input, textarea, select {
   font-family: var(--font-sans);
 }
 
-/* Links — scoped to the base layer so component utility classes
-   (e.g. an active nav item's text color) can override it. */
-@layer base {
-  a {
-    @apply text-cyan-400 hover:text-cyan-300 transition-colors;
-  }
+/* Float animation for playful accents */
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-floaty {
+  animation: floaty 4s ease-in-out infinite;
 }
