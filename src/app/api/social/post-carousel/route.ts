@@ -1,6 +1,11 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  isComposioConfigured,
+  postToPlatforms,
+  COMPOSIO_USER_ID,
+} from "@/lib/composio";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,13 +15,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const {
-      projectId,
-      platforms,
-      caption,
-      composioApiKey,
-      scheduleFor,
-    } = body;
+    const { projectId, platforms, caption, imageUrl } = body as {
+      projectId?: string;
+      platforms?: string[];
+      caption?: string;
+      imageUrl?: string;
+    };
 
     if (!projectId) {
       return NextResponse.json(
@@ -32,37 +36,45 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Since we're using sessionStorage for carousel data, we can't access it server-side.
-    // The user must have the carousel data available from the carousel viewer.
-    // For now, we'll prepare the payload and let the client handle the actual posting to Composio.
+    const text = (caption || "").trim() || "תוכן חדש מ-Postwave";
 
-    const postPayload = {
-      projectId,
+    // If Composio isn't configured yet, return an honest "not configured"
+    // response (not a fake success) so the UI can guide the user precisely.
+    if (!isComposioConfigured()) {
+      return NextResponse.json({
+        configured: false,
+        message:
+          "פרסום אוטומטי עדיין לא הופעל. הוסף COMPOSIO_API_KEY במשתני הסביבה ב-Vercel כדי לפרסם בלחיצה אחת.",
+        instructions: {
+          step1: "היכנס ל-https://app.composio.dev ← Settings ← API Keys",
+          step2: "העתק את ה-API Key",
+          step3:
+            "ב-Vercel: Project → Settings → Environment Variables → הוסף COMPOSIO_API_KEY",
+          step4: "Redeploy, ואז כפתור הפרסום ישלח ישירות לרשתות",
+        },
+      });
+    }
+
+    // Real posting through Composio — one honest result per platform.
+    const results = await postToPlatforms(
       platforms,
-      caption: caption || "בדוק את הקרוסלה המדהימה שלנו!",
-      timestamp: new Date().toISOString(),
-      scheduleFor: scheduleFor || null,
-    };
+      text,
+      imageUrl,
+      COMPOSIO_USER_ID
+    );
 
-    // Log the post request (in a real app, save to database)
-    console.log("Social post request:", {
-      user: session.user.email,
-      ...postPayload,
-    });
+    const anySuccess = results.some((r) => r.successful);
+    const allSuccess = results.every((r) => r.successful);
 
-    // Return success - actual posting would happen via Composio or manual download
-    return NextResponse.json({
-      success: true,
-      message: "בקשת הפרסום התקבלה בהצלחה",
-      postPayload,
-      instructions: {
-        step1: "הורד את כל הקרוסלה (7 תמונות PNG)",
-        step2: `פתח את Composio ובחר את הרשתות: ${platforms.join(", ")}`,
-        step3: "העלה את ה-7 תמונות",
-        step4: "הוסף את הטקסט: " + caption,
-        step5: "לחץ על Publish כדי לפרסם",
+    return NextResponse.json(
+      {
+        configured: true,
+        success: allSuccess,
+        partial: anySuccess && !allSuccess,
+        results,
       },
-    });
+      { status: anySuccess ? 200 : 502 }
+    );
   } catch (error) {
     console.error("Social post error:", error);
     return NextResponse.json(
