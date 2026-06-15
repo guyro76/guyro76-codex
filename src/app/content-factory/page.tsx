@@ -13,16 +13,47 @@ const CONTENT_TYPES: {
 }[] = [
   { value: "carousel", label: "קרוסלה", emoji: "📱" },
   { value: "story", label: "סטורי", emoji: "🎬" },
+  { value: "post", label: "פוסט", emoji: "✍️" },
+  { value: "presentation", label: "מצגת", emoji: "📊" },
   { value: "reels", label: "רילס", emoji: "🎞️", soon: true },
-  { value: "post", label: "פוסט", emoji: "✍️", soon: true },
-  { value: "presentation", label: "מצגת", emoji: "📊", soon: true },
 ];
+
+// Per-type wording so the form speaks the right language for each format.
+const TYPE_COPY: Record<
+  string,
+  { subtitle: string; cta: string; loading: string }
+> = {
+  carousel: {
+    subtitle: "צור קרוסלה מעוררת השראה עם 7 שקפים",
+    cta: "צור קרוסלה ✨",
+    loading: "יוצר קרוסלה...",
+  },
+  story: {
+    subtitle: "צור סטורי שמושך תשומת לב",
+    cta: "צור סטורי 🎬",
+    loading: "יוצר סטורי...",
+  },
+  post: {
+    subtitle: "צור פוסט בודד עם כיתוב מוכן לפרסום",
+    cta: "צור פוסט ✍️",
+    loading: "יוצר פוסט...",
+  },
+  presentation: {
+    subtitle: "צור מצגת של 10 שקפים בפורמט רחב (16:9)",
+    cta: "צור מצגת 📊",
+    loading: "יוצר מצגת...",
+  },
+};
 
 function ContentFactoryForm() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const type = searchParams.get("type") || "carousel";
+  const rawType = searchParams.get("type") || "carousel";
+  // Only allow real, shippable types from the URL (reels is still soon).
+  const type = ["carousel", "story", "post", "presentation"].includes(rawType)
+    ? rawType
+    : "carousel";
 
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -33,8 +64,10 @@ function ContentFactoryForm() {
     objective: "בניית סמכות",
     theme: "midnight",
     design: "modern",
-    contentType: "carousel",
+    contentType: type,
   });
+
+  const copy = TYPE_COPY[formData.contentType] || TYPE_COPY.carousel;
 
   if (status === "unauthenticated") {
     router.push("/");
@@ -79,7 +112,7 @@ function ContentFactoryForm() {
         // sessionStorage unavailable — viewer will show a friendly fallback
       }
 
-      toast.success("הקרוסלה נוצרה בהצלחה!");
+      toast.success(data.message || "התוכן נוצר בהצלחה!");
       router.push(`/carousel/${data.projectId}`);
     } catch (error) {
       toast.error(
@@ -96,11 +129,7 @@ function ContentFactoryForm() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">מפעל תוכן</h1>
-          <p className="text-slate-400">
-            {type === "carousel"
-              ? "צור קרוסלה מעוררת השראה עם 7 שקפים"
-              : "צור תוכן שיעורר עניין"}
-          </p>
+          <p className="text-slate-400">{copy.subtitle}</p>
         </div>
 
         <form onSubmit={handleCreateCarousel} className="space-y-6">
@@ -279,7 +308,7 @@ function ContentFactoryForm() {
           {loading && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>מיצור קרוסלה...</span>
+                <span>{copy.loading}</span>
                 <span>{progress}%</span>
               </div>
               <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
@@ -307,13 +336,7 @@ function ContentFactoryForm() {
           >
             <span className="pointer-events-none absolute inset-x-0 -top-1/2 h-1/2 bg-gradient-to-b from-white/25 to-transparent blur-md" />
             <span className="relative">
-              {loading
-                ? formData.contentType === "story"
-                  ? "יוצר סטורי..."
-                  : "יוצר קרוסלה..."
-                : formData.contentType === "story"
-                ? "צור סטורי 🎬"
-                : "צור קרוסלה ✨"}
+              {loading ? copy.loading : copy.cta}
             </span>
           </button>
         </form>
@@ -323,29 +346,30 @@ function ContentFactoryForm() {
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
             <p className="text-sm text-blue-200">
               ℹ️ <strong>כיצד זה עובד:</strong>{" "}
-              {formData.contentType === "carousel"
-                ? "המערכת תחפש מקורות אמינים, תכתוב 7 שקפים, תחפש תמונות רלוונטיות, ותבנה קרוסלה מוכנה להורדה וביעוט."
-                : "המערכת תיצור סרטון סטורי בן 15 שניות עם אנימציות, טקסט, והוזמנות לפעולה."}
+              {formData.contentType === "carousel" &&
+                "המערכת כותבת 7 שקפים, מחפשת תמונות רלוונטיות, ובונה קרוסלה מוכנה להורדה ולפרסום."}
+              {formData.contentType === "story" &&
+                "המערכת בונה שקף סטורי אנכי (9:16) עם טקסט, תמונה וקריאה לפעולה — מוכן להעלאה."}
+              {formData.contentType === "post" &&
+                "המערכת יוצרת פוסט בודד עם כותרת חזקה וכיתוב מוכן — לחיצה אחת והוא מוכן לפרסום."}
+              {formData.contentType === "presentation" &&
+                "המערכת בונה מצגת של 10 שקפים בפורמט רחב (16:9): פתיחה, נקודות מפתח, סיכום וקריאה לפעולה."}
             </p>
           </div>
 
           <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
             <p className="text-sm text-purple-200">
-              📐 <strong>גדלים אוטומטיים:</strong>
+              📐 <strong>גדלים אוטומטיים לפי הרשת:</strong>
               <br />
               <span className="text-xs">
-                • Instagram:{" "}
-                {formData.contentType === "carousel"
-                  ? "1080x1350px (קרוסלה)"
-                  : "1080x1920px (סטורי)"}
-                <br />• Facebook:{" "}
-                {formData.contentType === "carousel"
-                  ? "1200x628px (קרוסלה)"
-                  : "1080x1920px (סטורי)"}
-                <br />• LinkedIn:{" "}
-                {formData.contentType === "carousel"
-                  ? "1200x627px (קרוסלה)"
-                  : "Not supported"}
+                {formData.contentType === "carousel" &&
+                  "• Instagram 1080×1350 · Facebook 1200×628 · LinkedIn 1200×627"}
+                {formData.contentType === "story" &&
+                  "• Instagram / Facebook / TikTok 1080×1920 (9:16)"}
+                {formData.contentType === "post" &&
+                  "• Instagram 1080×1080 · Facebook 1200×630 · LinkedIn 1200×1200"}
+                {formData.contentType === "presentation" &&
+                  "• כל הרשתות 1920×1080 (16:9) — אידאלי ל-LinkedIn ולוובינרים"}
               </span>
             </p>
           </div>

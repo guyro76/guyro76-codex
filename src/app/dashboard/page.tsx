@@ -103,6 +103,33 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* Quick create — every content type one click away */}
+      <section>
+        <h2 className="mb-3 text-right text-lg font-bold text-slate-200">
+          צור תוכן חדש
+        </h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { type: "carousel", label: "קרוסלה", emoji: "📱" },
+            { type: "post", label: "פוסט", emoji: "✍️" },
+            { type: "presentation", label: "מצגת", emoji: "📊" },
+            { type: "story", label: "סטורי", emoji: "🎬" },
+          ].map((c) => (
+            <Link
+              key={c.type}
+              href={`/content-factory?type=${c.type}`}
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0e0e16] p-5 text-center transition-all hover:border-cyan-300/50 hover:bg-[#12121d]"
+            >
+              <span className="pointer-events-none absolute inset-x-0 -top-1/2 h-1/2 bg-gradient-to-b from-cyan-400/10 to-transparent blur-md" />
+              <div className="relative mb-2 text-3xl">{c.emoji}</div>
+              <div className="relative text-sm font-bold text-slate-100">
+                {c.label}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* Daily Tip */}
       <section>
         <DailyTip />

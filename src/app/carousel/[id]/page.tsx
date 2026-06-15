@@ -26,7 +26,16 @@ interface CarouselData {
   template: Template;
   dimensions: { width: number; height: number; ratio: string };
   aiGenerated?: boolean;
+  contentType?: string;
 }
+
+// Hebrew label per content type for headings, buttons and toasts.
+const TYPE_LABEL: Record<string, string> = {
+  carousel: "קרוסלה",
+  story: "סטורי",
+  post: "פוסט",
+  presentation: "מצגת",
+};
 
 // --- Client-side PNG rendering (no external service needed) ---
 
@@ -191,6 +200,8 @@ export default function CarouselPage({ params }: { params: { id: string } }) {
   const dims = data.dimensions || { width: 1080, height: 1350, ratio: "4 / 5" };
   const ratio = `${dims.width} / ${dims.height}`;
   const colors = data.template?.colors || ["#06B6D4", "#0891B2", "#0E7490"];
+  const typeLabel = TYPE_LABEL[data.contentType || "carousel"] || "תוכן";
+  const isSingle = total === 1;
 
   const downloadOne = (i: number) => {
     const s = data.slides[i];
@@ -212,16 +223,19 @@ export default function CarouselPage({ params }: { params: { id: string } }) {
       // small gap so the browser accepts the sequential downloads
       await new Promise((r) => setTimeout(r, 350));
     }
-    toast.success("כל 7 השקפים הורדו! מוכנים לפרסום בכל רשת.");
+    toast.success(`כל ${total} השקפים הורדו! מוכנים לפרסום בכל רשת.`);
   };
 
   return (
     <div className="min-h-screen bg-slate-950 py-10 px-4 text-white">
       <div className="max-w-2xl mx-auto">
         <div className="mb-6 text-right">
-          <h1 className="text-3xl font-bold mb-1">צפה בקרוסלה שלך</h1>
+          <h1 className="text-3xl font-bold mb-1">
+            {isSingle ? `ה${typeLabel} שלך` : `צפה ב${typeLabel} שלך`}
+          </h1>
           <p className="text-slate-400 text-sm">
-            {data.template?.name} · {data.topic} · שקף {current + 1} מתוך {total}
+            {data.template?.name} · {data.topic}
+            {isSingle ? "" : ` · שקף ${current + 1} מתוך ${total}`}
             {data.aiGenerated ? "" : " · נוצר במנוע החינמי"}
           </p>
         </div>
@@ -265,56 +279,66 @@ export default function CarouselPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* Dots */}
-        <div className="mt-5 flex justify-center gap-2">
-          {data.slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              aria-label={`שקף ${i + 1}`}
-              className={`h-2.5 rounded-full transition-all ${
-                i === current ? "w-6 bg-cyan-400" : "w-2.5 bg-slate-600"
-              }`}
-            />
-          ))}
-        </div>
+        {/* Dots (multi-slide only) */}
+        {!isSingle && (
+          <div className="mt-5 flex justify-center gap-2">
+            {data.slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                aria-label={`שקף ${i + 1}`}
+                className={`h-2.5 rounded-full transition-all ${
+                  i === current ? "w-6 bg-cyan-400" : "w-2.5 bg-slate-600"
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Navigation */}
         <div className="mt-5 flex items-center justify-between gap-4">
-          <button
-            onClick={() => setCurrent(Math.max(0, current - 1))}
-            disabled={current === 0}
-            className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors"
-          >
-            → הקודם
-          </button>
+          {!isSingle && (
+            <button
+              onClick={() => setCurrent(Math.max(0, current - 1))}
+              disabled={current === 0}
+              className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors"
+            >
+              → הקודם
+            </button>
+          )}
 
           <button
             onClick={() => downloadOne(current)}
-            className="px-6 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold transition-colors"
+            className="flex-1 px-6 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold transition-colors"
           >
-            ⬇️ הורד שקף
+            ⬇️ {isSingle ? "הורד את התמונה" : "הורד שקף"}
           </button>
 
-          <button
-            onClick={() => setCurrent(Math.min(total - 1, current + 1))}
-            disabled={current === total - 1}
-            className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors"
-          >
-            הבא ←
-          </button>
+          {!isSingle && (
+            <button
+              onClick={() => setCurrent(Math.min(total - 1, current + 1))}
+              disabled={current === total - 1}
+              className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors"
+            >
+              הבא ←
+            </button>
+          )}
         </div>
 
-        {/* Download all */}
-        <button
-          onClick={downloadAll}
-          className="mt-6 w-full rounded-xl bg-gradient-to-l from-cyan-500 to-sky-500 py-3 font-bold text-white shadow-lg transition-transform hover:scale-[1.01]"
-        >
-          ⬇️ הורד את כל הקרוסלה (7 תמונות)
-        </button>
-        <p className="mt-2 text-center text-xs text-slate-500">
-          התמונות נשמרות במכשיר שלך — מוכנות להעלאה לכל רשת חברתית.
-        </p>
+        {/* Download all (multi-slide only) */}
+        {!isSingle && (
+          <>
+            <button
+              onClick={downloadAll}
+              className="mt-6 w-full rounded-xl bg-gradient-to-l from-cyan-500 to-sky-500 py-3 font-bold text-white shadow-lg transition-transform hover:scale-[1.01]"
+            >
+              ⬇️ הורד את כל ה{typeLabel} ({total} תמונות)
+            </button>
+            <p className="mt-2 text-center text-xs text-slate-500">
+              התמונות נשמרות במכשיר שלך — מוכנות להעלאה לכל רשת חברתית.
+            </p>
+          </>
+        )}
 
         {/* Actions */}
         <div className="mt-8 flex flex-col gap-3">

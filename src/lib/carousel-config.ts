@@ -2,18 +2,26 @@ export const CAROUSEL_DIMENSIONS = {
   instagram: {
     carousel: { width: 1080, height: 1350, ratio: "4:5" },
     story: { width: 1080, height: 1920, ratio: "9:16" },
+    post: { width: 1080, height: 1080, ratio: "1:1" },
+    presentation: { width: 1920, height: 1080, ratio: "16:9" },
   },
   facebook: {
     carousel: { width: 1200, height: 628, ratio: "1.91:1" },
     story: { width: 1080, height: 1920, ratio: "9:16" },
+    post: { width: 1200, height: 630, ratio: "1.91:1" },
+    presentation: { width: 1920, height: 1080, ratio: "16:9" },
   },
   linkedin: {
     carousel: { width: 1200, height: 627, ratio: "1.91:1" },
     story: null,
+    post: { width: 1200, height: 1200, ratio: "1:1" },
+    presentation: { width: 1920, height: 1080, ratio: "16:9" },
   },
   tiktok: {
     carousel: { width: 1080, height: 1920, ratio: "9:16" },
     story: { width: 1080, height: 1920, ratio: "9:16" },
+    post: { width: 1080, height: 1920, ratio: "9:16" },
+    presentation: { width: 1920, height: 1080, ratio: "16:9" },
   },
 };
 

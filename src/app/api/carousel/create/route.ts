@@ -2,9 +2,22 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { generateCarouselContent } from "@/lib/claude";
 import { generateCarouselFallback } from "@/lib/carousel-fallback";
+import {
+  generatePostFallback,
+  generatePresentationFallback,
+} from "@/lib/content-fallback";
 import { searchWikimediaImages, isPlaceholderImage } from "@/lib/images";
 import { getDimensions, getTemplate } from "@/lib/carousel-config";
 import { NextRequest, NextResponse } from "next/server";
+
+// Hebrew labels per content type, used in the success message + persistence.
+const TYPE_LABELS: Record<string, string> = {
+  carousel: "קרוסלה",
+  story: "סטורי",
+  post: "פוסט",
+  presentation: "מצגת",
+  reels: "רילס",
+};
 
 // A real Anthropic key looks like "sk-ant-...". Anything else (placeholder /
 // empty) means we run the free, no-cost generator instead — so creation always
@@ -63,22 +76,34 @@ export async function POST(req: NextRequest) {
       articles,
     };
 
+    // Free, no-cost generator per content type — a single-image post, a
+    // multi-slide presentation, or the 7-slide carousel/story.
+    const freeGenerator = () => {
+      if (contentType === "post") return generatePostFallback(genInput);
+      if (contentType === "presentation")
+        return generatePresentationFallback(genInput);
+      return generateCarouselFallback(genInput);
+    };
+
     // Content: use Claude only when a real key exists, otherwise the free
-    // generator. Even with a key, fall back gracefully on any error.
+    // generator. Even with a key, fall back gracefully on any error. Claude
+    // is only wired for the 7-slide carousel/story shape today.
     let carouselData: {
       slides: { headline: string; body: string; imageQuery: string }[];
     };
-    if (hasAiKey) {
+    const claudeEligible =
+      contentType === "carousel" || contentType === "story";
+    if (hasAiKey && claudeEligible) {
       try {
         carouselData = await generateCarouselContent(genInput);
         if (!carouselData?.slides || carouselData.slides.length !== 7) {
-          carouselData = generateCarouselFallback(genInput);
+          carouselData = freeGenerator();
         }
       } catch {
-        carouselData = generateCarouselFallback(genInput);
+        carouselData = freeGenerator();
       }
     } else {
-      carouselData = generateCarouselFallback(genInput);
+      carouselData = freeGenerator();
     }
 
     const dimensions = getDimensions(platform, contentType) || {
@@ -130,7 +155,7 @@ export async function POST(req: NextRequest) {
       const project = await prisma.project.create({
         data: {
           userId: user.id,
-          type: contentType === "story" ? "story" : "carousel",
+          type: contentType || "carousel",
           topic,
           platform,
           format: contentType,
@@ -171,8 +196,8 @@ export async function POST(req: NextRequest) {
       contentType,
       dimensions,
       template: templateData,
-      aiGenerated: hasAiKey,
-      message: `${contentType === "story" ? "סטורי" : "קרוסלה"} נוצר בהצלחה!`,
+      aiGenerated: hasAiKey && claudeEligible,
+      message: `${TYPE_LABELS[contentType] || "תוכן"} נוצר בהצלחה!`,
     });
   } catch (error) {
     console.error("Carousel creation error:", error);
