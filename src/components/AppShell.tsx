@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icon, type IconName } from "./Icons";
+import { NewsTicker } from "./NewsTicker";
 
 export const NAV_ITEMS: Array<{ href: string; label: string; icon: IconName }> = [
   { href: "/dashboard", label: "דשבורד סמכות", icon: "dashboard" },
@@ -98,6 +99,11 @@ export function AppShell({
                 יציאה
                 <Icon name="logout" size={16} />
               </button>
+            </div>
+
+            {/* Live news ticker (center) — marketing, social & AI headlines */}
+            <div className="mx-4 hidden min-w-0 flex-1 md:flex">
+              <NewsTicker />
             </div>
 
             <div className="flex items-center gap-4 text-right">

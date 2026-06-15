@@ -70,8 +70,12 @@ function ContentFactoryForm() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  // Topic can be pre-filled from the URL (e.g. from Trends or Content Search,
+  // which pass ?topic=... so a click turns a source straight into content).
+  const presetTopic = searchParams.get("topic") || "";
+
   const [formData, setFormData] = useState({
-    topic: "",
+    topic: presetTopic,
     platform: "instagram",
     objective: "בניית סמכות",
     theme: "midnight",
