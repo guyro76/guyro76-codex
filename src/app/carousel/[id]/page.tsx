@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, use } from "react";
 import { toast } from "sonner";
 import { getContent } from "@/lib/content-store";
 
@@ -144,7 +144,8 @@ function downloadCanvas(canvas: HTMLCanvasElement, filename: string) {
   }, "image/png");
 }
 
-export default function CarouselPage({ params }: { params: { id: string } }) {
+export default function CarouselPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = use(paramsPromise);
   const { status } = useSession();
   const router = useRouter();
   const [data, setData] = useState<CarouselData | null>(null);

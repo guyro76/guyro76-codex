@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { toast } from "sonner";
 import { getContent } from "@/lib/content-store";
 
@@ -31,10 +31,11 @@ interface PlatformResult {
 }
 
 export default function PostToSocialPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const params = use(paramsPromise);
   const { status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
