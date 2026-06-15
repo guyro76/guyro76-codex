@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { getContent } from "@/lib/content-store";
 
 interface Slide {
   headline: string;
@@ -35,6 +36,7 @@ const TYPE_LABEL: Record<string, string> = {
   story: "סטורי",
   post: "פוסט",
   presentation: "מצגת",
+  reels: "רילס",
 };
 
 // --- Client-side PNG rendering (no external service needed) ---
@@ -154,12 +156,8 @@ export default function CarouselPage({ params }: { params: { id: string } }) {
   }, [status, router]);
 
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(`carousel:${params.id}`);
-      if (raw) setData(JSON.parse(raw));
-    } catch {
-      // ignore — handled by the empty state below
-    }
+    const stored = getContent(params.id);
+    if (stored) setData(stored as unknown as CarouselData);
     setLoading(false);
   }, [params.id]);
 
@@ -180,16 +178,24 @@ export default function CarouselPage({ params }: { params: { id: string } }) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white gap-4 px-4 text-center">
         <div className="text-5xl">🗂️</div>
-        <h1 className="text-2xl font-bold">הקרוסלה לא נמצאה</h1>
+        <h1 className="text-2xl font-bold">התוכן לא נמצא</h1>
         <p className="text-slate-400">
-          ייתכן שרעננת את הדף. צור קרוסלה חדשה כדי לצפות בה כאן.
+          ייתכן שנוצר במכשיר אחר. בדוק בספרייה שלך או צור תוכן חדש.
         </p>
-        <button
-          onClick={() => router.push("/content-factory")}
-          className="mt-2 px-6 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold transition-colors"
-        >
-          ← צור קרוסלה
-        </button>
+        <div className="mt-2 flex gap-3">
+          <button
+            onClick={() => router.push("/library")}
+            className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 font-semibold transition-colors"
+          >
+            📚 הספרייה שלי
+          </button>
+          <button
+            onClick={() => router.push("/content-factory")}
+            className="px-6 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold transition-colors"
+          >
+            ← צור תוכן
+          </button>
+        </div>
       </div>
     );
   }

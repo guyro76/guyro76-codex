@@ -105,14 +105,23 @@ export default function DashboardPage() {
 
       {/* Quick create — every content type one click away */}
       <section>
-        <h2 className="mb-3 text-right text-lg font-bold text-slate-200">
-          צור תוכן חדש
-        </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mb-3 flex items-center justify-between">
+          <Link
+            href="/library"
+            className="rounded-lg border border-white/10 bg-white/[0.04] px-4 py-1.5 text-sm font-semibold text-slate-200 transition-colors hover:border-cyan-300/40 hover:text-cyan-300"
+          >
+            📚 הספרייה שלי
+          </Link>
+          <h2 className="text-right text-lg font-bold text-slate-200">
+            צור תוכן חדש
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {[
             { type: "carousel", label: "קרוסלה", emoji: "📱" },
             { type: "post", label: "פוסט", emoji: "✍️" },
             { type: "presentation", label: "מצגת", emoji: "📊" },
+            { type: "reels", label: "רילס", emoji: "🎞️" },
             { type: "story", label: "סטורי", emoji: "🎬" },
           ].map((c) => (
             <Link

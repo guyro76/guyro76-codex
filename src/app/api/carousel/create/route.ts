@@ -5,6 +5,7 @@ import { generateCarouselFallback } from "@/lib/carousel-fallback";
 import {
   generatePostFallback,
   generatePresentationFallback,
+  generateReelsFallback,
 } from "@/lib/content-fallback";
 import { searchWikimediaImages, isPlaceholderImage } from "@/lib/images";
 import { getDimensions, getTemplate } from "@/lib/carousel-config";
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
       if (contentType === "post") return generatePostFallback(genInput);
       if (contentType === "presentation")
         return generatePresentationFallback(genInput);
+      if (contentType === "reels") return generateReelsFallback(genInput);
       return generateCarouselFallback(genInput);
     };
 

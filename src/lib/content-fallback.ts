@@ -59,9 +59,47 @@ export function generatePostFallback(input: ContentInput): {
 }
 
 /**
- * A multi-slide PRESENTATION (10 slides): title → agenda → 5 key points →
- * recap → CTA → closing. Landscape 16:9, ideal for LinkedIn / webinars.
+ * A vertical REELS storyboard (5 frames, 9:16): hook → 3 beats → CTA, each
+ * with a scene/timing hint baked into the body so it doubles as a shooting
+ * script. Free and deterministic — no video API needed.
  */
+export function generateReelsFallback(input: ContentInput): {
+  slides: ContentSlide[];
+} {
+  const topic = (input.topic || "הנושא שלך").trim();
+  const audience = (input.audience || "הקהל שלכם").trim();
+
+  const slides: ContentSlide[] = [
+    {
+      headline: topic,
+      body: `🎬 0-3 שניות (Hook): פתחו במשפט שעוצר את הגלילה — "${topic}? רוב האנשים עושים את זה לא נכון."`,
+      imageQuery: `${topic}`,
+    },
+    {
+      headline: "הבעיה",
+      body: `🎬 3-8 שניות: הציגו את הכאב של ${audience} ב${topic} במשפט אחד חד. תנו להם להרגיש "זה בדיוק אני".`,
+      imageQuery: `${topic} problem challenge`,
+    },
+    {
+      headline: "הפתרון",
+      body: `🎬 8-18 שניות: 3 צעדים מהירים. הראו, אל תספרו — תנועה, טקסט על המסך וקצב מהיר.`,
+      imageQuery: `solution steps quick`,
+    },
+    {
+      headline: "ההוכחה",
+      body: `🎬 18-25 שניות: תוצאה אחת ממשית או דוגמה. אמינות = שמירות ושיתופים.`,
+      imageQuery: `result proof success`,
+    },
+    {
+      headline: "תורכם 🚀",
+      body: `🎬 25-30 שניות (CTA): ${ctaForObjective(input.objective, topic)}`,
+      imageQuery: `call to action motivation`,
+    },
+  ];
+
+  return { slides };
+}
+
 export function generatePresentationFallback(input: ContentInput): {
   slides: ContentSlide[];
 } {

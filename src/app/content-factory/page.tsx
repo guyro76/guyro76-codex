@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { saveContent } from "@/lib/content-store";
 
 const CONTENT_TYPES: {
   value: string;
@@ -15,7 +16,7 @@ const CONTENT_TYPES: {
   { value: "story", label: "סטורי", emoji: "🎬" },
   { value: "post", label: "פוסט", emoji: "✍️" },
   { value: "presentation", label: "מצגת", emoji: "📊" },
-  { value: "reels", label: "רילס", emoji: "🎞️", soon: true },
+  { value: "reels", label: "רילס", emoji: "🎞️" },
 ];
 
 // Per-type wording so the form speaks the right language for each format.
@@ -43,6 +44,11 @@ const TYPE_COPY: Record<
     cta: "צור מצגת 📊",
     loading: "יוצר מצגת...",
   },
+  reels: {
+    subtitle: "צור תסריט רילס אנכי (9:16) — 5 פריימים עם תזמון מוכן לצילום",
+    cta: "צור רילס 🎞️",
+    loading: "יוצר רילס...",
+  },
 };
 
 function ContentFactoryForm() {
@@ -51,7 +57,13 @@ function ContentFactoryForm() {
   const searchParams = useSearchParams();
   const rawType = searchParams.get("type") || "carousel";
   // Only allow real, shippable types from the URL (reels is still soon).
-  const type = ["carousel", "story", "post", "presentation"].includes(rawType)
+  const type = [
+    "carousel",
+    "story",
+    "post",
+    "presentation",
+    "reels",
+  ].includes(rawType)
     ? rawType
     : "carousel";
 
@@ -104,13 +116,10 @@ function ContentFactoryForm() {
       const data = await response.json();
       setProgress(100);
 
-      // Stash the full result so the viewer renders it instantly without
-      // depending on server-side persistence (which is ephemeral on Vercel).
-      try {
-        sessionStorage.setItem(`carousel:${data.projectId}`, JSON.stringify(data));
-      } catch {
-        // sessionStorage unavailable — viewer will show a friendly fallback
-      }
+      // Persist to the local content store (localStorage) so the item survives
+      // refreshes and shows up in the library — and mirrors to sessionStorage
+      // for the viewer, all without any backend dependency.
+      saveContent(data);
 
       toast.success(data.message || "התוכן נוצר בהצלחה!");
       router.push(`/carousel/${data.projectId}`);
@@ -354,6 +363,8 @@ function ContentFactoryForm() {
                 "המערכת יוצרת פוסט בודד עם כותרת חזקה וכיתוב מוכן — לחיצה אחת והוא מוכן לפרסום."}
               {formData.contentType === "presentation" &&
                 "המערכת בונה מצגת של 10 שקפים בפורמט רחב (16:9): פתיחה, נקודות מפתח, סיכום וקריאה לפעולה."}
+              {formData.contentType === "reels" &&
+                "המערכת בונה תסריט רילס של 5 פריימים אנכיים (9:16) עם תזמון לכל שנייה — Hook, בעיה, פתרון, הוכחה וקריאה לפעולה."}
             </p>
           </div>
 
@@ -370,6 +381,8 @@ function ContentFactoryForm() {
                   "• Instagram 1080×1080 · Facebook 1200×630 · LinkedIn 1200×1200"}
                 {formData.contentType === "presentation" &&
                   "• כל הרשתות 1920×1080 (16:9) — אידאלי ל-LinkedIn ולוובינרים"}
+                {formData.contentType === "reels" &&
+                  "• Instagram / TikTok / Facebook 1080×1920 (9:16)"}
               </span>
             </p>
           </div>

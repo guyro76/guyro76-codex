@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { getContent } from "@/lib/content-store";
 
 // Only networks the user has actually connected in Composio.
 const PLATFORMS = [
@@ -47,23 +48,18 @@ export default function PostToSocialPage({
     if (status === "unauthenticated") router.push("/");
   }, [status, router]);
 
-  // Pull the carousel the user just created (same session) to build a caption
-  // and grab a real public image URL for the post.
+  // Pull the saved content (survives refresh via the local store) to build a
+  // caption and grab a real public image URL for the post.
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(`carousel:${params.id}`);
-      if (raw) {
-        const data: CarouselData = JSON.parse(raw);
-        setCarousel(data);
-        const first = data.slides?.[0];
-        const suggested = first
-          ? `${first.headline}\n\n${first.body}\n\n#postwave`
-          : `${data.topic || "תוכן חדש"} — נוצר ב-Postwave`;
-        setCaption(suggested);
-      } else {
-        setCaption("תוכן חדש מ-Postwave");
-      }
-    } catch {
+    const data = getContent(params.id) as CarouselData | null;
+    if (data) {
+      setCarousel(data);
+      const first = data.slides?.[0];
+      const suggested = first
+        ? `${first.headline}\n\n${first.body}\n\n#postwave`
+        : `${data.topic || "תוכן חדש"} — נוצר ב-Postwave`;
+      setCaption(suggested);
+    } else {
       setCaption("תוכן חדש מ-Postwave");
     }
   }, [params.id]);
