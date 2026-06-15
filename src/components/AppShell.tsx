@@ -48,30 +48,30 @@ export function AppShell({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Score card */}
-            <div className="glass rounded-3xl p-5">
-              <p className="text-xs font-semibold text-pink-600">ציון סמכות</p>
-              <p className="mt-2 text-5xl font-black bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
+            <div className="glass-strong rounded-3xl p-5 border-2 border-cyan-500/50">
+              <p className="text-xs font-semibold neon-glow neon-pink">ציון סמכות</p>
+              <p className="mt-3 text-5xl font-black text-gradient animate-glow-text">
                 {score}
-                <span className="text-lg text-slate-500">/100</span>
               </p>
+              <p className="text-sm neon-cyan">/100</p>
             </div>
 
             {/* Nav */}
-            <nav className="glass flex flex-1 flex-col gap-1 rounded-3xl p-2 overflow-y-auto">
+            <nav className="glass flex flex-1 flex-col gap-2 rounded-3xl p-2 overflow-y-auto border border-magenta-500/30">
               {NAV_ITEMS.map((item) => {
                 const active = pathname === item.href;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center justify-end gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all ${
+                    className={`flex items-center justify-end gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all ${
                       active
-                        ? "bg-gradient-to-l from-pink-300 to-violet-300 text-slate-950 shadow-md"
-                        : "text-slate-600 hover:bg-white/40 hover:text-slate-800"
+                        ? "border border-cyan-500/70 bg-gradient-to-l from-magenta-600/20 to-cyan-600/20 text-cyan-300 neon-glow shadow-lg"
+                        : "border border-transparent text-cyan-200/60 hover:border-magenta-500/50 hover:text-magenta-300 hover:bg-magenta-900/10"
                     }`}
                   >
                     <span>{item.label}</span>
-                    <Icon name={item.icon} size={18} />
+                    <Icon name={item.icon} size={18} className={active ? "text-cyan-400" : "text-magenta-400/70"} />
                   </Link>
                 );
               })}
@@ -82,18 +82,18 @@ export function AppShell({
         {/* Main column */}
         <div className="flex min-w-0 flex-1 flex-col gap-5">
           {/* Header */}
-          <header className="glass flex items-center justify-between rounded-3xl px-5 py-4">
+          <header className="glass-strong flex items-center justify-between rounded-3xl px-5 py-4 border border-cyan-500/30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpen(true)}
-                className="glass rounded-xl px-3 py-2 text-sm md:hidden hover:bg-white/40 transition-colors"
+                className="glass rounded-xl px-3 py-2 text-sm md:hidden hover:border-magenta-500/50 border border-transparent transition-all neon-cyan"
                 aria-label="תפריט"
               >
                 <Icon name="menu" size={20} />
               </button>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className="glass flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white/40 transition-colors"
+                className="glass flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium neon-magenta hover:border-magenta-500/70 border border-transparent transition-all hover:shadow-lg"
               >
                 יציאה
                 <Icon name="logout" size={16} />
@@ -102,16 +102,16 @@ export function AppShell({
 
             <div className="flex items-center gap-4 text-right">
               <div>
-                <p className="text-lg font-extrabold leading-tight text-gradient">
-                  Postwave
+                <p className="text-lg font-extrabold leading-tight text-gradient animate-glow-text">
+                  POSTWAVE
                 </p>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs neon-cyan/50">
                   {name}
-                  {isAdmin ? " · מנהל" : ""}
+                  {isAdmin ? " · ADMIN" : ""}
                 </p>
               </div>
-              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-pink-300 to-violet-300 shadow-lg">
-                <Icon name="sparkles" size={24} className="text-violet-700" />
+              <div className="grid h-12 w-12 place-items-center rounded-2xl border border-magenta-500/50 bg-gradient-to-br from-magenta-900/30 to-cyan-900/30 animate-neon-pulse">
+                <Icon name="sparkles" size={24} className="neon-cyan animate-float-neon" />
               </div>
             </div>
           </header>
