@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, use } from "react";
 import { toast } from "sonner";
-import { getContent } from "@/lib/content-store";
+import { getContent, saveContent } from "@/lib/content-store";
 
 interface Slide {
   headline: string;
@@ -151,6 +151,8 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
   const [data, setData] = useState<CarouselData | null>(null);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedSlides, setEditedSlides] = useState<Slide[]>([]);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
@@ -158,7 +160,10 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
 
   useEffect(() => {
     const stored = getContent(params.id);
-    if (stored) setData(stored as unknown as CarouselData);
+    if (stored) {
+      setData(stored as unknown as CarouselData);
+      setEditedSlides(JSON.parse(JSON.stringify((stored as unknown as CarouselData).slides)));
+    }
     setLoading(false);
   }, [params.id]);
 
@@ -202,7 +207,8 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
   }
 
   const total = data.slides.length;
-  const slide = data.slides[current];
+  const displaySlides = isEditing ? editedSlides : data.slides;
+  const slide = displaySlides[current];
   const image = data.images[current];
   const dims = data.dimensions || { width: 1080, height: 1350, ratio: "4 / 5" };
   const ratio = `${dims.width} / ${dims.height}`;
@@ -210,8 +216,29 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
   const typeLabel = TYPE_LABEL[data.contentType || "carousel"] || "תוכן";
   const isSingle = total === 1;
 
+  const updateEditedSlide = (field: keyof Slide, value: string) => {
+    const updated = [...editedSlides];
+    updated[current] = { ...updated[current], [field]: value };
+    setEditedSlides(updated);
+  };
+
+  const saveEdits = () => {
+    if (data) {
+      const updated = { ...data, slides: editedSlides };
+      saveContent(updated);
+      setData(updated);
+      setIsEditing(false);
+      toast.success("השקפים עודכנו בהצלחה!");
+    }
+  };
+
+  const discardEdits = () => {
+    setEditedSlides(JSON.parse(JSON.stringify(data!.slides)));
+    setIsEditing(false);
+  };
+
   const downloadOne = (i: number) => {
-    const s = data.slides[i];
+    const s = displaySlides[i];
     const canvas = renderSlideCanvas({
       width: dims.width,
       height: dims.height,
@@ -236,15 +263,27 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
   return (
     <div className="min-h-screen bg-slate-950 py-10 px-4 text-white">
       <div className="max-w-2xl mx-auto">
-        <div className="mb-6 text-right">
-          <h1 className="text-3xl font-bold mb-1">
-            {isSingle ? `ה${typeLabel} שלך` : `צפה ב${typeLabel} שלך`}
-          </h1>
-          <p className="text-slate-400 text-sm">
-            {data.template?.name} · {data.topic}
-            {isSingle ? "" : ` · שקף ${current + 1} מתוך ${total}`}
-            {data.aiGenerated ? "" : " · נוצר במנוע החינמי"}
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <button
+            onClick={() => (isEditing ? discardEdits() : setIsEditing(true))}
+            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
+              isEditing
+                ? "bg-slate-700 hover:bg-slate-600"
+                : "bg-slate-800 hover:bg-slate-700"
+            }`}
+          >
+            {isEditing ? "❌ בטל" : "✏️ ערוך"}
+          </button>
+          <div className="text-right">
+            <h1 className="text-3xl font-bold mb-1">
+              {isSingle ? `ה${typeLabel} שלך` : `צפה ב${typeLabel} שלך`}
+            </h1>
+            <p className="text-slate-400 text-sm">
+              {data.template?.name} · {data.topic}
+              {isSingle ? "" : ` · שקף ${current + 1} מתוך ${total}`}
+              {data.aiGenerated ? "" : " · נוצר במנוע החינמי"}
+            </p>
+          </div>
         </div>
 
         {/* Slide canvas */}
@@ -273,12 +312,33 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
               {current + 1} / {total}
             </span>
             <div>
-              <h2 className="mb-4 text-3xl font-extrabold leading-tight drop-shadow-lg md:text-4xl">
-                {slide.headline}
-              </h2>
-              <p className="text-base leading-relaxed text-white/95 drop-shadow md:text-lg">
-                {slide.body}
-              </p>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <textarea
+                    value={slide.headline}
+                    onChange={(e) => updateEditedSlide("headline", e.target.value)}
+                    className="w-full rounded-lg bg-black/50 p-3 text-2xl font-extrabold text-white placeholder-slate-400 border border-cyan-500/50 focus:border-cyan-400 focus:outline-none resize-none"
+                    rows={3}
+                    placeholder="כתוב כותרת..."
+                  />
+                  <textarea
+                    value={slide.body}
+                    onChange={(e) => updateEditedSlide("body", e.target.value)}
+                    className="w-full rounded-lg bg-black/50 p-3 text-lg text-white placeholder-slate-400 border border-cyan-500/50 focus:border-cyan-400 focus:outline-none resize-none"
+                    rows={4}
+                    placeholder="כתוב טקסט..."
+                  />
+                </div>
+              ) : (
+                <>
+                  <h2 className="mb-4 text-3xl font-extrabold leading-tight drop-shadow-lg md:text-4xl">
+                    {slide.headline}
+                  </h2>
+                  <p className="text-base leading-relaxed text-white/95 drop-shadow md:text-lg">
+                    {slide.body}
+                  </p>
+                </>
+              )}
             </div>
             <span className="self-end text-sm font-bold opacity-80">
               Postwave
@@ -349,26 +409,37 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
 
         {/* Actions */}
         <div className="mt-8 flex flex-col gap-3">
-          <button
-            onClick={() => router.push(`/post-to-social/${params.id}`)}
-            className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold transition-colors"
-          >
-            🚀 פרסם לרשתות החברתיות
-          </button>
-          <div className="flex gap-3">
+          {isEditing ? (
             <button
-              onClick={() => router.push("/content-factory")}
-              className="flex-1 py-2 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+              onClick={saveEdits}
+              className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold transition-colors"
             >
-              צור אחרת
+              ✅ שמור שינויים
             </button>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="flex-1 py-2 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 transition-colors"
-            >
-              חזרה לדשבורד
-            </button>
-          </div>
+          ) : (
+            <>
+              <button
+                onClick={() => router.push(`/post-to-social/${params.id}`)}
+                className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold transition-colors"
+              >
+                🚀 פרסם לרשתות החברתיות
+              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => router.push("/content-factory")}
+                  className="flex-1 py-2 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+                >
+                  צור אחרת
+                </button>
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="flex-1 py-2 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 transition-colors"
+                >
+                  חזרה לדשבורד
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
