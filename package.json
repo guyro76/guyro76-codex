@@ -1,0 +1,19 @@
+{
+  "name": "albumix-ai",
+  "version": "1.0.0",
+  "description": "עיצוב אלבומים חכם בעזרת AI",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server -p 8000 -o",
+    "build": "echo 'Albumix is a static site - ready to deploy!'",
+    "serve": "npx http-server -p 8000"
+  },
+  "keywords": [
+    "album",
+    "design",
+    "ai",
+    "hebrew"
+  ],
+  "author": "",
+  "license": "MIT"
+}
