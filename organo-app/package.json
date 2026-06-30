@@ -2,15 +2,15 @@
   "name": "organo",
   "version": "0.4.0",
   "private": true,
-  "engines": { "node": ">=20.9.0" },
+  "engines": { "node": "22.x" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
-    "cheerio": "^1.1.2",
+    "@supabase/supabase-js": "2.108.2",
+    "cheerio": "1.2.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "lucide-react": "^0.468.0",
@@ -25,6 +25,7 @@
     "typescript": "^5.9.2"
   },
   "overrides": {
-    "postcss": "8.5.10"
+    "postcss": "8.5.10",
+    "undici": "7.28.0"
   }
 }
