@@ -40,6 +40,8 @@ export interface AnalysisResult {
     contentType: string;
     htmlBytes: number;
     redirects: number;
+    source: "direct" | "browser-retry" | "reader";
+    limited: boolean;
   };
   snapshot: {
     title: string;
