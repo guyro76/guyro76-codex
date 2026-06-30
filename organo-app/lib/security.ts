@@ -69,7 +69,7 @@ export function normalizeUrl(input: string): URL {
 }
 
 export async function assertPublicUrl(url: URL): Promise<void> {
-  const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
+  const hostname = url.hostname.toLowerCase().replace(/^\[|\]$/g, "").replace(/\.$/, "");
   if (blockedHostnames.has(hostname) || hostname.endsWith(".local")) {
     throw new Error("לא ניתן לנתח כתובת פנימית או מקומית");
   }
