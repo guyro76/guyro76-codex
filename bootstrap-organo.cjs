@@ -3,11 +3,16 @@ const path = require('node:path');
 
 const root = __dirname;
 const source = path.join(root, 'organo-app');
-const remove = ['app', 'pages', 'src', 'lib', 'types', 'public', 'components'];
-for (const name of remove) fs.rmSync(path.join(root, name), { recursive: true, force: true });
-for (const name of ['next.config.js', 'next.config.ts', 'next.config.mjs']) {
-  fs.rmSync(path.join(root, name), { force: true });
-}
+const removeDirectories = ['app', 'pages', 'src', 'lib', 'types', 'public', 'components'];
+for (const name of removeDirectories) fs.rmSync(path.join(root, name), { recursive: true, force: true });
+
+const removeFiles = [
+  'next.config.js', 'next.config.ts', 'next.config.mjs',
+  'postcss.config.js', 'postcss.config.cjs', 'postcss.config.mjs',
+  'tailwind.config.js', 'tailwind.config.cjs', 'tailwind.config.ts'
+];
+for (const name of removeFiles) fs.rmSync(path.join(root, name), { force: true });
+
 for (const name of ['app', 'lib', 'types', 'public', 'components']) {
   fs.cpSync(path.join(source, name), path.join(root, name), { recursive: true });
 }
