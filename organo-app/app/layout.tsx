@@ -84,10 +84,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <a className="skip-link" href="#main-content">דילוג לתוכן המרכזי</a>
         <div id="main-content">{children}</div>
-        <Link className="global-monitor-link" href="/monitor" aria-label="פתח מסך מוניטור לאתר">
-          <span aria-hidden="true" />
-          מסך מוניטור
-        </Link>
+        <div className="global-action-stack">
+          <Link className="global-report-link" href="/report-builder" aria-label="הפקת דוח PDF ממותג מתוצאות הסריקה">
+            <span aria-hidden="true">PDF</span>
+            דו״ח PDF ממותג
+          </Link>
+          <Link className="global-monitor-link" href="/monitor" aria-label="פתח מסך מוניטור לאתר">
+            <span aria-hidden="true" />
+            מסך מוניטור
+          </Link>
+        </div>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </body>
     </html>
