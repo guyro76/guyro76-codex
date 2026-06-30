@@ -9,6 +9,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/faq" },
 };
 
+const categoryIds: Record<(typeof faqItems)[number]["category"], string> = {
+  "כללי": "general",
+  "סריקות ודוחות": "scans-reports",
+  "AI ואוגי": "ai-ogi",
+  "פרטיות ואבטחה": "privacy-security",
+  "סוכנויות והרשאות": "agencies-permissions",
+};
 const categories = [...new Set(faqItems.map((item) => item.category))];
 const faqSchema = {
   "@context": "https://schema.org",
@@ -24,10 +31,10 @@ export default function FaqPage() {
   return (
     <InfoPage eyebrow="מרכז הידע" title="שאלות נפוצות על אורגנו" intro="תשובות ברורות על הסריקות, הדוחות, אוגי, AI מקומי, פרטיות, אבטחה ועבודה בסוכנויות.">
       <div className="faq-directory" aria-label="קטגוריות שאלות נפוצות">
-        {categories.map((category) => <a key={category} href={`#faq-${category}`}>{category}</a>)}
+        {categories.map((category) => <a key={category} href={`#${categoryIds[category]}`}>{category}</a>)}
       </div>
       {categories.map((category) => (
-        <section key={category} id={`faq-${category}`} className="faq-category">
+        <section key={category} id={categoryIds[category]} className="faq-category">
           <h2>{category}</h2>
           <div className="faq-list">
             {faqItems.filter((item) => item.category === category).map((item) => (
