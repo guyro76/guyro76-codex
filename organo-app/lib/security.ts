@@ -48,8 +48,17 @@ function isPrivateIPv6(ip: string): boolean {
 export function normalizeUrl(input: string): URL {
   const raw = input.trim();
   if (!raw) throw new Error("יש להזין כתובת אתר");
-  const value = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-  const url = new URL(value);
+
+  const hasExplicitScheme = /^[a-z][a-z0-9+.-]*:/i.test(raw);
+  const value = hasExplicitScheme ? raw : `https://${raw}`;
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("כתובת האתר אינה תקינה");
+  }
+
   if (!["http:", "https:"].includes(url.protocol)) {
     throw new Error("ניתן לנתח רק כתובות HTTP או HTTPS");
   }
