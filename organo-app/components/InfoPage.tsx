@@ -9,6 +9,7 @@ export function InfoPage({ eyebrow, title, intro, children }: { eyebrow: string;
         <Link href="/" className="info-brand"><Leaf aria-hidden="true" /> אורגנו</Link>
         <div>
           <Link href="/about">אודות</Link>
+          <Link href="/faq">שאלות נפוצות</Link>
           <Link href="/privacy">פרטיות</Link>
           <Link href="/accessibility">נגישות</Link>
           <Link href="/security">אבטחה</Link>
