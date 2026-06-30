@@ -1,6 +1,7 @@
 import type { AnalysisResult } from "@/types/analyze";
 import { analyzeWebsite as runPrimaryAnalysis } from "@/lib/analyzer";
 import { analyzeWithPageSpeed } from "@/lib/pagespeed";
+import { blockedSiteReport } from "@/lib/blocked-report";
 import { normalizeUrl } from "@/lib/security";
 
 type FallbackOutcome = { result?: AnalysisResult; error?: unknown };
@@ -30,7 +31,6 @@ export async function runResilientAnalysis(input: string): Promise<AnalysisResul
     clearTimeout(fallbackTimer);
     const outcome = await startFallback(primaryError);
     if (outcome.result) return outcome.result;
-    if (outcome.error instanceof Error) throw outcome.error;
-    throw new Error("לא ניתן היה להשלים את הסריקה");
+    return blockedSiteReport(target, [primaryError, outcome.error]);
   }
 }
