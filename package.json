@@ -1,11 +1,11 @@
 {
   "name": "organo-seo-ai",
-  "version": "0.4.0",
+  "version": "0.4.1-audit",
   "private": true,
   "engines": { "node": "22.x" },
   "scripts": {
     "dev": "node bootstrap-organo.cjs && next dev",
-    "build": "node bootstrap-organo.cjs && next build",
+    "build": "npm audit --json || true; node bootstrap-organo.cjs && next build",
     "start": "next start"
   },
   "dependencies": {
