@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeWebsite } from "@/lib/analyzer";
+import { runResilientAnalysis } from "@/lib/resilient-analysis";
 import { saveScan } from "@/lib/supabase";
 import { enforceRateLimit, requestTooLarge } from "@/lib/rate-limit";
 
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
     const url = typeof body.url === "string" ? body.url.slice(0, 2048) : "";
     const sessionId = typeof body.sessionId === "string" ? body.sessionId.slice(0, 80) : "anonymous";
     const result = await Promise.race([
-      analyzeWebsite(url),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("הסריקה ארכה זמן רב מדי. נסה שוב או בדוק עמוד פנימי אחר באתר.")), 27_000)),
+      runResilientAnalysis(url),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("הסריקה ארכה זמן רב מדי. נסה שוב או בדוק עמוד פנימי אחר באתר.")), 28_500)),
     ]);
     const persisted = await saveScan(sessionId, result);
     return NextResponse.json(
