@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import OgiAssistant from "@/components/OgiAssistant";
 import { contactEmail, siteDescription, siteName, siteUrl } from "@/lib/site";
 import "./globals.css";
 import "./info.css";
 import "./dashboard-2026.css";
 import "./monitor-global.css";
+import "./ogi.css";
 
 const base = siteUrl();
 
@@ -94,6 +96,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             מסך מוניטור
           </Link>
         </div>
+        <OgiAssistant />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </body>
     </html>
