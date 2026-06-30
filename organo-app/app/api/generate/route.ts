@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { GenerateRequest } from "@/types/analyze";
+import { enforceRateLimit, requestTooLarge } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -26,16 +27,16 @@ function fallback(data: GenerateRequest): string {
             "@id": `${data.analysis?.finalUrl || "https://example.com"}#organization`,
             name: brand,
             url: data.analysis?.finalUrl || "https://example.com",
-            sameAs: []
+            sameAs: [],
           },
           {
             "@type": "WebPage",
             "@id": `${data.analysis?.finalUrl || "https://example.com"}#webpage`,
             url: data.analysis?.finalUrl || "https://example.com",
             name: topic,
-            about: { "@id": `${data.analysis?.finalUrl || "https://example.com"}#organization` }
-          }
-        ]
+            about: { "@id": `${data.analysis?.finalUrl || "https://example.com"}#organization` },
+          },
+        ],
       }, null, 2);
     case "article":
     default:
@@ -43,51 +44,83 @@ function fallback(data: GenerateRequest): string {
   }
 }
 
-function extractOutputText(payload: any): string {
-  if (typeof payload?.output_text === "string") return payload.output_text;
+function extractOutputText(payload: unknown): string {
+  const value = payload as { output_text?: unknown; output?: Array<{ content?: Array<{ type?: string; text?: unknown }> }> };
+  if (typeof value.output_text === "string") return value.output_text;
   const texts: string[] = [];
-  for (const item of payload?.output ?? []) {
-    for (const content of item?.content ?? []) {
-      if (content?.type === "output_text" && typeof content.text === "string") texts.push(content.text);
+  for (const item of value.output ?? []) {
+    for (const content of item.content ?? []) {
+      if (content.type === "output_text" && typeof content.text === "string") texts.push(content.text);
     }
   }
   return texts.join("\n").trim();
 }
 
 export async function POST(request: NextRequest) {
+  const rate = enforceRateLimit(request, "generate", 20, 10 * 60 * 1000);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "בוצעו יותר מדי פעולות יצירת תוכן בזמן קצר. נסה שוב מאוחר יותר." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfter), "Cache-Control": "no-store" } },
+    );
+  }
+  if (requestTooLarge(request, 120_000)) {
+    return NextResponse.json({ error: "הבקשה גדולה מדי" }, { status: 413, headers: { "Cache-Control": "no-store" } });
+  }
+
   try {
     const data = (await request.json()) as GenerateRequest;
+    const safeData: GenerateRequest = {
+      ...data,
+      keyword: String(data.keyword || "").slice(0, 300),
+      audience: String(data.audience || "").slice(0, 300),
+      tone: String(data.tone || "").slice(0, 100),
+      language: String(data.language || "עברית").slice(0, 50),
+    };
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) return NextResponse.json({ text: fallback(data), mode: "template" });
+    if (!apiKey) {
+      return NextResponse.json({ text: fallback(safeData), mode: "template" }, { headers: { "Cache-Control": "no-store", "X-RateLimit-Remaining": String(rate.remaining) } });
+    }
 
     const model = process.env.OPENAI_MODEL || "gpt-5-mini";
-    const context = data.analysis ? {
-      url: data.analysis.finalUrl,
-      title: data.analysis.snapshot.title,
-      description: data.analysis.snapshot.description,
-      scores: data.analysis.scores,
-      keywords: data.analysis.topKeywords,
-      failedChecks: data.analysis.checks.filter((item) => item.status !== "pass").slice(0, 10).map((item) => ({ title: item.title, finding: item.finding, recommendation: item.recommendation })),
+    const context = safeData.analysis ? {
+      url: safeData.analysis.finalUrl,
+      title: safeData.analysis.snapshot.title,
+      description: safeData.analysis.snapshot.description,
+      scores: safeData.analysis.scores,
+      keywords: safeData.analysis.topKeywords,
+      failedChecks: safeData.analysis.checks.filter((entry) => entry.status !== "pass").slice(0, 10).map((entry) => ({ title: entry.title, finding: entry.finding, recommendation: entry.recommendation })),
     } : null;
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        reasoning: { effort: "low" },
-        instructions: "You are Organo, an expert SEO, GEO and AEO content strategist. Write accurate, useful, people-first content. Do not invent facts, statistics, credentials or guarantees. Use the requested language and return only the finished content.",
-        input: JSON.stringify({ request: data, context }),
-      }),
-    });
-    if (!response.ok) return NextResponse.json({ text: fallback(data), mode: "template", warning: "AI provider unavailable" });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 22_000);
+    let response: Response;
+    try {
+      response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          reasoning: { effort: "low" },
+          instructions: "You are Organo, an expert SEO, GEO and AEO content strategist. Write accurate, useful, people-first content. Do not invent facts, statistics, credentials or guarantees. Use the requested language and return only the finished content.",
+          input: JSON.stringify({ request: safeData, context }),
+        }),
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (!response.ok) {
+      return NextResponse.json({ text: fallback(safeData), mode: "template", warning: "AI provider unavailable" }, { headers: { "Cache-Control": "no-store" } });
+    }
     const payload = await response.json();
-    const text = extractOutputText(payload) || fallback(data);
-    return NextResponse.json({ text, mode: "ai" });
+    const text = extractOutputText(payload) || fallback(safeData);
+    return NextResponse.json({ text, mode: "ai" }, { headers: { "Cache-Control": "no-store", "X-RateLimit-Remaining": String(rate.remaining) } });
   } catch {
-    return NextResponse.json({ error: "לא ניתן היה ליצור תוכן" }, { status: 400 });
+    return NextResponse.json({ error: "לא ניתן היה ליצור תוכן" }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
 }
