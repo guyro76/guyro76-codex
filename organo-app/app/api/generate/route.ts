@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return NextResponse.json({ text: fallback(data), mode: "template" });
 
-    const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
+    const model = process.env.OPENAI_MODEL || "gpt-5-mini";
     const context = data.analysis ? {
       url: data.analysis.finalUrl,
       title: data.analysis.snapshot.title,
