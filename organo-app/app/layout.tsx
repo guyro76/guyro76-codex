@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { contactEmail, siteDescription, siteName, siteUrl } from "@/lib/site";
 import "./globals.css";
 import "./info.css";
+import "./monitor-global.css";
 
 const base = siteUrl();
 
@@ -81,6 +83,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <a className="skip-link" href="#main-content">דילוג לתוכן המרכזי</a>
         <div id="main-content">{children}</div>
+        <Link className="global-monitor-link" href="/monitor" aria-label="פתח מסך מוניטור לאתר">
+          <span aria-hidden="true" />
+          מסך מוניטור
+        </Link>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </body>
     </html>
