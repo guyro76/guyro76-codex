@@ -1,22 +1,97 @@
 import type { Metadata } from "next";
+import { contactEmail, siteDescription, siteName, siteUrl } from "@/lib/site";
 import "./globals.css";
 
+const base = siteUrl();
+
 export const metadata: Metadata = {
-  title: "אורגנו - SEO, GEO ו-AEO במקום אחד",
-  description: "כלי לניתוח אתרים, שיפור קידום אורגני והכנת תוכן למנועי חיפוש ומנועי תשובות מבוססי AI.",
+  metadataBase: new URL(base),
+  title: {
+    default: "אורגנו - ניתוח SEO, GEO ו-AEO במקום אחד",
+    template: "%s | אורגנו",
+  },
+  description: siteDescription,
+  applicationName: siteName,
+  authors: [{ name: "גיא רוזנברג", url: `${base}/about` }],
+  creator: "גיא רוזנברג",
+  publisher: "אורגנו",
+  keywords: [
+    "SEO",
+    "GEO",
+    "AEO",
+    "ניתוח אתר",
+    "קידום אורגני",
+    "אופטימיזציה למנועי תשובות",
+    "אופטימיזציה למנועי AI",
+    "Schema",
+    "בדיקת robots.txt",
+  ],
+  alternates: { canonical: "/" },
   icons: { icon: "/favicon.svg" },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
+  },
   openGraph: {
     title: "אורגנו - מערכת צמיחה אורגנית חכמה",
     description: "ניתוח SEO, GEO ו-AEO עם המלצות ותוכן מוכן ליישום.",
+    url: base,
+    siteName,
     type: "website",
     locale: "he_IL",
   },
+  twitter: {
+    card: "summary",
+    title: "אורגנו - מערכת צמיחה אורגנית חכמה",
+    description: "ניתוח SEO, GEO ו-AEO עם המלצות ותוכן מוכן ליישום.",
+  },
+  category: "technology",
+};
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${base}/#organization`,
+      name: siteName,
+      url: base,
+      email: contactEmail,
+      founder: { "@type": "Person", name: "גיא רוזנברג" },
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${base}/#website`,
+      url: base,
+      name: siteName,
+      description: siteDescription,
+      inLanguage: "he-IL",
+      publisher: { "@id": `${base}/#organization` },
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${base}/#software`,
+      name: siteName,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      url: base,
+      description: siteDescription,
+      inLanguage: "he-IL",
+      creator: { "@id": `${base}/#organization` },
+      offers: { "@type": "Offer", price: "0", priceCurrency: "ILS" },
+    },
+  ],
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="he" dir="rtl">
-      <body>{children}</body>
+      <body>
+        <a className="skip-link" href="#main-content">דילוג לתוכן המרכזי</a>
+        {children}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      </body>
     </html>
   );
 }
