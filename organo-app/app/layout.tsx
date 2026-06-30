@@ -3,6 +3,7 @@ import Link from "next/link";
 import { contactEmail, siteDescription, siteName, siteUrl } from "@/lib/site";
 import "./globals.css";
 import "./info.css";
+import "./dashboard-2026.css";
 import "./monitor-global.css";
 
 const base = siteUrl();
