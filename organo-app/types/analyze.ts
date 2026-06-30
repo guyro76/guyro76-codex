@@ -1,7 +1,7 @@
 export type Category = "SEO" | "GEO" | "AEO" | "Performance";
 export type CheckStatus = "pass" | "warning" | "fail" | "info";
 export type Priority = "critical" | "high" | "medium" | "opportunity";
-export type FetchSource = "direct" | "browser-retry" | "reader" | "proxy" | "pagespeed";
+export type FetchSource = "direct" | "browser-retry" | "reader" | "proxy" | "pagespeed" | "blocked";
 
 export interface AnalysisCheck {
   id: string;
