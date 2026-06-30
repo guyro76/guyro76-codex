@@ -7,6 +7,24 @@ const blockedHostnames = new Set([
   "metadata.google.internal",
 ]);
 
+export type FetchSource = "direct" | "browser-retry" | "reader";
+
+type SafeFetchOptions = {
+  timeoutMs?: number;
+  maxBytes?: number;
+  accept?: string;
+  allowReaderFallback?: boolean;
+};
+
+type SafeFetchResult = {
+  response: Response;
+  body: string;
+  finalUrl: URL;
+  redirects: number;
+  source: FetchSource;
+  limited: boolean;
+};
+
 function isPrivateIPv4(ip: string): boolean {
   const parts = ip.split(".").map(Number);
   if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return true;
@@ -81,7 +99,12 @@ export async function assertPublicUrl(url: URL): Promise<void> {
     return;
   }
 
-  const addresses = await lookup(hostname, { all: true, verbatim: true });
+  let addresses;
+  try {
+    addresses = await lookup(hostname, { all: true, verbatim: true });
+  } catch {
+    throw new Error("לא ניתן היה לאתר את שרת האתר. ייתכן שמדובר בתקלה זמנית ב-DNS");
+  }
   if (!addresses.length) throw new Error("לא נמצאה כתובת IP עבור הדומיין");
   for (const item of addresses) {
     if ((item.family === 4 && isPrivateIPv4(item.address)) || (item.family === 6 && isPrivateIPv6(item.address))) {
@@ -90,49 +113,134 @@ export async function assertPublicUrl(url: URL): Promise<void> {
   }
 }
 
+const browserHeaders = (accept: string): Record<string, string> => ({
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+  Accept: accept,
+  "Accept-Language": "he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7",
+  "Cache-Control": "no-cache",
+  Pragma: "no-cache",
+  "Upgrade-Insecure-Requests": "1",
+});
+
+async function readBody(response: Response, maxBytes: number): Promise<string> {
+  const declaredLength = Number(response.headers.get("content-length") || 0);
+  if (declaredLength > maxBytes) throw new Error("העמוד גדול מדי לניתוח מהיר");
+  const buffer = await response.arrayBuffer();
+  if (buffer.byteLength > maxBytes) throw new Error("העמוד גדול מדי לניתוח מהיר");
+  return new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+}
+
+async function requestOnce(url: URL, timeoutMs: number, maxBytes: number, accept: string) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      redirect: "manual",
+      signal: controller.signal,
+      headers: browserHeaders(accept),
+      cache: "no-store",
+    });
+    const body = await readBody(response, maxBytes);
+    return { response, body };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function alternateHost(url: URL): URL | null {
+  if (isIP(url.hostname) || url.hostname === "localhost") return null;
+  const alternate = new URL(url);
+  alternate.hostname = url.hostname.startsWith("www.") ? url.hostname.slice(4) : `www.${url.hostname}`;
+  return alternate;
+}
+
+async function readerFallback(target: URL, maxBytes: number): Promise<SafeFetchResult> {
+  const readerUrl = new URL(`https://r.jina.ai/${target.toString()}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const response = await fetch(readerUrl, {
+      signal: controller.signal,
+      cache: "no-store",
+      headers: {
+        Accept: "text/html",
+        "X-Respond-With": "html",
+        "X-Engine": "browser",
+        "X-No-Cache": "true",
+        "X-Timeout": "8",
+      },
+    });
+    if (!response.ok) throw new Error(`Reader HTTP ${response.status}`);
+    const body = await readBody(response, maxBytes);
+    const synthetic = new Response(body, {
+      status: 200,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "x-organo-fetch-source": "reader",
+      },
+    });
+    return { response: synthetic, body, finalUrl: target, redirects: 0, source: "reader", limited: true };
+  } catch {
+    throw new Error("האתר חסם את הסריקה וגם מנגנון הדפדפן החלופי לא הצליח לקרוא אותו");
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function safeFetch(
   initialUrl: URL,
-  options: { timeoutMs?: number; maxBytes?: number; accept?: string } = {},
-): Promise<{ response: Response; body: string; finalUrl: URL; redirects: number }> {
-  const timeoutMs = options.timeoutMs ?? 12_000;
+  options: SafeFetchOptions = {},
+): Promise<SafeFetchResult> {
+  const timeoutMs = options.timeoutMs ?? 7_000;
   const maxBytes = options.maxBytes ?? 1_800_000;
+  const accept = options.accept ?? "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8";
+  const allowReaderFallback = options.allowReaderFallback ?? true;
   let current = initialUrl;
   let redirects = 0;
+  let source: FetchSource = "direct";
 
   while (redirects <= 5) {
     await assertPublicUrl(current);
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    let response: Response;
     try {
-      response = await fetch(current, {
-        redirect: "manual",
-        signal: controller.signal,
-        headers: {
-          "User-Agent": "OrganoAuditBot/1.0",
-          Accept: options.accept ?? "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
-        },
-        cache: "no-store",
-      });
-    } finally {
-      clearTimeout(timer);
+      const { response, body } = await requestOnce(current, timeoutMs, maxBytes, accept);
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        const location = response.headers.get("location");
+        if (!location) throw new Error("האתר החזיר הפניה ללא יעד");
+        current = new URL(location, current);
+        redirects += 1;
+        continue;
+      }
+
+      if ([403, 406, 429].includes(response.status) && allowReaderFallback) {
+        return readerFallback(current, maxBytes);
+      }
+      return { response, body, finalUrl: current, redirects, source, limited: false };
+    } catch (error) {
+      const alternate = alternateHost(current);
+      if (alternate && source === "direct") {
+        try {
+          await assertPublicUrl(alternate);
+          const result = await requestOnce(alternate, 5_000, maxBytes, accept);
+          source = "browser-retry";
+          if ([301, 302, 303, 307, 308].includes(result.response.status)) {
+            const location = result.response.headers.get("location");
+            if (location) {
+              current = new URL(location, alternate);
+              redirects += 1;
+              continue;
+            }
+          }
+          if (result.response.ok) {
+            return { response: result.response, body: result.body, finalUrl: alternate, redirects, source, limited: false };
+          }
+        } catch {
+          // Continue to browser-rendered fallback below.
+        }
+      }
+      if (allowReaderFallback) return readerFallback(current, maxBytes);
+      if (error instanceof Error && error.name === "AbortError") throw new Error("האתר לא הגיב בזמן שהוקצב לסריקה");
+      throw error;
     }
-
-    if ([301, 302, 303, 307, 308].includes(response.status)) {
-      const location = response.headers.get("location");
-      if (!location) throw new Error("האתר החזיר הפניה ללא יעד");
-      current = new URL(location, current);
-      redirects += 1;
-      continue;
-    }
-
-    const declaredLength = Number(response.headers.get("content-length") || 0);
-    if (declaredLength > maxBytes) throw new Error("העמוד גדול מדי לניתוח מהיר");
-
-    const buffer = await response.arrayBuffer();
-    if (buffer.byteLength > maxBytes) throw new Error("העמוד גדול מדי לניתוח מהיר");
-    const body = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-    return { response, body, finalUrl: current, redirects };
   }
 
   throw new Error("האתר ביצע יותר מדי הפניות");
