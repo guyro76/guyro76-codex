@@ -71,9 +71,10 @@ export default function MonitorPage() {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [countdown, setCountdown] = useState(300);
   const activeRequest = useRef<AbortController | null>(null);
+  const urlRef = useRef("");
 
   const runCheck = useCallback(async (target?: string) => {
-    const value = (target || url).trim();
+    const value = (target || urlRef.current).trim();
     if (!value) {
       setError("יש להזין כתובת אתר לבדיקה");
       return;
@@ -92,8 +93,10 @@ export default function MonitorPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "בדיקת המוניטור נכשלה");
-      setResult(data as MonitorResult);
-      setUrl((data as MonitorResult).finalUrl);
+      const monitorResult = data as MonitorResult;
+      setResult(monitorResult);
+      urlRef.current = monitorResult.finalUrl;
+      setUrl(monitorResult.finalUrl);
       setCountdown(300);
     } catch (caught) {
       if (caught instanceof DOMException && caught.name === "AbortError") return;
@@ -101,12 +104,13 @@ export default function MonitorPage() {
     } finally {
       setLoading(false);
     }
-  }, [url]);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const initial = params.get("url") || latestStoredUrl();
     if (initial) {
+      urlRef.current = initial;
       setUrl(initial);
       void runCheck(initial);
     }
@@ -114,22 +118,27 @@ export default function MonitorPage() {
   }, [runCheck]);
 
   useEffect(() => {
-    if (!autoRefresh || !url) return;
+    if (!autoRefresh || !urlRef.current) return;
     const timer = window.setInterval(() => {
       setCountdown((current) => {
         if (current <= 1) {
-          void runCheck(url);
+          void runCheck(urlRef.current);
           return 300;
         }
         return current - 1;
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [autoRefresh, runCheck, url]);
+  }, [autoRefresh, runCheck]);
 
   function submit(event: FormEvent) {
     event.preventDefault();
     void runCheck();
+  }
+
+  function changeUrl(value: string) {
+    urlRef.current = value;
+    setUrl(value);
   }
 
   const statusClass = result?.loadState || "idle";
@@ -155,7 +164,7 @@ export default function MonitorPage() {
       </section>
 
       <form className="monitor-form" onSubmit={submit}>
-        <div><Globe2 /><input dir="ltr" type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://www.example.co.il" aria-label="כתובת אתר למוניטור" /></div>
+        <div><Globe2 /><input dir="ltr" type="url" value={url} onChange={(event) => changeUrl(event.target.value)} placeholder="https://www.example.co.il" aria-label="כתובת אתר למוניטור" /></div>
         <button disabled={loading}>{loading ? <LoaderCircle className="spin" /> : <MonitorCheck />} {loading ? "בודק וטוען צילום..." : "הפעל בדיקת מוניטור"}</button>
       </form>
 
