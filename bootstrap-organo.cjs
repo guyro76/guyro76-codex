@@ -8,7 +8,7 @@ for (const name of remove) fs.rmSync(path.join(root, name), { recursive: true, f
 for (const name of ['next.config.js', 'next.config.ts', 'next.config.mjs']) {
   fs.rmSync(path.join(root, name), { force: true });
 }
-for (const name of ['app', 'lib', 'types', 'public']) {
+for (const name of ['app', 'lib', 'types', 'public', 'components']) {
   fs.cpSync(path.join(source, name), path.join(root, name), { recursive: true });
 }
 for (const name of ['tsconfig.json', 'next-env.d.ts', 'next.config.mjs']) {
