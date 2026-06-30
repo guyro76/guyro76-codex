@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { contactEmail, siteDescription, siteName, siteUrl } from "@/lib/site";
 import "./globals.css";
+import "./info.css";
 
 const base = siteUrl();
 
@@ -15,17 +16,7 @@ export const metadata: Metadata = {
   authors: [{ name: "גיא רוזנברג", url: `${base}/about` }],
   creator: "גיא רוזנברג",
   publisher: "אורגנו",
-  keywords: [
-    "SEO",
-    "GEO",
-    "AEO",
-    "ניתוח אתר",
-    "קידום אורגני",
-    "אופטימיזציה למנועי תשובות",
-    "אופטימיזציה למנועי AI",
-    "Schema",
-    "בדיקת robots.txt",
-  ],
+  keywords: ["SEO", "GEO", "AEO", "ניתוח אתר", "קידום אורגני", "אופטימיזציה למנועי תשובות", "אופטימיזציה למנועי AI", "Schema", "בדיקת robots.txt"],
   alternates: { canonical: "/" },
   icons: { icon: "/favicon.svg" },
   robots: {
@@ -89,7 +80,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="he" dir="rtl">
       <body>
         <a className="skip-link" href="#main-content">דילוג לתוכן המרכזי</a>
-        {children}
+        <div id="main-content">{children}</div>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </body>
     </html>
