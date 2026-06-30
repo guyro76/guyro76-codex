@@ -32,10 +32,10 @@ export async function loadHistory(sessionId: string) {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from("scans")
-    .select("id,url,final_url,overall_score,seo_score,geo_score,aeo_score,performance_score,created_at")
+    .select("id,url,final_url,overall_score,seo_score,geo_score,aeo_score,performance_score,created_at,result")
     .eq("session_id", sessionId)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(30);
   if (error) return [];
   return data ?? [];
 }
