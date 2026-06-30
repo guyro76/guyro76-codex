@@ -1,6 +1,7 @@
 export type Category = "SEO" | "GEO" | "AEO" | "Performance";
 export type CheckStatus = "pass" | "warning" | "fail" | "info";
 export type Priority = "critical" | "high" | "medium" | "opportunity";
+export type FetchSource = "direct" | "browser-retry" | "reader" | "pagespeed";
 
 export interface AnalysisCheck {
   id: string;
@@ -40,7 +41,7 @@ export interface AnalysisResult {
     contentType: string;
     htmlBytes: number;
     redirects: number;
-    source: "direct" | "browser-retry" | "reader";
+    source: FetchSource;
     limited: boolean;
   };
   snapshot: {
