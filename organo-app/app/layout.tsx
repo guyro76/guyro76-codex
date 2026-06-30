@@ -7,6 +7,7 @@ import "./info.css";
 import "./dashboard-2026.css";
 import "./monitor-global.css";
 import "./ogi.css";
+import "./ogi-blue.css";
 
 const base = siteUrl();
 
