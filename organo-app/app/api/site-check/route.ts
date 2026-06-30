@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeWebsite } from "@/lib/analyzer";
+import { runResilientAnalysis } from "@/lib/resilient-analysis";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   try {
-    const result = await analyzeWebsite(target);
+    const result = await runResilientAnalysis(target);
     return NextResponse.json({
       ok: true,
       key,
