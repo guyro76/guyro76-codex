@@ -1,7 +1,7 @@
 export type Category = "SEO" | "GEO" | "AEO" | "Performance";
 export type CheckStatus = "pass" | "warning" | "fail" | "info";
 export type Priority = "critical" | "high" | "medium" | "opportunity";
-export type FetchSource = "direct" | "browser-retry" | "reader" | "pagespeed";
+export type FetchSource = "direct" | "browser-retry" | "reader" | "proxy" | "pagespeed";
 
 export interface AnalysisCheck {
   id: string;
@@ -29,13 +29,7 @@ export interface AnalysisResult {
   fetchedAt: string;
   durationMs: number;
   persisted: boolean;
-  scores: {
-    overall: number;
-    seo: number;
-    geo: number;
-    aeo: number;
-    performance: number;
-  };
+  scores: { overall: number; seo: number; geo: number; aeo: number; performance: number };
   response: {
     status: number;
     contentType: string;
