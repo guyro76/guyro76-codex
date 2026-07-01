@@ -1,11 +1,12 @@
 {
   "name": "organo",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "engines": { "node": "22.x" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/verify-build.cjs",
     "start": "next start"
   },
   "dependencies": {
