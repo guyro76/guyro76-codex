@@ -1,83 +1,10 @@
-name: Deploy Paprika Securely to Netlify
+name: Paprika Deployment Disabled
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
-
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
+  workflow_dispatch:
 
 jobs:
-  deploy:
-    if: github.head_ref == 'paprika-production'
+  disabled:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
-      - name: Checkout standalone Paprika branch
-        uses: actions/checkout@v4
-        with:
-          ref: paprika-production
-
-      - name: Create temporary encryption key
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:8192 -out /tmp/paprika-private.pem
-          openssl pkey -in /tmp/paprika-private.pem -pubout -out /tmp/paprika-public.pem
-          PUBLIC_KEY=$(base64 -w0 /tmp/paprika-public.pem)
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
-            -f body="PAPRIKA_DEPLOY_KEY:${GITHUB_RUN_ID}:${PUBLIC_KEY}"
-
-      - name: Receive encrypted Netlify authorization
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          MARKER="PAPRIKA_PROXY_CIPHERTEXT:${GITHUB_RUN_ID}:"
-          BODY=""
-          for attempt in $(seq 1 120); do
-            BODY=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --paginate \
-              --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .body" | tail -n 1)
-            if [ -n "$BODY" ]; then
-              break
-            fi
-            sleep 5
-          done
-          if [ -z "$BODY" ]; then
-            echo "Encrypted deployment authorization was not received"
-            exit 1
-          fi
-          CIPHERTEXT="${BODY#${MARKER}}"
-          printf '%s' "$CIPHERTEXT" | base64 -d > /tmp/paprika-proxy.enc
-          openssl pkeyutl -decrypt \
-            -inkey /tmp/paprika-private.pem \
-            -in /tmp/paprika-proxy.enc \
-            -pkeyopt rsa_padding_mode:oaep \
-            -pkeyopt rsa_oaep_md:sha256 \
-            -pkeyopt rsa_mgf1_md:sha256 \
-            -out /tmp/paprika-proxy.txt
-          chmod 600 /tmp/paprika-proxy.txt
-
-      - name: Deploy Paprika to Netlify
-        run: |
-          PROXY_PATH=$(cat /tmp/paprika-proxy.txt)
-          npx --yes @netlify/mcp@latest \
-            --site-id 993c0559-0b1b-40ee-b423-7db0b54bb0a6 \
-            --proxy-path "$PROXY_PATH"
-
-      - name: Remove temporary authorization comment
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          MARKER="PAPRIKA_PROXY_CIPHERTEXT:${GITHUB_RUN_ID}:"
-          gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --paginate \
-            --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" \
-            | while read -r COMMENT_ID; do
-                [ -n "$COMMENT_ID" ] && gh api --method DELETE "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}"
-              done
+      - run: echo "Paprika automatic deployment is disabled."
