@@ -1,0 +1,14 @@
+name: Deploy Paprika
+on:
+  push:
+    branches: [paprika-production]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p paprika-dist && cp paprika-vercel.html paprika-dist/index.html
+      - run: npx --yes netlify-cli@latest deploy --prod --dir=paprika-dist --site=993c0559-0b1b-40ee-b423-7db0b54bb0a6
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
