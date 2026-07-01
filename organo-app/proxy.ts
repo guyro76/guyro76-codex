@@ -1,7 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC = ["/login", "/auth/callback", "/forgot-password", "/reset-password", "/setup-required", "/about", "/faq", "/privacy", "/accessibility", "/security", "/terms", "/robots.txt", "/sitemap.xml", "/llms.txt"];
+const PUBLIC = [
+  "/login", "/auth/callback", "/forgot-password", "/reset-password", "/setup-required",
+  "/about", "/faq", "/privacy", "/privacy-request", "/cookies", "/accessibility", "/security", "/terms",
+  "/robots.txt", "/sitemap.xml", "/llms.txt", "/.well-known/security.txt", "/api/privacy-request"
+];
 const isPublic = (path: string) => PUBLIC.some((item) => path === item || path.startsWith(`${item}/`));
 
 export async function proxy(request: NextRequest) {
@@ -10,8 +14,6 @@ export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-  // Fail closed in every environment. Missing auth configuration must never expose
-  // the dashboard, API routes, scan history, reports, or admin screens.
   if (!url || !key) {
     if (isPublic(path)) return NextResponse.next();
     if (api) return NextResponse.json({ error: "Authentication is not configured" }, { status: 503 });
