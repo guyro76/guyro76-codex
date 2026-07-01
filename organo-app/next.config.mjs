@@ -30,6 +30,9 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   compress: true,
+  async redirects() {
+    return [{ source: "/", destination: "/home", permanent: false }];
+  },
   async headers() {
     return [
       {
