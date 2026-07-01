@@ -1,7 +1,7 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "devCommand": "next dev",
-  "installCommand": "npm install",
-  "framework": "nextjs"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "npm install --prefix organo-app",
+  "buildCommand": "npm run build --prefix organo-app",
+  "outputDirectory": "organo-app/.next"
 }
