@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AppChromeClient from "@/components/AppChromeClient";
 import OgiAssistant from "@/components/OgiAssistant";
 import { contactEmail, siteDescription, siteName, siteUrl } from "@/lib/site";
 import "./globals.css";
 import "./info.css";
 import "./dashboard-2026.css";
+import "./app-chrome.css";
 import "./monitor-global.css";
 import "./ogi.css";
 import "./ogi-blue.css";
@@ -86,6 +88,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="he" dir="rtl">
       <body>
         <a className="skip-link" href="#main-content">דילוג לתוכן המרכזי</a>
+        <AppChromeClient />
         <div id="main-content">{children}</div>
         <div className="global-action-stack">
           <Link className="global-report-link" href="/report-builder" aria-label="הפקת דוח PDF ממותג מתוצאות הסריקה">
