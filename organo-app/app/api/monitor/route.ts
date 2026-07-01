@@ -42,9 +42,7 @@ async function getLighthousePreview(target: URL) {
   try {
     const response = await fetch(endpoint, { signal: controller.signal, cache: "no-store" });
     const payload = await response.json() as PageSpeedPayload;
-    if (!response.ok || payload.error?.message || payload.lighthouseResult?.runtimeError?.message) {
-      return null;
-    }
+    if (!response.ok || payload.error?.message || payload.lighthouseResult?.runtimeError?.message) return null;
     const lighthouse = payload.lighthouseResult;
     const audits = lighthouse?.audits ?? {};
     const screenshot = audits["final-screenshot"]?.details?.data;
@@ -60,6 +58,29 @@ async function getLighthousePreview(target: URL) {
     };
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function getFallbackScreenshot(target: URL) {
+  const endpoint = `https://image.thum.io/get/width/1200/crop/900/noanimate/${target.toString()}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12_000);
+  try {
+    const response = await fetch(endpoint, {
+      signal: controller.signal,
+      cache: "no-store",
+      headers: { accept: "image/avif,image/webp,image/png,image/jpeg,*/*;q=0.8" },
+    });
+    if (!response.ok) return "";
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.startsWith("image/")) return "";
+    const bytes = await response.arrayBuffer();
+    if (!bytes.byteLength || bytes.byteLength > 5_500_000) return "";
+    return `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
+  } catch {
+    return "";
   } finally {
     clearTimeout(timer);
   }
@@ -118,10 +139,24 @@ export async function POST(request: NextRequest) {
       directError = pageOutcome.error instanceof Error ? pageOutcome.error.message : "הבדיקה הישירה נכשלה";
     }
 
-    const screenshot = preview?.screenshot || "";
-    const fallbackScreenshotUrl = `https://image.thum.io/get/width/1200/crop/900/noanimate/${target.toString()}`;
+    const lighthouseScreenshot = preview?.screenshot || "";
+    const fallbackScreenshot = lighthouseScreenshot ? "" : await getFallbackScreenshot(target);
+    const screenshot = lighthouseScreenshot || fallbackScreenshot;
     const isDirectlyOnline = statusCode >= 200 && statusCode < 400;
     const loadState = isDirectlyOnline ? "online" : preview ? "limited" : "offline";
+
+    if (!screenshot) {
+      return NextResponse.json({
+        error: "לא ניתן היה להפיק צילום מסך תקין של האתר. נסה שוב בעוד מספר שניות.",
+        requestedUrl: target.toString(),
+        finalUrl,
+        title: title || new URL(finalUrl).hostname,
+        checkedAt: new Date().toISOString(),
+        loadState,
+        statusCode,
+        responseTimeMs,
+      }, { status: 503, headers: { "Cache-Control": "no-store" } });
+    }
 
     return NextResponse.json({
       requestedUrl: target.toString(),
@@ -135,8 +170,8 @@ export async function POST(request: NextRequest) {
       redirects,
       responseTimeMs,
       responseSource,
-      screenshot: screenshot || fallbackScreenshotUrl,
-      screenshotSource: screenshot ? "Google Lighthouse" : "צילום חיצוני מאובטח",
+      screenshot,
+      screenshotSource: lighthouseScreenshot ? "Google Lighthouse" : "צילום חיצוני מאובטח",
       screenshotCapturedAt: preview?.fetchTime || new Date().toISOString(),
       metrics: preview?.metrics || { lcp: "לא זמין", cls: "לא זמין", tbt: "לא זמין" },
       note: isDirectlyOnline
