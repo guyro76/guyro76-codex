@@ -11,6 +11,8 @@ export function InfoPage({ eyebrow, title, intro, children }: { eyebrow: string;
           <Link href="/about">אודות</Link>
           <Link href="/faq">שאלות נפוצות</Link>
           <Link href="/privacy">פרטיות</Link>
+          <Link href="/privacy-request">בקשת פרטיות</Link>
+          <Link href="/cookies">Cookies</Link>
           <Link href="/accessibility">נגישות</Link>
           <Link href="/security">אבטחה</Link>
           <Link href="/terms">תנאי שימוש</Link>
