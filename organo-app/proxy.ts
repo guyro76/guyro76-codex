@@ -2,9 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC = [
+  "/",
   "/login", "/auth/callback", "/forgot-password", "/reset-password", "/setup-required",
   "/about", "/faq", "/privacy", "/privacy-request", "/cookies", "/accessibility", "/security", "/terms",
-  "/robots.txt", "/sitemap.xml", "/llms.txt", "/.well-known/security.txt", "/api/privacy-request"
+  "/report-builder", "/monitor",
+  "/robots.txt", "/sitemap.xml", "/llms.txt", "/.well-known/security.txt",
+  "/api/status", "/api/history", "/api/analyze", "/api/generate", "/api/privacy-request"
 ];
 const isPublic = (path: string) => PUBLIC.some((item) => path === item || path.startsWith(`${item}/`));
 
