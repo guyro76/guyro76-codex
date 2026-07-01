@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import LoginForm from "./LoginForm";
-import "./login.css";
 
 export const metadata: Metadata = {
   title: "כניסה למערכת",
