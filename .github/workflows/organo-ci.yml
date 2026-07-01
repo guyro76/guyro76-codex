@@ -1,0 +1,39 @@
+name: Organo Production CI
+
+on:
+  push:
+    branches: [organo-commercial]
+  pull_request:
+    branches: [organo-commercial]
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run build
+      - name: Verify critical routes
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const file='.next/server/app-paths-manifest.json';
+          if(!fs.existsSync(file)) throw new Error('Missing app paths manifest');
+          const text=fs.readFileSync(file,'utf8');
+          const required=['/page','/login/page','/admin/page','/privacy/page','/privacy-request/page','/cookies/page','/accessibility/page','/security/page','/terms/page','/setup-required/page','/api/status/route'];
+          const missing=required.filter(x=>!text.includes(x));
+          if(missing.length) throw new Error('Missing routes: '+missing.join(', '));
+          console.log('Critical route verification passed');
+          NODE
+      - name: Verify secrets are not committed
+        run: |
+          if grep -R --exclude-dir=node_modules --exclude-dir=.git -E "SUPABASE_SERVICE_ROLE_KEY=|SUPABASE_SECRET_KEY=|OPENAI_API_KEY=" .; then
+            echo "Potential secret found in repository"
+            exit 1
+          fi
