@@ -1,0 +1,23 @@
+name: Deploy Paprika PR to Netlify
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.head_ref == 'paprika-production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Paprika
+        uses: actions/checkout@v4
+        with:
+          ref: paprika-production
+
+      - name: Deploy standalone Paprika
+        run: npx --yes netlify-cli@latest deploy --prod --dir=. --site=993c0559-0b1b-40ee-b423-7db0b54bb0a6
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
