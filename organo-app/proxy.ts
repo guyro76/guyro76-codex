@@ -10,8 +10,10 @@ export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
+  // Fail closed in every environment. Missing auth configuration must never expose
+  // the dashboard, API routes, scan history, reports, or admin screens.
   if (!url || !key) {
-    if (process.env.VERCEL_ENV !== "production" || isPublic(path)) return NextResponse.next();
+    if (isPublic(path)) return NextResponse.next();
     if (api) return NextResponse.json({ error: "Authentication is not configured" }, { status: 503 });
     return NextResponse.redirect(new URL("/setup-required", request.url));
   }
