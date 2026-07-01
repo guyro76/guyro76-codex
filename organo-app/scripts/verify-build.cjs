@@ -17,11 +17,16 @@ if (!manifests.length) {
 }
 
 const serialized = JSON.stringify(manifests.map((entry) => entry.data));
-const required = ['page', 'home', 'login', 'faq', 'api/status'];
+const required = ['/page', '/home/page', '/login/page', '/faq/page', '/api/status/route'];
 const missing = required.filter((route) => !serialized.includes(route));
 
 if (missing.length) {
   throw new Error(`Organo QA failed: missing critical routes: ${missing.join(', ')}`);
 }
 
-console.log(`Organo route QA passed using ${manifests.map((entry) => path.basename(entry.file)).join(', ')}`);
+const buildId = path.join(root, '.next', 'BUILD_ID');
+if (!fs.existsSync(buildId) || !fs.readFileSync(buildId, 'utf8').trim()) {
+  throw new Error('Organo QA failed: BUILD_ID was not generated.');
+}
+
+console.log(`Organo route QA passed: ${required.join(', ')}`);
