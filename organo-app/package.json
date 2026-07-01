@@ -1,6 +1,6 @@
 {
   "name": "organo",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "engines": { "node": "22.x" },
   "scripts": {
@@ -10,6 +10,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@neondatabase/auth": "latest",
+    "@neondatabase/serverless": "latest",
     "@supabase/ssr": "0.7.0",
     "@supabase/supabase-js": "2.108.2",
     "cheerio": "1.2.0",
