@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Leaf, LoaderCircle, LockKeyhole, Mail } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { authClient } from "@/lib/neon/auth-client";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -21,9 +21,11 @@ export default function LoginForm() {
     setBusy(true);
     setMessage("");
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (error) throw error;
+      const { error } = await authClient.signIn.email({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (error) throw new Error(error.message || "הכניסה נכשלה");
       router.replace(next);
       router.refresh();
     } catch (error) {
@@ -37,14 +39,11 @@ export default function LoginForm() {
     setBusy(true);
     setMessage("");
     try {
-      const supabase = createClient();
-      const callback = new URL("/auth/callback", window.location.origin);
-      callback.searchParams.set("next", next);
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await authClient.signIn.social({
         provider: "google",
-        options: { redirectTo: callback.toString() },
+        callbackURL: next,
       });
-      if (error) throw error;
+      if (error) throw new Error(error.message || "הכניסה עם Google נכשלה");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "הכניסה עם Google נכשלה");
       setBusy(false);
@@ -57,7 +56,7 @@ export default function LoginForm() {
         <div className="login-brand"><span><Leaf /></span><div><strong>אורגנו</strong><small>Organic Growth OS</small></div></div>
         <p className="login-eyebrow">כניסה מאובטחת למערכת</p>
         <h1>ברוך הבא</h1>
-        <p className="login-intro">הגישה לאורגנו ניתנת רק למשתמשים שאושרו על ידי מנהל המערכת.</p>
+        <p className="login-intro">הגישה לאורגנו ניתנת רק למשתמשים שאושרו או הוזמנו על ידי מנהל המערכת.</p>
         {denied && <div className="login-alert" role="alert">החשבון אומת, אך עדיין לא קיבל הרשאה להשתמש במערכת. פנה למנהל המערכת.</div>}
         {message && <div className="login-alert" role="alert">{message}</div>}
         <button className="google-login" type="button" onClick={googleLogin} disabled={busy}>
