@@ -1,3 +1,4 @@
+// Client reports must contain a verified embedded website screenshot.
 import * as cheerio from "cheerio";
 import { NextRequest, NextResponse } from "next/server";
 import { enforceRateLimit, requestTooLarge } from "@/lib/rate-limit";
