@@ -16,7 +16,7 @@ for (const name of removeFiles) fs.rmSync(path.join(root, name), { force: true }
 for (const name of ['app', 'lib', 'types', 'public', 'components']) {
   fs.cpSync(path.join(source, name), path.join(root, name), { recursive: true });
 }
-for (const name of ['tsconfig.json', 'next-env.d.ts', 'next.config.mjs']) {
+for (const name of ['tsconfig.json', 'next-env.d.ts', 'next.config.mjs', 'proxy.ts']) {
   fs.copyFileSync(path.join(source, name), path.join(root, name));
 }
 console.log('Organo source prepared at repository root.');
