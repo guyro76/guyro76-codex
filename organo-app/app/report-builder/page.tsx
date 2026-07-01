@@ -14,12 +14,13 @@ import {
   ImageIcon,
   Leaf,
   LoaderCircle,
+  RefreshCw,
   Share2,
   Sparkles,
   Target,
   TrendingUp,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AnalysisCheck, AnalysisResult, Category } from "@/types/analyze";
 import "./report-builder.css";
 
@@ -41,7 +42,10 @@ type MonitorResult = {
   statusCode?: number;
   responseTimeMs?: number;
   loadState?: "online" | "limited" | "offline";
+  error?: string;
 };
+
+type MonitorState = "idle" | "loading" | "ready" | "failed";
 
 const categoryNames: Record<Category, string> = {
   SEO: "SEO",
@@ -149,28 +153,62 @@ function wrapText(context: CanvasRenderingContext2D, text: string, x: number, y:
   if (line && lineY <= y + lineHeight * 3) context.fillText(line.trim(), x, lineY);
 }
 
+async function waitForImages(container: HTMLElement) {
+  const images = Array.from(container.querySelectorAll("img"));
+  await Promise.all(images.map((image) => {
+    if (image.complete && image.naturalWidth > 0) return Promise.resolve();
+    return new Promise<void>((resolve, reject) => {
+      const timer = window.setTimeout(() => reject(new Error("אחת התמונות בדו״ח לא נטענה בזמן. נסה שוב.")), 15_000);
+      image.addEventListener("load", () => {
+        window.clearTimeout(timer);
+        resolve();
+      }, { once: true });
+      image.addEventListener("error", () => {
+        window.clearTimeout(timer);
+        reject(new Error("אחת התמונות בדו״ח נכשלה בטעינה. נסה צילום מחדש."));
+      }, { once: true });
+    });
+  }));
+}
+
 export default function ReportBuilderPage() {
   const [scan, setScan] = useState<StoredScan | null>(null);
   const [monitor, setMonitor] = useState<MonitorResult | null>(null);
+  const [monitorState, setMonitorState] = useState<MonitorState>("idle");
   const [clientName, setClientName] = useState("");
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState("");
   const reportRef = useRef<HTMLDivElement>(null);
 
+  const loadMonitor = useCallback(async (url: string) => {
+    setMonitorState("loading");
+    setMonitor(null);
+    setMessage("מצלם את האתר ומכין את הדו״ח. כפתורי ההפקה ייפתחו לאחר בדיקת התמונה.");
+    try {
+      const response = await fetch("/api/monitor", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url }),
+        cache: "no-store",
+      });
+      const data = await response.json() as MonitorResult;
+      if (!response.ok || !data.screenshot) throw new Error(data.error || "צילום האתר לא התקבל");
+      setMonitor(data);
+      setMonitorState("ready");
+      setMessage("צילום האתר הושלם ונבדק. הדו״ח מוכן להפקה.");
+    } catch (error) {
+      setMonitor(null);
+      setMonitorState("failed");
+      setMessage(error instanceof Error ? `צילום האתר נכשל: ${error.message}` : "צילום האתר נכשל. יש לנסות שוב.");
+    }
+  }, []);
+
   useEffect(() => {
     const current = loadLatestScan();
     setScan(current);
     setClientName(current?.clientName || "");
-    if (!current?.result?.finalUrl) return;
-    fetch("/api/monitor", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ url: current.result.finalUrl }),
-    })
-      .then((response) => response.json())
-      .then((data) => setMonitor(data as MonitorResult))
-      .catch(() => setMonitor(null));
-  }, []);
+    if (current?.result?.finalUrl) void loadMonitor(current.result.finalUrl);
+  }, [loadMonitor]);
 
   const result = scan?.result || null;
   const strengths = useMemo(() => result ? topStrengths(result) : [], [result]);
@@ -180,37 +218,49 @@ export default function ReportBuilderPage() {
     return [...strengths.slice(0, 2), ...issues.slice(0, 4)].map((check) => ({ check, image: evidenceImage(check, result) }));
   }, [issues, result, strengths]);
 
+  const canExport = monitorState === "ready" && Boolean(monitor?.screenshot) && !exporting;
+
   async function buildPdf() {
     if (!reportRef.current || !result) throw new Error("אין תוצאות סריקה מלאות להפקת הדו״ח");
+    if (monitorState === "loading") throw new Error("צילום האתר עדיין בהכנה. המתן מספר שניות ונסה שוב.");
+    if (!monitor?.screenshot || monitorState !== "ready") throw new Error("לא ניתן להפיק או לשלוח דוח ללקוח ללא צילום אתר תקין. לחץ על 'נסה צילום מחדש'.");
+
     setExporting(true);
     setMessage("");
     reportRef.current.classList.add("pdf-export");
     try {
+      await document.fonts?.ready;
+      await waitForImages(reportRef.current);
       const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas"), import("jspdf")]);
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 1.7,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#06170f",
-        logging: false,
-        windowWidth: Math.max(reportRef.current.scrollWidth, 1240),
-      });
-      const image = canvas.toDataURL("image/jpeg", 0.95);
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 6;
-      const width = pageWidth - margin * 2;
-      const height = canvas.height * width / canvas.width;
-      let offset = margin;
-      pdf.addImage(image, "JPEG", margin, offset, width, height, undefined, "FAST");
-      let remaining = height - (pageHeight - margin * 2);
-      while (remaining > 0) {
-        pdf.addPage();
-        offset = margin - (height - remaining);
-        pdf.addImage(image, "JPEG", margin, offset, width, height, undefined, "FAST");
-        remaining -= pageHeight - margin * 2;
+      const maxWidth = pageWidth - margin * 2;
+      const maxHeight = pageHeight - margin * 2;
+      const pages = Array.from(reportRef.current.querySelectorAll<HTMLElement>(".report-page"));
+      if (!pages.length) throw new Error("לא נמצאו עמודים להפקת הדו״ח");
+
+      for (let index = 0; index < pages.length; index += 1) {
+        const page = pages[index];
+        const canvas = await html2canvas(page, {
+          scale: 1.7,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#06170f",
+          logging: false,
+          windowWidth: Math.max(page.scrollWidth, 1240),
+        });
+        const image = canvas.toDataURL("image/jpeg", 0.95);
+        const ratio = Math.min(maxWidth / canvas.width, maxHeight / canvas.height);
+        const width = canvas.width * ratio;
+        const height = canvas.height * ratio;
+        const x = (pageWidth - width) / 2;
+        const y = (pageHeight - height) / 2;
+        if (index > 0) pdf.addPage();
+        pdf.addImage(image, "JPEG", x, y, width, height, undefined, "FAST");
       }
+
       const fileName = `Organo-Branded-Report-${host(result.finalUrl)}-${result.fetchedAt.slice(0, 10)}.pdf`;
       return { blob: pdf.output("blob"), fileName };
     } finally {
@@ -228,7 +278,7 @@ export default function ReportBuilderPage() {
       link.download = fileName;
       link.click();
       setTimeout(() => URL.revokeObjectURL(href), 1500);
-      setMessage("הדו״ח הממותג הופק בהצלחה וכולל את צילום האתר וצילומי התובנות.");
+      setMessage("הדו״ח הממותג הופק בהצלחה לאחר אימות צילום האתר וכל התמונות.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "הפקת ה-PDF נכשלה");
     }
@@ -249,8 +299,8 @@ export default function ReportBuilderPage() {
       link.href = href;
       link.download = fileName;
       link.click();
-      window.open(`https://wa.me/?text=${encodeURIComponent(`דו״ח אורגנו עבור ${clientName || host(result.finalUrl)} מוכן. מצורף קובץ PDF ממותג עם צילום האתר והתובנות.`)}`, "_blank", "noopener,noreferrer");
-      setMessage("הדו״ח הורד ו-WhatsApp נפתח. יש לצרף את הקובץ שהורד.");
+      window.open(`https://wa.me/?text=${encodeURIComponent(`דו״ח אורגנו עבור ${clientName || host(result.finalUrl)} מוכן. מצורף קובץ PDF ממותג ומאומת עם צילום האתר והתובנות.`)}`, "_blank", "noopener,noreferrer");
+      setMessage("הדו״ח המאומת הורד ו-WhatsApp נפתח. יש לצרף את הקובץ שהורד.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "שיתוף הדו״ח נכשל");
     }
@@ -265,10 +315,11 @@ export default function ReportBuilderPage() {
       <header className="builder-toolbar">
         <Link href="/"><ArrowRight /> חזרה לתוצאות הסריקה</Link>
         <div><label>שם הלקוח בדו״ח<input value={clientName} onChange={(event) => setClientName(event.target.value)} placeholder={host(result.finalUrl)} /></label></div>
-        <button onClick={downloadPdf} disabled={exporting}><FileDown />{exporting ? "מפיק דו״ח..." : "הורד PDF ממותג"}</button>
-        <button onClick={sharePdf} disabled={exporting}><Share2 />שלח ללקוח</button>
+        <button onClick={downloadPdf} disabled={!canExport}><FileDown />{exporting ? "מפיק דו״ח..." : monitorState === "loading" ? "ממתין לצילום..." : "הורד PDF ממותג"}</button>
+        <button onClick={sharePdf} disabled={!canExport}><Share2 />שלח ללקוח</button>
+        {monitorState === "failed" && <button onClick={() => void loadMonitor(result.finalUrl)} disabled={exporting}><RefreshCw />נסה צילום מחדש</button>}
       </header>
-      {message && <div className="builder-message">{message}</div>}
+      {message && <div className="builder-message">{monitorState === "loading" && <LoaderCircle />} {message}</div>}
 
       <div ref={reportRef} className="branded-report">
         <section className="report-cover report-page">
@@ -291,11 +342,13 @@ export default function ReportBuilderPage() {
             <article><Gauge /><span>ביצועים</span><b>{result.scores.performance}</b></article>
           </div>
           <div className="executive-copy"><h3>{statusText(result.scores.overall)}</h3><p>בבדיקה נמצאו <b>{strengths.length}</b> נקודות חוזק מרכזיות ו-<b>{issues.length}</b> נושאים מרכזיים לשיפור. הדו״ח מפריד בין מה שעובד היטב, מה שאינו תקין ומה מומלץ לבצע קודם.</p></div>
-          <div className="site-screenshot-block">
-            <div className="section-heading"><ImageIcon /><div><small>VISUAL EVIDENCE</small><h3>צילום דף הכניסה שנבדק</h3></div></div>
-            {monitor?.screenshot ? <img src={monitor.screenshot} alt={`צילום האתר ${monitor.title || host(result.finalUrl)}`} /> : <div className="screenshot-placeholder"><LoaderCircle /><p>צילום האתר לא היה זמין בזמן הפקת הדו״ח.</p></div>}
-            <div className="screenshot-meta"><span>מקור: {monitor?.screenshotSource || "לא זמין"}</span><span>HTTP: {monitor?.statusCode || result.response.status || "-"}</span><span>זמן תגובה: {monitor?.responseTimeMs ? `${monitor.responseTimeMs}ms` : `${result.durationMs}ms`}</span></div>
-          </div>
+          {monitor?.screenshot && (
+            <div className="site-screenshot-block">
+              <div className="section-heading"><ImageIcon /><div><small>VISUAL EVIDENCE</small><h3>צילום דף הכניסה שנבדק</h3></div></div>
+              <img src={monitor.screenshot} alt={`צילום האתר ${monitor.title || host(result.finalUrl)}`} />
+              <div className="screenshot-meta"><span>מקור: {monitor.screenshotSource || "צילום מאומת"}</span><span>HTTP: {monitor.statusCode || result.response.status || "-"}</span><span>זמן תגובה: {monitor.responseTimeMs ? `${monitor.responseTimeMs}ms` : `${result.durationMs}ms`}</span></div>
+            </div>
+          )}
         </section>
 
         <section className="report-page findings-page">
