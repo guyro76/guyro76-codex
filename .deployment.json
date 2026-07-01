@@ -1,8 +1,0 @@
-{
-  "timestamp": "2026-06-13T08:48:21Z",
-  "branch": "claude/authorityboost-ai-build-s8w237",
-  "nextauth_secret": "Wc7wgw3ihbvVsZmF4WcTSBMGbvo3A+pyBI0v7TRtOBY=",
-  "git_commit": "0c5ada418945e14fef647bb6b1d3c03692a58581",
-  "git_branch": "claude/authorityboost-ai-build-s8w237",
-  "notes": "Run 'vercel --prod' after setting environment variables in Vercel dashboard"
-}
