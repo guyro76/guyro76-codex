@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC = ["/login", "/auth/callback", "/forgot-password", "/reset-password", "/setup-required", "/about", "/faq", "/privacy", "/accessibility", "/security", "/terms", "/robots.txt", "/sitemap.xml", "/llms.txt"];
+const PUBLIC = ["/", "/api/status", "/api/analyze", "/api/generate", "/api/history", "/report-builder", "/monitor", "/login", "/auth/callback", "/forgot-password", "/reset-password", "/setup-required", "/about", "/faq", "/privacy", "/accessibility", "/security", "/terms", "/robots.txt", "/sitemap.xml", "/llms.txt"];
 const isPublic = (path: string) => PUBLIC.some((item) => path === item || path.startsWith(`${item}/`));
 
 export async function proxy(request: NextRequest) {
@@ -38,7 +38,8 @@ export async function proxy(request: NextRequest) {
   }
 
   const { data: profile } = await supabase.from("profiles").select("access_status,platform_role").eq("id", user.id).maybeSingle();
-  const owner = user.email?.toLowerCase() === "guyro76@gmail.com";
+  const configuredOwner = process.env.ORGANO_OWNER_EMAIL?.trim().toLowerCase();
+  const owner = Boolean(configuredOwner && user.email?.toLowerCase() === configuredOwner);
   if (!owner && profile?.access_status !== "active") {
     if (api) return NextResponse.json({ error: "User is not authorized" }, { status: 403 });
     return NextResponse.redirect(new URL("/login?error=not-authorized", request.url));
