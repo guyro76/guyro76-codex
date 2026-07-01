@@ -11,6 +11,7 @@ import {
   FileDown,
   Gauge,
   Globe2,
+  History,
   ImageIcon,
   Leaf,
   LoaderCircle,
@@ -47,6 +48,18 @@ type MonitorResult = {
 
 type MonitorState = "idle" | "loading" | "ready" | "failed";
 
+type SavedReport = {
+  id: string;
+  scanKey: string;
+  url: string;
+  score: number;
+  scanDate: string;
+  generatedAt: string;
+  clientName?: string;
+  fileName: string;
+  action: "downloaded" | "shared";
+};
+
 const categoryNames: Record<Category, string> = {
   SEO: "SEO",
   GEO: "GEO",
@@ -60,6 +73,12 @@ const priorityNames = { critical: "קריטי", high: "גבוה", medium: "בי�
 function loadLatestScan(): StoredScan | null {
   try {
     const modern = JSON.parse(localStorage.getItem("organo-history-v2") || "[]") as StoredScan[];
+    const selectedId = localStorage.getItem("organo-selected-scan-id");
+    if (selectedId) {
+      const selected = modern.find((scan) => scan.id === selectedId && scan.result);
+      localStorage.removeItem("organo-selected-scan-id");
+      if (selected) return selected;
+    }
     const complete = modern.find((scan) => scan.result);
     if (complete) return complete;
   } catch {}
@@ -220,6 +239,25 @@ export default function ReportBuilderPage() {
 
   const canExport = monitorState === "ready" && Boolean(monitor?.screenshot) && !exporting;
 
+  function rememberReport(fileName: string, action: SavedReport["action"]) {
+    if (!result) return;
+    const entry: SavedReport = {
+      id: crypto.randomUUID(),
+      scanKey: `${result.finalUrl}|${result.fetchedAt}`,
+      url: result.finalUrl,
+      score: result.scores.overall,
+      scanDate: result.fetchedAt,
+      generatedAt: new Date().toISOString(),
+      clientName: clientName || scan?.clientName || undefined,
+      fileName,
+      action,
+    };
+    try {
+      const existing = JSON.parse(localStorage.getItem("organo-report-history-v1") || "[]") as SavedReport[];
+      localStorage.setItem("organo-report-history-v1", JSON.stringify([entry, ...existing].slice(0, 50)));
+    } catch {}
+  }
+
   async function buildPdf() {
     if (!reportRef.current || !result) throw new Error("אין תוצאות סריקה מלאות להפקת הדו״ח");
     if (monitorState === "loading") throw new Error("צילום האתר עדיין בהכנה. המתן מספר שניות ונסה שוב.");
@@ -278,7 +316,8 @@ export default function ReportBuilderPage() {
       link.download = fileName;
       link.click();
       setTimeout(() => URL.revokeObjectURL(href), 1500);
-      setMessage("הדו״ח הממותג הופק בהצלחה לאחר אימות צילום האתר וכל התמונות.");
+      rememberReport(fileName, "downloaded");
+      setMessage("הדו״ח הממותג הופק ונשמר בהיסטוריית הדוחות.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "הפקת ה-PDF נכשלה");
     }
@@ -292,6 +331,8 @@ export default function ReportBuilderPage() {
       const nav = navigator as Navigator & { canShare?: (data?: ShareData) => boolean };
       if (navigator.share && nav.canShare?.({ files: [file] })) {
         await navigator.share({ title: `דו״ח אורגנו - ${clientName || host(result.finalUrl)}`, files: [file] });
+        rememberReport(fileName, "shared");
+        setMessage("הדו״ח נפתח לשיתוף ונשמר בהיסטוריית הדוחות.");
         return;
       }
       const href = URL.createObjectURL(blob);
@@ -300,20 +341,22 @@ export default function ReportBuilderPage() {
       link.download = fileName;
       link.click();
       window.open(`https://wa.me/?text=${encodeURIComponent(`דו״ח אורגנו עבור ${clientName || host(result.finalUrl)} מוכן. מצורף קובץ PDF ממותג ומאומת עם צילום האתר והתובנות.`)}`, "_blank", "noopener,noreferrer");
-      setMessage("הדו״ח המאומת הורד ו-WhatsApp נפתח. יש לצרף את הקובץ שהורד.");
+      rememberReport(fileName, "shared");
+      setMessage("הדו״ח המאומת נשמר בהיסטוריה, הורד ו-WhatsApp נפתח.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "שיתוף הדו״ח נכשל");
     }
   }
 
   if (!result) {
-    return <main className="report-builder-empty"><Leaf /><h1>אין סריקה מלאה להפקת דו״ח</h1><p>חזור למערכת, בצע ניתוח אתר ולאחר מכן לחץ על הכפתור "דו״ח PDF ממותג".</p><Link href="/"><ArrowRight /> חזרה לניתוח אתר</Link></main>;
+    return <main className="report-builder-empty"><Leaf /><h1>אין סריקה מלאה להפקת דו״ח</h1><p>חזור למערכת, בצע ניתוח אתר ולאחר מכן לחץ על הכפתור "דו״ח PDF ממותג".</p><div><Link href="/"><ArrowRight /> חזרה לניתוח אתר</Link><Link href="/history"><History /> היסטוריית דוחות</Link></div></main>;
   }
 
   return (
     <main className="report-builder-page">
       <header className="builder-toolbar">
         <Link href="/"><ArrowRight /> חזרה לתוצאות הסריקה</Link>
+        <Link href="/history"><History /> היסטוריית דוחות</Link>
         <div><label>שם הלקוח בדו״ח<input value={clientName} onChange={(event) => setClientName(event.target.value)} placeholder={host(result.finalUrl)} /></label></div>
         <button onClick={downloadPdf} disabled={!canExport}><FileDown />{exporting ? "מפיק דו״ח..." : monitorState === "loading" ? "ממתין לצילום..." : "הורד PDF ממותג"}</button>
         <button onClick={sharePdf} disabled={!canExport}><Share2 />שלח ללקוח</button>
