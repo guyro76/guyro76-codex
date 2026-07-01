@@ -91,6 +91,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AppChromeClient />
         <div id="main-content">{children}</div>
         <div className="global-action-stack">
+          <Link className="global-history-link" href="/history" aria-label="פתח היסטוריית דוחות וסריקות">
+            <span aria-hidden="true">H</span>
+            היסטוריית דוחות
+          </Link>
           <Link className="global-report-link" href="/report-builder" aria-label="הפקת דוח PDF ממותג מתוצאות הסריקה">
             <span aria-hidden="true">PDF</span>
             דו״ח PDF ממותג
