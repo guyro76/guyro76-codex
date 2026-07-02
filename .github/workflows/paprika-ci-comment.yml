@@ -1,10 +1,32 @@
-name: Paprika QA Manual Only
+name: Paprika Pull Request QA
 
 on:
-  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'paprika-app/**'
+      - '.github/workflows/paprika-ci-comment.yml'
+
+permissions:
+  contents: read
 
 jobs:
-  disabled:
+  qa:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - run: echo "Paprika QA is manual only."
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: paprika-app/package.json
+      - name: Install
+        working-directory: paprika-app
+        run: npm install
+      - name: TypeScript
+        working-directory: paprika-app
+        run: npm run typecheck
+      - name: Production build
+        working-directory: paprika-app
+        run: npm run build
