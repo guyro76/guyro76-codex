@@ -54,14 +54,28 @@ export async function loadCloudWorkspace(supabase: SupabaseClient, organizationI
   };
 }
 
-export async function resolveOrganizationId(supabase: SupabaseClient, userId: string) {
-  const { data, error } = await supabase
+export async function resolveOrganizationId(supabase: SupabaseClient, userId: string, email?: string) {
+  const membership = await supabase
     .from('memberships')
     .select('organization_id')
     .eq('user_id', userId)
     .order('created_at')
     .limit(1)
     .maybeSingle();
-  if (error) throw new Error(error.message);
-  return data?.organization_id as string | undefined;
+  if (membership.error) throw new Error(membership.error.message);
+  if (membership.data?.organization_id) return membership.data.organization_id as string;
+
+  const baseName = (email?.split('@')[0] || 'Paprika').replace(/[^a-zA-Z0-9_-]/g, '') || 'Paprika';
+  const slug = `${baseName.toLowerCase()}-${userId.slice(0, 8)}`;
+  const organization = await supabase
+    .from('organizations')
+    .insert({ name: `${baseName} Agency`, slug, owner_id: userId, plan: 'trial' })
+    .select('id')
+    .single();
+  if (organization.error || !organization.data) throw new Error(organization.error?.message || 'לא ניתן ליצור סביבת סוכנות.');
+
+  const membershipInsert = await supabase.from('memberships').insert({ organization_id: organization.data.id, user_id: userId, role: 'owner' });
+  if (membershipInsert.error) throw new Error(membershipInsert.error.message);
+  await supabase.from('subscriptions').insert({ organization_id: organization.data.id, status: 'trial', plan: 'trial' });
+  return organization.data.id as string;
 }
