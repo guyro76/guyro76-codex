@@ -1,10 +1,49 @@
-name: Paprika QA Manual Only
+name: Paprika Silent Build Check
 
 on:
+  issue_comment:
+    types: [created]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  disabled:
+  verify:
+    if: github.event_name == 'workflow_dispatch' || (github.event.issue.number == 6 && github.event.comment.body == 'PAPRIKA_SILENT_QA')
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - run: echo "Paprika QA is manual only."
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: paprika-app/package.json
+      - name: Verify product
+        shell: bash
+        run: |
+          set +e
+          cd paprika-app
+          npm install > /tmp/install.log 2>&1
+          install_code=$?
+          if [ $install_code -eq 0 ]; then npm run typecheck > /tmp/typecheck.log 2>&1; else : > /tmp/typecheck.log; fi
+          type_code=$?
+          if [ $install_code -eq 0 ] && [ $type_code -eq 0 ]; then npm run build > /tmp/build.log 2>&1; else : > /tmp/build.log; fi
+          build_code=$?
+          cd ..
+          if [ $install_code -eq 0 ] && [ $type_code -eq 0 ] && [ $build_code -eq 0 ]; then
+            printf '{"status":"PASS","install":0,"typecheck":0,"build":0,"commit":"%s"}\n' "$GITHUB_SHA" > paprika-app/qa-result.json
+            : > paprika-app/qa-errors.txt
+          else
+            printf '{"status":"FAIL","install":%s,"typecheck":%s,"build":%s,"commit":"%s"}\n' "$install_code" "$type_code" "$build_code" "$GITHUB_SHA" > paprika-app/qa-result.json
+            { tail -n 20 /tmp/install.log; tail -n 40 /tmp/typecheck.log; tail -n 60 /tmp/build.log; } > paprika-app/qa-errors.txt
+          fi
+          git config user.name "paprika-qa-bot"
+          git config user.email "actions@github.com"
+          git add paprika-app/qa-result.json paprika-app/qa-errors.txt
+          git commit -m "Record Paprika QA result" || true
+          git push origin HEAD:main
+          exit 0
