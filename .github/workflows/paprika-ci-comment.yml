@@ -1,8 +1,12 @@
 name: Paprika Build QA
 
 on:
-  issue_comment:
-    types: [created]
+  push:
+    branches: [main]
+    paths:
+      - 'paprika-app/**'
+      - '.github/workflows/paprika-ci-comment.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -10,13 +14,10 @@ permissions:
 
 jobs:
   qa:
-    if: github.event.issue.number == 5 && github.event.comment.body == 'PAPRIKA_QA_RUN'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
 
       - uses: actions/setup-node@v4
         with:
@@ -37,12 +38,12 @@ jobs:
           build_code=$?
 
           if [ $install_code -eq 0 ] && [ $type_code -eq 0 ] && [ $build_code -eq 0 ]; then
-            printf 'PAPRIKA_QA_RESULT:PASS\n\n- npm install: PASS\n- TypeScript: PASS\n- Next.js build: PASS\n' > /tmp/result.md
+            printf 'PAPRIKA_QA_RESULT:PASS\n\n- npm install: PASS\n- TypeScript: PASS\n- Next.js build: PASS\n- Commit: %s\n' "$GITHUB_SHA" > /tmp/result.md
           else
-            printf 'PAPRIKA_QA_RESULT:FAIL\n\n```text\n' > /tmp/result.md
+            printf 'PAPRIKA_QA_RESULT:FAIL\n\nCommit: %s\n\n```text\n' "$GITHUB_SHA" > /tmp/result.md
             tail -n 12 /tmp/paprika-install.log >> /tmp/result.md
-            tail -n 20 /tmp/paprika-typecheck.log >> /tmp/result.md
-            tail -n 28 /tmp/paprika-build.log >> /tmp/result.md
+            tail -n 24 /tmp/paprika-typecheck.log >> /tmp/result.md
+            tail -n 32 /tmp/paprika-build.log >> /tmp/result.md
             printf '\n```\n' >> /tmp/result.md
           fi
           exit 0
@@ -51,10 +52,3 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/5/comments" -F body=@/tmp/result.md
-
-      - name: Remove trigger comment
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-          COMMENT_ID: ${{ github.event.comment.id }}
-        run: gh api --method DELETE "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}"
