@@ -2,5 +2,8 @@
   "framework": "nextjs",
   "installCommand": "cd paprika-app && npm install",
   "buildCommand": "cd paprika-app && npm run build",
-  "outputDirectory": "paprika-app/.next"
+  "outputDirectory": "paprika-app/.next",
+  "git": {
+    "deploymentEnabled": false
+  }
 }
