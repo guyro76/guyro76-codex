@@ -1,4 +1,4 @@
-name: Paprika Silent Build Check
+name: Paprika Build and Release
 
 on:
   issue_comment:
@@ -47,3 +47,27 @@ jobs:
           git commit -m "Record Paprika QA result" || true
           git push origin HEAD:main
           exit 0
+
+  release:
+    if: github.event_name == 'issue_comment' && github.event.issue.number == 6 && github.event.comment.body == 'PAPRIKA_RELEASE_APPROVED'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Enable Vercel deployment
+        shell: bash
+        run: |
+          cat > vercel.json <<'JSON'
+          {
+            "framework": "nextjs",
+            "installCommand": "cd paprika-app && npm install",
+            "buildCommand": "cd paprika-app && npm run build",
+            "outputDirectory": "paprika-app/.next"
+          }
+          JSON
+          git config user.name "paprika-release-bot"
+          git config user.email "actions@github.com"
+          git add vercel.json
+          git commit -m "Release QA-approved Paprika build"
+          git push origin HEAD:main
