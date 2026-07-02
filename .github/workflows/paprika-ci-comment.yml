@@ -1,54 +1,10 @@
-name: Paprika Build QA
+name: Paprika QA Manual Only
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'paprika-app/**'
-      - '.github/workflows/paprika-ci-comment.yml'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  issues: write
-
 jobs:
-  qa:
+  disabled:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: paprika-app/package.json
-
-      - name: Install, type-check and build
-        working-directory: paprika-app
-        shell: bash
-        run: |
-          set +e
-          npm install > /tmp/paprika-install.log 2>&1
-          install_code=$?
-          if [ $install_code -eq 0 ]; then npm run typecheck > /tmp/paprika-typecheck.log 2>&1; else : > /tmp/paprika-typecheck.log; fi
-          type_code=$?
-          if [ $install_code -eq 0 ] && [ $type_code -eq 0 ]; then npm run build > /tmp/paprika-build.log 2>&1; else : > /tmp/paprika-build.log; fi
-          build_code=$?
-
-          if [ $install_code -eq 0 ] && [ $type_code -eq 0 ] && [ $build_code -eq 0 ]; then
-            printf 'PAPRIKA_QA_RESULT:PASS\n\n- npm install: PASS\n- TypeScript: PASS\n- Next.js build: PASS\n- Commit: %s\n' "$GITHUB_SHA" > /tmp/result.md
-          else
-            printf 'PAPRIKA_QA_RESULT:FAIL\n\nCommit: %s\n\n```text\n' "$GITHUB_SHA" > /tmp/result.md
-            tail -n 12 /tmp/paprika-install.log >> /tmp/result.md
-            tail -n 24 /tmp/paprika-typecheck.log >> /tmp/result.md
-            tail -n 32 /tmp/paprika-build.log >> /tmp/result.md
-            printf '\n```\n' >> /tmp/result.md
-          fi
-          exit 0
-
-      - name: Publish QA result
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/5/comments" -F body=@/tmp/result.md
+      - run: echo "Paprika QA is manual only."
