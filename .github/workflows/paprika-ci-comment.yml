@@ -1,0 +1,63 @@
+name: Paprika Build QA
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  qa:
+    if: github.event.issue.number == 4 && github.event.comment.body == 'PAPRIKA_QA_RUN'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: paprika-app/package.json
+
+      - name: Install and build without failing notification loop
+        id: verify
+        working-directory: paprika-app
+        shell: bash
+        run: |
+          set +e
+          npm install > /tmp/paprika-install.log 2>&1
+          install_code=$?
+          if [ $install_code -eq 0 ]; then npm run typecheck > /tmp/paprika-typecheck.log 2>&1; else : > /tmp/paprika-typecheck.log; fi
+          type_code=$?
+          if [ $install_code -eq 0 ] && [ $type_code -eq 0 ]; then npm run build > /tmp/paprika-build.log 2>&1; else : > /tmp/paprika-build.log; fi
+          build_code=$?
+          if [ $install_code -eq 0 ] && [ $type_code -eq 0 ] && [ $build_code -eq 0 ]; then
+            echo 'result=PASS' >> "$GITHUB_OUTPUT"
+            echo 'details=Install, TypeScript and Next.js build passed.' >> "$GITHUB_OUTPUT"
+          else
+            echo 'result=FAIL' >> "$GITHUB_OUTPUT"
+            { tail -n 12 /tmp/paprika-install.log; tail -n 18 /tmp/paprika-typecheck.log; tail -n 24 /tmp/paprika-build.log; } | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/%/%25/g' > /tmp/details.txt
+            echo "details=$(cat /tmp/details.txt)" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
+
+      - name: Publish QA result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ steps.verify.outputs.result }}
+          DETAILS: ${{ steps.verify.outputs.details }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/4/comments" -f body="PAPRIKA_QA_RESULT:${RESULT}\n${DETAILS}"
+
+      - name: Remove trigger comment
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: gh api --method DELETE "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}"
