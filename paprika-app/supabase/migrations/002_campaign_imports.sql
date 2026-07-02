@@ -1,5 +1,6 @@
 create table if not exists public.data_imports (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   client_id uuid references public.clients(id) on delete set null,
   platform text not null default 'unknown',
@@ -15,6 +16,7 @@ create table if not exists public.data_imports (
 
 create table if not exists public.campaign_rows (
   id bigint generated always as identity primary key,
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   import_id uuid not null references public.data_imports(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   client_id uuid references public.clients(id) on delete set null,
@@ -40,6 +42,6 @@ create table if not exists public.campaign_rows (
   created_at timestamptz not null default now()
 );
 
-create index if not exists data_imports_user_created_idx on public.data_imports(user_id, created_at desc);
+create index if not exists data_imports_org_created_idx on public.data_imports(organization_id, created_at desc);
 create index if not exists campaign_rows_import_idx on public.campaign_rows(import_id);
-create index if not exists campaign_rows_user_platform_idx on public.campaign_rows(user_id, platform);
+create index if not exists campaign_rows_org_platform_idx on public.campaign_rows(organization_id, platform);
