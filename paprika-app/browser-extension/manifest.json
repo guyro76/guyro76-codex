@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Paprika Campaign Inspector",
+  "version": "0.1.0",
+  "description": "חלונית צד לניתוח המסך הפתוח ב-Google Ads וב-Meta Ads Manager.",
+  "permissions": ["activeTab", "storage", "sidePanel", "downloads"],
+  "host_permissions": [
+    "https://ads.google.com/*",
+    "https://business.facebook.com/*",
+    "https://www.facebook.com/adsmanager/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "פתיחת Paprika Inspector" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://ads.google.com/*",
+        "https://business.facebook.com/*",
+        "https://www.facebook.com/adsmanager/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
