@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Paprika Campaign Inspector</title>
+  <style>
+    :root{color-scheme:light;--red:#b91c1c;--orange:#f97316;--cream:#fff7ed;--ink:#351817;--muted:#765d57}
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at 0 0,#ffd8c0,transparent 34%),linear-gradient(135deg,#fffaf6,#ffede2);min-height:100vh;padding:14px}
+    .brand,.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{margin-bottom:15px}.logo{width:43px;height:43px;border-radius:52% 44% 58% 42%;background:linear-gradient(140deg,#ff6248,#a91515);transform:rotate(8deg);box-shadow:0 9px 22px #8f17172b}.brand h1{font-size:19px;margin:0}.brand small{color:var(--red);font-weight:800}.card{border:1px solid #ffffffd9;border-radius:18px;background:#ffffffba;backdrop-filter:blur(18px);box-shadow:0 14px 40px #7c2d1214;padding:14px;margin-bottom:12px}.btn{width:100%;border:0;border-radius:13px;padding:11px 13px;font-weight:900;cursor:pointer}.primary{background:linear-gradient(115deg,var(--red),var(--orange));color:white}.secondary{background:white;color:var(--ink);border:1px solid #fed7aa;margin-top:8px}.status{font-size:12px;line-height:1.6;color:var(--muted);margin:8px 0 0}.pill{display:inline-flex;border-radius:999px;background:#ffedd5;padding:4px 8px;font-size:10px;font-weight:900;color:#9a3412}.metric{display:grid;grid-template-columns:1fr auto;gap:7px;padding:8px 0;border-bottom:1px solid #f7dfd4;font-size:12px}.metric:last-child{border:0}.tables{max-height:340px;overflow:auto}.table-card{padding:9px;border-radius:12px;background:#fff7ed;margin-top:8px;font-size:11px}.table-card b{display:block;margin-bottom:5px}.preview{direction:ltr;text-align:left;white-space:pre-wrap;overflow:auto;max-height:130px;font-family:monospace;font-size:9px;color:#6b4d46}.danger{color:#991b1b}.success{color:#166534}
+  </style>
+</head>
+<body>
+  <div class="brand"><div><h1>פפריקה אינספקטור</h1><small>Campaign Inspector</small></div><div class="logo"></div></div>
+  <div class="card">
+    <div class="row"><b>המסך הנוכחי</b><span id="provider" class="pill">לא זוהה</span></div>
+    <p id="pageTitle" class="status">פתח Google Ads או Meta Ads Manager.</p>
+    <button id="capture" class="btn primary">סריקת הטבלה הגלויה</button>
+    <button id="download" class="btn secondary" disabled>הורדת Snapshot כ-JSON</button>
+    <button id="copyCsv" class="btn secondary" disabled>העתקת הטבלה כ-TSV</button>
+  </div>
+  <div class="card">
+    <b>מה נאסף?</b>
+    <div class="metric"><span>טבלאות גלויות</span><strong id="tableCount">0</strong></div>
+    <div class="metric"><span>שורות</span><strong id="rowCount">0</strong></div>
+    <div class="metric"><span>כותרות מסך</span><strong id="headingCount">0</strong></div>
+    <p class="status">התוסף אינו אוסף סיסמאות, שדות טופס או טקסט חופשי מכל הדף.</p>
+  </div>
+  <div class="card tables">
+    <b>תצוגה מקדימה</b>
+    <div id="preview" class="status">עדיין לא בוצעה סריקה.</div>
+  </div>
+  <p id="message" class="status"></p>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
