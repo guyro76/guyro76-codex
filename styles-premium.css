@@ -912,6 +912,80 @@ p {
    DARK MODE
    ============================================ */
 
+/* ============================================
+   LOADING & STATES
+   ============================================ */
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-primary[disabled] {
+    pointer-events: none;
+}
+
+/* ============================================
+   ANIMATIONS & POLISH
+   ============================================ */
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
 @media (prefers-color-scheme: dark) {
     :root {
         --bg-base: #0f1419;
@@ -922,6 +996,10 @@ p {
         --text-tertiary: #a0aec0;
         --border: #2d3748;
         --border-light: #374151;
+    }
+
+    body {
+        background: linear-gradient(180deg, #0f1419 0%, #1a202c 100%);
     }
 
     .navbar {
@@ -960,5 +1038,38 @@ p {
     .gallery-container {
         background: var(--bg-secondary);
         border-color: var(--border);
+    }
+
+    .style-card {
+        background: var(--bg-secondary);
+        border-color: var(--border);
+    }
+
+    .style-card:hover,
+    .style-card.selected {
+        background: var(--bg-tertiary);
+    }
+
+    .color-option {
+        box-shadow: var(--shadow-md), inset 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+    .navbar,
+    .footer,
+    .cta-section,
+    .design-options,
+    .btn-primary,
+    .btn-small {
+        display: none;
+    }
+
+    .gallery-item {
+        break-inside: avoid;
     }
 }
