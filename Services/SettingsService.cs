@@ -41,7 +41,7 @@ public class SettingsService : ISettingsService
     {
         return new Dictionary<string, object>
         {
-            { "resultMode", ResultMode.PreviewBeforeReplace.ToString() },
+            { "resultMode", ResultMode.ReplaceInPlace.ToString() },
             { "restoreClipboard", true },
             { "translationProvider", TranslationProvider.None.ToString() },
             { "translationApiKey", "" },
@@ -57,8 +57,8 @@ public class SettingsService : ISettingsService
 
     public ResultMode GetResultMode()
     {
-        var value = GetSetting("resultMode", ResultMode.PreviewBeforeReplace.ToString());
-        return Enum.TryParse<ResultMode>(value, out var result) ? result : ResultMode.PreviewBeforeReplace;
+        var value = GetSetting("resultMode", ResultMode.ReplaceInPlace.ToString());
+        return Enum.TryParse<ResultMode>(value, out var result) ? result : ResultMode.ReplaceInPlace;
     }
 
     public void SetResultMode(ResultMode mode) => SetSetting("resultMode", mode.ToString());

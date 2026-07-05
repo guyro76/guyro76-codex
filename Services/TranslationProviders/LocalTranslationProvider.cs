@@ -2,12 +2,6 @@ namespace LangFlipDesktop.Services.TranslationProviders;
 
 using LangFlipDesktop.Core.Interfaces;
 
-public interface ITranslationProvider
-{
-    Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage);
-    Task<bool> TestConnectionAsync();
-}
-
 public class LocalTranslationProvider : ITranslationProvider
 {
     private readonly Dictionary<string, string> _hebrewEnglishDict = new()
@@ -80,7 +74,7 @@ public class LocalTranslationProvider : ITranslationProvider
         { "דג", "fish" },
         { "פרי", "fruit" },
         { "ירקות", "vegetables" },
-        { "מים", "water" },
+        { "חלב", "milk" },
         { "תה", "tea" },
         { "קפה", "coffee" },
         { "יין", "wine" },
@@ -110,7 +104,6 @@ public class LocalTranslationProvider : ITranslationProvider
         // Time
         { "זמן", "time" },
         { "יום", "day" },
-        { "לילה", "night" },
         { "שבוע", "week" },
         { "חודש", "month" },
         { "שנה", "year" },
@@ -213,19 +206,12 @@ public class LocalTranslationProvider : ITranslationProvider
         // Basic improvements for Hebrew
         if (language == "Hebrew")
         {
-            var improved = text;
+            var improved = text.Trim();
 
-            // Fix common typing mistakes
-            improved = improved.Replace("לא", "לא "); // Add space after negation
-            improved = improved.Replace("ב", "ב "); // Add space after prefix
-            improved = System.Text.RegularExpressions.Regex.Replace(improved, @"  +", " "); // Remove extra spaces
-            improved = improved.Trim();
-
-            // Capitalize first letter if Hebrew
-            if (!string.IsNullOrEmpty(improved))
-            {
-                improved = char.ToUpper(improved[0]) + improved.Substring(1);
-            }
+            // Remove extra spaces and fix spacing around punctuation
+            improved = System.Text.RegularExpressions.Regex.Replace(improved, @"  +", " ");
+            improved = System.Text.RegularExpressions.Regex.Replace(improved, @"\s+([,.!?:;])", "$1");
+            improved = System.Text.RegularExpressions.Regex.Replace(improved, @"([,.!?:;])(?=\S)", "$1 ");
 
             return improved;
         }
@@ -259,8 +245,14 @@ public class LocalTranslationProvider : ITranslationProvider
 
         if (source == "English" && target == "Hebrew")
         {
-            // Reverse dictionary
-            return _hebrewEnglishDict.ToDictionary(x => x.Value, x => x.Key);
+            // Reverse dictionary - first Hebrew word wins when several map to the same English word
+            var reversed = new Dictionary<string, string>();
+            foreach (var pair in _hebrewEnglishDict)
+            {
+                if (!reversed.ContainsKey(pair.Value))
+                    reversed[pair.Value] = pair.Key;
+            }
+            return reversed;
         }
 
         return new Dictionary<string, string>();

@@ -38,6 +38,12 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true
           -o publish
 
+      - name: Add installer scripts to package
+        shell: pwsh
+        run: |
+          Copy-Item Install-LangFlip.ps1 publish\
+          Copy-Item Install-LangFlip.bat publish\
+
       - name: Create ZIP package
         shell: pwsh
         run: Compress-Archive -Path publish\* -DestinationPath LangFlip-Desktop-win-x64.zip
@@ -51,28 +57,36 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: "קליקשפה LangFlip Desktop v1.0.0"
+          tag_name: v1.1.0
+          name: "קליקשפה LangFlip Desktop v1.1.0"
           body: |
-            ## קליקשפה - LangFlip Desktop
+            ## קליקשפה - LangFlip Desktop v1.1.0
 
             אפליקציית Windows לתיקון שפת מקלדת (עברית ↔ אנגלית), תרגום ושיפור ניסוח.
+
+            ### 🆕 מה חדש בגרסה 1.1.0
+            - תיקון בעיית "לא קורה כלום" — ההחלפה עובדת עכשיו מיידית
+            - ברירת מחדל חדשה: החלפה מיידית במקום (כמו LangOver)
+            - מופעלת רק פעם אחת (Single Instance)
+            - תרגום ושיפור ניסוח בחינם — ללא צורך במפתח API
+            - קובץ ההתקנה כלול ב-ZIP ומסיר גרסה קודמת אוטומטית
 
             ### 📥 התקנה
             1. הורידו את הקובץ `LangFlip-Desktop-win-x64.zip`
             2. חלצו את התיקייה (Extract All)
-            3. הפעילו את `LangFlipDesktop.exe`
-            4. זהו! לא צריך להתקין .NET — הכל כלול בקובץ.
+            3. הפעילו את `Install-LangFlip.bat` כמנהל (קליק ימני → הפעל כמנהל)
+            4. זהו! לא צריך להתקין .NET — הכל כלול.
 
             ### 🧪 בדיקה מהירה
-            - פתחו פנקס רשימות, הקלידו `akuo`, סמנו ולחצו **Ctrl+Alt+H** → תקבלו `שלום`
+            - פתחו פנקס רשימות, הקלידו `akuo`, סמנו ולחצו **Ctrl+Alt+H** → הטקסט יוחלף ל`שלום` מיד
 
             ### ⌨️ קיצורי מקלדת
             - `Ctrl+Alt+H` — הפוך לעברית
             - `Ctrl+Alt+E` — הפוך לאנגלית
-            - `Ctrl+Alt+T` — תרגום (דורש מפתח OpenAI בהגדרות)
+            - `Ctrl+Alt+T` — תרגום
+            - `Ctrl+Alt+I` — שיפור ניסוח
             - `Ctrl+Alt+Space` — תפריט צף
 
             ---
-            **© 2026 תוכנן ונבנה ע״י גיא רוזנברג — כל הזכויות שמורות**
+            **© 2026 נבנה ותוכנן על ידי גיא רוזנברג — כל הזכויות שמורות**
           files: LangFlip-Desktop-win-x64.zip

@@ -1,13 +1,29 @@
 namespace LangFlipDesktop.Services;
 
-using System.Windows.Automation;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using System.Windows.Automation.Text;
 using LangFlipDesktop.Core.Interfaces;
 
 public class SelectedTextService : ISelectedTextService
 {
     private readonly IClipboardService _clipboardService;
+
+    // The window that had focus when the hotkey was pressed.
+    // Replacement must go back to this window, not to our own preview dialog.
+    private IntPtr _targetWindow = IntPtr.Zero;
+
+    private const int VK_SHIFT = 0x10;
+    private const int VK_CONTROL = 0x11;
+    private const int VK_MENU = 0x12; // Alt
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int vKey);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     public SelectedTextService(IClipboardService clipboardService)
     {
@@ -16,14 +32,13 @@ public class SelectedTextService : ISelectedTextService
 
     public async Task<string?> GetSelectedTextAsync()
     {
-        // Try UI Automation first
-        var uiAutomationText = TryGetViaUIAutomation();
-        if (!string.IsNullOrEmpty(uiAutomationText))
-        {
-            return uiAutomationText;
-        }
+        // Remember the window the user is typing in (Word, Notepad, browser...)
+        _targetWindow = GetForegroundWindow();
 
-        // Fallback to clipboard method
+        // Critical: the user is still physically holding Ctrl+Alt from the hotkey.
+        // Sending Ctrl+C now would arrive as Ctrl+Alt+C and copy nothing.
+        await WaitForModifierReleaseAsync();
+
         return await TryGetViaClipboardAsync();
     }
 
@@ -31,38 +46,25 @@ public class SelectedTextService : ISelectedTextService
     {
         try
         {
-            var element = AutomationElement.FocusedElement;
-            if (element == null)
-                return false;
-
-            // Try to use ValuePattern to replace directly
-            object? pattern;
-            if (element.TryGetCurrentPattern(ValuePattern.Pattern, out pattern) && pattern is ValuePattern valuePattern)
+            // Give focus back to the original window (the preview dialog may have stolen it)
+            if (_targetWindow != IntPtr.Zero)
             {
-                try
-                {
-                    valuePattern.SetValue(newText);
-                    return true;
-                }
-                catch
-                {
-                    // Fallback if SetValue fails
-                }
+                SetForegroundWindow(_targetWindow);
+                await Task.Delay(150);
             }
 
-            // Fallback: delete selected text and paste new text
+            await WaitForModifierReleaseAsync();
+
             var savedClipboard = _clipboardService.SaveAndClear();
             _clipboardService.SetClipboardText(newText);
-            await Task.Delay(50);
+            await Task.Delay(100);
 
-            // Delete selected text (Ctrl+X cuts it)
-            SendKey("^x");
-            await Task.Delay(50);
-
-            // Paste the new text (Ctrl+V)
+            // The original selection is still active in the target window,
+            // so a single paste replaces it.
             SendKey("^v");
-            await Task.Delay(50);
 
+            // Give the target application time to consume the clipboard before restoring it
+            await Task.Delay(300);
             _clipboardService.Restore(savedClipboard);
             return true;
         }
@@ -72,28 +74,19 @@ public class SelectedTextService : ISelectedTextService
         }
     }
 
-    private string? TryGetViaUIAutomation()
+    private static async Task WaitForModifierReleaseAsync()
     {
-        try
+        // Wait up to ~1.5s for Ctrl/Alt/Shift to be physically released
+        for (var i = 0; i < 50; i++)
         {
-            var element = AutomationElement.FocusedElement;
-            if (element == null)
-                return null;
+            var ctrlDown = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+            var altDown = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+            var shiftDown = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
 
-            var textPattern = element.GetCurrentPattern(TextPattern.Pattern) as TextPattern;
-            if (textPattern?.DocumentRange == null)
-                return null;
+            if (!ctrlDown && !altDown && !shiftDown)
+                return;
 
-            var selection = textPattern.GetSelection();
-            if (selection == null || selection.Length == 0)
-                return null;
-
-            var selectedText = selection[0].GetText(-1);
-            return !string.IsNullOrEmpty(selectedText) ? selectedText : null;
-        }
-        catch
-        {
-            return null;
+            await Task.Delay(30);
         }
     }
 
@@ -105,21 +98,16 @@ public class SelectedTextService : ISelectedTextService
 
             await Task.Delay(100);
 
-            // Simulate Ctrl+C
+            // Simulate Ctrl+C to copy the current selection
             SendKey("^c");
 
-            await Task.Delay(100);
+            await Task.Delay(150);
 
             var selectedText = _clipboardService.GetClipboardText();
 
-            if (string.IsNullOrEmpty(selectedText))
-            {
-                _clipboardService.Restore(previousContent);
-                return null;
-            }
-
             _clipboardService.Restore(previousContent);
-            return selectedText;
+
+            return string.IsNullOrEmpty(selectedText) ? null : selectedText;
         }
         catch
         {

@@ -52,24 +52,9 @@
         </Style>
     </Window.Resources>
 
-    <StackPanel Orientation="Vertical">
-        <!-- Original -->
-        <TextBlock Text="המקור:" FontSize="14" FontWeight="Bold" Foreground="#38D5FF" Margin="16,16,16,4" />
-        <TextBox x:Name="OriginalTextBox" Style="{StaticResource PreviewTextBox}" Height="150" />
-
-        <!-- Result -->
-        <TextBlock Text="התוצאה:" FontSize="14" FontWeight="Bold" Foreground="#38D5FF" Margin="16,16,16,4" />
-        <TextBox x:Name="ResultTextBox" Style="{StaticResource PreviewTextBox}" Height="150" />
-
-        <!-- Buttons -->
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,16">
-            <Button Content="החלף במקום" Style="{StaticResource PreviewButton}" Click="Button_Replace" />
-            <Button Content="העתק" Style="{StaticResource PreviewButton}" Background="#4FFF00" Foreground="#000000" Click="Button_Copy" />
-            <Button Content="ביטול" Style="{StaticResource PreviewButton}" Background="#333333" Click="Button_Cancel" />
-        </StackPanel>
-
-        <!-- Copyright Footer -->
-        <Border Background="#0B1F4D" BorderBrush="#2563EB" BorderThickness="0,1,0,0" Padding="12,12,12,12">
+    <DockPanel LastChildFill="True">
+        <!-- Copyright Footer - always pinned to the bottom -->
+        <Border DockPanel.Dock="Bottom" Background="#0B1F4D" BorderBrush="#2563EB" BorderThickness="0,1,0,0" Padding="8,8,8,8">
             <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                 <TextBlock Text="© נבנה ותוכנן על ידי גיא רוזנברג 2026"
                            FontSize="9" FontWeight="Bold" Foreground="#4FFF00"
@@ -79,5 +64,28 @@
                            TextAlignment="Center"/>
             </StackPanel>
         </Border>
-    </StackPanel>
+
+        <!-- Buttons - always visible above the footer -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,8">
+            <Button Content="החלף במקום" Style="{StaticResource PreviewButton}" Click="Button_Replace" />
+            <Button Content="העתק" Style="{StaticResource PreviewButton}" Background="#4FFF00" Foreground="#000000" Click="Button_Copy" />
+            <Button Content="ביטול" Style="{StaticResource PreviewButton}" Background="#333333" Click="Button_Cancel" />
+        </StackPanel>
+
+        <!-- Text areas share the remaining space -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="המקור:" FontSize="14" FontWeight="Bold" Foreground="#38D5FF" Margin="16,12,16,4" />
+            <TextBox Grid.Row="1" x:Name="OriginalTextBox" Style="{StaticResource PreviewTextBox}" />
+
+            <TextBlock Grid.Row="2" Text="התוצאה:" FontSize="14" FontWeight="Bold" Foreground="#38D5FF" Margin="16,12,16,4" />
+            <TextBox Grid.Row="3" x:Name="ResultTextBox" Style="{StaticResource PreviewTextBox}" />
+        </Grid>
+    </DockPanel>
 </Window>
