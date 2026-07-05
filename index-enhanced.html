@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אלבומיקס AI Premium - עיצוב אלבומים חכם</title>
+    <link rel="stylesheet" href="styles-premium.css">
+    <style>
+        /* Enhanced features styling */
+        .feature-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: linear-gradient(135deg, #ff6b9d 0%, #ffa502 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .live-preview-indicator {
+            position: fixed;
+            bottom: 300px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            background: white;
+            z-index: 999;
+            border: 2px solid #667eea;
+            overflow: hidden;
+            display: none;
+        }
+
+        .advanced-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+            border: 2px solid #667eea;
+            padding: 16px;
+            max-height: 500px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .keyboard-shortcut {
+            display: inline-block;
+            background: #f5f7ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+            font-weight: 600;
+            margin: 0 2px;
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="navbar-container">
+            <div class="logo">
+                <span class="logo-icon">🎨</span>
+                <span class="logo-text">אלבומיקס AI</span>
+                <span class="feature-badge">Premium+</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#create" class="nav-link">צור אלבום</a>
+                <a href="#gallery" class="nav-link">גלריה</a>
+                <a href="#templates" class="nav-link">תבניות</a>
+                <a href="#about" class="nav-link">אודות</a>
+            </nav>
+            <button class="cta-button">התחל עכשיו</button>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">עיצוב אלבומים מדהימים בשנייה</h1>
+            <p class="hero-subtitle">
+                AI-powered album designer עם עיצובים מקצועיים, אפקטים חזותיים,
+                ותבניות בלתי מוגבלות. עלה תמונות וצפה בקסם מתרחש!
+            </p>
+            <button class="btn-primary btn-lg">🚀 בואו נתחיל</button>
+            <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-tertiary);">
+                💡 טיפ: הקש <span class="keyboard-shortcut">Ctrl+Z</span> לביטול ו-<span class="keyboard-shortcut">Ctrl+Shift+Z</span> להחזרה
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="gradient-blob blob-1"></div>
+            <div class="gradient-blob blob-2"></div>
+            <div class="gradient-blob blob-3"></div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="features-container">
+            <h2 class="section-title">✨ תכונות Premium</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>תבניות עיצוב</h3>
+                    <p>בחר מ-4+ תבניות עיצוב מקצועיות עם עיצובים ייחודיים</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌈</div>
+                    <h3>אפקטים חזותיים</h3>
+                    <p>עיצוב, צינן, חמום, שחור לבן, וועד עוד אפקטים</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📐</div>
+                    <h3>פריסות חכמות</h3>
+                    <p>אלגוריתם חכם שבוחר את הפריסה הטובה ביותר לתמונות שלך</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>שמירה אוטומטית</h3>
+                    <p>כל הפרויקטים שלך שמורים בעברית ומוכנים להורדה</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>עבודה בכל מקום</h3>
+                    <p>עובד על דסקטופ, טאבלט ונייד ללא בעיות</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌙</div>
+                    <h3>Dark Mode מלא</h3>
+                    <p>מצב אפל יפה שנוח לעיניים בלילה</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="create" class="upload-section">
+        <div class="upload-container">
+            <h2 class="section-title">צור את האלבום שלך</h2>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📷</div>
+                <h3>גרור תמונות כאן</h3>
+                <p>או לחץ להעלאה (עד 10 תמונות, 5MB כל אחת)</p>
+            </div>
+
+            <div id="imagePreview" class="image-preview"></div>
+
+            <div id="designOptions" class="design-options" style="display: none;">
+                <h3>בחר סגנון עיצוב</h3>
+                <div class="style-grid">
+                    <div class="style-card" data-style="modern">
+                        <div class="style-preview modern-preview"></div>
+                        <p>🎨 מודרני</p>
+                    </div>
+                    <div class="style-card" data-style="artistic">
+                        <div class="style-preview artistic-preview"></div>
+                        <p>🖌️ אמנותי</p>
+                    </div>
+                    <div class="style-card" data-style="minimal">
+                        <div class="style-preview minimal-preview"></div>
+                        <p>⚪ מינימליסט</p>
+                    </div>
+                    <div class="style-card" data-style="colorful">
+                        <div class="style-preview colorful-preview"></div>
+                        <p>🌈 צבעוני</p>
+                    </div>
+                </div>
+
+                <div class="color-options">
+                    <h4>בחר צבע ראשי</h4>
+                    <div class="color-palette">
+                        <div class="color-option" data-color="#FF6B9D" style="background-color: #FF6B9D;" title="ורוד"></div>
+                        <div class="color-option" data-color="#C44569" style="background-color: #C44569;" title="אדום"></div>
+                        <div class="color-option" data-color="#FFA502" style="background-color: #FFA502;" title="כתום"></div>
+                        <div class="color-option" data-color="#FFD23F" style="background-color: #FFD23F;" title="צהוב"></div>
+                        <div class="color-option" data-color="#3BCEAC" style="background-color: #3BCEAC;" title="טורקיז"></div>
+                        <div class="color-option" data-color="#0EAD69" style="background-color: #0EAD69;" title="ירוק"></div>
+                        <div class="color-option" data-color="#00D4FF" style="background-color: #00D4FF;" title="כחול בהיר"></div>
+                        <div class="color-option" data-color="#6366F1" style="background-color: #6366F1;" title="סגול"></div>
+                    </div>
+                </div>
+
+                <button class="btn-primary btn-lg" id="generateBtn">✨ צור אלבום יפה!</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="gallery" class="gallery-section">
+        <div class="gallery-container">
+            <h2 class="section-title">🎨 אלבומים שלך</h2>
+            <div class="gallery-grid" id="galleryGrid">
+                <!-- אלבומים יוצגו כאן -->
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <h2>מוכנים ליצור משהו מדהים?</h2>
+        <p>התחל עכשיו בחינם - אף כרטיס אשראי לא נדרש</p>
+        <button class="btn-primary btn-lg">🚀 בואו נתחיל</button>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2024 אלבומיקס AI Premium. כל הזכויות שמורות.</p>
+            <div class="footer-links">
+                <a href="#">פרטיות</a>
+                <a href="#">תנאים</a>
+                <a href="#">צור קשר</a>
+                <a href="#">קהילה</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="app-final.js"></script>
+    <script src="app-premium-enhanced.js"></script>
+</body>
+</html>
