@@ -19,8 +19,21 @@ public partial class SettingsWindow : Window
 
     private void LoadSettings()
     {
-        // Load settings from service and populate UI
-        // This will be completed when integrated with the main application
+        var mode = _settingsService.GetResultMode();
+        SrbReplace.IsChecked = mode == Core.Enums.ResultMode.ReplaceInPlace;
+        SrbPreview.IsChecked = mode == Core.Enums.ResultMode.PreviewBeforeReplace;
+        SrbCopy.IsChecked = mode == Core.Enums.ResultMode.CopyToClipboard;
+
+        RestoreClipboardCheck.IsChecked = _settingsService.GetRestoreClipboard();
+
+        ProviderCombo.SelectedIndex = _settingsService.GetTranslationProvider() switch
+        {
+            Core.Enums.TranslationProvider.OpenAI => 1,
+            Core.Enums.TranslationProvider.DeepL => 2,
+            _ => 0 // Local (free)
+        };
+
+        ApiKeyBox.Password = _settingsService.GetTranslationApiKey();
     }
 
     private async void Button_CheckUpdates(object sender, RoutedEventArgs e)
@@ -64,7 +77,24 @@ public partial class SettingsWindow : Window
 
     private void Button_Save(object sender, RoutedEventArgs e)
     {
-        // Save settings to service
+        if (SrbReplace.IsChecked == true)
+            _settingsService.SetResultMode(Core.Enums.ResultMode.ReplaceInPlace);
+        else if (SrbPreview.IsChecked == true)
+            _settingsService.SetResultMode(Core.Enums.ResultMode.PreviewBeforeReplace);
+        else if (SrbCopy.IsChecked == true)
+            _settingsService.SetResultMode(Core.Enums.ResultMode.CopyToClipboard);
+
+        _settingsService.SetRestoreClipboard(RestoreClipboardCheck.IsChecked == true);
+
+        _settingsService.SetTranslationProvider(ProviderCombo.SelectedIndex switch
+        {
+            1 => Core.Enums.TranslationProvider.OpenAI,
+            2 => Core.Enums.TranslationProvider.DeepL,
+            _ => Core.Enums.TranslationProvider.None // Local (free)
+        });
+
+        _settingsService.SetTranslationApiKey(ApiKeyBox.Password ?? "");
+
         _settingsService.Save();
         DialogResult = true;
         Close();

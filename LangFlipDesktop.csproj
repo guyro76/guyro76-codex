@@ -7,7 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>LangFlipDesktop</RootNamespace>
     <AssemblyName>LangFlipDesktop</AssemblyName>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Authors>Guy Rosenberg</Authors>
     <Copyright>© 2026 Guy Rosenberg. All rights reserved.</Copyright>
     <Description>Professional Windows desktop app to fix keyboard layout typing, translate text between Hebrew and English, and improve writing quality.</Description>

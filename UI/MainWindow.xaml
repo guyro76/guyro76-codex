@@ -82,9 +82,9 @@
             <TextBlock Text="מצב תוצאה" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" Margin="16,16,16,8" />
             <Border Style="{StaticResource StatusCard}">
                 <StackPanel Orientation="Vertical">
-                    <RadioButton Content="הצג לפני החלפה" Foreground="#FFFFFF" Margin="8" IsChecked="True" />
-                    <RadioButton Content="החלף במקום" Foreground="#FFFFFF" Margin="8" />
-                    <RadioButton Content="העתק ללוח בלבד" Foreground="#FFFFFF" Margin="8" />
+                    <RadioButton x:Name="RbReplace" Content="החלף במקום (מומלץ)" Foreground="#FFFFFF" Margin="8" Checked="ResultMode_Checked" />
+                    <RadioButton x:Name="RbPreview" Content="הצג לפני החלפה" Foreground="#FFFFFF" Margin="8" Checked="ResultMode_Checked" />
+                    <RadioButton x:Name="RbCopy" Content="העתק ללוח בלבד" Foreground="#FFFFFF" Margin="8" Checked="ResultMode_Checked" />
                 </StackPanel>
             </Border>
 
@@ -129,7 +129,7 @@
             <!-- Copyright Footer -->
             <Border Background="#0B1F4D" BorderBrush="#2563EB" BorderThickness="0,1,0,0" Padding="16,16,16,16" Margin="0,32,0,0">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                    <TextBlock Text="קליקשפה v1.1 | עדכון: 13.06.2026"
+                    <TextBlock Text="קליקשפה v1.1.1 | עדכון: 05.07.2026"
                                FontSize="13" FontWeight="Bold" Foreground="#38D5FF"
                                TextAlignment="Center" Margin="0,0,0,8"/>
                     <TextBlock Text="© נבנה ותוכנן על ידי גיא רוזנברג 2026"

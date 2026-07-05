@@ -57,10 +57,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.1.0
-          name: "קליקשפה LangFlip Desktop v1.1.0"
+          tag_name: v1.1.1
+          name: "קליקשפה LangFlip Desktop v1.1.1"
           body: |
-            ## קליקשפה - LangFlip Desktop v1.1.0
+            ## קליקשפה - LangFlip Desktop v1.1.1
 
             אפליקציית Windows לתיקון שפת מקלדת (עברית ↔ אנגלית), תרגום ושיפור ניסוח.
 

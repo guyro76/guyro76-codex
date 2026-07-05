@@ -2,7 +2,7 @@
 # This script removes any existing version and installs the new one
 
 param(
-    [string]$Version = "1.1.0"
+    [string]$Version = "1.1.1"
 )
 
 $ErrorActionPreference = "Stop"

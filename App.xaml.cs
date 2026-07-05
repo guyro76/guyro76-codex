@@ -73,6 +73,7 @@ public partial class App : Application
     private void SetupUI()
     {
         _mainWindow = new MainWindow();
+        _mainWindow.BindSettings(_settingsService!);
         _mainWindow.ActionRequested += MainWindow_ActionRequested;
         _mainWindow.ShowSettingsRequested += MainWindow_ShowSettingsRequested;
         _mainWindow.Closing += (s, e) =>
@@ -204,9 +205,15 @@ public partial class App : Application
 
     private void ShowSettingsWindow()
     {
-        _settingsWindow ??= new SettingsWindow(_settingsService!, _updateService);
+        // A closed WPF window cannot be shown again - always create a fresh one
+        _settingsWindow = new SettingsWindow(_settingsService!, _updateService);
         _settingsWindow.Owner = _mainWindow;
-        _settingsWindow.ShowDialog();
+        if (_settingsWindow.ShowDialog() == true)
+        {
+            // Apply the (possibly) new translation provider and refresh main window state
+            _translationService?.InitializeProvider();
+            _mainWindow?.BindSettings(_settingsService!);
+        }
     }
 
     private void ShowFloatingMenu()
