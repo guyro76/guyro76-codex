@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="אלבומיקס - דעיין אלבומים מקצועיים בשנייה עם AI">
+    <meta name="theme-color" content="#667eea">
+    <title>אלבומיקס - עיצוב אלבומים פרימיום</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #00d4ff;
+            --accent: #ff6b9d;
+            --dark: #0f1419;
+            --light: #f5f7ff;
+            --text: #1a1a2e;
+            --text-light: #718096;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, var(--light) 0%, #f8fbff 100%);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* ============ NAVBAR ============ */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e8ebf7;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.08);
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            margin-right: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .btn-nav {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        /* ============ HERO ============ */
+        .hero {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 5rem 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-content p {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1.2rem 3rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .hero-visual {
+            position: relative;
+            height: 400px;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            filter: blur(50px);
+            opacity: 0.6;
+        }
+
+        .blob1 {
+            width: 350px;
+            height: 350px;
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            top: 0;
+            left: 0;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .blob2 {
+            width: 280px;
+            height: 280px;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            top: 50px;
+            right: 0;
+            animation: float 6s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(30px, -50px); }
+            66% { transform: translate(-20px, 20px); }
+        }
+
+        /* ============ UPLOAD SECTION ============ */
+        .upload-section {
+            max-width: 1200px;
+            margin: 5rem auto;
+            padding: 0 2rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .upload-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.1);
+            border: 2px solid #f0f3ff;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--secondary);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0, 212, 255, 0.03);
+        }
+
+        .upload-area:hover {
+            background: rgba(102, 126, 234, 0.05);
+            border-color: var(--primary);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-area p {
+            color: var(--text-light);
+        }
+
+        /* ============ PREVIEW GRID ============ */
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e8ebf7;
+            transition: all 0.3s;
+        }
+
+        .preview-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 107, 107, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-remove:hover {
+            background: #ff6b6b;
+            transform: scale(1.1);
+        }
+
+        /* ============ DESIGN OPTIONS ============ */
+        .design-options {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: #f5f7ff;
+            border-radius: 16px;
+            display: none;
+        }
+
+        .design-options.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .design-options h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .style-card {
+            cursor: pointer;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .style-card:hover,
+        .style-card.selected {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .style-preview {
+            width: 100%;
+            height: 100px;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .style-card p {
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .color-options {
+            margin-bottom: 2rem;
+        }
+
+        .color-options h4 {
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+            gap: 1rem;
+        }
+
+        .color-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .color-option:hover,
+        .color-option.selected {
+            border-color: var(--text);
+            transform: scale(1.1);
+        }
+
+        /* ============ GALLERY ============ */
+        .gallery-section {
+            max-width: 1200px;
+            margin: 5rem auto;
+            padding: 0 2rem;
+        }
+
+        .gallery-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.1);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .gallery-item {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 2px solid #f0f3ff;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .gallery-info {
+            padding: 1.5rem;
+            background: #f5f7ff;
+        }
+
+        .gallery-info h4 {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .gallery-info p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-small {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            margin-right: 0.5rem;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        /* ============ CTA SECTION ============ */
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin: 5rem 0;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* ============ FOOTER ============ */
+        .footer {
+            background: var(--text);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        /* ============ NOTIFICATIONS ============ */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .notification.success {
+            background: #3bceac;
+        }
+
+        .notification.error {
+            background: #ff6b6b;
+        }
+
+        .notification.info {
+            background: var(--primary);
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 768px) {
+            .hero {
+                grid-template-columns: 1fr;
+                padding: 3rem 1rem;
+            }
+
+            .hero-content h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero-visual {
+                height: 300px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .style-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+
+        /* ============ DARK MODE ============ */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --light: #0f1419;
+                --text: #f7fafc;
+                --text-light: #cbd5e0;
+            }
+
+            body {
+                background: linear-gradient(180deg, #0f1419 0%, #1a202c 100%);
+            }
+
+            .navbar {
+                background: rgba(26, 32, 44, 0.8);
+                border-bottom-color: #2d3748;
+            }
+
+            .upload-container,
+            .gallery-container {
+                background: #1a202c;
+                border-color: #2d3748;
+            }
+
+            .design-options {
+                background: #1a202c;
+            }
+
+            .gallery-info {
+                background: #2d3748;
+            }
+
+            .upload-area {
+                background: rgba(0, 212, 255, 0.05);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">
+                <span class="logo-icon">🎨</span>
+                <span>אלבומיקס</span>
+            </div>
+            <div class="nav-links">
+                <a href="#create">צור אלבום</a>
+                <a href="#gallery">גלריה</a>
+                <button class="btn-nav" onclick="document.getElementById('uploadArea').scrollIntoView({behavior:'smooth'})">
+                    התחל עכשיו
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>עיצוב אלבומים מקצועיים בשנייה</h1>
+            <p>העלה תמונות, בחר עיצוב, וצפה בקסם. AI-powered album designer שעובד בכל מכשיר.</p>
+            <button class="btn-primary">🚀 בואו נתחיל</button>
+        </div>
+        <div class="hero-visual">
+            <div class="blob blob1"></div>
+            <div class="blob blob2"></div>
+        </div>
+    </section>
+
+    <!-- UPLOAD -->
+    <section id="create" class="upload-section">
+        <h2 class="section-title">צור את האלבום שלך</h2>
+
+        <div class="upload-container">
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📷</div>
+                <h2>גרור תמונות כאן</h2>
+                <p>או לחץ להעלאה (עד 10 תמונות, 5MB כל אחת)</p>
+                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+            </div>
+
+            <div class="image-preview" id="imagePreview"></div>
+
+            <div class="design-options" id="designOptions">
+                <h3>בחר סגנון עיצוב</h3>
+                <div class="style-grid">
+                    <div class="style-card" data-style="modern">
+                        <div class="style-preview" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                        <p>🎨 מודרני</p>
+                    </div>
+                    <div class="style-card" data-style="artistic">
+                        <div class="style-preview" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                        <p>🖌️ אמנותי</p>
+                    </div>
+                    <div class="style-card" data-style="minimal">
+                        <div class="style-preview" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);"></div>
+                        <p>⚪ מינימליסט</p>
+                    </div>
+                    <div class="style-card" data-style="colorful">
+                        <div class="style-preview" style="background: linear-gradient(90deg, #fa709a 0%, #fee140 50%, #30b56d 100%);"></div>
+                        <p>🌈 צבעוני</p>
+                    </div>
+                </div>
+
+                <div class="color-options">
+                    <h4>בחר צבע ראשי</h4>
+                    <div class="color-palette">
+                        <div class="color-option" data-color="#FF6B9D" style="background: #FF6B9D;"></div>
+                        <div class="color-option" data-color="#C44569" style="background: #C44569;"></div>
+                        <div class="color-option" data-color="#FFA502" style="background: #FFA502;"></div>
+                        <div class="color-option" data-color="#FFD23F" style="background: #FFD23F;"></div>
+                        <div class="color-option" data-color="#3BCEAC" style="background: #3BCEAC;"></div>
+                        <div class="color-option" data-color="#0EAD69" style="background: #0EAD69;"></div>
+                        <div class="color-option" data-color="#00D4FF" style="background: #00D4FF;"></div>
+                        <div class="color-option" data-color="#6366F1" style="background: #6366F1;"></div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" id="generateBtn" style="width: 100%;">✨ צור אלבום</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- GALLERY -->
+    <section id="gallery" class="gallery-section">
+        <h2 class="section-title">אלבומים שלך</h2>
+        <div class="gallery-container">
+            <div class="gallery-grid" id="galleryGrid">
+                <!-- Albums appear here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <h2>מוכנים ליצור משהו מדהים?</h2>
+        <p>התחל עכשיו בחינם - אף כרטיס אשראי לא נדרש</p>
+        <button class="btn-primary">🚀 בואו נתחיל</button>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>&copy; 2024 אלבומיקס AI. כל הזכויות שמורות.</p>
+    </footer>
+
+    <script>
+        // ============ APPLICATION LOGIC ============
+        class AlbumixApp {
+            constructor() {
+                this.images = [];
+                this.selectedStyle = 'modern';
+                this.selectedColor = '#667eea';
+                this.storageKey = 'albumix_projects';
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadSavedProjects();
+                this.selectDefaults();
+                this.showNotification('👋 ברוכים הבאים ל-אלבומיקס!', 'info');
+            }
+
+            setupEventListeners() {
+                const fileInput = document.getElementById('fileInput');
+                const uploadArea = document.getElementById('uploadArea');
+                const generateBtn = document.getElementById('generateBtn');
+
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.background = 'rgba(102, 126, 234, 0.1)';
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.style.background = 'rgba(0, 212, 255, 0.03)';
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    fileInput.files = e.dataTransfer.files;
+                    this.handleFiles();
+                });
+
+                fileInput.addEventListener('change', () => this.handleFiles());
+                generateBtn.addEventListener('click', () => this.generateAlbum());
+
+                document.querySelectorAll('.style-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+                        e.currentTarget.classList.add('selected');
+                        this.selectedStyle = e.currentTarget.dataset.style;
+                    });
+                });
+
+                document.querySelectorAll('.color-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+                        e.currentTarget.classList.add('selected');
+                        this.selectedColor = e.currentTarget.dataset.color;
+                    });
+                });
+            }
+
+            handleFiles() {
+                const fileInput = document.getElementById('fileInput');
+                const files = Array.from(fileInput.files);
+
+                files.forEach(file => {
+                    if (!file.type.startsWith('image/')) {
+                        this.showNotification(`${file.name} - לא תמונה`, 'error');
+                        return;
+                    }
+
+                    if (file.size > 5 * 1024 * 1024) {
+                        this.showNotification(`${file.name} - גדול מדי`, 'error');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.images.push({src: e.target.result, name: file.name});
+                        this.renderPreview();
+                        this.showNotification(`✅ ${file.name} נטען`, 'success');
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            renderPreview() {
+                const preview = document.getElementById('imagePreview');
+                const options = document.getElementById('designOptions');
+
+                preview.innerHTML = this.images.map((img, i) => `
+                    <div class="preview-item">
+                        <img src="${img.src}" alt="${img.name}">
+                        <button class="preview-remove" onclick="app.removeImage(${i})">×</button>
+                    </div>
+                `).join('');
+
+                options.classList.add('show');
+            }
+
+            removeImage(index) {
+                this.images.splice(index, 1);
+                this.renderPreview();
+                if (this.images.length === 0) {
+                    document.getElementById('designOptions').classList.remove('show');
+                }
+            }
+
+            selectDefaults() {
+                const firstStyle = document.querySelector('.style-card');
+                const firstColor = document.querySelector('.color-option');
+
+                if (firstStyle) {
+                    firstStyle.classList.add('selected');
+                    this.selectedStyle = firstStyle.dataset.style;
+                }
+
+                if (firstColor) {
+                    firstColor.classList.add('selected');
+                    this.selectedColor = firstColor.dataset.color;
+                }
+            }
+
+            generateAlbum() {
+                if (this.images.length === 0) {
+                    this.showNotification('בחר לפחות תמונה אחת', 'error');
+                    return;
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 600;
+                const ctx = canvas.getContext('2d');
+
+                // Background
+                const gradient = ctx.createLinearGradient(0, 0, 800, 600);
+                gradient.addColorStop(0, this.selectedColor);
+                gradient.addColorStop(1, this.lightenColor(this.selectedColor, 30));
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 800, 600);
+
+                // Images
+                const imagesToShow = this.images.slice(0, 4);
+                const imageSize = 180;
+                const gap = 15;
+
+                imagesToShow.forEach((img, index) => {
+                    const x = 50 + (index % 2) * (imageSize + gap);
+                    const y = 50 + Math.floor(index / 2) * (imageSize + gap);
+
+                    const imgElement = new Image();
+                    imgElement.onload = () => {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.roundRect(x, y, imageSize, imageSize, 10);
+                        ctx.clip();
+                        ctx.drawImage(imgElement, x, y, imageSize, imageSize);
+                        ctx.restore();
+
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(x, y, imageSize, imageSize);
+                    };
+                    imgElement.src = img.src;
+                });
+
+                // Title
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 48px Rubik, Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 5;
+                ctx.shadowOffsetY = 2;
+                ctx.fillText('אלבומי היפה', 400, 580);
+
+                this.displayResult(canvas);
+                this.showNotification('✨ אלבום נוצר!', 'success');
+            }
+
+            displayResult(canvas) {
+                const dataUrl = canvas.toDataURL('image/png');
+                const gallery = document.getElementById('galleryGrid');
+
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.innerHTML = `
+                    <img src="${dataUrl}" alt="album">
+                    <div class="gallery-info">
+                        <h4>אלבום חדש</h4>
+                        <p>${new Date().toLocaleDateString('he-IL')}</p>
+                        <button class="btn-small" onclick="app.downloadAlbum('${dataUrl}')">📥 הורד</button>
+                        <button class="btn-small" onclick="app.saveAlbum('${dataUrl}')">💾 שמור</button>
+                    </div>
+                `;
+
+                gallery.insertBefore(item, gallery.firstChild);
+            }
+
+            downloadAlbum(dataUrl) {
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = `albumix-${Date.now()}.png`;
+                link.click();
+                this.showNotification('📥 אלבום מתחיל להורד', 'success');
+            }
+
+            saveAlbum(dataUrl) {
+                const name = prompt('שם האלבום:', `אלבום-${new Date().toLocaleDateString('he-IL')}`);
+                if (!name) return;
+
+                const projects = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
+                projects.push({
+                    id: Date.now(),
+                    name: name,
+                    image: dataUrl,
+                    date: new Date().toISOString()
+                });
+
+                localStorage.setItem(this.storageKey, JSON.stringify(projects));
+                this.showNotification(`💾 "${name}" שמור!`, 'success');
+            }
+
+            loadSavedProjects() {
+                const projects = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
+                const gallery = document.getElementById('galleryGrid');
+
+                projects.reverse().forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    item.innerHTML = `
+                        <img src="${p.image}" alt="${p.name}">
+                        <div class="gallery-info">
+                            <h4>${p.name}</h4>
+                            <p>${new Date(p.date).toLocaleDateString('he-IL')}</p>
+                            <button class="btn-small" onclick="app.downloadAlbum('${p.image}')">📥 הורד</button>
+                            <button class="btn-small" onclick="app.deleteProject(${p.id})">🗑️ מחק</button>
+                        </div>
+                    `;
+                    gallery.appendChild(item);
+                });
+            }
+
+            deleteProject(id) {
+                if (!confirm('הסר אלבום?')) return;
+                const projects = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
+                const filtered = projects.filter(p => p.id !== id);
+                localStorage.setItem(this.storageKey, JSON.stringify(filtered));
+                location.reload();
+            }
+
+            lightenColor(color, percent) {
+                const num = parseInt(color.replace('#', ''), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = Math.min(255, (num >> 16) + amt);
+                const G = Math.min(255, (num >> 8 & 0x00FF) + amt);
+                const B = Math.min(255, (num & 0x0000FF) + amt);
+                return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+            }
+
+            showNotification(message, type) {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.style.animation = 'slideIn 0.3s ease reverse';
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            }
+        }
+
+        // Polyfill for roundRect
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.beginPath();
+                this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r);
+                this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r);
+                this.arcTo(x, y, x + w, y, r);
+                this.closePath();
+            };
+        }
+
+        // Initialize app
+        const app = new AlbumixApp();
+    </script>
+</body>
+</html>
