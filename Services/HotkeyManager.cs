@@ -19,6 +19,7 @@ public class HotkeyManager
     private const uint VK_E = 0x45;
     private const uint VK_T = 0x54;
     private const uint VK_I = 0x49;
+    private const uint VK_Z = 0x5A;
     private const uint VK_SPACE = 0x20;
 
     private readonly IntPtr _windowHandle;
@@ -34,6 +35,7 @@ public class HotkeyManager
 
     public void RegisterDefaultHotkeys()
     {
+        RegisterHotkey(MOD_CTRL | MOD_ALT, VK_Z, ActionType.AutoFix);              // Ctrl+Alt+Z - smart fix
         RegisterHotkey(MOD_CTRL | MOD_ALT, VK_H, ActionType.ConvertToHebrew);      // Ctrl+Alt+H
         RegisterHotkey(MOD_CTRL | MOD_ALT, VK_E, ActionType.ConvertToEnglish);      // Ctrl+Alt+E
         RegisterHotkey(MOD_CTRL | MOD_ALT, VK_T, ActionType.TranslateToHebrew);     // Ctrl+Alt+T (auto-detect)

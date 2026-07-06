@@ -40,6 +40,11 @@ public partial class MainWindow : Window
         _settingsService.Save();
     }
 
+    private void Button_AutoFix(object sender, RoutedEventArgs e)
+    {
+        ActionRequested?.Invoke(this, ActionType.AutoFix);
+    }
+
     private void Button_ConvertHebrew(object sender, RoutedEventArgs e)
     {
         ActionRequested?.Invoke(this, ActionType.ConvertToHebrew);

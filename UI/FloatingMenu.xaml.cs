@@ -40,6 +40,12 @@ public partial class FloatingMenu : Window
         Close();
     }
 
+    private void Button_AutoFix(object sender, RoutedEventArgs e)
+    {
+        ActionSelected?.Invoke(this, ActionType.AutoFix);
+        Close();
+    }
+
     private void Button_ConvertHebrew(object sender, RoutedEventArgs e)
     {
         ActionSelected?.Invoke(this, ActionType.ConvertToHebrew);

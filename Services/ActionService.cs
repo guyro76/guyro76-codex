@@ -40,6 +40,7 @@ public class ActionService : IActionService
         {
             var result = action switch
             {
+                ActionType.AutoFix => HandleAutoFix(selectedText),
                 ActionType.ConvertToHebrew => HandleConvertToHebrew(selectedText),
                 ActionType.ConvertToEnglish => HandleConvertToEnglish(selectedText),
                 ActionType.TranslateToEnglish => await HandleTranslateToEnglish(selectedText),
@@ -61,6 +62,17 @@ public class ActionService : IActionService
                 ResultDirection = _keyboardService.DetectTextDirection(selectedText)
             };
         }
+    }
+
+    private ActionResult HandleAutoFix(string text)
+    {
+        // Punto Switcher style: detect what the user actually typed and flip it.
+        // Mostly Hebrew characters -> the user wanted English (typed with Hebrew layout on).
+        // Mostly Latin characters -> the user wanted Hebrew.
+        var direction = _keyboardService.DetectTextDirection(text);
+        return direction == TextDirection.RTL
+            ? HandleConvertToEnglish(text)
+            : HandleConvertToHebrew(text);
     }
 
     private ActionResult HandleConvertToHebrew(string text)

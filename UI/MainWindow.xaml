@@ -4,18 +4,29 @@
         Title="קליקשפה - LangFlip Desktop"
         Width="700"
         Height="900"
-        Background="#071426"
         Foreground="#FFFFFF"
         WindowStartupLocation="CenterScreen"
         FlowDirection="RightToLeft">
+    <Window.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#070D1A" Offset="0" />
+            <GradientStop Color="#0B1830" Offset="0.5" />
+            <GradientStop Color="#0A1226" Offset="1" />
+        </LinearGradientBrush>
+    </Window.Background>
     <Window.Resources>
+        <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#2563EB" Offset="0" />
+            <GradientStop Color="#38D5FF" Offset="1" />
+        </LinearGradientBrush>
+
         <Style x:Key="GlassButton" TargetType="Button">
-            <Setter Property="Background" Value="#1E3A5F" />
+            <Setter Property="Background" Value="#16233F" />
             <Setter Property="Foreground" Value="#FFFFFF" />
-            <Setter Property="Padding" Value="16,12" />
-            <Setter Property="Margin" Value="8" />
+            <Setter Property="Padding" Value="18,12" />
+            <Setter Property="Margin" Value="6" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#2563EB" />
+            <Setter Property="BorderBrush" Value="#2E4A7A" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
@@ -25,12 +36,13 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8">
+                                CornerRadius="10"
+                                Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2563EB" />
+                                <Setter Property="Background" Value="{StaticResource AccentGradient}" />
                                 <Setter Property="BorderBrush" Value="#38D5FF" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -39,13 +51,24 @@
             </Setter>
         </Style>
 
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource GlassButton}">
+            <Setter Property="Background" Value="{StaticResource AccentGradient}" />
+            <Setter Property="BorderBrush" Value="#38D5FF" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
         <Style x:Key="StatusCard" TargetType="Border">
-            <Setter Property="Background" Value="#0F2441" />
-            <Setter Property="BorderBrush" Value="#2563EB" />
+            <Setter Property="Background" Value="#111D36" />
+            <Setter Property="BorderBrush" Value="#22375C" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="CornerRadius" Value="14" />
             <Setter Property="Padding" Value="16" />
-            <Setter Property="Margin" Value="16" />
+            <Setter Property="Margin" Value="16,8,16,8" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="3" Opacity="0.35" />
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -53,9 +76,17 @@
         <StackPanel Orientation="Vertical" Margin="0">
             <!-- Header -->
             <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="0,32,0,0">
-                <TextBlock Text="קליקשפה" FontSize="48" FontWeight="Bold" Foreground="#38D5FF" TextAlignment="Center" />
+                <TextBlock Text="קליקשפה" FontSize="48" FontWeight="Bold" TextAlignment="Center">
+                    <TextBlock.Foreground>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#38D5FF" Offset="0" />
+                            <GradientStop Color="#7C9FFF" Offset="1" />
+                        </LinearGradientBrush>
+                    </TextBlock.Foreground>
+                </TextBlock>
+                <Rectangle Height="3" Width="120" Fill="{StaticResource AccentGradient}" RadiusX="2" RadiusY="2" Margin="0,6,0,0" />
                 <TextBlock Text="מתקן, מתרגם ומשפר טקסט בכל מקום במחשב"
-                           FontSize="14" Foreground="#BDEFFF" TextAlignment="Center" Margin="0,8,0,0" />
+                           FontSize="14" Foreground="#BDEFFF" TextAlignment="Center" Margin="0,10,0,0" />
             </StackPanel>
 
             <!-- Status Card -->
@@ -71,6 +102,7 @@
             <!-- Quick Actions -->
             <TextBlock Text="פעולות מהירות" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF" Margin="16,16,16,8" />
             <WrapPanel HorizontalAlignment="Center" Margin="8">
+                <Button Content="⚡ תיקון חכם" Style="{StaticResource PrimaryButton}" Click="Button_AutoFix" />
                 <Button Content="הפוך לעברית" Style="{StaticResource GlassButton}" Click="Button_ConvertHebrew" />
                 <Button Content="הפוך לאנגלית" Style="{StaticResource GlassButton}" Click="Button_ConvertEnglish" />
                 <Button Content="תרגם לאנגלית" Style="{StaticResource GlassButton}" Click="Button_TranslateEnglish" />
@@ -92,6 +124,7 @@
             <TextBlock Text="קיצורי דרך" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" Margin="16,16,16,8" />
             <Border Style="{StaticResource StatusCard}">
                 <StackPanel Orientation="Vertical">
+                    <TextBlock Text="Ctrl + Alt + Z — ⚡ תיקון חכם (מזהה לבד את הכיוון)" Foreground="#4FFF00" Margin="8" FontSize="12" FontWeight="Bold" />
                     <TextBlock Text="Ctrl + Alt + H — הפוך לעברית" Foreground="#BDEFFF" Margin="8" FontSize="12" />
                     <TextBlock Text="Ctrl + Alt + E — הפוך לאנגלית" Foreground="#BDEFFF" Margin="8" FontSize="12" />
                     <TextBlock Text="Ctrl + Alt + T — תרגום אוטומטי" Foreground="#BDEFFF" Margin="8" FontSize="12" />
@@ -129,7 +162,7 @@
             <!-- Copyright Footer -->
             <Border Background="#0B1F4D" BorderBrush="#2563EB" BorderThickness="0,1,0,0" Padding="16,16,16,16" Margin="0,32,0,0">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                    <TextBlock Text="קליקשפה v1.1.1 | עדכון: 05.07.2026"
+                    <TextBlock Text="קליקשפה v1.2.0 | עדכון: 05.07.2026"
                                FontSize="13" FontWeight="Bold" Foreground="#38D5FF"
                                TextAlignment="Center" Margin="0,0,0,8"/>
                     <TextBlock Text="© נבנה ותוכנן על ידי גיא רוזנברג 2026"

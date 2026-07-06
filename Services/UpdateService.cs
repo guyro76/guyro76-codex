@@ -15,7 +15,7 @@ public class UpdateService : IUpdateService
 {
     private const string GitHubRepo = "guyro76/guyro76-codex";
     private const string ReleaseApiUrl = $"https://api.github.com/repos/{GitHubRepo}/releases/latest";
-    private const string CurrentVersion = "1.1.1";
+    private const string CurrentVersion = "1.2.0";
     private readonly HttpClient _httpClient;
 
     public UpdateService()

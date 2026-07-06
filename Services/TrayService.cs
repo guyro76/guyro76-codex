@@ -38,6 +38,10 @@ public class TrayService : IDisposable
 
         _contextMenu.Items.Add(new ToolStripSeparator());
 
+        var autoFixItem = new ToolStripMenuItem("⚡ תיקון חכם (Ctrl+Alt+Z)");
+        autoFixItem.Click += (s, e) => ActionRequested?.Invoke(this, ActionType.AutoFix);
+        _contextMenu.Items.Add(autoFixItem);
+
         var convertHebrewItem = new ToolStripMenuItem("הפוך לעברית");
         convertHebrewItem.Click += (s, e) => ActionRequested?.Invoke(this, ActionType.ConvertToHebrew);
         _contextMenu.Items.Add(convertHebrewItem);

@@ -52,6 +52,7 @@
                        TextAlignment="Center" Margin="0,0,0,8" />
 
             <!-- Buttons -->
+            <Button Content="⚡ תיקון חכם" Style="{StaticResource FloatingMenuButton}" Background="#2563EB" Click="Button_AutoFix" />
             <Button Content="הפוך לעברית" Style="{StaticResource FloatingMenuButton}" Click="Button_ConvertHebrew" />
             <Button Content="הפוך לאנגלית" Style="{StaticResource FloatingMenuButton}" Click="Button_ConvertEnglish" />
             <Button Content="תרגם לאנגלית" Style="{StaticResource FloatingMenuButton}" Click="Button_TranslateEnglish" />

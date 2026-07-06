@@ -245,7 +245,8 @@ public partial class App : Application
 
     private void ShowNotification(string message)
     {
-        MessageBox.Show(message, "קליקשפה", MessageBoxButton.OK, MessageBoxImage.Information);
+        // Non-blocking toast - never steals focus from the document the user is typing in
+        ToastWindow.ShowMessage(message);
     }
 
     protected override void OnExit(ExitEventArgs e)
