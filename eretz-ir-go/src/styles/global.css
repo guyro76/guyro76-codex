@@ -1,0 +1,336 @@
+/* ====== ארץ-עיר GO! — מערכת עיצוב ====== */
+:root {
+  --bg-deep: #1b1035;
+  --bg-mid: #2b1b5a;
+  --bg-card: rgba(255, 255, 255, 0.08);
+  --bg-card-strong: rgba(255, 255, 255, 0.14);
+  --border-glass: rgba(255, 255, 255, 0.18);
+  --turquoise: #33d6c3;
+  --purple: #7c5cff;
+  --coral: #ff5c8a;
+  --gold: #ffd75c;
+  --night: #101d3d;
+  --text: #f4f2ff;
+  --text-dim: rgba(244, 242, 255, 0.65);
+  --ok: #3ddc84;
+  --ok-bg: rgba(61, 220, 132, 0.16);
+  --bad: #ff5c5c;
+  --bad-bg: rgba(255, 92, 92, 0.14);
+  --pending: #ffd75c;
+  --pending-bg: rgba(255, 215, 92, 0.14);
+  --radius: 18px;
+  --shadow: 0 8px 32px rgba(10, 5, 30, 0.45);
+  --font-size-base: 17px;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: var(--font-size-base); }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  direction: rtl;
+  font-family: 'Heebo', 'Segoe UI', 'Arial Hebrew', system-ui, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 800px at 85% -10%, rgba(124, 92, 255, 0.35), transparent 60%),
+    radial-gradient(1000px 700px at -10% 110%, rgba(51, 214, 195, 0.22), transparent 55%),
+    linear-gradient(160deg, var(--bg-deep), var(--bg-mid) 55%, var(--night));
+  background-attachment: fixed;
+}
+
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+
+.screen {
+  flex: 1;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 16px 16px 90px;
+  animation: fadeUp 0.35s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+h1, h2, h3 { margin: 0.4em 0; line-height: 1.2; }
+h1 { font-size: 1.9rem; }
+p { line-height: 1.55; }
+
+/* ====== קלפים ====== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 16px;
+}
+
+.card.clickable { cursor: pointer; transition: transform 0.18s ease, border-color 0.18s ease; }
+.card.clickable:hover, .card.clickable:focus-visible { transform: translateY(-3px) scale(1.01); border-color: var(--turquoise); }
+.card.clickable:active { transform: scale(0.98); }
+
+/* ====== כפתורים ====== */
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 14px;
+  min-height: 48px; /* אזור לחיצה גדול לילדים */
+  padding: 10px 20px;
+  color: var(--text);
+  background: var(--bg-card-strong);
+  border: 1px solid var(--border-glass);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+button:hover { filter: brightness(1.15); }
+button:active { transform: scale(0.96); }
+button:focus-visible { outline: 3px solid var(--turquoise); outline-offset: 2px; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--purple), var(--turquoise));
+  font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: 0 6px 22px rgba(124, 92, 255, 0.45);
+}
+.btn-coral { background: linear-gradient(135deg, var(--coral), #ff8a5c); font-weight: 700; }
+.btn-gold { background: linear-gradient(135deg, var(--gold), #ffb15c); color: #3a2a00; font-weight: 700; }
+.btn-ghost { background: transparent; }
+.btn-small { min-height: 38px; padding: 6px 14px; font-size: 0.9rem; }
+
+/* ====== שדות קלט ====== */
+input[type='text'], input[type='number'], input[type='password'], select, textarea {
+  font-family: inherit;
+  font-size: 1.05rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 2px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  direction: rtl;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--turquoise); }
+input::placeholder { color: var(--text-dim); }
+
+/* מצבי תשובה: ירוק=נכון, אדום=שגוי, צהוב=בבדיקה */
+.answer-valid input[type='text'] { border-color: var(--ok); background: var(--ok-bg); }
+.answer-invalid input[type='text'] { border-color: var(--bad); background: var(--bad-bg); }
+.answer-pending input[type='text'] { border-color: var(--pending); background: var(--pending-bg); }
+
+.status-text-ok { color: var(--ok); font-weight: 600; }
+.status-text-bad { color: var(--bad); font-weight: 600; }
+.status-text-pending { color: var(--pending); font-weight: 600; }
+
+/* ====== קלף קטגוריה ====== */
+.cat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(10px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.cat-card.valid { border-color: var(--ok); box-shadow: 0 0 18px rgba(61, 220, 132, 0.35); }
+.cat-card.invalid { border-color: var(--bad); animation: gentleShake 0.35s ease; }
+.cat-card .cat-head { display: flex; align-items: center; gap: 10px; }
+.cat-card .cat-icon { font-size: 1.7rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4)); }
+.cat-card .cat-name { font-weight: 700; flex: 1; }
+
+@keyframes gentleShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+}
+
+/* ====== גלגל אותיות ====== */
+.letter-wheel {
+  width: min(230px, 60vw);
+  height: min(230px, 60vw);
+  margin: 24px auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6rem;
+  font-weight: 900;
+  background: conic-gradient(from 0deg, var(--purple), var(--turquoise), var(--coral), var(--gold), var(--purple));
+  box-shadow: 0 0 60px rgba(124, 92, 255, 0.55), inset 0 0 40px rgba(0, 0, 0, 0.35);
+  perspective: 600px;
+}
+.letter-wheel .inner {
+  width: 78%;
+  height: 78%;
+  border-radius: 50%;
+  background: var(--bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 4px 24px rgba(51, 214, 195, 0.7);
+}
+.letter-wheel.spinning { animation: wheelSpin 0.5s linear infinite; }
+@keyframes wheelSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+.letter-wheel.landed { animation: pop 0.5s cubic-bezier(0.2, 2.2, 0.4, 1); }
+@keyframes pop { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
+
+/* ====== רשימת השלמה אוטומטית ====== */
+.autocomplete {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  z-index: 30;
+  background: #241747;
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  max-height: 190px;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+}
+.autocomplete .item {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.autocomplete .item:hover, .autocomplete .item.used { background: rgba(124, 92, 255, 0.25); }
+.autocomplete .item.used { opacity: 0.5; text-decoration: line-through; }
+
+/* ====== ארצי הבוט ====== */
+.artzi-bubble {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(51, 214, 195, 0.12);
+  border: 1px solid rgba(51, 214, 195, 0.4);
+  border-radius: 16px 16px 16px 4px;
+  padding: 12px 14px;
+  animation: fadeUp 0.3s ease;
+}
+.artzi-bubble .face { font-size: 1.8rem; }
+
+/* ====== שונות ====== */
+.grid { display: grid; gap: 12px; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 560px) {
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  h1 { font-size: 1.55rem; }
+}
+@media (min-width: 700px) {
+  .cats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.center { text-align: center; }
+.dim { color: var(--text-dim); }
+.gold { color: var(--gold); }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 14px;
+}
+.topbar h2 { flex: 1; margin: 0; }
+
+.timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 1.5rem;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: var(--bg-card-strong);
+  border: 1px solid var(--border-glass);
+}
+.timer.low { color: var(--bad); animation: pulse 1s infinite; }
+@keyframes pulse { 50% { transform: scale(1.08); } }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 2px solid var(--border-glass);
+  background: var(--bg-card);
+  cursor: pointer;
+  min-height: 44px;
+  transition: all 0.15s ease;
+}
+.chip.on { border-color: var(--turquoise); background: rgba(51, 214, 195, 0.18); font-weight: 700; }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 5, 25, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+.modal {
+  background: linear-gradient(160deg, #2d1c5e, #1c123e);
+  border: 1px solid var(--border-glass);
+  border-radius: 22px;
+  padding: 22px;
+  max-width: 440px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
+  animation: pop 0.4s cubic-bezier(0.2, 1.8, 0.4, 1);
+}
+
+.confetti { font-size: 2.2rem; letter-spacing: 8px; animation: pulse 1.2s infinite; }
+
+.avatar-big {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  background: var(--bg-card-strong);
+  border: 3px solid var(--border-glass);
+}
+
+.word-card {
+  border-radius: 16px;
+  padding: 14px;
+  background: linear-gradient(160deg, rgba(124, 92, 255, 0.25), rgba(51, 214, 195, 0.12));
+  border: 1px solid var(--border-glass);
+  transition: transform 0.2s ease;
+}
+.word-card:hover { transform: translateY(-3px) rotate(0.5deg); }
+
+img { max-width: 100%; border-radius: 12px; }
+
+/* הפחתת תנועה — נגישות */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+}
+.reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {
+  animation-duration: 0.001s !important;
+  transition-duration: 0.001s !important;
+}
+
+/* טקסט גדול — נגישות */
+.big-text { --font-size-base: 20px; }

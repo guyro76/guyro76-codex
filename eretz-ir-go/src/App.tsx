@@ -1,0 +1,123 @@
+import React, { Component, useEffect, useState, type ReactNode } from 'react';
+import { useApp } from './store/appStore';
+import { getSetting } from './db/db';
+import Splash from './screens/Splash';
+import Profiles from './screens/Profiles';
+import ProfileEdit from './screens/ProfileEdit';
+import Home from './screens/Home';
+import ModeSelect from './screens/ModeSelect';
+import Categories from './screens/Categories';
+import CategoryCreate from './screens/CategoryCreate';
+import LetterDraw from './screens/LetterDraw';
+import Game from './screens/Game';
+import PassDevice from './screens/PassDevice';
+import RoundResults from './screens/RoundResults';
+import MatchResults from './screens/MatchResults';
+import Leaderboard from './screens/Leaderboard';
+import Album from './screens/Album';
+import Achievements from './screens/Achievements';
+import Daily from './screens/Daily';
+import Settings from './screens/Settings';
+import Parent from './screens/Parent';
+import Credits from './screens/Credits';
+import Privacy from './screens/Privacy';
+import MultiplayerInfo from './screens/MultiplayerInfo';
+
+/** מסך שגיאה ידידותי — Error Boundary */
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="screen center">
+          <h1>אופס! משהו השתבש 🙈</h1>
+          <p className="dim">אל דאגה — הפרופילים והמילים שלכם שמורים.</p>
+          <button className="btn-primary" onClick={() => window.location.reload()}>
+            נטען מחדש
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function OfflineBanner() {
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const up = () => setOnline(true);
+    const down = () => setOnline(false);
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
+    return () => {
+      window.removeEventListener('online', up);
+      window.removeEventListener('offline', down);
+    };
+  }, []);
+  if (online) return null;
+  return (
+    <div
+      role="status"
+      style={{
+        background: 'rgba(255,215,92,0.15)',
+        borderBottom: '1px solid rgba(255,215,92,0.4)',
+        padding: '6px 14px',
+        textAlign: 'center',
+        fontSize: '0.9rem'
+      }}
+    >
+      📴 מצב Offline — המשחק המקומי עובד כרגיל; אימות תשובות חדשות יושלם כשיחזור החיבור
+    </div>
+  );
+}
+
+export default function App() {
+  const screen = useApp((s) => s.screen);
+  const loadProfiles = useApp((s) => s.loadProfiles);
+  const loadCustomCategories = useApp((s) => s.loadCustomCategories);
+
+  useEffect(() => {
+    void loadProfiles();
+    void loadCustomCategories();
+    void getSetting('reducedMotion').then((v) => {
+      document.body.classList.toggle('reduced-motion', v === '1');
+    });
+    void getSetting('bigText').then((v) => {
+      document.body.classList.toggle('big-text', v === '1');
+    });
+  }, [loadProfiles, loadCustomCategories]);
+
+  const screens: Record<string, React.ReactElement> = {
+    splash: <Splash />,
+    profiles: <Profiles />,
+    'profile-edit': <ProfileEdit />,
+    home: <Home />,
+    'mode-select': <ModeSelect />,
+    categories: <Categories />,
+    'category-create': <CategoryCreate />,
+    'letter-draw': <LetterDraw />,
+    game: <Game />,
+    'pass-device': <PassDevice />,
+    'round-results': <RoundResults />,
+    'match-results': <MatchResults />,
+    leaderboard: <Leaderboard />,
+    album: <Album />,
+    achievements: <Achievements />,
+    daily: <Daily />,
+    settings: <Settings />,
+    parent: <Parent />,
+    credits: <Credits />,
+    privacy: <Privacy />,
+    'multiplayer-info': <MultiplayerInfo />
+  };
+
+  return (
+    <ErrorBoundary>
+      <OfflineBanner />
+      {screens[screen] ?? <Splash />}
+    </ErrorBoundary>
+  );
+}
