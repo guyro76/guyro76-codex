@@ -1,6 +1,7 @@
 import React, { Component, useEffect, useState, type ReactNode } from 'react';
 import { useApp } from './store/appStore';
 import { getSetting } from './db/db';
+import { loadContentIntoKnowledge, maybeAutoUpdate } from './lib/contentPack';
 import Splash from './screens/Splash';
 import Profiles from './screens/Profiles';
 import ProfileEdit from './screens/ProfileEdit';
@@ -88,6 +89,8 @@ export default function App() {
     void getSetting('bigText').then((v) => {
       document.body.classList.toggle('big-text', v === '1');
     });
+    // תוכן שהותקן בעבר נטען למנוע הידע; בדיקת עדכון לכל היותר פעם ביממה
+    void loadContentIntoKnowledge().then(() => maybeAutoUpdate());
   }, [loadProfiles, loadCustomCategories]);
 
   const screens: Record<string, React.ReactElement> = {

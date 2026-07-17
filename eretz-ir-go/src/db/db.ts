@@ -31,6 +31,16 @@ export interface CustomCategoryRow {
   createdAt: string;
 }
 
+/** ערך שהגיע מ-Content Pack (עדכון תוכן חתום) */
+export interface ContentItemRow {
+  id?: number;
+  canonicalName: string;
+  normalized: string;
+  categoryId: string;
+  source: string;
+  addedAt: string;
+}
+
 class EretzIrDB extends Dexie {
   profiles!: EntityTable<Profile, 'id'>;
   personalAnswers!: EntityTable<PersonalAnswer, 'id'>;
@@ -39,6 +49,7 @@ class EretzIrDB extends Dexie {
   userKnowledge!: EntityTable<UserKnowledgeRow, 'id'>;
   customCategories!: EntityTable<CustomCategoryRow, 'id'>;
   settings!: EntityTable<SettingsRow, 'key'>;
+  contentItems!: EntityTable<ContentItemRow, 'id'>;
 
   constructor() {
     super('eretz-ir-go');
@@ -50,6 +61,9 @@ class EretzIrDB extends Dexie {
       userKnowledge: '++id, normalized, categoryId',
       customCategories: '++id, profileId',
       settings: 'key'
+    });
+    this.version(2).stores({
+      contentItems: '++id, normalized, categoryId'
     });
   }
 }

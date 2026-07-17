@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import TopBar from '../components/TopBar';
 import { useApp } from '../store/appStore';
-import { getSetting, setSetting, importProfile } from '../db/db';
+import { db, getSetting, setSetting, importProfile } from '../db/db';
+import { applyContentPack, fetchContentPack } from '../lib/contentPack';
 
 export default function Settings() {
   const { loadProfiles, navigate } = useApp();
@@ -9,11 +10,19 @@ export default function Settings() {
   const [bigText, setBigText] = useState(false);
   const [sound, setSound] = useState(true);
   const [storageUse, setStorageUse] = useState<string>('...');
+  const [packVersion, setPackVersion] = useState<string | null>(null);
+  const [packCount, setPackCount] = useState(0);
+  const [packAuto, setPackAuto] = useState(true);
+  const [packMsg, setPackMsg] = useState('');
+  const [packBusy, setPackBusy] = useState(false);
 
   useEffect(() => {
     void getSetting('reducedMotion').then((v) => setReducedMotion(v === '1'));
     void getSetting('bigText').then((v) => setBigText(v === '1'));
     void getSetting('sound').then((v) => setSound(v !== '0'));
+    void getSetting('contentPackVersion').then((v) => setPackVersion(v ?? null));
+    void getSetting('packAutoUpdate').then((v) => setPackAuto(v !== '0'));
+    void db.contentItems.count().then(setPackCount);
     if (navigator.storage?.estimate) {
       void navigator.storage.estimate().then((est) => {
         setStorageUse(`${((est.usage ?? 0) / 1024 / 1024).toFixed(1)} MB`);
@@ -85,6 +94,47 @@ export default function Settings() {
         <button className="btn-small" onClick={() => void clearImageCache()}>
           🧹 ניקוי מטמון תמונות
         </button>
+      </div>
+
+      <div className="card" style={{ marginTop: 14 }}>
+        <strong>🔄 עדכוני תוכן</strong>
+        <p className="dim" style={{ fontSize: '0.88rem' }}>
+          {packVersion
+            ? `חבילה מותקנת: ${packVersion} · ${packCount} ערכים נוספים במאגר`
+            : 'אין חבילת תוכן מותקנת — המשחק משתמש במאגר המובנה (עובד מצוין גם כך)'}
+        </p>
+        <label className="row spread">
+          <span>עדכון אוטומטי (לכל היותר פעם ביום)</span>
+          <input
+            type="checkbox"
+            style={{ width: 28, minHeight: 28 }}
+            checked={packAuto}
+            onChange={(ev) => {
+              setPackAuto(ev.target.checked);
+              void setSetting('packAutoUpdate', ev.target.checked ? '1' : '0');
+            }}
+          />
+        </label>
+        <button
+          className="btn-small"
+          disabled={packBusy || !navigator.onLine}
+          onClick={() => {
+            setPackBusy(true);
+            setPackMsg('בודקים…');
+            void fetchContentPack()
+              .then(applyContentPack)
+              .then(async (r) => {
+                setPackVersion(r.version);
+                setPackCount(await db.contentItems.count());
+                setPackMsg(`עודכן לגרסה ${r.version} — נוספו ${r.added} ערכים 🎉`);
+              })
+              .catch((err: Error) => setPackMsg(`אין עדכון זמין (${err.message})`))
+              .finally(() => setPackBusy(false));
+          }}
+        >
+          {navigator.onLine ? '⬇️ בדיקת עדכון עכשיו' : '📴 נדרש חיבור לאינטרנט'}
+        </button>
+        {packMsg && <p className="dim" style={{ fontSize: '0.85rem' }}>{packMsg}</p>}
       </div>
 
       <div className="card" style={{ marginTop: 14 }}>
