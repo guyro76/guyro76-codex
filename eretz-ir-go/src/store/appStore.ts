@@ -23,7 +23,8 @@ export type Screen =
   | 'parent'
   | 'credits'
   | 'privacy'
-  | 'multiplayer-info';
+  | 'multiplayer-info'
+  | 'blitz';
 
 interface AppState {
   screen: Screen;

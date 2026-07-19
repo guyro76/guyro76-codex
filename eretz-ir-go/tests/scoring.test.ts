@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scoreAnswer, originalityScore, originalityBonus, speedBonus, completionBonus } from '../src/lib/scoring';
+import { scoreAnswer, originalityScore, originalityBonus, speedBonus, completionBonus, blitzPoints } from '../src/lib/scoring';
 import type { SubmittedAnswer } from '../src/types';
 
 describe('ניקוד קלאסי', () => {
@@ -84,5 +84,17 @@ describe('בונוסים', () => {
     const valid = { validation: { status: 'valid' }, revealed: false } as SubmittedAnswer;
     expect(completionBonus([valid, valid, valid], 3)).toBe(8);
     expect(completionBonus([valid, valid], 3)).toBe(0);
+  });
+});
+
+describe('ניקוד בליץ (ראש בראש)', () => {
+  it('תשובה בודדת = 10', () => {
+    expect(blitzPoints(1)).toBe(10);
+    expect(blitzPoints(2)).toBe(10);
+  });
+  it('רצף 3+ מוסיף בונוס מדורג עד 10', () => {
+    expect(blitzPoints(3)).toBe(12);
+    expect(blitzPoints(5)).toBe(16);
+    expect(blitzPoints(10)).toBe(20); // תקרה
   });
 });

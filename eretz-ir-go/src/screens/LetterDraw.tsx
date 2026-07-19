@@ -3,6 +3,7 @@ import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
 import { GAME_LETTERS } from '../lib/hebrew';
 import { roundIntro } from '../lib/persona';
+import { sfx } from '../lib/sound';
 
 export default function LetterDraw() {
   const { navigate, activeProfile } = useApp();
@@ -12,6 +13,8 @@ export default function LetterDraw() {
   const settings = useGame((s) => s.settings);
   const dailyLetter = useGame((s) => s.dailyDate); // באתגר יומי האות כבר נקבעה
   const fixedLetter = useGame((s) => s.letter);
+  const power = useGame((s) => s.power);
+  const usePower = useGame((s) => s.usePower);
 
   const [display, setDisplay] = useState('א');
   const [spinning, setSpinning] = useState(false);
@@ -37,6 +40,7 @@ export default function LetterDraw() {
         setDisplay(target);
         setFinalLetter(target);
         setSpinning(false);
+        sfx.letter();
         if ('vibrate' in navigator) navigator.vibrate?.(60);
       }
     }, 90);
@@ -76,6 +80,21 @@ export default function LetterDraw() {
           >
             מתחילים! ⏱️
           </button>
+          {settings.powerCards && !power.swap && !dailyLetter && (
+            <div style={{ marginTop: 10 }}>
+              <button
+                className="btn-ghost btn-small"
+                onClick={() => {
+                  if (usePower('swap')) {
+                    sfx.power();
+                    spin();
+                  }
+                }}
+              >
+                🎴 קלף כוח: החלפת אות (פעם אחת במשחק)
+              </button>
+            </div>
+          )}
         </>
       )}
       {!finalLetter && !spinning && (

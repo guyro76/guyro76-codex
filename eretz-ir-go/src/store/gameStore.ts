@@ -43,6 +43,8 @@ interface GameState {
   hintsLeft: number;
   coop: boolean;
   dailyDate: string | null;
+  /** קלפי כוח — מאגר משותף למשחק; דגל true = הקלף נוצל */
+  power: { extraTime: boolean; swap: boolean; freeHint: boolean; double: { playerIdx: number; categoryId: string } | null };
 
   startMatch: (settings: GameSettings, categories: Category[], profiles: Profile[], dailyDate?: string) => void;
   rollLetter: (forced?: string) => string;
@@ -51,6 +53,8 @@ interface GameState {
   askHint: (categoryId: string) => Hint | null;
   revealAnswer: (categoryId: string) => string | null;
   finishPlayer: () => Promise<void>;
+  usePower: (kind: 'extraTime' | 'swap' | 'freeHint') => boolean;
+  setDoubleCategory: (categoryId: string) => void;
   continueToNextPlayer: () => void;
   nextRound: () => void;
   endMatch: () => Promise<void>;
@@ -80,6 +84,7 @@ export const useGame = create<GameState>((set, get) => ({
   hintsLeft: 3,
   coop: false,
   dailyDate: null,
+  power: { extraTime: false, swap: false, freeHint: false, double: null },
 
   startMatch: (settings, categories, profiles, dailyDate) => {
     set({
@@ -100,7 +105,8 @@ export const useGame = create<GameState>((set, get) => ({
       phase: 'letter',
       hintsLeft: settings.hintsPerRound,
       coop: settings.mode === 'coop',
-      dailyDate: dailyDate ?? null
+      dailyDate: dailyDate ?? null,
+      power: { extraTime: false, swap: false, freeHint: false, double: null }
     });
   },
 
@@ -238,6 +244,11 @@ export const useGame = create<GameState>((set, get) => ({
       const players = s.players.map((p, i) => {
         const submitted = s.coop ? results[0] : results[i];
         if (!submitted) return p;
+        // קלף ניקוד כפול: מכפיל את הקטגוריה שסומנה על ידי השחקן שבחר בה
+        if (s.power.double && s.power.double.playerIdx === i) {
+          const target = submitted.find((a) => a.categoryId === s.power.double!.categoryId);
+          if (target && target.totalScore > 0) target.totalScore *= 2;
+        }
         const answersScore = submitted.reduce((sum, a) => sum + a.totalScore, 0);
         const bonus = completionBonus(submitted, s.categories.length);
         const roundScore = answersScore + bonus;
@@ -259,6 +270,28 @@ export const useGame = create<GameState>((set, get) => ({
         bestRoundScore: Math.max(p.profile.bestRoundScore, p.roundScore)
       });
     }
+  },
+
+  usePower: (kind) => {
+    const s0 = get();
+    if (!s0.settings.powerCards || s0.power[kind]) return false;
+    if (kind === 'extraTime') {
+      // הזזת תחילת הסיבוב קדימה = 15 שניות נוספות על השעון
+      set((s) => ({ roundStartedAt: s.roundStartedAt + 15000, power: { ...s.power, extraTime: true } }));
+    } else if (kind === 'freeHint') {
+      set((s) => ({ hintsLeft: s.hintsLeft + 1, power: { ...s.power, freeHint: true } }));
+    } else {
+      set((s) => ({ power: { ...s.power, swap: true } }));
+    }
+    return true;
+  },
+
+  setDoubleCategory: (categoryId) => {
+    set((s) => {
+      if (!s.settings.powerCards || s.power.double) return s;
+      const playerIdx = s.coop ? 0 : s.currentPlayerIdx;
+      return { power: { ...s.power, double: { playerIdx, categoryId } } };
+    });
   },
 
   continueToNextPlayer: () => {
@@ -345,7 +378,8 @@ export const useGame = create<GameState>((set, get) => ({
       phase: 'idle',
       hintsLeft: 3,
       coop: false,
-      dailyDate: null
+      dailyDate: null,
+      power: { extraTime: false, swap: false, freeHint: false, double: null }
     });
   }
 }));

@@ -96,3 +96,9 @@ export function originalityLabel(originality: number, duplicate: boolean): strin
   if (originality >= 40) return 'תשובה טובה';
   return 'תשובה נפוצה';
 }
+
+/** ניקוד מצב "ראש בראש": 10 לתשובה + בונוס רצף (2 נק׳ לכל רצף מ-3 ומעלה, עד 10) */
+export function blitzPoints(streak: number): number {
+  const bonus = streak >= 3 ? Math.min(10, (streak - 2) * 2) : 0;
+  return 10 + bonus;
+}

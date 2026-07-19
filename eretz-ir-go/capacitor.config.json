@@ -1,0 +1,15 @@
+{
+  "appId": "com.eretzir.go",
+  "appName": "ארץ-עיר GO!",
+  "webDir": "dist",
+  "backgroundColor": "#1b1035",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "automatic"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -3,6 +3,7 @@ import TopBar from '../components/TopBar';
 import { useApp } from '../store/appStore';
 import { db, getSetting, setSetting, importProfile } from '../db/db';
 import { applyContentPack, fetchContentPack } from '../lib/contentPack';
+import { setSoundEnabled } from '../lib/sound';
 
 export default function Settings() {
   const { loadProfiles, navigate } = useApp();
@@ -82,6 +83,7 @@ export default function Settings() {
             checked={sound}
             onChange={(ev) => {
               setSound(ev.target.checked);
+              setSoundEnabled(ev.target.checked);
               void setSetting('sound', ev.target.checked ? '1' : '0');
             }}
           />

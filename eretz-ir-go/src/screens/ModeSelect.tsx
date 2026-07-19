@@ -8,12 +8,14 @@ export interface ModeDraft {
   mode: GameMode;
   rounds: number;
   seconds: number;
+  powerCards: boolean;
 }
 
 /** טיוטת ההגדרות עוברת דרך settings table כדי לשרוד רענון */
 export async function loadModeDraft(): Promise<ModeDraft> {
   const raw = await getSetting('modeDraft');
-  return raw ? (JSON.parse(raw) as ModeDraft) : { mode: 'solo', rounds: 3, seconds: 180 };
+  const parsed = raw ? (JSON.parse(raw) as Partial<ModeDraft>) : {};
+  return { mode: parsed.mode ?? 'solo', rounds: parsed.rounds ?? 3, seconds: parsed.seconds ?? 180, powerCards: parsed.powerCards ?? false };
 }
 
 export default function ModeSelect() {
@@ -21,6 +23,7 @@ export default function ModeSelect() {
   const [mode, setMode] = useState<GameMode>('solo');
   const [rounds, setRounds] = useState(3);
   const [seconds, setSeconds] = useState(180);
+  const [powerCards, setPowerCards] = useState(false);
 
   const needsSecond = mode === 'duel' || mode === 'coop' || mode === 'tournament';
   const others = profiles.filter((p) => p.id !== activeProfile?.id);
@@ -30,12 +33,13 @@ export default function ModeSelect() {
     { id: 'duel', icon: '⚔️', name: 'דו-קרב', desc: 'שניים על אותו מכשיר, תור אחרי תור' },
     { id: 'coop', icon: '🤝', name: 'שיתוף פעולה', desc: 'ממלאים יחד לוח אחד — ניקוד קבוצתי' },
     { id: 'tournament', icon: '🏆', name: 'טורניר משפחתי', desc: 'כמה סיבובים, טבלה מצטברת וגביע' },
-    { id: 'practice', icon: '📖', name: 'תרגול חופשי', desc: 'בלי שעון, עם רמזים — ללמידה' }
+    { id: 'practice', icon: '📖', name: 'תרגול חופשי', desc: 'בלי שעון, עם רמזים — ללמידה' },
+    { id: 'blitz', icon: '⚡', name: 'ראש בראש', desc: 'קטגוריה אחת, 45 שניות, כמה שיותר תשובות!' }
   ];
 
   const start = async () => {
-    await setSetting('modeDraft', JSON.stringify({ mode, rounds, seconds } satisfies ModeDraft));
-    navigate('categories');
+    await setSetting('modeDraft', JSON.stringify({ mode, rounds, seconds, powerCards } satisfies ModeDraft));
+    navigate(mode === 'blitz' ? 'blitz' : 'categories');
   };
 
   return (
@@ -91,6 +95,22 @@ export default function ModeSelect() {
         </div>
       )}
 
+      {mode !== 'blitz' && (
+        <div className="card" style={{ marginTop: 14 }}>
+          <label className="row spread">
+            <span>
+              🎴 <strong>קלפי כוח</strong> — ⏳ זמן נוסף, 🔁 החלפת אות, 💡 רמז מתנה, ✖️2 ניקוד כפול
+            </span>
+            <input
+              type="checkbox"
+              style={{ width: 28, minHeight: 28 }}
+              checked={powerCards}
+              onChange={(ev) => setPowerCards(ev.target.checked)}
+            />
+          </label>
+        </div>
+      )}
+
       <div className="card" style={{ marginTop: 14 }}>
         <div className="row spread">
           <label style={{ flex: 1 }}>
@@ -122,7 +142,7 @@ export default function ModeSelect() {
         disabled={needsSecond && !secondProfile}
         onClick={() => void start()}
       >
-        המשך לבחירת קטגוריות ←
+        {mode === 'blitz' ? 'יאללה, לבליץ! ⚡' : 'המשך לבחירת קטגוריות ←'}
       </button>
     </div>
   );

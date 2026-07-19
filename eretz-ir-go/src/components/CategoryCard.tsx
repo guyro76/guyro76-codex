@@ -24,6 +24,9 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
   const players = useGame((s) => s.players);
   const coop = useGame((s) => s.coop);
   const currentPlayerIdx = useGame((s) => s.currentPlayerIdx);
+  const powerCardsOn = useGame((s) => s.settings.powerCards);
+  const doublePick = useGame((s) => s.power.double);
+  const setDoubleCategory = useGame((s) => s.setDoubleCategory);
 
   const [suggestions, setSuggestions] = useState<PersonalAnswer[]>([]);
   const [open, setOpen] = useState(false);
@@ -83,7 +86,20 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
         <span className="cat-icon" aria-hidden>
           {category.icon}
         </span>
-        <span className="cat-name">{category.name}</span>
+        <span className="cat-name">
+          {category.name}
+          {doublePick?.categoryId === category.id && <span className="gold"> ×2</span>}
+        </span>
+        {powerCardsOn && !doublePick && (
+          <button
+            className="btn-small btn-ghost"
+            aria-label={`ניקוד כפול על ${category.name}`}
+            title="קלף כוח: ניקוד כפול על הקטגוריה הזו"
+            onClick={() => setDoubleCategory(category.id)}
+          >
+            ×2
+          </button>
+        )}
         <button
           className="btn-small btn-ghost"
           aria-label={`רמז מארצי לקטגוריה ${category.name}, נשארו ${hintsLeft} רמזים`}

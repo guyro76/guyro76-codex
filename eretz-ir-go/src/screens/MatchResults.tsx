@@ -1,10 +1,16 @@
 import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
+import { useEffect } from 'react';
 import { celebrate } from '../lib/persona';
+import { sfx } from '../lib/sound';
 
 export default function MatchResults() {
   const { navigate, refreshActive } = useApp();
   const game = useGame();
+
+  useEffect(() => {
+    sfx.win();
+  }, []);
 
   const sorted = [...game.players].sort((a, b) => b.totalScore - a.totalScore);
   const winner = sorted[0];

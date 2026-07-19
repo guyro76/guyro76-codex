@@ -3,6 +3,7 @@ import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
 import CategoryCard from '../components/CategoryCard';
 import { say } from '../lib/persona';
+import { sfx } from '../lib/sound';
 
 export default function Game() {
   const { navigate } = useApp();
@@ -81,6 +82,34 @@ export default function Game() {
           )}
         </div>
       </div>
+
+      {game.settings.powerCards && (
+        <div className="row" style={{ marginTop: 10 }} aria-label="קלפי כוח">
+          <button
+            className="btn-small btn-gold"
+            disabled={game.power.extraTime || game.settings.roundSeconds <= 0}
+            onClick={() => {
+              if (game.usePower('extraTime')) sfx.power();
+            }}
+          >
+            ⏳ +15 שניות
+          </button>
+          <button
+            className="btn-small btn-gold"
+            disabled={game.power.freeHint}
+            onClick={() => {
+              if (game.usePower('freeHint')) sfx.power();
+            }}
+          >
+            💡 רמז מתנה
+          </button>
+          <span className="chip" style={{ fontSize: '0.82rem' }}>
+            {game.power.double
+              ? `✖️2 על ${game.categories.find((c) => c.id === game.power.double!.categoryId)?.name ?? ''}`
+              : '✖️2 — סמנו קטגוריה עם כפתור ה-×2 בקלף'}
+          </span>
+        </div>
+      )}
 
       {isDuel && (
         <p className="dim center" style={{ margin: '8px 0' }}>
