@@ -24,6 +24,7 @@ import Credits from './screens/Credits';
 import Privacy from './screens/Privacy';
 import MultiplayerInfo from './screens/MultiplayerInfo';
 import Blitz from './screens/Blitz';
+import Chain from './screens/Chain';
 
 /** מסך שגיאה ידידותי — Error Boundary */
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
@@ -116,7 +117,8 @@ export default function App() {
     credits: <Credits />,
     privacy: <Privacy />,
     'multiplayer-info': <MultiplayerInfo />,
-    blitz: <Blitz />
+    blitz: <Blitz />,
+    chain: <Chain />
   };
 
   return (

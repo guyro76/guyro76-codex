@@ -34,12 +34,16 @@ export default function ModeSelect() {
     { id: 'coop', icon: '🤝', name: 'שיתוף פעולה', desc: 'ממלאים יחד לוח אחד — ניקוד קבוצתי' },
     { id: 'tournament', icon: '🏆', name: 'טורניר משפחתי', desc: 'כמה סיבובים, טבלה מצטברת וגביע' },
     { id: 'practice', icon: '📖', name: 'תרגול חופשי', desc: 'בלי שעון, עם רמזים — ללמידה' },
-    { id: 'blitz', icon: '⚡', name: 'ראש בראש', desc: 'קטגוריה אחת, 45 שניות, כמה שיותר תשובות!' }
+    { id: 'blitz', icon: '⚡', name: 'ראש בראש', desc: 'קטגוריה אחת, 45 שניות, כמה שיותר תשובות!' },
+    { id: 'chain', icon: '🔗', name: 'שרשרת', desc: 'כל תשובה מתחילה באות האחרונה של הקודמת' }
   ];
+
+  /** מצבי המשחק המהירים מנוהלים במסך משלהם ולא עוברים בבחירת קטגוריות */
+  const quickModes: Partial<Record<GameMode, 'blitz' | 'chain'>> = { blitz: 'blitz', chain: 'chain' };
 
   const start = async () => {
     await setSetting('modeDraft', JSON.stringify({ mode, rounds, seconds, powerCards } satisfies ModeDraft));
-    navigate(mode === 'blitz' ? 'blitz' : 'categories');
+    navigate(quickModes[mode] ?? 'categories');
   };
 
   return (
@@ -95,7 +99,7 @@ export default function ModeSelect() {
         </div>
       )}
 
-      {mode !== 'blitz' && (
+      {!quickModes[mode] && (
         <div className="card" style={{ marginTop: 14 }}>
           <label className="row spread">
             <span>
@@ -111,7 +115,7 @@ export default function ModeSelect() {
         </div>
       )}
 
-      <div className="card" style={{ marginTop: 14 }}>
+      <div className="card" style={{ marginTop: 14, display: quickModes[mode] ? 'none' : undefined }}>
         <div className="row spread">
           <label style={{ flex: 1 }}>
             סיבובים
@@ -142,7 +146,7 @@ export default function ModeSelect() {
         disabled={needsSecond && !secondProfile}
         onClick={() => void start()}
       >
-        {mode === 'blitz' ? 'יאללה, לבליץ! ⚡' : 'המשך לבחירת קטגוריות ←'}
+        {mode === 'blitz' ? 'יאללה, לבליץ! ⚡' : mode === 'chain' ? 'מתחילים שרשרת! 🔗' : 'המשך לבחירת קטגוריות ←'}
       </button>
     </div>
   );

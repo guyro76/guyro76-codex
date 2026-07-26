@@ -24,7 +24,8 @@ export type Screen =
   | 'credits'
   | 'privacy'
   | 'multiplayer-info'
-  | 'blitz';
+  | 'blitz'
+  | 'chain';
 
 interface AppState {
   screen: Screen;

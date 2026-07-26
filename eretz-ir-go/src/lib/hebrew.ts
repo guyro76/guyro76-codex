@@ -98,6 +98,12 @@ export function spellingVariants(normalized: string): string[] {
   return [...variants];
 }
 
+/** האות האחרונה המשמעותית של תשובה — לצורך מצב "שרשרת" (סופיות מומרות לרגילות) */
+export function lastLetterOf(raw: string): string {
+  const clean = normalizeHebrew(raw).replace(/[^א-ת]/g, '');
+  return clean.charAt(clean.length - 1);
+}
+
 /** האם המחרוזת נראית כמו ג'יבריש — רצף ללא תנועה הגיונית או תו חוזר */
 export function looksLikeGibberish(raw: string): boolean {
   const s = normalizeHebrew(raw);
