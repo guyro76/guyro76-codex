@@ -2,13 +2,22 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/**
+ * BASE_PATH מאפשר פריסה גם לשורש דומיין (Vercel/Netlify) וגם לתת-נתיב
+ * (GitHub Pages, למשל "/guyro76-codex/"). ה-manifest וה-Service Worker
+ * נגזרים ממנו אוטומטית כדי שההתקנה כ-PWA תעבוד בשני המקרים.
+ */
+const base = process.env.BASE_PATH ?? '/';
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['icons/logo.svg'],
       manifest: {
+        scope: base,
         name: 'ארץ-עיר GO!',
         short_name: 'ארץ-עיר GO!',
         description: 'משחק ארץ-עיר משפחתי חכם — עובד גם בלי אינטרנט, בלי פרסומות ובלי איסוף מידע',
@@ -16,7 +25,7 @@ export default defineConfig({
         lang: 'he',
         display: 'standalone',
         orientation: 'any',
-        start_url: '/',
+        start_url: base,
         background_color: '#1b1035',
         theme_color: '#2b1b5a',
         icons: [
@@ -27,7 +36,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        navigateFallback: 'index.html',
+        navigateFallback: `${base}index.html`,
         runtimeCaching: [
           {
             // תמונות מ-Wikimedia Commons נשמרות במטמון לצפייה חוזרת במצב Offline

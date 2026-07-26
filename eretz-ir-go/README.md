@@ -35,7 +35,9 @@ npm run seed:report  # דו"ח כיסוי המאגר לפי אות וקטגור�
 
 ## פריסה
 
-תיקיית `dist/` היא אתר סטטי — אפשר לפרוס ל-Vercel / Netlify / GitHub Pages. ה-Service Worker וה-Manifest נוצרים אוטומטית בבנייה, והאפליקציה ניתנת להתקנה במסך הבית (Android, iOS, Desktop).
+**פריסה אוטומטית מוכנה:** ה-workflow `.github/workflows/eretz-ir-go-pages.yml` מריץ בדיקות ופורס ל-GitHub Pages בכל דחיפה. צריך לאשר פעם אחת ב-**Settings → Pages → Source: GitHub Actions**, ואז הכתובת היא `https://guyro76.github.io/guyro76-codex/`.
+
+תיקיית `dist/` היא אתר סטטי, כך שאפשר גם לפרוס ל-Vercel / Netlify. הבנייה מכבדת `BASE_PATH` ולכן עובדת גם בשורש דומיין וגם בתת-נתיב. ה-Service Worker וה-Manifest נוצרים אוטומטית, והאפליקציה ניתנת להתקנה במסך הבית (Android, iOS, Desktop). להעלאה לחנויות — ראו `STORE_DEPLOYMENT.md`.
 
 ## משחק בשני מכשירים (אופציונלי)
 

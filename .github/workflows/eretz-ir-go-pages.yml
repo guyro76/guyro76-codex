@@ -1,0 +1,63 @@
+name: ארץ-עיר GO! — בדיקות ופריסה ל-GitHub Pages
+
+on:
+  push:
+    branches: ['claude/eretz-ir-go-game-3kvtm3', main]
+    paths: ['eretz-ir-go/**', '.github/workflows/eretz-ir-go-pages.yml']
+  workflow_dispatch:
+
+# נדרש כדי לפרוס ל-Pages ללא סודות חיצוניים
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: eretz-ir-go-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: eretz-ir-go
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: eretz-ir-go/package-lock.json
+
+      - name: התקנת תלויות
+        run: npm ci
+
+      - name: בדיקת טיפוסים
+        run: npx tsc -b
+
+      - name: בדיקות אוטומטיות
+        run: npm test
+
+      - name: יצירת אייקוני PWA
+        run: npm run icons
+
+      - name: בנייה לפרודקשן
+        # הנתיב הציבורי ב-Pages הוא /<repo>/ — נגזר אוטומטית משם המאגר
+        run: BASE_PATH="/${GITHUB_REPOSITORY#*/}/" npm run build
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: eretz-ir-go/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

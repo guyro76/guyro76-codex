@@ -4,9 +4,26 @@
 
 ## שלב 0 — פריסת גרסת web (נדרש לשני המסלולים)
 
+### האפשרות הפשוטה: GitHub Pages (אוטומטי, בלי חשבון חיצוני)
+
+הפרויקט כולל workflow מוכן — `.github/workflows/eretz-ir-go-pages.yml`. הוא מריץ בדיקות טיפוסים, 57 בדיקות אוטומטיות, ואז בונה ופורס. **צריך לאשר Pages פעם אחת:**
+
+1. ב-GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**
+2. זה הכול. כל דחיפה לענף מפרסת מחדש אוטומטית.
+
+הכתובת הציבורית תהיה `https://guyro76.github.io/guyro76-codex/` — כתובת HTTPS קבועה, בדיוק מה שנדרש להתקנת ה-PWA בטלפון ולהעלאה ל-Google Play.
+
+הבנייה מכבדת את משתנה הסביבה `BASE_PATH`, כך שאותו קוד עובד גם בתת-נתיב (Pages) וגם בשורש דומיין:
+
 ```bash
-npm run build          # יוצר dist/
-# פרסו את dist/ לדומיין HTTPS קבוע, למשל Vercel/Netlify:
+npm run build                              # לשורש דומיין (Vercel/Netlify)
+BASE_PATH=/guyro76-codex/ npm run build    # לתת-נתיב (GitHub Pages)
+```
+
+### לחלופין: Vercel או Netlify (דומיין נקי משלכם)
+
+```bash
+npm run build            # יוצר dist/
 npx vercel deploy dist --prod
 ```
 
