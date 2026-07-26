@@ -5,5 +5,19 @@
   "outputDirectory": "paprika-app/.next",
   "git": {
     "deploymentEnabled": false
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/reminder-telegram",
+      "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/reminder-whatsapp",
+      "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/reminder-email",
+      "schedule": "30 3 * * *"
+    }
+  ]
 }
