@@ -24,7 +24,7 @@ public partial class App : Application
     private HotkeyManager? _hotkeyManager;
     private HotkeyWindowHelper? _hotkeyWindowHelper;
     private TrayService? _trayService;
-    private bool _allowClose = false;
+    private bool _isExiting = false;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -76,12 +76,15 @@ public partial class App : Application
         _mainWindow.BindSettings(_settingsService!);
         _mainWindow.ActionRequested += MainWindow_ActionRequested;
         _mainWindow.ShowSettingsRequested += MainWindow_ShowSettingsRequested;
-        _mainWindow.Closing += (s, e) =>
+        // X closes the application completely.
+        // Minimize keeps it running quietly in the tray.
+        _mainWindow.Closed += (s, e) => FullyExit();
+        _mainWindow.StateChanged += (s, e) =>
         {
-            if (!_allowClose)
+            if (_mainWindow!.WindowState == WindowState.Minimized)
             {
-                e.Cancel = true;
                 _mainWindow.Hide();
+                ToastWindow.ShowMessage("קליקשפה ממשיכה לפעול ברקע — לחצו על האייקון בשורת המשימות כדי לפתוח");
             }
         };
         _mainWindow.Show();
@@ -109,8 +112,15 @@ public partial class App : Application
 
     private void FullyExit()
     {
-        _allowClose = true;
-        _mainWindow?.Close();
+        if (_isExiting)
+            return;
+
+        _isExiting = true;
+        _trayService?.Dispose();
+
+        if (_mainWindow is { IsVisible: true })
+            _mainWindow.Close();
+
         Shutdown();
     }
 
@@ -150,7 +160,7 @@ public partial class App : Application
             var selectedText = await _selectedTextService.GetSelectedTextAsync();
             if (string.IsNullOrEmpty(selectedText))
             {
-                ShowNotification("לא זוהה טקסט מסומן");
+                ShowNotification("לא זוהה טקסט מסומן — סמנו את הטקסט ולחצו שוב על הקיצור");
                 return;
             }
 
@@ -187,18 +197,15 @@ public partial class App : Application
     private void ShowMainWindow()
     {
         if (_mainWindow == null)
-        {
-            _mainWindow = new MainWindow();
+            return;
+
+        // Minimizing hides the window, so it must be shown *and* un-minimized
+        if (!_mainWindow.IsVisible)
             _mainWindow.Show();
-        }
-        else if (_mainWindow.WindowState == WindowState.Minimized)
-        {
+
+        if (_mainWindow.WindowState == WindowState.Minimized)
             _mainWindow.WindowState = WindowState.Normal;
-        }
-        else if (!_mainWindow.IsVisible)
-        {
-            _mainWindow.Show();
-        }
+
         _mainWindow.Activate();
         _mainWindow.Focus();
     }

@@ -74,4 +74,14 @@ public partial class MainWindow : Window
     {
         ShowSettingsRequested?.Invoke(this, EventArgs.Empty);
     }
+
+    private void Button_Minimize(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void Button_Exit(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
 }

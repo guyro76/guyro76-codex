@@ -5,28 +5,47 @@ using LangFlipDesktop.Core.Interfaces;
 
 public class ClipboardService : IClipboardService
 {
+    // The Windows clipboard is a single shared resource - another application
+    // holding it open makes any call throw. Every operation retries briefly.
+    private const int RetryCount = 6;
+    private const int RetryDelayMs = 40;
+
     public string GetClipboardText()
     {
-        try
+        for (var i = 0; i < RetryCount; i++)
         {
-            return Clipboard.GetText() ?? string.Empty;
+            try
+            {
+                return Clipboard.ContainsText() ? Clipboard.GetText() ?? string.Empty : string.Empty;
+            }
+            catch
+            {
+                Thread.Sleep(RetryDelayMs);
+            }
         }
-        catch
-        {
-            return string.Empty;
-        }
+
+        return string.Empty;
     }
 
-    public void SetClipboardText(string text)
+    public bool SetClipboardText(string text)
     {
-        try
+        if (string.IsNullOrEmpty(text))
+            return false;
+
+        for (var i = 0; i < RetryCount; i++)
         {
-            Clipboard.SetText(text);
+            try
+            {
+                Clipboard.SetText(text);
+                return true;
+            }
+            catch
+            {
+                Thread.Sleep(RetryDelayMs);
+            }
         }
-        catch
-        {
-            // Silently fail if clipboard is unavailable
-        }
+
+        return false;
     }
 
     public void CopyToClipboard(string text)
@@ -37,14 +56,20 @@ public class ClipboardService : IClipboardService
     public string SaveAndClear()
     {
         var current = GetClipboardText();
-        try
+
+        for (var i = 0; i < RetryCount; i++)
         {
-            Clipboard.Clear();
+            try
+            {
+                Clipboard.Clear();
+                break;
+            }
+            catch
+            {
+                Thread.Sleep(RetryDelayMs);
+            }
         }
-        catch
-        {
-            // Silently fail
-        }
+
         return current;
     }
 

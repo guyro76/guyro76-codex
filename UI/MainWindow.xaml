@@ -155,14 +155,18 @@
                 </StackPanel>
             </Border>
 
-            <!-- Settings Button -->
-            <Button Content="הגדרות" Style="{StaticResource GlassButton}" Click="Button_Settings"
-                    Width="150" HorizontalAlignment="Center" Margin="0,16,0,16" />
+            <!-- Window Actions -->
+            <WrapPanel HorizontalAlignment="Center" Margin="0,16,0,16">
+                <Button Content="הגדרות" Style="{StaticResource GlassButton}" Click="Button_Settings" Width="150" />
+                <Button Content="הקטן לרקע" Style="{StaticResource GlassButton}" Click="Button_Minimize" Width="150" />
+                <Button Content="✕ סגור לגמרי" Style="{StaticResource GlassButton}" Click="Button_Exit"
+                        Width="150" Background="#5A1A2A" BorderBrush="#B03A50" />
+            </WrapPanel>
 
             <!-- Copyright Footer -->
             <Border Background="#0B1F4D" BorderBrush="#2563EB" BorderThickness="0,1,0,0" Padding="16,16,16,16" Margin="0,32,0,0">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                    <TextBlock Text="קליקשפה v1.2.0 | עדכון: 05.07.2026"
+                    <TextBlock Text="קליקשפה v1.2.1 | עדכון: 07.07.2026"
                                FontSize="13" FontWeight="Bold" Foreground="#38D5FF"
                                TextAlignment="Center" Margin="0,0,0,8"/>
                     <TextBlock Text="© נבנה ותוכנן על ידי גיא רוזנברג 2026"
