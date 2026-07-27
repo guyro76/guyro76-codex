@@ -27,7 +27,8 @@ cd eretz-ir-go
 npm install
 npm run icons     # יצירת אייקוני ה-PWA (פעם אחת)
 npm run dev       # פיתוח: http://localhost:5173
-npm test          # בדיקות (vitest)
+npm test          # 57 בדיקות יחידה (vitest)
+npm run test:e2e  # 5 בדיקות E2E בדפדפן אמיתי (playwright) — דורש build קודם
 npm run build     # בנייה לפריסה — תיקיית dist/
 npm run preview   # תצוגה מקדימה של הבנייה
 npm run seed:report  # דו"ח כיסוי המאגר לפי אות וקטגוריה
