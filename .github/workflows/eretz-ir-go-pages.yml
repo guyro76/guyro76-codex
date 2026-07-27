@@ -43,6 +43,13 @@ jobs:
       - name: יצירת אייקוני PWA
         run: npm run icons
 
+      - name: התקנת Chromium לבדיקות E2E
+        run: npx playwright install --with-deps chromium
+
+      - name: בדיקות E2E — מסלול המשחק המלא
+        # רצות מול הבנייה לשורש דומיין, לפני הבנייה לתת-נתיב של Pages
+        run: npm run build && npm run test:e2e
+
       - name: בנייה לפרודקשן
         # הנתיב הציבורי ב-Pages הוא /<repo>/ — נגזר אוטומטית משם המאגר
         run: BASE_PATH="/${GITHUB_REPOSITORY#*/}/" npm run build
