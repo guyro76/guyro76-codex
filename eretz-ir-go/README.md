@@ -36,7 +36,9 @@ npm run seed:report  # דו"ח כיסוי המאגר לפי אות וקטגור�
 
 ## פריסה
 
-**פריסה אוטומטית מוכנה:** ה-workflow `.github/workflows/eretz-ir-go-pages.yml` מריץ בדיקות ופורס ל-GitHub Pages בכל דחיפה. צריך לאשר פעם אחת ב-**Settings → Pages → Source: GitHub Actions**, ואז הכתובת היא `https://guyro76.github.io/guyro76-codex/`.
+**המשחק חי:** https://guyro76.github.io/guyro76-codex/
+
+ה-workflow `.github/workflows/eretz-ir-go-pages.yml` מריץ בכל דחיפה בדיקת טיפוסים, 57 בדיקות יחידה, 5 בדיקות E2E בדפדפן, בנייה, ואז דוחף את התוצר לענף `gh-pages` — כך שהאתר החי מתעדכן אוטומטית. אין צורך בשום סוד חיצוני.
 
 תיקיית `dist/` היא אתר סטטי, כך שאפשר גם לפרוס ל-Vercel / Netlify. הבנייה מכבדת `BASE_PATH` ולכן עובדת גם בשורש דומיין וגם בתת-נתיב. ה-Service Worker וה-Manifest נוצרים אוטומטית, והאפליקציה ניתנת להתקנה במסך הבית (Android, iOS, Desktop). להעלאה לחנויות — ראו `STORE_DEPLOYMENT.md`.
 

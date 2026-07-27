@@ -6,22 +6,18 @@ on:
     paths: ['eretz-ir-go/**', '.github/workflows/eretz-ir-go-pages.yml']
   workflow_dispatch:
 
-# נדרש כדי לפרוס ל-Pages ללא סודות חיצוניים
+# הפריסה נעשית בדחיפה לענף gh-pages, ולכן נדרשת רק הרשאת כתיבה לתוכן.
+# ה-GITHUB_TOKEN המובנה מספיק — אין צורך בשום סוד חיצוני.
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: eretz-ir-go-pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: eretz-ir-go
     steps:
       - uses: actions/checkout@v4
 
@@ -32,49 +28,46 @@ jobs:
           cache-dependency-path: eretz-ir-go/package-lock.json
 
       - name: התקנת תלויות
+        working-directory: eretz-ir-go
         run: npm ci
 
       - name: בדיקת טיפוסים
+        working-directory: eretz-ir-go
         run: npx tsc -b
 
-      - name: בדיקות אוטומטיות
+      - name: בדיקות יחידה
+        working-directory: eretz-ir-go
         run: npm test
 
       - name: יצירת אייקוני PWA
+        working-directory: eretz-ir-go
         run: npm run icons
 
       - name: התקנת Chromium לבדיקות E2E
+        working-directory: eretz-ir-go
         run: npx playwright install --with-deps chromium
 
       - name: בדיקות E2E — מסלול המשחק המלא
-        # רצות מול הבנייה לשורש דומיין, לפני הבנייה לתת-נתיב של Pages
+        working-directory: eretz-ir-go
         run: npm run build && npm run test:e2e
 
-      - name: בנייה לפרודקשן
+      - name: בנייה לפרודקשן (נתיב Pages)
+        working-directory: eretz-ir-go
         # הנתיב הציבורי ב-Pages הוא /<repo>/ — נגזר אוטומטית משם המאגר
         run: BASE_PATH="/${GITHUB_REPOSITORY#*/}/" npm run build
 
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: eretz-ir-go/dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    # הפריסה תיכשל עד שיופעל Pages פעם אחת ב-Settings → Pages → Source: GitHub Actions.
-    # אין סיבה לצבוע את כל ה-CI באדום בגלל הגדרה שממתינה לאישור — הבדיקות הן השער האמיתי.
-    continue-on-error: true
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
-
-      - name: הסבר אם הפריסה לא בוצעה
-        if: failure()
+      - name: פריסה לענף gh-pages
+        # רק מהענף הראשי של הפיתוח — כדי שענפי ניסוי לא ידרסו את האתר החי
+        if: github.ref == 'refs/heads/claude/eretz-ir-go-game-3kvtm3' || github.ref == 'refs/heads/main'
         run: |
-          echo "::warning::הבנייה והבדיקות עברו, אך הפריסה מחכה להפעלת GitHub Pages."
-          echo "להפעלה חד-פעמית: Settings → Pages → Build and deployment → Source: GitHub Actions"
-          echo "אחרי זה כל דחיפה תפרוס אוטומטית ל-https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          cd eretz-ir-go/dist
+          touch .nojekyll
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "פריסה אוטומטית מ-${GITHUB_SHA::7}"
+          git push -q --force \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" \
+            gh-pages
+          echo "::notice::האתר עודכן — https://${GITHUB_REPOSITORY%%/*}.github.io/${GITHUB_REPOSITORY#*/}/"
