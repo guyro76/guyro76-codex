@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useApp } from '../store/appStore';
+import { useGame } from '../store/gameStore';
 import TopBar from '../components/TopBar';
 import type { GameMode } from '../types';
 import { getSetting, setSetting } from '../db/db';
+import { CATEGORIES, CLASSIC_CATEGORY_IDS } from '../data/categories';
 
 export interface ModeDraft {
   mode: GameMode;
@@ -20,6 +22,7 @@ export async function loadModeDraft(): Promise<ModeDraft> {
 
 export default function ModeSelect() {
   const { navigate, profiles, activeProfile, secondProfile, selectSecondProfile } = useApp();
+  const startMatch = useGame((g) => g.startMatch);
   const [mode, setMode] = useState<GameMode>('solo');
   const [rounds, setRounds] = useState(3);
   const [seconds, setSeconds] = useState(180);
@@ -35,7 +38,8 @@ export default function ModeSelect() {
     { id: 'tournament', icon: '🏆', name: 'טורניר משפחתי', desc: 'כמה סיבובים, טבלה מצטברת וגביע' },
     { id: 'practice', icon: '📖', name: 'תרגול חופשי', desc: 'בלי שעון, עם רמזים — ללמידה' },
     { id: 'blitz', icon: '⚡', name: 'ראש בראש', desc: 'קטגוריה אחת, 45 שניות, כמה שיותר תשובות!' },
-    { id: 'chain', icon: '🔗', name: 'שרשרת', desc: 'כל תשובה מתחילה באות האחרונה של הקודמת' }
+    { id: 'chain', icon: '🔗', name: 'שרשרת', desc: 'כל תשובה מתחילה באות האחרונה של הקודמת' },
+    { id: 'mystery', icon: '🎴', name: 'קלף מסתורי', desc: 'הקטגוריות נשארות סוד — מתגלות רק אחרי הגרלת האות!' }
   ];
 
   /** מצבי המשחק המהירים מנוהלים במסך משלהם ולא עוברים בבחירת קטגוריות */
@@ -43,6 +47,28 @@ export default function ModeSelect() {
 
   const start = async () => {
     await setSetting('modeDraft', JSON.stringify({ mode, rounds, seconds, powerCards } satisfies ModeDraft));
+
+    // קלף מסתורי: המשחק בוחר את הקטגוריות בעצמו ומדלג על מסך הבחירה
+    if (mode === 'mystery' && activeProfile) {
+      const pool = [...CLASSIC_CATEGORY_IDS, ...CATEGORIES.filter((c) => !c.classic).map((c) => c.id)];
+      const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, 5);
+      startMatch(
+        {
+          mode,
+          categoryIds: picked,
+          roundSeconds: seconds,
+          rounds,
+          difficulty: activeProfile.difficulty,
+          hintsPerRound: 3,
+          powerCards
+        },
+        picked.map((id) => CATEGORIES.find((c) => c.id === id)!).filter(Boolean),
+        [activeProfile]
+      );
+      navigate('letter-draw');
+      return;
+    }
+
     navigate(quickModes[mode] ?? 'categories');
   };
 
@@ -146,7 +172,13 @@ export default function ModeSelect() {
         disabled={needsSecond && !secondProfile}
         onClick={() => void start()}
       >
-        {mode === 'blitz' ? 'יאללה, לבליץ! ⚡' : mode === 'chain' ? 'מתחילים שרשרת! 🔗' : 'המשך לבחירת קטגוריות ←'}
+        {mode === 'blitz'
+          ? 'יאללה, לבליץ! ⚡'
+          : mode === 'chain'
+            ? 'מתחילים שרשרת! 🔗'
+            : mode === 'mystery'
+              ? 'לגלות את הקלף המסתורי! 🎴'
+              : 'המשך לבחירת קטגוריות ←'}
       </button>
     </div>
   );

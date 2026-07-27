@@ -13,6 +13,7 @@ export default function LetterDraw() {
   const settings = useGame((s) => s.settings);
   const dailyLetter = useGame((s) => s.dailyDate); // באתגר יומי האות כבר נקבעה
   const fixedLetter = useGame((s) => s.letter);
+  const categories = useGame((s) => s.categories);
   const power = useGame((s) => s.power);
   const usePower = useGame((s) => s.usePower);
 
@@ -67,6 +68,18 @@ export default function LetterDraw() {
 
       {finalLetter && activeProfile && (
         <>
+          {settings.mode === 'mystery' && (
+            <div className="card" style={{ maxWidth: 420, margin: '0 auto 12px', borderColor: 'var(--gold)' }}>
+              <strong>🎴 הקלפים נחשפים!</strong>
+              <div className="row" style={{ justifyContent: 'center', marginTop: 8 }}>
+                {categories.map((c) => (
+                  <span key={c.id} className="chip on">
+                    {c.icon} {c.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="card" style={{ maxWidth: 420, margin: '0 auto 16px', whiteSpace: 'pre-line' }}>
             <span aria-hidden>🤖</span> {roundIntro(activeProfile, finalLetter, roundIndex === 0)}
           </div>
