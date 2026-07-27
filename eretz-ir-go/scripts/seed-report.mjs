@@ -14,11 +14,14 @@ const CLASSIC = ['country', 'city', 'animal', 'plant', 'inanimate', 'boyname', '
 
 // חילוץ גס של הערכים מקובץ ה-seed (שם + קטגוריות)
 const entries = [];
-const re = /e\(\s*['"‘]([^'"]+)['"]\s*,\s*\[([^\]]*)\]/g;
+// שם מוקף במרכאות בודדות או כפולות — שמות עם גרש (למשל צ'ארלי צ'פלין)
+// כתובים במרכאות כפולות, ולכן חייבים שני ענפים נפרדים.
+const re = /e\(\s*(?:'([^']+)'|"([^"]+)")\s*,\s*\[([^\]]*)\]/g;
 let m;
 while ((m = re.exec(src))) {
-  const cats = [...m[2].matchAll(/'([^']+)'/g)].map((x) => x[1]);
-  if (cats.length) entries.push({ name: m[1], cats });
+  const name = m[1] ?? m[2];
+  const cats = [...m[3].matchAll(/'([^']+)'/g)].map((x) => x[1]);
+  if (name && cats.length) entries.push({ name, cats });
 }
 
 console.log(`סה"כ ערכים במאגר: ${entries.length}\n`);
