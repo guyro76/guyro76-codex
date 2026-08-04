@@ -1,12 +1,31 @@
 import { useEffect, useState } from 'react';
 import TopBar from '../components/TopBar';
-import { db, type UserKnowledgeRow } from '../db/db';
+import { db } from '../db/db';
+
+interface CreditRow {
+  key: string;
+  name: string;
+  pageUrl?: string;
+}
 
 export default function Credits() {
-  const [imageRows, setImageRows] = useState<UserKnowledgeRow[]>([]);
+  const [imageRows, setImageRows] = useState<CreditRow[]>([]);
 
+  // כל תמונה שהמשחק הציג אי פעם מופיעה כאן עם קישור לעמוד המקור והרישיון:
+  // גם תמונות של תשובות שאומתו אונליין וגם תמונות שנמצאו לערכי המאגר.
   useEffect(() => {
-    void db.userKnowledge.toArray().then((rows) => setImageRows(rows.filter((r) => r.imageUrl)));
+    void Promise.all([db.userKnowledge.toArray(), db.imageCache.toArray()]).then(([known, cached]) => {
+      const rows: CreditRow[] = [
+        ...known
+          .filter((r) => r.imageUrl)
+          .map((r) => ({ key: `k${r.id}`, name: r.canonicalName, pageUrl: r.source })),
+        ...cached
+          .filter((r) => r.found && r.url)
+          .map((r) => ({ key: `c${r.normalized}`, name: r.normalized, pageUrl: r.pageUrl }))
+      ];
+      const seen = new Set<string>();
+      setImageRows(rows.filter((r) => !seen.has(r.name) && seen.add(r.name)));
+    });
   }, []);
 
   return (
@@ -36,11 +55,13 @@ export default function Credits() {
         <div className="card" style={{ marginTop: 14 }}>
           <h3>קרדיטים לתמונות שנטענו</h3>
           {imageRows.map((r) => (
-            <div key={r.id} style={{ padding: '6px 0', borderTop: '1px solid var(--border-glass)' }}>
-              <strong>{r.canonicalName}</strong>{' '}
-              <a href={r.source} target="_blank" rel="noreferrer" style={{ color: 'var(--turquoise)' }}>
-                עמוד המקור והרישיון ↗
-              </a>
+            <div key={r.key} style={{ padding: '6px 0', borderTop: '1px solid var(--border-glass)' }}>
+              <strong>{r.name}</strong>{' '}
+              {r.pageUrl && (
+                <a href={r.pageUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--turquoise)' }}>
+                  עמוד המקור והרישיון ↗
+                </a>
+              )}
             </div>
           ))}
         </div>

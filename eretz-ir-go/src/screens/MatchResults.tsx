@@ -8,13 +8,16 @@ export default function MatchResults() {
   const { navigate, refreshActive } = useApp();
   const game = useGame();
 
-  useEffect(() => {
-    sfx.win();
-  }, []);
-
   const sorted = [...game.players].sort((a, b) => b.totalScore - a.totalScore);
   const winner = sorted[0];
   const isTie = sorted.length > 1 && sorted[0].totalScore === sorted[1].totalScore;
+  // שיא אישי חדש = פאנפרה ארוכה; משחק רגיל = צליל ניצחון קצר
+  const isRecord = !!winner && winner.totalScore > (winner.profile.bestRoundScore ?? 0) * game.settings.rounds;
+
+  useEffect(() => {
+    if (isRecord) sfx.fanfare();
+    else sfx.win();
+  }, [isRecord]);
 
   const finish = async (to: 'home' | 'mode-select') => {
     await refreshActive();

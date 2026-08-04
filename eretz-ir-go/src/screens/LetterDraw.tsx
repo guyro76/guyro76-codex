@@ -3,7 +3,7 @@ import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
 import { GAME_LETTERS } from '../lib/hebrew';
 import { roundIntro } from '../lib/persona';
-import { sfx } from '../lib/sound';
+import { primeAudio, sfx } from '../lib/sound';
 
 export default function LetterDraw() {
   const { navigate, activeProfile } = useApp();
@@ -20,31 +20,47 @@ export default function LetterDraw() {
   const [display, setDisplay] = useState('א');
   const [spinning, setSpinning] = useState(false);
   const [finalLetter, setFinalLetter] = useState<string | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
+
+  /** סך הצעדים של הגלגל; הקצב מאט בהדרגה כדי שהעצירה תרגיש אמיתית */
+  const SPIN_STEPS = 22;
 
   const spin = () => {
     if (spinning) return;
+    // הלחיצה הזו היא מחווה של המשתמש — הרגע היחיד שבו iOS מרשה
+    // לפתוח AudioContext. משחררים כאן כדי שגם צליל הסיבוב יישמע.
+    primeAudio();
     setSpinning(true);
     setFinalLetter(null);
     // באתגר היומי משתמשים באות שכבר הוגדרה
     const target = dailyLetter && fixedLetter ? fixedLetter : rollLetter();
-    let ticks = 0;
-    timerRef.current = setInterval(() => {
-      ticks++;
+    sfx.spinStart();
+
+    let step = 0;
+    const tick = () => {
+      step++;
+      const progress = step / SPIN_STEPS;
       setDisplay(GAME_LETTERS[Math.floor(Math.random() * GAME_LETTERS.length)]);
-      if (ticks > 18) {
-        if (timerRef.current) clearInterval(timerRef.current);
+      sfx.spinTick(progress);
+      if ('vibrate' in navigator) navigator.vibrate?.(8);
+
+      if (step >= SPIN_STEPS) {
         setDisplay(target);
         setFinalLetter(target);
         setSpinning(false);
-        sfx.letter();
-        if ('vibrate' in navigator) navigator.vibrate?.(60);
+        sfx.select();
+        if ('vibrate' in navigator) navigator.vibrate?.([40, 60, 90]);
+        return;
       }
-    }, 90);
+      if (step === SPIN_STEPS - 6) sfx.spinSlow();
+      // האטה: מ-55ms בהתחלה עד ~230ms בצעד האחרון
+      timerRef.current = setTimeout(tick, 55 + Math.round(175 * progress * progress));
+    };
+    timerRef.current = setTimeout(tick, 55);
   };
 
   return (

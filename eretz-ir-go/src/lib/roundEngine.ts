@@ -29,7 +29,10 @@ export async function processRound(params: {
   const userRows = await db.userKnowledge.toArray();
   kb.addUserItems(
     userRows.map((row) => ({
-      ...userItem(row.canonicalName, row.categoryId, row.source, row.description),
+      ...userItem(row.canonicalName, row.categoryId, row.source, row.description, {
+        url: row.imageUrl ?? '',
+        attribution: row.imageAttribution
+      }),
       id: `user-db-${row.id}`
     }))
   );
@@ -121,6 +124,14 @@ export async function processRound(params: {
             addedAt: new Date().toISOString()
           });
         }
+        // הזרקה מיידית למנוע הידע כדי שמסך התוצאות יציג את התמונה
+        // כבר בסיבוב הזה, בלי להמתין לטעינה הבאה של המשחק.
+        kb.addUserItems([
+          userItem(raw.text.trim(), category.id, onlineSource, onlineDescription, {
+            url: onlineImage ?? '',
+            attribution: onlineImage ? 'ויקיפדיה/ויקישיתוף — הרישיון בעמוד המקור' : undefined
+          })
+        ]);
       }
     }
     results.push(submitted);

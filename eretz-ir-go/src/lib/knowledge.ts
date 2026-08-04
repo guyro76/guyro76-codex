@@ -107,10 +107,23 @@ export function userItem(
   name: string,
   categoryId: string,
   source: string,
-  description?: string
+  description?: string,
+  image?: { url: string; attribution?: string }
 ): KnowledgeItem {
   const normalized = normalizeHebrew(name);
   return {
+    // תמונה נשמרת רק כשהגיעה עם מקור מזוהה (ויקיפדיה/ויקישיתוף).
+    // תמונה שמקורה אינו ידוע לא תוצג — כך נדרש באפיון.
+    image: image?.url
+      ? {
+          url: image.url,
+          thumbnailUrl: image.url,
+          source: source,
+          author: image.attribution,
+          license: 'ראו עמוד המקור בוויקיפדיה',
+          attributionRequired: true
+        }
+      : undefined,
     id: `user-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
     canonicalName: name.trim(),
     normalizedName: normalized,
@@ -125,4 +138,23 @@ export function userItem(
     childSafe: true,
     lastVerifiedAt: new Date().toISOString().slice(0, 10)
   };
+}
+
+/**
+ * טעינת כל הערכים שאושרו בעבר (אימות אונליין / אישור הורה) אל מנוע הידע,
+ * כולל התמונות ששמורות לצידם. נקרא בעליית האפליקציה כדי שמסכים כמו
+ * "אוסף המילים" יציגו תמונות גם בלי לשחק סיבוב חדש.
+ */
+export async function loadUserKnowledge(): Promise<void> {
+  const { db } = await import('../db/db');
+  const rows = await db.userKnowledge.toArray();
+  getKnowledgeBase().addUserItems(
+    rows.map((row) => ({
+      ...userItem(row.canonicalName, row.categoryId, row.source, row.description, {
+        url: row.imageUrl ?? '',
+        attribution: row.imageAttribution
+      }),
+      id: `user-db-${row.id}`
+    }))
+  );
 }

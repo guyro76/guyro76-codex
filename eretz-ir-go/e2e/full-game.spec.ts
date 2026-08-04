@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { stubWikipedia } from './helpers';
 
 /**
  * מסלול הקבלה מהאפיון:
@@ -21,12 +22,13 @@ test.beforeEach(async ({ page }) => {
     // כל הרצה מתחילה ממאגר נקי
     indexedDB.deleteDatabase('eretz-ir-go');
   });
+  await stubWikipedia(page);
 });
 
 test('מסלול מלא: פרופיל, קטגוריות, אות, מילוי, ניקוד ושמירה באוסף', async ({ page }) => {
   const errors = trackConsoleErrors(page);
 
-  await page.goto('/');
+  await page.goto('./');
 
   // --- מסך פתיחה ---
   await expect(page.getByRole('heading', { name: 'ארץ-עיר GO!' })).toBeVisible();
@@ -121,7 +123,7 @@ test('מסלול מלא: פרופיל, קטגוריות, אות, מילוי, נ�
 
 test('תשובה שגויה נצבעת אדום ולא מקבלת ניקוד, נכונה נצבעת ירוק', async ({ page }) => {
   const errors = trackConsoleErrors(page);
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();

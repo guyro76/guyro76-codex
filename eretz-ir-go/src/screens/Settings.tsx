@@ -3,7 +3,7 @@ import TopBar from '../components/TopBar';
 import { useApp } from '../store/appStore';
 import { db, getSetting, setSetting, importProfile } from '../db/db';
 import { applyContentPack, fetchContentPack } from '../lib/contentPack';
-import { setSoundEnabled } from '../lib/sound';
+import { iosSilentSwitchLikely, primeAudio, setSoundEnabled, sfx } from '../lib/sound';
 
 export default function Settings() {
   const { loadProfiles, navigate } = useApp();
@@ -39,11 +39,13 @@ export default function Settings() {
   };
 
   const clearImageCache = async () => {
+    // גם קובצי התמונות עצמם (Cache API) וגם רשימת הכתובות ששמורה מקומית
     if ('caches' in window) {
       await caches.delete('wikimedia-images');
       await caches.delete('wiki-api');
-      setStorageUse('נוקה ✔');
     }
+    await db.imageCache.clear();
+    setStorageUse('נוקה ✔');
   };
 
   return (
@@ -88,6 +90,26 @@ export default function Settings() {
             }}
           />
         </label>
+        {sound && (
+          <div style={{ marginTop: 8 }}>
+            <button
+              className="btn-small"
+              onClick={() => {
+                // הלחיצה עצמה משחררת את האודיו באייפון, ואז מנגנת
+                primeAudio();
+                sfx.win();
+              }}
+            >
+              🎵 בדיקת צליל
+            </button>
+            {iosSilentSwitchLikely() && (
+              <p className="dim" style={{ fontSize: '0.8rem', margin: '6px 0 0' }}>
+                לא שומעים כלום באייפון? ודאו שמתג ה<strong>שקט</strong> בצד המכשיר כבוי ושעוצמת
+                הקול מוגברת. הצליל נדלק מעצמו מיד אחרי הנגיעה הראשונה במסך.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="card" style={{ marginTop: 14 }}>

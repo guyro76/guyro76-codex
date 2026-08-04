@@ -7,6 +7,7 @@ import { gentleFail, randomJoke } from '../lib/persona';
 import { db } from '../db/db';
 import type { SubmittedAnswer } from '../types';
 import { getKnowledgeBase } from '../lib/knowledge';
+import AnswerImage from '../components/AnswerImage';
 
 function statusClass(a: SubmittedAnswer): string {
   if (a.validation.status === 'valid') return 'status-text-ok';
@@ -72,7 +73,11 @@ export default function RoundResults() {
 
           {p.submitted.map((a) => {
             const cat = game.categories.find((c) => c.id === a.categoryId);
-            const item = a.validation.matchedItem;
+            // תשובה שאומתה אונליין אינה נושאת matchedItem — משלימים ממנוע
+            // הידע, שם כבר יושבת התמונה שהתקבלה מוויקיפדיה.
+            const item =
+              a.validation.matchedItem ??
+              (a.normalizedText ? kb.findExact(a.normalizedText)[0] : undefined);
             const key = `${a.categoryId}|${a.rawText}`;
             return (
               <div
@@ -102,6 +107,7 @@ export default function RoundResults() {
                 {a.validation.status === 'valid' && item?.facts?.[0] && (
                   <p style={{ margin: '4px 0 0', fontSize: '0.88rem' }}>💡 {item.facts[0]}</p>
                 )}
+                {a.validation.status === 'valid' && <AnswerImage item={item} label={a.rawText} discover />}
 
                 {a.validation.status !== 'valid' && a.validation.status !== 'empty' && a.rawText && (
                   <p className="dim" style={{ margin: '4px 0 0', fontSize: '0.88rem' }}>
@@ -162,9 +168,9 @@ export default function RoundResults() {
                   {game.categories.find((c) => c.id === nw.answer.categoryId)?.name} · האות {nw.answer.letter}
                   {!game.coop && game.players.length > 1 && ` · ${nw.playerName}`}
                 </p>
-                {item?.image?.thumbnailUrl && (
-                  <img src={item.image.thumbnailUrl} alt={nw.answer.rawText} style={{ maxHeight: 160 }} loading="lazy" />
-                )}
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <AnswerImage item={item} label={nw.answer.rawText} size="large" discover />
+                </div>
                 {item?.facts?.[0] && <p>💡 {item.facts[0]}</p>}
                 <p className="dim" style={{ fontSize: '0.85rem' }}>
                   המילה נוספה לאוסף המילים שלך ותופיע בהשלמה האוטומטית 🃏

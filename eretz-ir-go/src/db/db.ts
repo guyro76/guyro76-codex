@@ -41,6 +41,20 @@ export interface ContentItemRow {
   addedAt: string;
 }
 
+/**
+ * תמונה אמיתית שנמצאה לערך מהמאגר המובנה.
+ * נשמרת פעם אחת בלבד ואז זמינה גם בלי אינטרנט.
+ * `found: false` = חיפשנו ולא נמצאה תמונה — כדי לא לחזור ולשאול כל משחק.
+ */
+export interface ImageCacheRow {
+  normalized: string;
+  found: boolean;
+  url?: string;
+  pageUrl?: string;
+  attribution?: string;
+  fetchedAt: string;
+}
+
 class EretzIrDB extends Dexie {
   profiles!: EntityTable<Profile, 'id'>;
   personalAnswers!: EntityTable<PersonalAnswer, 'id'>;
@@ -50,6 +64,7 @@ class EretzIrDB extends Dexie {
   customCategories!: EntityTable<CustomCategoryRow, 'id'>;
   settings!: EntityTable<SettingsRow, 'key'>;
   contentItems!: EntityTable<ContentItemRow, 'id'>;
+  imageCache!: EntityTable<ImageCacheRow, 'normalized'>;
 
   constructor() {
     super('eretz-ir-go');
@@ -64,6 +79,9 @@ class EretzIrDB extends Dexie {
     });
     this.version(2).stores({
       contentItems: '++id, normalized, categoryId'
+    });
+    this.version(3).stores({
+      imageCache: 'normalized, fetchedAt'
     });
   }
 }

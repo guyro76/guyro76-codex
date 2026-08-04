@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { stubWikipedia } from './helpers';
 
 /** מצבי המשחק המהירים והמיוחדים — כל אחד נבדק עד לתחילת משחק אמיתית */
 
@@ -13,7 +14,7 @@ function trackConsoleErrors(page: Page): string[] {
 
 /** פתיחה → פרופיל אורי → מסך בחירת המצב */
 async function gotoModeSelect(page: Page) {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
@@ -22,6 +23,7 @@ async function gotoModeSelect(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
+  await stubWikipedia(page);
 });
 
 test('⚡ ראש בראש: תשובה נכונה מוסיפה ניקוד, שגויה לא', async ({ page }) => {
