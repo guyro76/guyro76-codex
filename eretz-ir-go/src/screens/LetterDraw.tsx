@@ -46,7 +46,8 @@ export default function LetterDraw() {
       const progress = step / SPIN_STEPS;
       setDisplay(GAME_LETTERS[Math.floor(Math.random() * GAME_LETTERS.length)]);
       sfx.spinTick(progress);
-      if ('vibrate' in navigator) navigator.vibrate?.(8);
+      // רטט קל אחת לכמה צעדים — רצף מלא מרגיש מציק ביד
+      if (step % 3 === 0 && 'vibrate' in navigator) navigator.vibrate?.(8);
 
       if (step >= SPIN_STEPS) {
         setDisplay(target);
