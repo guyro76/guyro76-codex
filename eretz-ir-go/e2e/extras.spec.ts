@@ -146,3 +146,35 @@ test('🛒 קניית תשובה: חסומה בלי קרדיט, ועובדת א�
 
   expect(errors, `שגיאות קונסול: ${errors.join(' | ')}`).toEqual([]);
 });
+test('🎲 אפשר לכבות את משימות הביניים בהגדרות', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (msg) => msg.type() === 'error' && errors.push(msg.text()));
+  page.on('pageerror', (err) => errors.push(String(err)));
+
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await page.getByRole('heading', { name: 'אורי' }).click();
+  await page.getByRole('button', { name: /הגדרות/ }).click();
+  await page.getByLabel(/משימות ביניים/).uncheck();
+  await page.getByRole('button', { name: /חזרה|←/ }).first().click();
+
+  await page.getByRole('button', { name: /משחק חדש/ }).click();
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
+  await page.locator('select').first().selectOption('2');
+  await intoRound(page);
+  await page.getByRole('button', { name: /סיימתי/ }).click();
+  await expect(page.getByRole('heading', { name: /תוצאות הסיבוב/ })).toBeVisible({ timeout: 20_000 });
+
+  const closeNew = page.getByRole('button', { name: /מעולה|למילה הבאה/ });
+  while (await closeNew.first().isVisible().catch(() => false)) {
+    await closeNew.first().click();
+    await page.waitForTimeout(200);
+  }
+
+  // בלי משימות ביניים עוברים ישר להגרלת האות הבאה
+  await page.getByRole('button', { name: /לסיבוב הבא/ }).click();
+  await expect(page.locator('.letter-wheel')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'משימת ביניים!' })).toBeHidden();
+
+  expect(errors, `שגיאות קונסול: ${errors.join(' | ')}`).toEqual([]);
+});

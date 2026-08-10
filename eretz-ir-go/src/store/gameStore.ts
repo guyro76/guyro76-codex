@@ -382,12 +382,12 @@ export const useGame = create<GameState>((set, get) => ({
   },
 
   endMatch: async () => {
-    // נקודות הבונוס ממשימות הביניים נזקפות לשחקן בסיום המשחק
+    // נקודות הבונוס ממשימות הביניים נזקפות בסיום המשחק. המשימה משותפת
+    // לכל מי שיושב מול המכשיר, ולכן כולם מקבלים את אותו בונוס — בדו-קרב
+    // זה שומר על הפרש הנקודות בין השחקנים ולא מכריע במקומם.
     if (get().bonusPoints > 0) {
       set((s) => ({
-        players: s.players.map((p, i) =>
-          i === 0 || s.coop ? { ...p, totalScore: p.totalScore + s.bonusPoints } : p
-        )
+        players: s.players.map((p) => ({ ...p, totalScore: p.totalScore + s.bonusPoints }))
       }));
     }
     const state = get();

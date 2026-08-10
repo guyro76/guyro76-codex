@@ -10,6 +10,7 @@ export default function Settings() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [bigText, setBigText] = useState(false);
   const [sound, setSound] = useState(true);
+  const [miniGames, setMiniGames] = useState(true);
   const [storageUse, setStorageUse] = useState<string>('...');
   const [packVersion, setPackVersion] = useState<string | null>(null);
   const [packCount, setPackCount] = useState(0);
@@ -21,6 +22,7 @@ export default function Settings() {
     void getSetting('reducedMotion').then((v) => setReducedMotion(v === '1'));
     void getSetting('bigText').then((v) => setBigText(v === '1'));
     void getSetting('sound').then((v) => setSound(v !== '0'));
+    void getSetting('miniGames').then((v) => setMiniGames(v !== '0'));
     void getSetting('contentPackVersion').then((v) => setPackVersion(v ?? null));
     void getSetting('packAutoUpdate').then((v) => setPackAuto(v !== '0'));
     void db.contentItems.count().then(setPackCount);
@@ -87,6 +89,18 @@ export default function Settings() {
               setSound(ev.target.checked);
               setSoundEnabled(ev.target.checked);
               void setSetting('sound', ev.target.checked ? '1' : '0');
+            }}
+          />
+        </label>
+        <label className="row spread">
+          <span>🎲 משימות ביניים בין סיבובים</span>
+          <input
+            type="checkbox"
+            style={{ width: 28, minHeight: 28 }}
+            checked={miniGames}
+            onChange={(ev) => {
+              setMiniGames(ev.target.checked);
+              void setSetting('miniGames', ev.target.checked ? '1' : '0');
             }}
           />
         </label>

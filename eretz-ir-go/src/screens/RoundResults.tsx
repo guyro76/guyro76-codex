@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
 import Modal from '../components/Modal';
 import { originalityLabel } from '../lib/scoring';
 import { gentleFail, randomJoke } from '../lib/persona';
-import { db } from '../db/db';
+import { db, getSetting } from '../db/db';
 import type { SubmittedAnswer } from '../types';
 import { getKnowledgeBase } from '../lib/knowledge';
 import AnswerImage from '../components/AnswerImage';
@@ -28,6 +28,12 @@ export default function RoundResults() {
   const [newWordIdx, setNewWordIdx] = useState(0);
   const [showNewWords, setShowNewWords] = useState(true);
   const [appealSent, setAppealSent] = useState<Set<string>>(new Set());
+  // אפשר לכבות את משימות הביניים בהגדרות — למשפחות שרוצות משחק קצר
+  const [miniGamesOn, setMiniGamesOn] = useState(true);
+
+  useEffect(() => {
+    void getSetting('miniGames').then((v) => setMiniGamesOn(v !== '0'));
+  }, []);
 
   const kb = getKnowledgeBase();
 
@@ -147,11 +153,11 @@ export default function RoundResults() {
             // בין סיבוב לסיבוב יש משימת ביניים — אפשר לשחק לבונוס
             // או לדלג ישר לאות הבאה מתוך המסך שלה.
             game.nextRound();
-            navigate('mini-game');
+            navigate(miniGamesOn ? 'mini-game' : 'letter-draw');
           }
         }}
       >
-        {isLastRound ? 'לתוצאות המשחק 🏁' : 'למשימת הביניים 🎲'}
+        {isLastRound ? 'לתוצאות המשחק 🏁' : miniGamesOn ? 'למשימת הביניים 🎲' : 'לסיבוב הבא 🎡'}
       </button>
 
       {showNewWords && newWords.length > 0 && newWordIdx < newWords.length && (
