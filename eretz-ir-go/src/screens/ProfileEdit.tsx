@@ -12,7 +12,9 @@ export default function ProfileEdit() {
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState(AVATARS[0]);
   const [color, setColor] = useState(COLORS[0]);
-  const [gender, setGender] = useState<Gender>('girl');
+  // אין ברירת מחדל למגדר: מי שלא בוחר היה מקבל פנייה בלשון נקבה
+  // בלי ששאלו אותו. הבחירה נדרשת לפני שמירה.
+  const [gender, setGender] = useState<Gender | null>(null);
   const [age, setAge] = useState(11);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -31,7 +33,7 @@ export default function ProfileEdit() {
   }, [editingProfileId]);
 
   const save = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !gender) return;
     if (editingProfileId != null) {
       await db.profiles.update(editingProfileId, { name: name.trim(), avatar, color, gender, age, difficulty });
     } else {
@@ -114,7 +116,10 @@ export default function ProfileEdit() {
         </div>
 
         <div>
-          <p style={{ margin: '0 0 6px' }}>איך לפנות אליך? (המשחק ידבר בהתאם)</p>
+          <p style={{ margin: '0 0 6px' }}>
+            איך לפנות אליך? (המשחק ידבר בהתאם){' '}
+            {!gender && <span className="status-text-pending">— חובה לבחור</span>}
+          </p>
           <div className="row">
             <button className={`chip${gender === 'girl' ? ' on' : ''}`} onClick={() => setGender('girl')}>
               👧 בת
@@ -150,7 +155,7 @@ export default function ProfileEdit() {
           </div>
         </div>
 
-        <button className="btn-primary" onClick={() => void save()} disabled={!name.trim()}>
+        <button className="btn-primary" onClick={() => void save()} disabled={!name.trim() || !gender}>
           שמירה ✔
         </button>
 
