@@ -123,18 +123,16 @@ export default function Snake({ onDone, onSkip }: MiniGameProps) {
           if (Math.abs(dx) < 16 && Math.abs(dy) < 16) return;
           turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up');
         }}
+        className="mg-arena"
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${SIZE}, 1fr)`,
-          gap: 1,
+          gap: 2,
           width: '100%',
           maxWidth: 320,
           aspectRatio: '1',
           margin: '0 auto',
-          padding: 4,
-          borderRadius: 14,
-          border: '1px solid var(--border-glass)',
-          background: 'rgba(255,255,255,0.05)',
+          padding: 6,
           touchAction: 'none'
         }}
       >
@@ -147,16 +145,7 @@ export default function Snake({ onDone, onSkip }: MiniGameProps) {
           return (
             <div
               key={i}
-              style={{
-                borderRadius: 3,
-                background: isHead
-                  ? 'var(--turquoise)'
-                  : isBody
-                    ? 'rgba(51,214,195,0.55)'
-                    : isFood
-                      ? 'var(--gold)'
-                      : 'transparent'
-              }}
+              className={`mg-cell ${isHead ? 'head' : isBody ? 'body' : isFood ? 'food' : 'empty'}`}
             />
           );
         })}

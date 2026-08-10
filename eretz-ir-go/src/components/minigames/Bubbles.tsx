@@ -8,6 +8,8 @@ import type { MiniGameProps } from './types';
  * הכול לחיצות בלבד — עובד מצוין באצבע על טלפון.
  */
 const FRUITS = ['🍎', '🍌', '🍇', '🍉', '🍓', '🍑', '🍍', '🥝'];
+/** צבעי בועות עליזים — מתחלפים לפי מיקום כדי שהלוח ייראה ססגוני */
+const BUBBLE_COLORS = ['#7ad7ff', '#ffd36e', '#ff9fb2', '#a5e887', '#c9a7ff', '#ffb37a'];
 const ROWS = 5;
 const COLS = 6;
 const LIVES = 3;
@@ -58,12 +60,12 @@ export default function Bubbles({ onDone, onSkip }: MiniGameProps) {
       </p>
 
       <div
+        className="mg-board"
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${COLS}, 1fr)`,
-          gap: 6,
-          maxWidth: 340,
-          margin: '0 auto'
+          gap: 8,
+          maxWidth: 340
         }}
       >
         {bubbles.map((b, i) => (
@@ -72,21 +74,8 @@ export default function Bubbles({ onDone, onSkip }: MiniGameProps) {
             aria-label={b.popped ? 'בועה שפוצצה' : 'בועה'}
             onClick={() => pop(i)}
             disabled={over || b.popped}
-            style={{
-              aspectRatio: '1',
-              minHeight: 0,
-              padding: 0,
-              fontSize: '1.4rem',
-              borderRadius: '50%',
-              border: '1px solid var(--border-glass)',
-              background: b.popped
-                ? b.fruit
-                  ? 'rgba(61,220,132,0.18)'
-                  : 'rgba(255,92,92,0.18)'
-                : 'radial-gradient(circle at 32% 30%, rgba(255,255,255,0.45), rgba(255,255,255,0.1))',
-              transform: b.popped ? 'scale(0.86)' : undefined,
-              transition: 'transform 120ms ease'
-            }}
+            className={`mg-bubble${b.popped ? (b.fruit ? ' popped-fruit' : ' popped-empty') : ''}`}
+            style={{ ['--mg-color' as string]: BUBBLE_COLORS[i % BUBBLE_COLORS.length] }}
           >
             {b.popped ? (b.fruit ?? '💨') : ''}
           </button>

@@ -43,21 +43,14 @@ export default function Hangman({ words, onDone, onSkip }: MiniGameProps) {
       <p className="dim">בלונים שנשארו: {'🎈'.repeat(Math.max(0, TRIES - wrong)) || '—'}</p>
 
       <div
-        className="row"
-        style={{ justifyContent: 'center', gap: 6, fontSize: '1.9rem', fontWeight: 800, direction: 'rtl' }}
+        className="row mg-board"
+        style={{ justifyContent: 'center', gap: 8, fontSize: '1.9rem', direction: 'rtl', maxWidth: 360, flexWrap: 'wrap' }}
       >
         {word.split('').map((ch, i) =>
           ch === ' ' ? (
             <span key={i} style={{ width: 14 }} />
           ) : (
-            <span
-              key={i}
-              style={{
-                minWidth: 30,
-                borderBottom: '3px solid var(--border-glass)',
-                color: picked.has(ch) || over ? 'var(--turquoise)' : 'transparent'
-              }}
-            >
+            <span key={i} className="mg-slot" style={{ color: picked.has(ch) || over ? undefined : 'transparent' }}>
               {picked.has(ch) || over ? ch : '·'}
             </span>
           )
@@ -69,14 +62,9 @@ export default function Hangman({ words, onDone, onSkip }: MiniGameProps) {
           {GAME_LETTERS.map((l) => (
             <button
               key={l}
-              className="btn-small"
+              className={`mg-key${picked.has(l) ? (letters.has(l) ? ' hit' : ' miss') : ''}`}
               disabled={picked.has(l)}
               onClick={() => guess(l)}
-              style={{
-                minWidth: 40,
-                opacity: picked.has(l) ? 0.35 : 1,
-                borderColor: picked.has(l) && !letters.has(l) ? 'var(--bad)' : undefined
-              }}
             >
               {l}
             </button>

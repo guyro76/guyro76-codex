@@ -106,15 +106,13 @@ export default function FruitNinja({ onDone, onSkip }: MiniGameProps) {
         onPointerMove={(ev) => slicing && sliceAt(ev.clientX, ev.clientY)}
         onPointerUp={() => setSlicing(false)}
         onPointerLeave={() => setSlicing(false)}
+        className="mg-arena"
         style={{
           position: 'relative',
           width: '100%',
           maxWidth: 360,
           aspectRatio: '1',
           margin: '0 auto',
-          borderRadius: 18,
-          border: '1px solid var(--border-glass)',
-          background: 'rgba(255,255,255,0.05)',
           overflow: 'hidden',
           touchAction: 'none',
           cursor: 'crosshair'
