@@ -361,3 +361,15 @@ img { max-width: 100%; border-radius: 12px; }
   font-size: 0.85rem;
   white-space: nowrap;
 }
+
+/* ===== פס פעולה נעוץ בתחתית =====
+   במסכים עם רשימה ארוכה (בחירת מצב, בחירת קטגוריות) הכפתור הראשי נפל
+   מתחת לקצה המסך בטלפון, והמשתמש לא מצא אותו. כאן הוא תמיד נגיש. */
+.action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  margin: 16px -16px 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--bg-deep) 62%, rgba(27, 16, 53, 0));
+}

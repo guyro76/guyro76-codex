@@ -127,12 +127,37 @@ export async function ensureDefaultProfiles(): Promise<void> {
   ]);
 }
 
+/**
+ * ספארי באייפון עלול להשאיר בקשת IndexedDB תלויה בלי לסיים ובלי לשגות —
+ * ואז כל `await` עליה נתקע לנצח. כשזה קורה באמצע טיפול בלחיצה, הכפתור
+ * פשוט "לא עושה כלום" בשקט. מגבלת הזמן הזו מבטיחה שהממשק תמיד ממשיך:
+ * ההגדרות הן נוחות, לא תנאי להתקדמות במשחק.
+ */
+const DB_TIMEOUT_MS = 4000;
+
+function withTimeout<T>(work: Promise<T>, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value: T) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(fallback), DB_TIMEOUT_MS);
+    work.then(finish, () => finish(fallback));
+  });
+}
+
 export async function getSetting(key: string): Promise<string | undefined> {
-  return (await db.settings.get(key))?.value;
+  return withTimeout(
+    db.settings.get(key).then((row) => row?.value),
+    undefined
+  );
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {
-  await db.settings.put({ key, value });
+  await withTimeout(db.settings.put({ key, value }).then(() => undefined), undefined);
 }
 
 /** ייצוא פרופיל מלא (כולל אוסף המילים) לקובץ JSON */

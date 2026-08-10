@@ -26,7 +26,8 @@ export default defineConfig({
   use: {
     baseURL: externalBase ?? 'http://127.0.0.1:4173/',
     locale: 'he-IL',
-    launchOptions: { executablePath },
+    // הרצה כ-root בקונטיינר דורשת את הדגל הזה, במיוחד בפרופילי נייד
+    launchOptions: { executablePath, args: ['--no-sandbox', '--disable-dev-shm-usage'] },
     ...devices['Desktop Chrome']
   },
   webServer: externalBase

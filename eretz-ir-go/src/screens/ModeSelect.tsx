@@ -13,11 +13,36 @@ export interface ModeDraft {
   powerCards: boolean;
 }
 
-/** טיוטת ההגדרות עוברת דרך settings table כדי לשרוד רענון */
+const DEFAULT_DRAFT: ModeDraft = { mode: 'solo', rounds: 3, seconds: 180, powerCards: false };
+
+/**
+ * טיוטת ההגדרות נשמרת קודם כול בזיכרון, ורק אחר כך (ובלי להמתין) לדיסק.
+ * המעבר בין המסכים לא תלוי ב-IndexedDB: באייפון כתיבה עלולה להיתקע,
+ * וכשהמעבר המתין לה הלחיצה על "משחק יחיד" פשוט לא עשתה כלום.
+ * השמירה לדיסק היא רק כדי שהבחירה תשרוד רענון של הדף.
+ */
+let draftCache: ModeDraft | null = null;
+
+export function saveModeDraft(draft: ModeDraft): void {
+  draftCache = draft;
+  void setSetting('modeDraft', JSON.stringify(draft));
+}
+
 export async function loadModeDraft(): Promise<ModeDraft> {
-  const raw = await getSetting('modeDraft');
-  const parsed = raw ? (JSON.parse(raw) as Partial<ModeDraft>) : {};
-  return { mode: parsed.mode ?? 'solo', rounds: parsed.rounds ?? 3, seconds: parsed.seconds ?? 180, powerCards: parsed.powerCards ?? false };
+  if (draftCache) return draftCache;
+  try {
+    const raw = await getSetting('modeDraft');
+    const parsed = raw ? (JSON.parse(raw) as Partial<ModeDraft>) : {};
+    draftCache = {
+      mode: parsed.mode ?? DEFAULT_DRAFT.mode,
+      rounds: parsed.rounds ?? DEFAULT_DRAFT.rounds,
+      seconds: parsed.seconds ?? DEFAULT_DRAFT.seconds,
+      powerCards: parsed.powerCards ?? DEFAULT_DRAFT.powerCards
+    };
+  } catch {
+    draftCache = { ...DEFAULT_DRAFT };
+  }
+  return draftCache;
 }
 
 export default function ModeSelect() {
@@ -45,8 +70,9 @@ export default function ModeSelect() {
   /** מצבי המשחק המהירים מנוהלים במסך משלהם ולא עוברים בבחירת קטגוריות */
   const quickModes: Partial<Record<GameMode, 'blitz' | 'chain'>> = { blitz: 'blitz', chain: 'chain' };
 
-  const start = async () => {
-    await setSetting('modeDraft', JSON.stringify({ mode, rounds, seconds, powerCards } satisfies ModeDraft));
+  const start = () => {
+    // שומרים בזיכרון ומנווטים מיד; הכתיבה לדיסק רצה ברקע
+    saveModeDraft({ mode, rounds, seconds, powerCards });
 
     // קלף מסתורי: המשחק בוחר את הקטגוריות בעצמו ומדלג על מסך הבחירה
     if (mode === 'mystery' && activeProfile) {
@@ -189,11 +215,14 @@ export default function ModeSelect() {
         </div>
       </div>
 
+      {/* פס פעולה נעוץ בתחתית: ברשימת מצבים ארוכה בטלפון הכפתור נפל
+          מתחת לקצה המסך, ונראה כאילו "הלחיצה לא עושה כלום". */}
+      <div className="action-bar">
       <button
         className="btn-primary"
-        style={{ width: '100%', marginTop: 16 }}
+        style={{ width: '100%' }}
         disabled={needsSecond && !secondProfile}
-        onClick={() => void start()}
+        onClick={start}
       >
         {mode === 'blitz'
           ? 'יאללה, לבליץ! ⚡'
@@ -203,6 +232,7 @@ export default function ModeSelect() {
               ? 'לגלות את הקלף המסתורי! 🎴'
               : 'המשך לבחירת קטגוריות ←'}
       </button>
+      </div>
     </div>
   );
 }

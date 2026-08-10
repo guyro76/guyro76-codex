@@ -53,7 +53,8 @@ export default function Categories() {
   const start = async () => {
     if (!activeProfile) return;
     const draft = await loadModeDraft();
-    await setSetting('favoriteCategorySet', JSON.stringify(selected));
+    // שמירה ברקע: המעבר למשחק לא ממתין לדיסק
+    void setSetting('favoriteCategorySet', JSON.stringify(selected));
     const cats = selected.map((id) => all.find((c) => c.id === id)).filter((c) => c != null);
     const players =
       draft.mode === 'duel' || draft.mode === 'coop' || draft.mode === 'tournament'
@@ -143,9 +144,11 @@ export default function Categories() {
         ))}
       </div>
 
-      <button className="btn-primary" style={{ width: '100%', marginTop: 18 }} disabled={!valid} onClick={() => void start()}>
+      <div className="action-bar">
+      <button className="btn-primary" style={{ width: '100%' }} disabled={!valid} onClick={() => void start()}>
         להגרלת האות! 🎡
       </button>
+      </div>
     </div>
   );
 }
