@@ -80,6 +80,14 @@ jobs:
             --prod \
             --message "ארץ-עיר GO! מ-${GITHUB_SHA::7}"
 
+      # חייב לרוץ בג'וב בלי `environment`: שער הסביבה נבדק לפני שהג'וב
+      # מתחיל, ולכן אי אפשר ליצור את הסביבה מתוך ג'וב שכפוף לה.
+      - name: הפעלת GitHub Pages והעברתו למצב Actions
+        if: github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - name: אריזת האתר כארטיפקט של Pages
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
@@ -112,11 +120,6 @@ jobs:
       name: github-pages
       url: ${{ steps.pages-deploy.outputs.page_url }}
     steps:
-      - name: הפעלת GitHub Pages (אם כבוי) והגדרתו למצב Actions
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
       - name: פרסום ל-GitHub Pages
         id: pages-deploy
         uses: actions/deploy-pages@v4
