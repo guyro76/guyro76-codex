@@ -3,18 +3,25 @@ import TopBar from '../components/TopBar';
 import { useApp } from '../store/appStore';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { db } from '../db/db';
+import { EMPTY_WALLET, getMiniGameWins, getWallet, type Wallet } from '../lib/wallet';
 
 export default function Achievements() {
   const { activeProfile } = useApp();
   const [collectionSize, setCollectionSize] = useState(0);
+  const [wallet, setWallet] = useState<Wallet>(EMPTY_WALLET);
+  const [miniGameWins, setMiniGameWins] = useState(0);
 
   useEffect(() => {
-    if (!activeProfile?.id) return;
-    void db.personalAnswers.where('profileId').equals(activeProfile.id).count().then(setCollectionSize);
+    const id = activeProfile?.id;
+    if (!id) return;
+    void db.personalAnswers.where('profileId').equals(id).count().then(setCollectionSize);
+    void getWallet(id).then(setWallet);
+    void getMiniGameWins(id).then(setMiniGameWins);
   }, [activeProfile]);
 
   if (!activeProfile) return null;
-  const earned = ACHIEVEMENTS.filter((a) => a.check(activeProfile, { collectionSize }));
+  const context = { collectionSize, bills: wallet.bills, gems: wallet.gems, miniGameWins };
+  const earned = ACHIEVEMENTS.filter((a) => a.check(activeProfile, context));
 
   return (
     <div className="screen">

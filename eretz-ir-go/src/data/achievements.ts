@@ -70,5 +70,42 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: '💎',
     description: 'מעל 100 נקודות בסיבוב אחד',
     check: (p) => p.bestRoundScore >= 100
+  },
+
+  // ===== הישגים למערכות החדשות: הארנק ומשימות הביניים =====
+  {
+    id: 'first-bills',
+    name: 'הארנק נפתח',
+    icon: '💵',
+    description: '10 שטרות בארנק',
+    check: (_p, extra) => extra.bills >= 10
+  },
+  {
+    id: 'rich-wallet',
+    name: 'קופה מלאה',
+    icon: '🏦',
+    description: '50 שטרות בארנק',
+    check: (_p, extra) => extra.bills >= 50
+  },
+  {
+    id: 'gem-collector',
+    name: 'אספן יהלומים',
+    icon: '💠',
+    description: '10 יהלומים — רק תשובות מקוריות במיוחד מזכות בהם',
+    check: (_p, extra) => extra.gems >= 10
+  },
+  {
+    id: 'mini-game-first',
+    name: 'משימה ראשונה',
+    icon: '🎲',
+    description: 'השלמת משימת ביניים אחת',
+    check: (_p, extra) => extra.miniGameWins >= 1
+  },
+  {
+    id: 'mini-game-master',
+    name: 'אלוף המשימות',
+    icon: '🕹️',
+    description: 'עשר משימות ביניים הושלמו',
+    check: (_p, extra) => extra.miniGameWins >= 10
   }
 ];

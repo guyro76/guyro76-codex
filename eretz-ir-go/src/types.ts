@@ -172,5 +172,15 @@ export interface Achievement {
   name: string;
   icon: string;
   description: string;
-  check: (p: Profile, extra: { collectionSize: number }) => boolean;
+  check: (p: Profile, extra: AchievementContext) => boolean;
+}
+
+/** נתונים שאינם על הפרופיל עצמו ונדרשים לבדיקת הישגים */
+export interface AchievementContext {
+  collectionSize: number;
+  /** הארנק: שטרות ויהלומים שנצברו במשחק */
+  bills: number;
+  gems: number;
+  /** כמה משימות ביניים הושלמו בהצלחה מלאה */
+  miniGameWins: number;
 }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ANSWER_PRICE, canAfford, canBuyAnswer, roundEarnings } from '../src/lib/wallet';
 import { MINI_GAMES, partialReward, pickMiniGame } from '../src/lib/miniGames';
+import { ACHIEVEMENTS } from '../src/data/achievements';
+import type { AchievementContext } from '../src/types';
 
 describe('ארנק המשחק', () => {
   it('קונים רק כשיש מספיק — אין יתרה שלילית', () => {
@@ -47,5 +49,52 @@ describe('משימות הביניים', () => {
     expect(half.points).toBe(Math.floor(spec.reward.points * 0.5));
     expect(half.wallet.gems).toBe(0);
     expect(partialReward(spec, 0)).toEqual({ points: 0, wallet: { bills: 0, gems: 0 } });
+  });
+});
+
+describe('הישגים למערכות החדשות', () => {
+  const profile = {
+    wins: 0,
+    gamesPlayed: 0,
+    totalAnswers: 0,
+    correctAnswers: 0,
+    originalitySum: 0,
+    bestRoundScore: 0,
+    dailyStreak: 0
+  } as unknown as Parameters<(typeof ACHIEVEMENTS)[number]['check']>[0];
+
+  const ctx = (over: Partial<AchievementContext> = {}): AchievementContext => ({
+    collectionSize: 0,
+    bills: 0,
+    gems: 0,
+    miniGameWins: 0,
+    ...over
+  });
+
+  const byId = (id: string) => ACHIEVEMENTS.find((a) => a.id === id)!;
+
+  it('כל ההישגים החדשים קיימים ומזוהים ביחיד', () => {
+    for (const id of ['first-bills', 'rich-wallet', 'gem-collector', 'mini-game-first', 'mini-game-master']) {
+      expect(ACHIEVEMENTS.filter((a) => a.id === id)).toHaveLength(1);
+    }
+  });
+
+  it('הישגי הארנק נפתחים בסכום הנכון בלבד', () => {
+    expect(byId('first-bills').check(profile, ctx({ bills: 9 }))).toBe(false);
+    expect(byId('first-bills').check(profile, ctx({ bills: 10 }))).toBe(true);
+    expect(byId('rich-wallet').check(profile, ctx({ bills: 49 }))).toBe(false);
+    expect(byId('rich-wallet').check(profile, ctx({ bills: 50 }))).toBe(true);
+    expect(byId('gem-collector').check(profile, ctx({ gems: 10 }))).toBe(true);
+  });
+
+  it('הישגי משימות הביניים נפתחים לפי מספר ההצלחות', () => {
+    expect(byId('mini-game-first').check(profile, ctx({ miniGameWins: 0 }))).toBe(false);
+    expect(byId('mini-game-first').check(profile, ctx({ miniGameWins: 1 }))).toBe(true);
+    expect(byId('mini-game-master').check(profile, ctx({ miniGameWins: 9 }))).toBe(false);
+    expect(byId('mini-game-master').check(profile, ctx({ miniGameWins: 10 }))).toBe(true);
+  });
+
+  it('אף הישג לא נפתח בפרופיל ריק לגמרי', () => {
+    expect(ACHIEVEMENTS.filter((a) => a.check(profile, ctx()))).toHaveLength(0);
   });
 });

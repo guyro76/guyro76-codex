@@ -7,7 +7,7 @@ import FruitNinja from '../components/minigames/FruitNinja';
 import Bubbles from '../components/minigames/Bubbles';
 import { getKnowledgeBase } from '../lib/knowledge';
 import { partialReward, pickMiniGame } from '../lib/miniGames';
-import { earn } from '../lib/wallet';
+import { addMiniGameWin, earn } from '../lib/wallet';
 import { sfx } from '../lib/sound';
 
 /**
@@ -43,8 +43,12 @@ export default function MiniGame() {
   const finish = async (progress: number) => {
     const reward = partialReward(spec, progress);
     addBonus(reward.points);
-    if (activeProfile?.id && (reward.wallet.bills > 0 || reward.wallet.gems > 0)) {
-      await earn(activeProfile.id, reward.wallet.bills, reward.wallet.gems);
+    if (activeProfile?.id) {
+      if (reward.wallet.bills > 0 || reward.wallet.gems > 0) {
+        await earn(activeProfile.id, reward.wallet.bills, reward.wallet.gems);
+      }
+      // רק הצלחה מלאה נספרת להישגים
+      if (progress >= 1) await addMiniGameWin(activeProfile.id);
       await refreshActive();
     }
     if (reward.points > 0) sfx.success();
