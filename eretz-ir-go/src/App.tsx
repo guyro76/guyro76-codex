@@ -23,6 +23,8 @@ import Settings from './screens/Settings';
 import Parent from './screens/Parent';
 import Credits from './screens/Credits';
 import Privacy from './screens/Privacy';
+import MiniGame from './screens/MiniGame';
+import SiteCredit from './components/SiteCredit';
 import MultiplayerInfo from './screens/MultiplayerInfo';
 import Blitz from './screens/Blitz';
 import Chain from './screens/Chain';
@@ -120,13 +122,15 @@ export default function App() {
     privacy: <Privacy />,
     'multiplayer-info': <MultiplayerInfo />,
     blitz: <Blitz />,
-    chain: <Chain />
+    chain: <Chain />,
+    'mini-game': <MiniGame />
   };
 
   return (
     <ErrorBoundary>
       <OfflineBanner />
       {screens[screen] ?? <Splash />}
+      <SiteCredit />
     </ErrorBoundary>
   );
 }

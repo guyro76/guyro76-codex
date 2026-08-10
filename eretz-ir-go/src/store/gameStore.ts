@@ -8,6 +8,7 @@ import { processRound } from '../lib/roundEngine';
 import { normalizeHebrew } from '../lib/hebrew';
 import { completionBonus } from '../lib/scoring';
 import { db } from '../db/db';
+import { earn, roundEarnings } from '../lib/wallet';
 import type { KnowledgeItem } from '../types';
 
 export interface AnswerDraft {
@@ -45,6 +46,10 @@ interface GameState {
   dailyDate: string | null;
   /** קלפי כוח — מאגר משותף למשחק; דגל true = הקלף נוצל */
   power: { extraTime: boolean; swap: boolean; freeHint: boolean; double: { playerIdx: number; categoryId: string } | null };
+  /** נקודות בונוס ממשימות הביניים, נצברות למשחק כולו */
+  bonusPoints: number;
+  /** משך הסיבוב שנבחר, כדי שאפשר יהיה לחזור אליו אחרי "בלי לחץ" */
+  lastTimedSeconds: number;
 
   startMatch: (settings: GameSettings, categories: Category[], profiles: Profile[], dailyDate?: string) => void;
   rollLetter: (forced?: string) => string;
@@ -52,6 +57,11 @@ interface GameState {
   setAnswer: (categoryId: string, text: string) => void;
   askHint: (categoryId: string) => Hint | null;
   revealAnswer: (categoryId: string) => string | null;
+  /** קניית תשובה מהארנק — ממלאת את התשובה, בלי ניקוד על התשובה עצמה */
+  buyAnswer: (categoryId: string) => string | null;
+  /** מעבר בין משחק על זמן לבין משחק בלי הגבלת זמן — זמין בכל שלב */
+  setTimed: (on: boolean) => void;
+  addBonus: (points: number) => void;
   finishPlayer: () => Promise<void>;
   usePower: (kind: 'extraTime' | 'swap' | 'freeHint') => boolean;
   setDoubleCategory: (categoryId: string) => void;
@@ -73,6 +83,8 @@ const emptySettings: GameSettings = {
 
 export const useGame = create<GameState>((set, get) => ({
   settings: emptySettings,
+  bonusPoints: 0,
+  lastTimedSeconds: 180,
   categories: [],
   players: [],
   currentPlayerIdx: 0,
@@ -106,7 +118,9 @@ export const useGame = create<GameState>((set, get) => ({
       hintsLeft: settings.hintsPerRound,
       coop: settings.mode === 'coop',
       dailyDate: dailyDate ?? null,
-      power: { extraTime: false, swap: false, freeHint: false, double: null }
+      power: { extraTime: false, swap: false, freeHint: false, double: null },
+      bonusPoints: 0,
+      lastTimedSeconds: settings.roundSeconds > 0 ? settings.roundSeconds : 180
     });
   },
 
@@ -207,6 +221,55 @@ export const useGame = create<GameState>((set, get) => ({
     return target.canonicalName;
   },
 
+  /**
+   * קניית תשובה: מבחינה מכנית זהה ל"גלו לי" — התשובה ממולאת ומסומנת
+   * `revealed`, ולכן אינה מזכה בניקוד. ההבדל הוא שכאן משלמים מהארנק
+   * במקום לבזבז רמזים, וזה זמין גם בלי לבקש רמז קודם.
+   * החיוב עצמו נעשה במסך, אחרי שהשחקן בחר שטרות או יהלומים.
+   */
+  buyAnswer: (categoryId) => {
+    const state = get();
+    const idx = state.coop ? 0 : state.currentPlayerIdx;
+    const player = state.players[idx];
+    const draft = player.answers[categoryId] ?? { text: '', hintsUsed: 0, revealed: false, typedAtMs: 0 };
+    const kb = getKnowledgeBase();
+
+    let target = draft.hintTarget;
+    if (!target) {
+      const exclude = new Set(
+        Object.values(player.answers)
+          .map((a) => normalizeHebrew(a.text))
+          .filter(Boolean)
+      );
+      target = pickHintTarget(kb, categoryId, normalizeHebrew(state.letter).charAt(0), exclude) ?? undefined;
+    }
+    if (!target) return null;
+    const chosen = target;
+
+    set((s) => {
+      const players = [...s.players];
+      const p = { ...players[idx] };
+      p.answers = {
+        ...p.answers,
+        [categoryId]: { ...draft, text: chosen.canonicalName, revealed: true, hintTarget: chosen }
+      };
+      players[idx] = p;
+      return { players };
+    });
+    return chosen.canonicalName;
+  },
+
+  setTimed: (on) => {
+    set((s) => ({
+      settings: { ...s.settings, roundSeconds: on ? s.lastTimedSeconds || 180 : 0 },
+      lastTimedSeconds: s.settings.roundSeconds > 0 ? s.settings.roundSeconds : s.lastTimedSeconds,
+      // מאתחלים את שעון הסיבוב, אחרת חזרה למצב מתוזמן מסיימת אותו מיד
+      roundStartedAt: on ? Date.now() : s.roundStartedAt
+    }));
+  },
+
+  addBonus: (points) => set((s) => ({ bonusPoints: s.bonusPoints + Math.max(0, points) })),
+
   finishPlayer: async () => {
     const state = get();
     const isDuel = state.settings.mode === 'duel' || state.settings.mode === 'tournament';
@@ -257,11 +320,17 @@ export const useGame = create<GameState>((set, get) => ({
       return { players, phase: 'round-done' };
     });
 
-    // עדכון סטטיסטיקות פרופיל
+    // עדכון סטטיסטיקות פרופיל + זיכוי הארנק על הסיבוב
     for (const p of get().players) {
       if (!p.profile.id || (get().coop && p !== get().players[0])) continue;
       const valid = p.submitted.filter((a) => a.validation.status === 'valid');
       const answered = p.submitted.filter((a) => a.normalizedText);
+      const earnings = roundEarnings(
+        valid.length,
+        p.submitted.length,
+        valid.filter((a) => a.originality >= 90).length
+      );
+      await earn(p.profile.id, earnings.bills, earnings.gems);
       await db.profiles.update(p.profile.id, {
         totalScore: p.profile.totalScore + p.roundScore,
         correctAnswers: p.profile.correctAnswers + valid.length,
@@ -313,6 +382,14 @@ export const useGame = create<GameState>((set, get) => ({
   },
 
   endMatch: async () => {
+    // נקודות הבונוס ממשימות הביניים נזקפות לשחקן בסיום המשחק
+    if (get().bonusPoints > 0) {
+      set((s) => ({
+        players: s.players.map((p, i) =>
+          i === 0 || s.coop ? { ...p, totalScore: p.totalScore + s.bonusPoints } : p
+        )
+      }));
+    }
     const state = get();
     const scores = state.players.map((p) => p.totalScore);
     const maxScore = Math.max(...scores);
@@ -379,7 +456,8 @@ export const useGame = create<GameState>((set, get) => ({
       hintsLeft: 3,
       coop: false,
       dailyDate: null,
-      power: { extraTime: false, swap: false, freeHint: false, double: null }
+      power: { extraTime: false, swap: false, freeHint: false, double: null },
+      bonusPoints: 0
     });
   }
 }));

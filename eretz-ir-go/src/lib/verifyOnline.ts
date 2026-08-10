@@ -6,6 +6,11 @@
  * תשובה נכנסת למאגר המקומי רק אחרי שנמצא לה ערך תואם.
  */
 
+import type { ImageCandidate } from './imageVerify';
+
+/** מועמד לתמונה, עם הקישור לעמוד המקור לצורך הקרדיט */
+export type ImageCandidateWithSource = ImageCandidate & { pageUrl?: string };
+
 export interface OnlineVerification {
   found: boolean;
   title?: string;
@@ -84,4 +89,75 @@ function titleMatches(title: string, term: string): boolean {
 
 export function isOnline(): boolean {
   return typeof navigator === 'undefined' ? false : navigator.onLine;
+}
+
+/**
+ * שליפת מועמדים לתמונה, עם כל הראיות שנדרשות כדי לאמת שהם הערך הנכון:
+ * תיאור קצר, פתיח, קטגוריות הערך וסימון דף פירושונים.
+ * האימות עצמו נעשה ב-`imageVerify.ts` — כאן רק אוספים את העובדות.
+ *
+ * מחפשים גם לפי המילה לבדה וגם עם רמז הקטגוריה, כדי שערך שגוי
+ * ("כרוב" היצור המיתולוגי) לא יסתיר את הערך הנכון ("כרוב" הירק).
+ */
+export async function fetchImageCandidates(
+  term: string,
+  categoryHint?: string,
+  signal?: AbortSignal
+): Promise<ImageCandidateWithSource[]> {
+  try {
+    const queries = categoryHint ? [term, `${term} ${categoryHint}`] : [term];
+    const titles = new Set<string>();
+    for (const q of queries) {
+      const res = await fetch(wikiUrl({ action: 'query', list: 'search', srsearch: q, srlimit: '4', srprop: '' }), {
+        signal
+      });
+      if (!res.ok) continue;
+      const data = (await res.json()) as { query?: { search?: { title: string }[] } };
+      for (const hit of data.query?.search ?? []) titles.add(hit.title);
+    }
+    if (titles.size === 0) return [];
+
+    const res = await fetch(
+      wikiUrl({
+        action: 'query',
+        prop: 'extracts|pageimages|info|categories|pageprops',
+        titles: [...titles].slice(0, 6).join('|'),
+        exintro: '1',
+        explaintext: '1',
+        exsentences: '2',
+        piprop: 'thumbnail',
+        pithumbsize: '400',
+        cllimit: '20',
+        inprop: 'url'
+      }),
+      { signal }
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      query?: {
+        pages?: Record<
+          string,
+          {
+            title: string;
+            extract?: string;
+            fullurl?: string;
+            thumbnail?: { source: string };
+            categories?: { title: string }[];
+            pageprops?: { disambiguation?: string; 'wikibase-shortdesc'?: string };
+          }
+        >;
+      };
+    };
+    return Object.values(data.query?.pages ?? {}).map((page) => ({
+      title: page.title,
+      description: page.pageprops?.['wikibase-shortdesc'],
+      extract: page.extract,
+      wikiCategories: (page.categories ?? []).map((c) => c.title.replace(/^קטגוריה:/, '')),
+      imageUrl: page.thumbnail?.source,
+      isDisambiguation: page.pageprops?.disambiguation !== undefined,
+      pageUrl: page.fullurl
+    }));
+  } catch {
+    return []; // Offline או שגיאת רשת — פשוט אין תמונה
+  }
 }

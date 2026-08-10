@@ -92,7 +92,7 @@ export default function Album() {
               <p className="dim" style={{ margin: '2px 0', fontSize: '0.85rem' }}>
                 {cat?.icon} {cat?.name} · האות {w.letter}
               </p>
-              <AnswerImage item={item} label={w.text} />
+              <AnswerImage item={item} label={w.text} categoryId={w.categoryId} />
               {item?.facts?.[0] && <p style={{ margin: '4px 0', fontSize: '0.85rem' }}>💡 {item.facts[0]}</p>}
               <p className="dim" style={{ margin: 0, fontSize: '0.78rem' }}>
                 {new Date(w.discoveredAt).toLocaleDateString('he-IL')} · שימושים: {w.timesUsed}

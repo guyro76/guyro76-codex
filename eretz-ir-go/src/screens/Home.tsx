@@ -3,6 +3,7 @@ import { useApp } from '../store/appStore';
 import { greeting, randomJoke } from '../lib/persona';
 import { tipOfTheDay } from '../data/tips';
 import { todayKey } from '../lib/daily';
+import WalletChip from '../components/WalletChip';
 
 export default function Home() {
   const { activeProfile, navigate } = useApp();
@@ -34,6 +35,9 @@ export default function Home() {
             <p className="dim" style={{ margin: 0, fontSize: '0.9rem' }}>
               🔥 רצף יומי: {activeProfile.dailyStreak} · 🏅 {activeProfile.wins} ניצחונות
             </p>
+            <div style={{ marginTop: 6 }}>
+              <WalletChip profileId={activeProfile.id} />
+            </div>
           </div>
         </div>
         <button className="btn-small btn-ghost" onClick={() => navigate('profiles')}>

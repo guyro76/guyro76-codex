@@ -27,22 +27,23 @@ test.beforeEach(async ({ page }) => {
       });
       return;
     }
-    const title = url.searchParams.get('titles') ?? '';
-    await route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify({
-        query: {
-          pages: {
-            '1': {
-              title,
-              extract: `${title} — ערך לבדיקה`,
-              fullurl: `https://he.wikipedia.org/wiki/${encodeURIComponent(title)}`,
-              thumbnail: { source: PIXEL }
-            }
-          }
+    // ה-API מחזיר עמוד לכל כותרת ברשימה המופרדת ב-| — וכך גם כאן
+    const titles = (url.searchParams.get('titles') ?? '').split('|').filter(Boolean);
+    const pages = Object.fromEntries(
+      titles.map((title, i) => [
+        String(i + 1),
+        {
+          title,
+          // ערך הבדיקה נושא סימנים לכל חמש הקטגוריות של הסבב המהיר,
+          // כדי שיעבור את שער התאמת-הנושא בלי קשר לקטגוריה שהוגרלה.
+          // האימות עצמו נבדק לעומק ב-tests/imageVerify.test.ts.
+          extract: `${title} — מדינה, עיר, בעל חיים, צמח, כלי לבדיקה`,
+          fullurl: `https://he.wikipedia.org/wiki/${encodeURIComponent(title)}`,
+          thumbnail: { source: PIXEL }
         }
-      })
-    });
+      ])
+    );
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ query: { pages } }) });
   });
   await page.exposeFunction('__searchCount', () => searches);
 });

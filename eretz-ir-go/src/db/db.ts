@@ -42,16 +42,25 @@ export interface ContentItemRow {
 }
 
 /**
- * תמונה אמיתית שנמצאה לערך מהמאגר המובנה.
- * נשמרת פעם אחת בלבד ואז זמינה גם בלי אינטרנט.
- * `found: false` = חיפשנו ולא נמצאה תמונה — כדי לא לחזור ולשאול כל משחק.
+ * תמונה אמיתית שנמצאה לתשובה, אחרי שעברה את שערי `imageVerify.ts`.
+ * נשמרת פעם אחת ואז זמינה גם בלי אינטרנט.
+ * `found: false` = חיפשנו ולא התקבל מועמד תקין — כדי לא לשאול שוב כל משחק.
  */
 export interface ImageCacheRow {
+  /** `${normalized}|${categoryId}` — "כלנית" בצומח ובשם של בת אינם אותו דבר */
+  key: string;
   normalized: string;
+  categoryId: string;
   found: boolean;
   url?: string;
   pageUrl?: string;
   attribution?: string;
+  /** כותרת הערך בוויקיפדיה שממנו נלקחה התמונה */
+  title?: string;
+  /** למה נדחתה — לעיון במסך ההורה */
+  rejectReason?: string;
+  /** נפסלה ידנית על ידי שחקן או הורה; לא תוצג שוב */
+  rejectedByUser?: boolean;
   fetchedAt: string;
 }
 
@@ -64,7 +73,7 @@ class EretzIrDB extends Dexie {
   customCategories!: EntityTable<CustomCategoryRow, 'id'>;
   settings!: EntityTable<SettingsRow, 'key'>;
   contentItems!: EntityTable<ContentItemRow, 'id'>;
-  imageCache!: EntityTable<ImageCacheRow, 'normalized'>;
+  imageCache!: EntityTable<ImageCacheRow, 'key'>;
 
   constructor() {
     super('eretz-ir-go');
@@ -80,8 +89,10 @@ class EretzIrDB extends Dexie {
     this.version(2).stores({
       contentItems: '++id, normalized, categoryId'
     });
+    // מטמון תמונות. המפתח כולל את הקטגוריה, כי אותה מילה בקטגוריות
+    // שונות היא דבר אחר לגמרי — וזה בדיוק מקור התמונות השגויות.
     this.version(3).stores({
-      imageCache: 'normalized, fetchedAt'
+      imageCache: 'key, normalized, categoryId, fetchedAt'
     });
   }
 }

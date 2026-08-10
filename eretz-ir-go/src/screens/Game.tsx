@@ -4,6 +4,7 @@ import { useGame } from '../store/gameStore';
 import CategoryCard from '../components/CategoryCard';
 import { say } from '../lib/persona';
 import { sfx } from '../lib/sound';
+import WalletChip from '../components/WalletChip';
 
 export default function Game() {
   const { navigate } = useApp();
@@ -28,14 +29,18 @@ export default function Game() {
     return () => clearInterval(t);
   }, [game.roundStartedAt, game.settings.roundSeconds, game.phase]);
 
-  // סיום אוטומטי כשנגמר הזמן — אין שליחה אחרי הזמן
+  // סיום אוטומטי כשנגמר הזמן — אין שליחה אחרי הזמן.
+  // הזמן שנותר מחושב כאן מחדש ולא נלקח מ-secondsLeft: כשמדליקים את
+  // השעון באמצע סיבוב, הערך השמור עדיין 0 לרנדר אחד — והסיבוב היה
+  // נסגר מיד במקום להתחיל לספור.
   useEffect(() => {
-    if (game.settings.roundSeconds > 0 && secondsLeft <= 0 && game.phase === 'playing' && !finishing.current) {
-      finishing.current = true;
-      void game.finishPlayer().then(() => {
-        finishing.current = false;
-      });
-    }
+    if (game.settings.roundSeconds <= 0 || game.phase !== 'playing' || finishing.current) return;
+    const left = game.settings.roundSeconds - Math.floor((Date.now() - game.roundStartedAt) / 1000);
+    if (left > 0) return;
+    finishing.current = true;
+    void game.finishPlayer().then(() => {
+      finishing.current = false;
+    });
   }, [secondsLeft, game]);
 
   // ניווט לפי שלב המשחק
@@ -72,14 +77,27 @@ export default function Game() {
           </div>
         </div>
         <div className="row">
+          <WalletChip profileId={activePlayerProfile.id} />
           <span className="chip" aria-label={`נשארו ${game.hintsLeft} רמזים`}>💡 {game.hintsLeft}</span>
+          {/* התצוגה והכפתור מופרדים: השעון מתעדכן כל שנייה, והכפתור
+              נשאר יציב כדי שאפשר יהיה ללחוץ עליו תוך כדי ספירה. */}
           {game.settings.roundSeconds > 0 ? (
-            <span className={`timer${secondsLeft <= 20 ? ' low' : ''}`} role="timer">
+            <span className={`timer${secondsLeft <= 20 ? ' low' : ''}`} role="timer" style={{ minWidth: '4.2rem' }}>
               {min}:{sec}
             </span>
           ) : (
-            <span className="chip">ללא שעון</span>
+            <span className="chip">♾️ בלי לחץ</span>
           )}
+          {/* מעבר בין משחק על זמן למשחק בלי לחץ — זמין גם תוך כדי הסיבוב */}
+          <button
+            className="chip"
+            aria-label="החלפת מצב זמן"
+            aria-pressed={game.settings.roundSeconds > 0}
+            title={game.settings.roundSeconds > 0 ? 'לכבות את השעון' : 'להדליק את השעון'}
+            onClick={() => game.setTimed(game.settings.roundSeconds <= 0)}
+          >
+            ⏱️
+          </button>
         </div>
       </div>
 

@@ -20,8 +20,8 @@ export default function Credits() {
           .filter((r) => r.imageUrl)
           .map((r) => ({ key: `k${r.id}`, name: r.canonicalName, pageUrl: r.source })),
         ...cached
-          .filter((r) => r.found && r.url)
-          .map((r) => ({ key: `c${r.normalized}`, name: r.normalized, pageUrl: r.pageUrl }))
+          .filter((r) => r.found && r.url && !r.rejectedByUser)
+          .map((r) => ({ key: `c${r.key}`, name: r.title ?? r.normalized, pageUrl: r.pageUrl }))
       ];
       const seen = new Set<string>();
       setImageRows(rows.filter((r) => !seen.has(r.name) && seen.add(r.name)));

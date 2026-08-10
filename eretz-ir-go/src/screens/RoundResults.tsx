@@ -107,7 +107,7 @@ export default function RoundResults() {
                 {a.validation.status === 'valid' && item?.facts?.[0] && (
                   <p style={{ margin: '4px 0 0', fontSize: '0.88rem' }}>💡 {item.facts[0]}</p>
                 )}
-                {a.validation.status === 'valid' && <AnswerImage item={item} label={a.rawText} discover />}
+                {a.validation.status === 'valid' && <AnswerImage item={item} label={a.rawText} categoryId={a.categoryId} discover />}
 
                 {a.validation.status !== 'valid' && a.validation.status !== 'empty' && a.rawText && (
                   <p className="dim" style={{ margin: '4px 0 0', fontSize: '0.88rem' }}>
@@ -144,12 +144,14 @@ export default function RoundResults() {
           if (isLastRound) {
             void game.endMatch().then(() => navigate('match-results'));
           } else {
+            // בין סיבוב לסיבוב יש משימת ביניים — אפשר לשחק לבונוס
+            // או לדלג ישר לאות הבאה מתוך המסך שלה.
             game.nextRound();
-            navigate('letter-draw');
+            navigate('mini-game');
           }
         }}
       >
-        {isLastRound ? 'לתוצאות המשחק 🏁' : 'לסיבוב הבא 🎡'}
+        {isLastRound ? 'לתוצאות המשחק 🏁' : 'למשימת הביניים 🎲'}
       </button>
 
       {showNewWords && newWords.length > 0 && newWordIdx < newWords.length && (
@@ -169,7 +171,7 @@ export default function RoundResults() {
                   {!game.coop && game.players.length > 1 && ` · ${nw.playerName}`}
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <AnswerImage item={item} label={nw.answer.rawText} size="large" discover />
+                  <AnswerImage item={item} label={nw.answer.rawText} categoryId={nw.answer.categoryId} size="large" discover />
                 </div>
                 {item?.facts?.[0] && <p>💡 {item.facts[0]}</p>}
                 <p className="dim" style={{ fontSize: '0.85rem' }}>

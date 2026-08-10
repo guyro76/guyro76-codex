@@ -9,6 +9,8 @@
   --purple: #7c5cff;
   --coral: #ff5c8a;
   --gold: #ffd75c;
+  /* סגול חציל, מובהר כדי להיקרא על הרקע הכהה של המשחק */
+  --eggplant: #c07bd8;
   --night: #101d3d;
   --text: #f4f2ff;
   --text-dim: rgba(244, 242, 255, 0.65);
@@ -334,3 +336,28 @@ img { max-width: 100%; border-radius: 12px; }
 
 /* טקסט גדול — נגישות */
 .big-text { --font-size-base: 20px; }
+
+/* ===== קרדיט קבוע בתחתית כל מסך ===== */
+.site-credit {
+  margin-top: 28px;
+  padding: 14px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: var(--eggplant);
+  border-top: 1px solid var(--border-glass);
+}
+
+/* ===== ארנק המשחק ===== */
+.wallet-chip {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}

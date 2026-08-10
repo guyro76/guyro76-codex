@@ -155,7 +155,11 @@ export default function ModeSelect() {
           </label>
           <label style={{ flex: 1 }}>
             זמן לסיבוב
-            <select value={seconds} onChange={(ev) => setSeconds(Number(ev.target.value))} disabled={mode === 'practice'}>
+            <select
+              value={seconds}
+              onChange={(ev) => setSeconds(Number(ev.target.value))}
+              disabled={mode === 'practice' || seconds === 0}
+            >
               <option value={60}>דקה</option>
               <option value={120}>2 דקות</option>
               <option value={180}>3 דקות</option>
@@ -163,6 +167,25 @@ export default function ModeSelect() {
               <option value={0}>ללא הגבלה</option>
             </select>
           </label>
+        </div>
+
+        {/* משחק על זמן או בלי לחץ. אפשר להחליף גם באמצע הסיבוב, מהשעון שבראש מסך המשחק. */}
+        <div className="row" style={{ marginTop: 10 }} role="group" aria-label="מצב זמן">
+          <button
+            className={`chip${seconds > 0 ? ' on' : ''}`}
+            aria-pressed={seconds > 0}
+            onClick={() => setSeconds(seconds > 0 ? seconds : 180)}
+            disabled={mode === 'practice'}
+          >
+            ⏱️ משחק על זמן
+          </button>
+          <button
+            className={`chip${seconds === 0 ? ' on' : ''}`}
+            aria-pressed={seconds === 0}
+            onClick={() => setSeconds(0)}
+          >
+            ♾️ בלי ספירת זמן
+          </button>
         </div>
       </div>
 

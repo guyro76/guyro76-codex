@@ -4,6 +4,10 @@ import { useGame, type AnswerDraft } from '../store/gameStore';
 import { db } from '../db/db';
 import { normalizeHebrew, unfinalize } from '../lib/hebrew';
 import { artziSays } from '../lib/artzi';
+import Modal from './Modal';
+import { ANSWER_PRICE, canAfford, getWallet, spendOnAnswer, type PayMethod, type Wallet } from '../lib/wallet';
+import { notifyWalletChanged } from './WalletChip';
+import { sfx } from '../lib/sound';
 import type { Gender } from '../types';
 
 interface Props {
@@ -20,6 +24,7 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
   const setAnswer = useGame((s) => s.setAnswer);
   const askHint = useGame((s) => s.askHint);
   const revealAnswer = useGame((s) => s.revealAnswer);
+  const buyAnswer = useGame((s) => s.buyAnswer);
   const hintsLeft = useGame((s) => s.hintsLeft);
   const players = useGame((s) => s.players);
   const coop = useGame((s) => s.coop);
@@ -31,6 +36,8 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
   const [suggestions, setSuggestions] = useState<PersonalAnswer[]>([]);
   const [open, setOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [showBuy, setShowBuy] = useState(false);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const text = draft?.text ?? '';
@@ -110,6 +117,21 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
           }}
         >
           💡 {hintsUsed > 0 ? `רמז ${Math.min(hintsUsed, 3)}/3` : 'רמז'}
+        </button>
+        {/* קניית תשובה מהקרדיט שנצבר במשחק — לא כסף אמיתי */}
+        <button
+          className="btn-small btn-ghost"
+          aria-label={`קניית תשובה לקטגוריה ${category.name} מהקרדיט`}
+          disabled={!profileId || draft?.revealed}
+          onClick={() => {
+            if (!profileId) return;
+            void getWallet(profileId).then((w) => {
+              setWallet(w);
+              setShowBuy(true);
+            });
+          }}
+        >
+          🛒 קנו תשובה
         </button>
       </div>
 
@@ -201,6 +223,59 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
             </div>
           </div>
         </div>
+      )}
+
+      {showBuy && wallet && (
+        <Modal onClose={() => setShowBuy(false)}>
+          <div className="center">
+            <h2 style={{ marginTop: 0 }}>🛒 קניית תשובה</h2>
+            <p className="dim">
+              {category.icon} {category.name} · האות {letter}
+            </p>
+            <p>
+              ארצי ימלא תשובה נכונה במקומכם. התשובה לא מזכה בניקוד — אבל היא נשמרת
+              לאוסף המילים ואפשר להמשיך הלאה.
+            </p>
+            <p className="dim">
+              בארנק: 💵 {wallet.bills} · 💎 {wallet.gems}
+            </p>
+            <div className="row" style={{ justifyContent: 'center' }}>
+              {(
+                [
+                  ['bills', `💵 ${ANSWER_PRICE.bills} שטרות`],
+                  ['gems', `💎 ${ANSWER_PRICE.gems} יהלומים`]
+                ] as [PayMethod, string][]
+              ).map(([method, label]) => (
+                <button
+                  key={method}
+                  className="btn-primary"
+                  disabled={!canAfford(wallet, method)}
+                  onClick={() => {
+                    if (!profileId) return;
+                    void spendOnAnswer(profileId, method).then((next) => {
+                      if (!next) return; // אין מספיק — לא קורה כלום
+                      const bought = buyAnswer(category.id);
+                      notifyWalletChanged();
+                      setShowBuy(false);
+                      if (bought) sfx.success();
+                    });
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {!canAfford(wallet, 'bills') && !canAfford(wallet, 'gems') && (
+              <p className="dim" style={{ fontSize: '0.85rem' }}>
+                עוד אין מספיק קרדיט. צוברים שטרות על כל תשובה נכונה, ויהלומים על
+                תשובות מקוריות ועל משימות הביניים 💪
+              </p>
+            )}
+            <button className="btn-ghost btn-small" onClick={() => setShowBuy(false)}>
+              לא עכשיו
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );
