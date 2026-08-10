@@ -6,10 +6,15 @@ on:
     paths: ['eretz-ir-go/**', '.github/workflows/eretz-ir-go-pages.yml']
   workflow_dispatch:
 
-# הפריסה נעשית בדחיפה לענף gh-pages, ולכן נדרשת רק הרשאת כתיבה לתוכן.
-# ה-GITHUB_TOKEN המובנה מספיק — אין צורך בשום סוד חיצוני.
+# פורסים בשתי דרכים במקביל כדי שהאתר יעלה בלי שאף אחד ייגע בהגדרות:
+# 1. Pages רשמי דרך Actions — `configure-pages` עם enablement מדליק את
+#    Pages בעצמו אם הוא כבוי, ומעביר אותו למצב Actions.
+# 2. דחיפה לענף gh-pages — רשת ביטחון אם המאגר מוגדר לשרת מענף.
+# ה-GITHUB_TOKEN המובנה מספיק לשתיהן — אין צורך בשום סוד חיצוני.
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: eretz-ir-go-pages
@@ -18,6 +23,9 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pages-deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -56,7 +64,24 @@ jobs:
         # הנתיב הציבורי ב-Pages הוא /<repo>/ — נגזר אוטומטית משם המאגר
         run: BASE_PATH="/${GITHUB_REPOSITORY#*/}/" npm run build
 
-      - name: פריסה לענף gh-pages
+      - name: הפעלת GitHub Pages (אם כבוי) והגדרתו למצב Actions
+        if: github.ref == 'refs/heads/claude/eretz-ir-go-game-3kvtm3' || github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: אריזת האתר כארטיפקט של Pages
+        if: github.ref == 'refs/heads/claude/eretz-ir-go-game-3kvtm3' || github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: eretz-ir-go/dist
+
+      - name: פרסום ל-GitHub Pages
+        id: pages-deploy
+        if: github.ref == 'refs/heads/claude/eretz-ir-go-game-3kvtm3' || github.ref == 'refs/heads/main'
+        uses: actions/deploy-pages@v4
+
+      - name: פריסה לענף gh-pages (רשת ביטחון)
         # רק מהענף הראשי של הפיתוח — כדי שענפי ניסוי לא ידרסו את האתר החי
         if: github.ref == 'refs/heads/claude/eretz-ir-go-game-3kvtm3' || github.ref == 'refs/heads/main'
         run: |
