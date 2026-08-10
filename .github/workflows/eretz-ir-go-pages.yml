@@ -61,6 +61,25 @@ jobs:
         # הנתיב הציבורי ב-Pages הוא /<repo>/ — נגזר אוטומטית משם המאגר
         run: BASE_PATH="/${GITHUB_REPOSITORY#*/}/" npm run build
 
+      # Netlify מגיש את האתר משורש הדומיין, ולכן משתמשים בבנייה של שלב
+      # ה-E2E (בלי BASE_PATH). הצעד רץ רק אם הוגדרו הסודות; בלעדיהם הוא
+      # מדלג בשקט ולא מפיל את הריצה.
+      - name: פריסה ל-Netlify
+        if: github.ref == 'refs/heads/claude/eretz-ir-go-game-3kvtm3' || github.ref == 'refs/heads/main'
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "::notice::מדלגים על Netlify — חסרים הסודות NETLIFY_AUTH_TOKEN ו-NETLIFY_SITE_ID"
+            exit 0
+          fi
+          npx --yes netlify-cli@latest deploy \
+            --dir=eretz-ir-go/dist \
+            --site "$NETLIFY_SITE_ID" \
+            --prod \
+            --message "ארץ-עיר GO! מ-${GITHUB_SHA::7}"
+
       - name: אריזת האתר כארטיפקט של Pages
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3

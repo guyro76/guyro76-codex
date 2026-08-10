@@ -1,0 +1,38 @@
+# פריסת ארץ-עיר GO! ל-Netlify.
+#
+# ב-Netlify האתר יושב בשורש הדומיין, ולכן הבנייה כאן היא `npm run build`
+# בלי BASE_PATH (בניגוד ל-GitHub Pages, ששם האתר יושב בתת-נתיב).
+#
+# בממשק של Netlify צריך להגדיר Base directory = eretz-ir-go, ואז הקובץ
+# הזה נקרא אוטומטית ואין מה להגדיר ידנית.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# אפליקציית עמוד יחיד: כל נתיב מוגש מ-index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# ה-Service Worker וה-manifest חייבים להיטען טריים, אחרת המשתמש
+# נתקע על גרסה ישנה של המשחק גם אחרי שפרסמנו עדכון.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# קובצי ה-assets נושאים גיבוב בשם, ולכן אפשר לשמור אותם לנצח
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
