@@ -87,9 +87,21 @@ export async function applyContentPack(pack: ContentPack): Promise<PackApplyResu
   return { version: pack.version, total: clean.length, added };
 }
 
+/** תקרת זמן להורדת חבילת תוכן — בלעדיה הבקשה יכולה להישאר תלויה ברשת גרועה */
+export const PACK_TIMEOUT_MS = 10_000;
+
 /** הורדת חבילה מה-URL המוגדר */
 export async function fetchContentPack(url: string = DEFAULT_PACK_URL): Promise<ContentPack> {
-  const res = await fetch(url, { cache: 'no-cache' });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PACK_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(url, { cache: 'no-cache', signal: controller.signal });
+  } catch {
+    throw new Error('לא הצלחנו להוריד את חבילת התוכן — נסו שוב מאוחר יותר');
+  } finally {
+    clearTimeout(timer);
+  }
   if (!res.ok) throw new Error(`השרת החזיר ${res.status}`);
   const pack = (await res.json()) as ContentPack;
   if (!pack.version || !Array.isArray(pack.items) || !pack.checksum) {

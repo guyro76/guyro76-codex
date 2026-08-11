@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { sfx } from '../../lib/sound';
 import { computerMove, isFull, progressFor, winnerOf, type Cell } from '../../lib/ticTacToe';
 import type { MiniGameProps } from './types';
@@ -10,6 +10,7 @@ import type { MiniGameProps } from './types';
 export default function TicTacToe({ onDone, onSkip }: MiniGameProps) {
   const [board, setBoard] = useState<Cell[]>(() => Array(9).fill(null));
   const [busy, setBusy] = useState(false);
+  const moveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const winner = winnerOf(board);
   const over = winner !== null || isFull(board);
@@ -18,6 +19,12 @@ export default function TicTacToe({ onDone, onSkip }: MiniGameProps) {
     if (winner === 'x') sfx.win();
     else if (winner === 'o') sfx.error();
   }, [winner]);
+
+  // מי שמדלג בזמן ש"המחשב חושב" יוצא מהמסך — הטיימר התלוי חייב להיעצר,
+  // אחרת הוא מנסה לעדכן קומפוננטה שכבר לא קיימת
+  useEffect(() => () => {
+    if (moveTimer.current) clearTimeout(moveTimer.current);
+  }, []);
 
   const play = (i: number) => {
     if (over || busy || board[i]) return;
@@ -29,7 +36,7 @@ export default function TicTacToe({ onDone, onSkip }: MiniGameProps) {
 
     // תור המחשב, עם השהיה קטנה כדי שיורגש כמו יריב ולא כמו מחשבון
     setBusy(true);
-    setTimeout(() => {
+    moveTimer.current = setTimeout(() => {
       setBoard((current) => {
         if (winnerOf(current) || isFull(current)) return current;
         const after = [...current];

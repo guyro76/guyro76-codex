@@ -106,7 +106,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-coral { background: linear-gradient(135deg, var(--coral), #ff8a5c); font-weight: 700; }
 .btn-gold { background: linear-gradient(135deg, var(--gold), #ffb15c); color: #3a2a00; font-weight: 700; }
 .btn-ghost { background: transparent; }
-.btn-small { min-height: 38px; padding: 6px 14px; font-size: 0.9rem; }
+/* 44px הוא הרף של אפל ל-Touch Target. WCAG AA מסתפק ב-24, אבל לילד
+   עם שליטה מוטורית פחות מדויקת זה ההבדל בין לפגוע ללא לפגוע. */
+.btn-small { min-height: 44px; padding: 6px 14px; font-size: 0.9rem; }
 
 /* ====== שדות קלט ====== */
 input[type='text'], input[type='number'], input[type='password'], select, textarea {

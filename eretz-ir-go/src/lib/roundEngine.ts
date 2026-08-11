@@ -39,6 +39,17 @@ export async function processRound(params: {
 
   const results: SubmittedAnswer[][] = [];
 
+  /**
+   * תקציב זמן כולל לאימות אונליין של כל הסיבוב.
+   *
+   * כל בדיקה בודדת כבר חסומה בזמן, אבל חמש קטגוריות שכולן ממתינות
+   * לפסק זמן היו מצטברות לחצי דקה של מסך תקוע. כשהתקציב נגמר פשוט
+   * מפסיקים לשאול את ויקיפדיה — תשובה שלא הספיקה להיבדק נשארת
+   * "בבדיקה", וההורה יכול לאשר אותה אחר כך. עדיף מלהשאיר ילד ממתין.
+   */
+  const ONLINE_BUDGET_MS = 12_000;
+  const onlineDeadline = Date.now() + ONLINE_BUDGET_MS;
+
   for (const player of players) {
     const submitted: SubmittedAnswer[] = [];
     const usedInRound = new Set<string>();
@@ -68,7 +79,7 @@ export async function processRound(params: {
       let onlineImage: string | undefined;
 
       // שלב 5: תשובה לא מוכרת — אימות אונליין לפני הכנסה למאגר
-      if (validation.status === 'needs-review' && isOnline()) {
+      if (validation.status === 'needs-review' && isOnline() && Date.now() < onlineDeadline) {
         const check = await verifyOnWikipedia(raw.text.trim());
         if (check.found && check.source) {
           validation = {

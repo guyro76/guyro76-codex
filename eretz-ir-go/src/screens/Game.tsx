@@ -93,7 +93,13 @@ export default function Game() {
             {game.coop && game.players[1] && (
               <span className="dim"> + {game.players[1].profile.name} (יחד!)</span>
             )}
-            <div style={{ fontSize: '2rem', fontWeight: 900, lineHeight: 1 }}>{game.letter}</div>
+            <div
+              className="round-letter"
+              aria-label={`האות של הסיבוב: ${game.letter}`}
+              style={{ fontSize: '2rem', fontWeight: 900, lineHeight: 1 }}
+            >
+              {game.letter}
+            </div>
           </div>
         </div>
         <div className="row">
