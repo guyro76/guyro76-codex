@@ -36,3 +36,20 @@
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# ===== כותרות אבטחה =====
+# ה-CSP נועל את המשחק למקורות שלו בלבד ולוויקיפדיה. גם אם חבילה
+# כלשהי בעץ התלויות תיפרץ מתישהו, הדפדפן לא ייתן לה לשלוח את
+# התשובות של הילדים לשום מקום אחר.
+# Permissions-Policy הופך את ההבטחה "בלי מצלמה ובלי מיקום" מהצהרה
+# באפיון לחסימה שהדפדפן אוכף.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://upload.wikimedia.org; font-src 'self'; connect-src 'self' https://he.wikipedia.org; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), midi=(), serial=(), bluetooth=(), magnetometer=(), gyroscope=(), accelerometer=(), display-capture=(), idle-detection=(), local-fonts=(), screen-wake-lock=()"
+    Cross-Origin-Opener-Policy = "same-origin"
+    X-Permitted-Cross-Domain-Policies = "none"

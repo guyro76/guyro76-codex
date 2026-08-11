@@ -25,6 +25,7 @@ import Credits from './screens/Credits';
 import Privacy from './screens/Privacy';
 import MiniGame from './screens/MiniGame';
 import SiteCredit from './components/SiteCredit';
+import LiveRegion from './components/LiveRegion';
 import MultiplayerInfo from './screens/MultiplayerInfo';
 import Blitz from './screens/Blitz';
 import Chain from './screens/Chain';
@@ -129,6 +130,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <OfflineBanner />
+      <LiveRegion />
       {screens[screen] ?? <Splash />}
       <SiteCredit />
     </ErrorBoundary>

@@ -4,6 +4,7 @@ import { useGame } from '../store/gameStore';
 import { GAME_LETTERS } from '../lib/hebrew';
 import { roundIntro } from '../lib/persona';
 import { primeAudio, sfx } from '../lib/sound';
+import { announce } from '../lib/announce';
 
 export default function LetterDraw() {
   const { navigate, activeProfile } = useApp();
@@ -54,6 +55,8 @@ export default function LetterDraw() {
         setFinalLetter(target);
         setSpinning(false);
         sfx.select();
+        // הגלגל עוצר בתנועה ובצליל — מי שלא רואה ולא שומע צריך שיוקרא לו
+        announce(`האות שהוגרלה היא ${target}`);
         if ('vibrate' in navigator) navigator.vibrate?.([40, 60, 90]);
         return;
       }

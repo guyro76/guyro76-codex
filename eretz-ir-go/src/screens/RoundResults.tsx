@@ -8,6 +8,7 @@ import { db, getSetting } from '../db/db';
 import type { SubmittedAnswer } from '../types';
 import { getKnowledgeBase } from '../lib/knowledge';
 import AnswerImage from '../components/AnswerImage';
+import { announce } from '../lib/announce';
 
 function statusClass(a: SubmittedAnswer): string {
   if (a.validation.status === 'valid') return 'status-text-ok';
@@ -34,6 +35,17 @@ export default function RoundResults() {
   useEffect(() => {
     void getSetting('miniGames').then((v) => setMiniGamesOn(v !== '0'));
   }, []);
+
+  // סיכום הסיבוב מוצג בצבעים ובאייקונים — מכריזים אותו פעם אחת בכניסה
+  // למסך, כך שגם מי שלא רואה יודע מה קרה בלי לסרוק את כל הקלפים
+  useEffect(() => {
+    const me = game.players[0];
+    if (!me) return;
+    const ok = me.submitted.filter((a) => a.validation.status === 'valid').length;
+    const total = me.submitted.length;
+    const points = me.submitted.reduce((sum, a) => sum + a.totalScore, 0);
+    announce(`תוצאות הסיבוב: ${ok} תשובות נכונות מתוך ${total}, ${points} נקודות`);
+  }, [game.players]);
 
   const kb = getKnowledgeBase();
 

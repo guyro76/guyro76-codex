@@ -11,6 +11,7 @@ import { getKnowledgeBase } from '../lib/knowledge';
 import { partialReward, pickMiniGame } from '../lib/miniGames';
 import { addMiniGameWin, earn } from '../lib/wallet';
 import { sfx } from '../lib/sound';
+import { announce } from '../lib/announce';
 
 /**
  * משימת ביניים בין סיבוב לסיבוב.
@@ -54,6 +55,11 @@ export default function MiniGame() {
       await refreshActive();
     }
     if (reward.points > 0) sfx.success();
+    announce(
+      reward.points > 0
+        ? `המשימה הסתיימה. זכיתם ב-${reward.points} נקודות`
+        : 'המשימה הסתיימה. הפעם בלי בונוס'
+    );
     setEarned({ points: reward.points, bills: reward.wallet.bills, gems: reward.wallet.gems });
   };
 

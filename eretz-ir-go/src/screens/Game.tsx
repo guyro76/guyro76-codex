@@ -5,6 +5,7 @@ import CategoryCard from '../components/CategoryCard';
 import { say } from '../lib/persona';
 import { sfx } from '../lib/sound';
 import WalletChip from '../components/WalletChip';
+import { announce } from '../lib/announce';
 
 export default function Game() {
   const { navigate } = useApp();
@@ -42,6 +43,25 @@ export default function Game() {
       finishing.current = false;
     });
   }, [secondsLeft, game]);
+
+  // הזמן שאוזל מסומן בצבע ובפעימה בלבד — מכריזים אותו בנקודות בודדות
+  // ולא בכל שנייה, כדי לא להציף את קורא המסך באמצע ההקלדה
+  const announcedAt = useRef<number | null>(null);
+  useEffect(() => {
+    if (game.settings.roundSeconds <= 0 || game.phase !== 'playing') return;
+    for (const mark of [30, 10]) {
+      if (secondsLeft <= mark && (announcedAt.current == null || announcedAt.current > mark)) {
+        announcedAt.current = mark;
+        announce(`נותרו ${mark} שניות`);
+        return;
+      }
+    }
+  }, [secondsLeft, game.settings.roundSeconds, game.phase]);
+
+  // סיבוב חדש מאפס את נקודות ההכרזה
+  useEffect(() => {
+    announcedAt.current = null;
+  }, [game.roundStartedAt]);
 
   // ניווט לפי שלב המשחק
   useEffect(() => {
