@@ -28,8 +28,23 @@ function watchErrors(page: Page): string[] {
   return errors;
 }
 
+/**
+ * ממתין לסיום כל האנימציות בדף.
+ *
+ * בלי זה המדידה תופסת כפתור באמצע אנימציית הכניסה, כשהוא עדיין
+ * מוקטן — ומדווחת על גודל מגע שגוי שאינו קיים במצב הסופי.
+ */
+async function settleAnimations(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    Promise.all(
+      document.getAnimations().map((a) => a.finished.catch(() => undefined))
+    ).then(() => undefined)
+  );
+}
+
 /** כל כפתור נראה צריך שם שאפשר להקריא, ואזור לחיצה שילד יפגע בו */
 async function auditButtons(page: Page, screen: string): Promise<string[] > {
+  await settleAnimations(page);
   const problems: string[] = [];
   const buttons = page.locator('button:visible');
   const count = await buttons.count();

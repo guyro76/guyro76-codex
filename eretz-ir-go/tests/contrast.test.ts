@@ -71,6 +71,12 @@ describe('ניגודיות צבעים — WCAG AA', () => {
     expect(ratio(over(rgb, Number(dim![4]), glass), glass)).toBeGreaterThanOrEqual(AA_NORMAL);
   });
 
+  it('קישורים נקראים על הזכוכית — הכחול־כהה של הדפדפן לא', () => {
+    // הבדיקה הזו נולדה מקישור שנשאר בצבע ברירת המחדל ולא נקרא כלל
+    expect(ratio(hex(token('link')), glass)).toBeGreaterThanOrEqual(AA_NORMAL);
+    expect(css).toMatch(/\na\s*\{[^}]*color:\s*var\(--link\)/);
+  });
+
   it('צבעי מצב — נכון, שגוי, זהב — כולם עוברים', () => {
     for (const name of ['ok', 'bad', 'gold']) {
       const r = ratio(hex(token(name)), glass);

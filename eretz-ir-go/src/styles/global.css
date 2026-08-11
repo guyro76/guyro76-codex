@@ -19,6 +19,8 @@
   /* אדום שעובר WCAG AA (5.07:1) גם על הנקודה הבהירה ביותר של הזכוכית */
   --bad: #ff9d9d;
   --bad-bg: rgba(255, 92, 92, 0.14);
+  /* צבע הקישורים. חייב לעבור AA על הזכוכית — נאכף ב-tests/contrast */
+  --link: #5fe3d3;
   --pending: #ffd75c;
   --pending-bg: rgba(255, 215, 92, 0.14);
   --radius: 22px;
@@ -37,6 +39,20 @@
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.28);
   --shadow: 0 18px 44px -14px rgba(6, 2, 24, 0.62), 0 4px 14px -6px rgba(58, 30, 120, 0.4);
   --shadow-lift: 0 30px 60px -18px rgba(6, 2, 24, 0.7), 0 8px 20px -8px rgba(124, 92, 255, 0.45);
+
+  /* ===== תנועה =====
+     ממשק משחק לא זז ליניארית. העקומה הראשית עוברת מעט את היעד
+     וחוזרת — זה מה שנותן לכפתור תחושה של חפץ ולא של מלבן. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 0.14s;
+  --dur-base: 0.24s;
+
+  /* ===== עומק =====
+     שלוש רמות בלבד. יותר מזה והעין מפסיקה להבין מה חשוב. */
+  --elev-1: 0 4px 12px -6px rgba(6, 2, 24, 0.5);
+  --elev-2: var(--shadow);
+  --elev-3: var(--shadow-lift);
 }
 
 * { box-sizing: border-box; }
@@ -78,6 +94,32 @@ body {
   to { opacity: 1; transform: none; }
 }
 
+/* כניסה מדורגת: הקלפים נוחתים בזה אחר זה במקום להופיע כגוש אחד.
+   ההפרש קטן בכוונה — מספיק כדי להרגיש חי, לא מספיק כדי לעכב. */
+.grid > * { animation: cardIn 0.42s var(--ease-out) backwards; }
+.grid > *:nth-child(1) { animation-delay: 0.02s; }
+.grid > *:nth-child(2) { animation-delay: 0.06s; }
+.grid > *:nth-child(3) { animation-delay: 0.10s; }
+.grid > *:nth-child(4) { animation-delay: 0.14s; }
+.grid > *:nth-child(5) { animation-delay: 0.18s; }
+.grid > *:nth-child(n + 6) { animation-delay: 0.22s; }
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+/* קישורים: בלי הכלל הזה הדפדפן נותן כחול-כהה ברירת מחדל, שעל הרקע
+   הכהה של המשחק פשוט לא נקרא. --link נבדק בבדיקת הניגודיות. */
+a {
+  color: var(--link);
+  text-decoration-color: rgba(51, 214, 195, 0.55);
+  text-underline-offset: 3px;
+}
+a:hover { color: #7fe9dc; }
+a:focus-visible { outline: 3px solid var(--turquoise); outline-offset: 3px; border-radius: 4px; }
+a:visited { color: var(--link); }
+
 h1, h2, h3 { margin: 0.4em 0; line-height: 1.2; }
 h1 { font-size: 1.9rem; }
 p { line-height: 1.55; }
@@ -86,22 +128,50 @@ p { line-height: 1.55; }
 .card {
   position: relative;
   background: var(--glass-fill);
-  border: 1px solid var(--glass-border);
+  border: 1px solid transparent;
   border-radius: var(--radius);
-  box-shadow: var(--shadow), var(--glass-highlight);
+  /* עובי הזכוכית: אור בקצה העליון, צל פנימי בתחתון. בלי הצל התחתון
+     המשטח נראה כמו מלבן שקוף; איתו הוא נראה כמו לוח עם עומק. */
+  box-shadow:
+    var(--shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 0 -18px 26px -22px rgba(0, 0, 0, 0.5);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   padding: 18px;
+  overflow: hidden;
 }
 
-/* ההשתקפות בקצה העליון — הפרט שהופך "שקוף" ל"זכוכית" */
+/* מסגרת מדורגת: בהירה בפינה שאליה מגיע האור, כמעט שקופה בהפוכה.
+   מסגרת אחידה היא הסימן המובהק ל"גלאס מורפיזם זול". */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0.12) 38%,
+    rgba(255, 255, 255, 0.04) 62%,
+    rgba(255, 255, 255, 0.22)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ההשתקפות הרחבה בחלק העליון */
 .card::before {
   content: '';
   position: absolute;
   inset: 0 0 auto;
-  height: 45%;
-  border-radius: var(--radius) var(--radius) 0 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent);
+  height: 52%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), transparent 85%);
   pointer-events: none;
 }
 
@@ -133,19 +203,35 @@ button {
   transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease,
     border-color 0.16s ease, opacity 0.16s ease;
 }
-button:hover { border-color: rgba(255, 255, 255, 0.32); box-shadow: var(--glass-highlight), 0 10px 26px -10px rgba(6, 2, 24, 0.75); }
-button:active { transform: scale(0.965); }
+button:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  transform: translateY(-1px);
+  box-shadow: var(--glass-highlight), 0 12px 28px -10px rgba(6, 2, 24, 0.8);
+}
+/* הלחיצה מורידה את הכפתור *ומקטינה את הצל* — בלי זה הוא נראה
+   כאילו הוא מתכווץ באוויר במקום להידחף פנימה */
+button:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: var(--glass-highlight), 0 2px 6px -3px rgba(6, 2, 24, 0.9);
+  transition-duration: var(--dur-fast);
+}
 button:focus-visible { outline: 3px solid var(--turquoise); outline-offset: 3px; }
 button:disabled { opacity: 0.42; cursor: not-allowed; transform: none; }
 
 .btn-primary {
-  background: linear-gradient(135deg, #8b6bff, #35d9c6 92%);
-  border-color: rgba(255, 255, 255, 0.26);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 46%),
+    linear-gradient(135deg, #8b6bff, #35d9c6 92%);
+  border-color: rgba(255, 255, 255, 0.3);
   font-weight: 700;
   font-size: 1.1rem;
-  box-shadow: var(--glass-highlight), 0 14px 34px -12px rgba(124, 92, 255, 0.75);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.18),
+    0 14px 34px -12px rgba(124, 92, 255, 0.75);
 }
-.btn-primary:hover { box-shadow: var(--glass-highlight), 0 18px 42px -12px rgba(124, 92, 255, 0.9); }
+.btn-primary:hover { box-shadow: var(--glass-highlight), 0 20px 46px -12px rgba(124, 92, 255, 0.95); }
+.btn-primary:active { box-shadow: var(--glass-highlight), 0 4px 12px -6px rgba(124, 92, 255, 0.9); }
 .btn-coral { background: linear-gradient(135deg, var(--coral), #ff8a5c); font-weight: 700; }
 .btn-gold { background: linear-gradient(135deg, var(--gold), #ffb15c); color: #3a2a00; font-weight: 700; }
 .btn-ghost { background: transparent; }
@@ -200,7 +286,18 @@ input::placeholder { color: var(--text-dim); }
   backdrop-filter: blur(10px);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.cat-card.valid { border-color: var(--ok); box-shadow: 0 0 18px rgba(61, 220, 132, 0.35); }
+.cat-card { transition: border-color var(--dur-base) ease, box-shadow var(--dur-base) ease, transform var(--dur-base) var(--ease-out); }
+.cat-card:focus-within { transform: translateY(-2px); box-shadow: var(--elev-2); border-color: rgba(51, 214, 195, 0.5); }
+.cat-card.valid {
+  border-color: var(--ok);
+  box-shadow: 0 0 0 1px rgba(61, 220, 132, 0.4), 0 10px 30px -12px rgba(61, 220, 132, 0.65);
+  animation: lockIn 0.4s var(--ease-spring);
+}
+@keyframes lockIn {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.025); }
+  100% { transform: scale(1); }
+}
 .cat-card.invalid { border-color: var(--bad); animation: gentleShake 0.35s ease; }
 .cat-card .cat-head { display: flex; align-items: center; gap: 10px; }
 .cat-card .cat-icon { font-size: 1.7rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4)); }
@@ -239,8 +336,28 @@ input::placeholder { color: var(--text-dim); }
 }
 .letter-wheel.spinning { animation: wheelSpin 0.5s linear infinite; }
 @keyframes wheelSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
-.letter-wheel.landed { animation: pop 0.5s cubic-bezier(0.2, 2.2, 0.4, 1); }
-@keyframes pop { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
+.letter-wheel.landed { animation: pop 0.55s var(--ease-spring); }
+@keyframes pop {
+  0% { transform: scale(0.62); }
+  100% { transform: scale(1); }
+}
+
+/* הילה שנושמת סביב הגלגל אחרי הנחיתה — האות היא הרגע החשוב במסך,
+   וכדאי שהעין תדע לאן ללכת */
+.letter-wheel.landed::after {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 2px solid rgba(51, 214, 195, 0.55);
+  animation: haloOut 1.1s var(--ease-out) 2;
+  pointer-events: none;
+}
+@keyframes haloOut {
+  0% { opacity: 0.85; transform: scale(0.92); }
+  100% { opacity: 0; transform: scale(1.16); }
+}
+.letter-wheel { position: relative; }
 
 /* ====== רשימת השלמה אוטומטית ====== */
 .autocomplete {
@@ -530,27 +647,27 @@ img { max-width: 100%; border-radius: 12px; }
   inset-inline-start: 8px;
 }
 
-/* ===== כדור הארץ של מסך הכניסה ===== */
+/* ===== כדור הארץ ===== */
 .globe-wrap {
   margin: 0 auto;
-  filter: drop-shadow(0 18px 40px rgba(58, 167, 240, 0.45));
+  filter: drop-shadow(0 22px 48px rgba(40, 140, 235, 0.5));
 }
 
-/* הרצועה כפולת הרוחב זזה בדיוק חצי — כך התפר בלתי נראה */
-.globe-spin {
-  animation: globeSpin 18s linear infinite;
-  will-change: transform;
-}
-@keyframes globeSpin {
+/* היבשות והעננים נעים במהירויות שונות — ההפרש הוא מה שנקרא כעומק.
+   הרצועה כפולת הרוחב זזה בדיוק חצי, כך שהתפר בלתי נראה. */
+.globe-land { animation: globeDrift 26s linear infinite; will-change: transform; }
+.globe-clouds { animation: globeDrift 38s linear infinite; will-change: transform; }
+
+@keyframes globeDrift {
   from { transform: translateX(0); }
-  to   { transform: translateX(-100px); }
+  to { transform: translateX(-120px); }
 }
 
-/* מי שביקש פחות תנועה מקבל כדור עומד, לא כדור מהבהב */
 @media (prefers-reduced-motion: reduce) {
-  .globe-spin { animation: none; }
+  .globe-land, .globe-clouds { animation: none; }
 }
-.reduced-motion .globe-spin { animation: none; }
+.reduced-motion .globe-land,
+.reduced-motion .globe-clouds { animation: none; }
 
 /* ===== ליטושי 2026 =====
    פרטים קטנים שמפרידים בין "עובד" ל"נראה יקר": מספרים ברוחב אחיד
@@ -605,3 +722,58 @@ h1, h2, h3 { scroll-margin-top: 80px; }
   -webkit-backdrop-filter: none;
 }
 .pw-eye:hover { border: none; box-shadow: none; }
+
+/* ===== טיפוגרפיה של משחק =====
+   מספרים גדולים הם חלק מהמשחק, לא טקסט. הם מקבלים משקל, מרווח אותיות
+   הדוק וזוהר עדין — כך שהניקוד נקרא כמו לוח תוצאות ולא כמו פסקה. */
+.gold, .score, .big-number {
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 14px rgba(255, 215, 92, 0.35);
+}
+
+/* הניקוד "קופץ" כשהוא משתנה — הפידבק שהופך נקודה למשמעותית */
+@keyframes scorePop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.score-pop { animation: scorePop 0.4s var(--ease-spring); display: inline-block; }
+
+/* ===== ויניה עדינה =====
+   מכהה את הפינות ומושכת את העין למרכז המסך. הפרט הזה קיים כמעט בכל
+   משחק ובכמעט אף אפליקציה, והוא חלק גדול מ"למה זה מרגיש כמו משחק". */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(6, 2, 24, 0.42));
+}
+#root { position: relative; z-index: 1; }
+
+/* כל התנועה החדשה מכבדת את מי שביקש פחות תנועה */
+@media (prefers-reduced-motion: reduce) {
+  .grid > *, .letter-wheel.landed, .letter-wheel.landed::after,
+  .cat-card.valid, .score-pop { animation: none !important; }
+  button:hover, button:active, .cat-card:focus-within { transform: none; }
+}
+.reduced-motion .grid > *,
+.reduced-motion .letter-wheel.landed,
+.reduced-motion .letter-wheel.landed::after,
+.reduced-motion .cat-card.valid,
+.reduced-motion .score-pop { animation: none !important; }
+
+/* ===== מרקם עדין על הזכוכית =====
+   זכוכית אמיתית אף פעם לא חלקה לגמרי. שכבת רעש כמעט בלתי נראית
+   שוברת את המדרגות בגרדיאנט ומוסיפה תחושה חומרית. ה-SVG מוטמע
+   כ-data URI ולכן לא נשלחת שום בקשת רשת. */
+.card::before {
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), transparent 85%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-blend-mode: overlay;
+}
+
+/* התוכן חייב לשבת מעל שכבות הזכוכית */
+.card > * { position: relative; z-index: 1; }
