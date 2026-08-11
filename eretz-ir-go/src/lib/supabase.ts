@@ -19,19 +19,90 @@ export function authConfigured(): boolean {
 
 let client: SupabaseClient | null = null;
 
+const REMEMBER_KEY = 'eretz-ir-go-remember';
+
+/** האם המשתמש ביקש שיזכרו אותו. ברירת המחדל: כן. */
+export function isRemembered(): boolean {
+  try {
+    return localStorage.getItem(REMEMBER_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
+
+export function setRemembered(value: boolean): void {
+  try {
+    localStorage.setItem(REMEMBER_KEY, value ? '1' : '0');
+  } catch {
+    /* דפדפן שחוסם אחסון — פשוט לא זוכרים */
+  }
+}
+
+/**
+ * אחסון הסשן, נבחר לפי "זכור אותי".
+ *
+ * מי שסימן — הסשן נשמר ב-localStorage ושורד סגירת דפדפן, כך שבפעם
+ * הבאה נכנסים ישר למשחק. מי שלא סימן (למשל על מחשב משותף) מקבל
+ * sessionStorage: ברגע שהלשונית נסגרת ההתחברות נעלמת.
+ */
+const sessionAwareStorage = {
+  getItem: (key: string) => {
+    try {
+      return (isRemembered() ? localStorage : sessionStorage).getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      (isRemembered() ? localStorage : sessionStorage).setItem(key, value);
+    } catch {
+      /* ignore */
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  }
+};
+
 export function supabase(): SupabaseClient | null {
   if (!authConfigured()) return null;
   client ??= createClient(url!, anonKey!, {
     auth: {
-      // "שיזכור אותי בכניסה הבאה" — הסשן נשמר ומתחדש מעצמו,
-      // כך שמי שהתחבר פעם אחת נכנס ישר למשחק בפעם הבאה.
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      storageKey: 'eretz-ir-go-auth'
+      storageKey: 'eretz-ir-go-auth',
+      storage: sessionAwareStorage
     }
   });
   return client;
+}
+
+/**
+ * אילו שיטות התחברות באמת פעילות בשרת.
+ *
+ * בלי הבדיקה הזו כפתור "להיכנס עם Google" מוביל למבוי סתום כשהספק
+ * עוד לא הוגדר. עדיף לא להציג כפתור מאשר להציג כפתור שנכשל.
+ */
+export async function availableProviders(): Promise<{ google: boolean; apple: boolean }> {
+  if (!authConfigured()) return { google: false, apple: false };
+  try {
+    const res = await fetch(`${url}/auth/v1/settings`, {
+      headers: { apikey: anonKey! },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!res.ok) return { google: false, apple: false };
+    const data = (await res.json()) as { external?: Record<string, boolean> };
+    return { google: Boolean(data.external?.google), apple: Boolean(data.external?.apple) };
+  } catch {
+    return { google: false, apple: false };
+  }
 }
 
 /** לאן חוזרים אחרי התחברות דרך ספק חיצוני */

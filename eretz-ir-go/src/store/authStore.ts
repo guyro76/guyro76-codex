@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Session } from '@supabase/supabase-js';
-import { authConfigured, redirectTo, supabase } from '../lib/supabase';
+import { authConfigured, availableProviders, redirectTo, supabase } from '../lib/supabase';
 import { TIERS, effectiveTier, tierAfterExpiry, type Role, type Tier, type TierSpec } from '../lib/tiers';
 
 export interface Account {
@@ -19,6 +19,8 @@ interface AuthState {
   account: Account | null;
   error: string | null;
   busy: boolean;
+  /** אילו ספקים חיצוניים באמת פעילים בשרת */
+  providers: { google: boolean; apple: boolean };
 
   init: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -50,6 +52,7 @@ export const useAuth = create<AuthState>((set, get) => ({
   account: null,
   error: null,
   busy: false,
+  providers: { google: false, apple: false },
 
   init: async () => {
     const client = supabase();
@@ -58,6 +61,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       set({ ready: true });
       return;
     }
+    void availableProviders().then((providers) => set({ providers }));
     const { data } = await client.auth.getSession();
     set({ session: data.session });
     if (data.session) await get().refreshAccount();

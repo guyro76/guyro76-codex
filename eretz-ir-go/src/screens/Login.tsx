@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Globe from '../components/Globe';
+import PasswordField from '../components/PasswordField';
 import { useAuth } from '../store/authStore';
+import { isRemembered, setRemembered } from '../lib/supabase';
 
 /**
  * מסך הכניסה. כדור הארץ מסתובב עד שנכנסים.
@@ -14,7 +16,9 @@ type Mode = 'choose' | 'email-in' | 'email-up';
 export default function Login() {
   const { signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, busy, error, clearError } =
     useAuth();
+  const providers = useAuth((s) => s.providers);
   const [mode, setMode] = useState<Mode>('choose');
+  const [remember, setRemember] = useState(isRemembered());
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -49,13 +53,17 @@ export default function Login() {
 
       {mode === 'choose' ? (
         <div className="card" style={{ maxWidth: 400, margin: '0 auto', display: 'grid', gap: 10 }}>
-          <button className="btn-primary" disabled={busy} onClick={() => void signInWithGoogle()}>
-            להיכנס עם Google
-          </button>
-          <button disabled={busy} onClick={() => void signInWithApple()}>
-             להיכנס עם Apple
-          </button>
-          <button disabled={busy} onClick={() => go('email-in')}>
+          {providers.google && (
+            <button className="btn-primary" disabled={busy} onClick={() => void signInWithGoogle()}>
+              להיכנס עם Google
+            </button>
+          )}
+          {providers.apple && (
+            <button disabled={busy} onClick={() => void signInWithApple()}>
+               להיכנס עם Apple
+            </button>
+          )}
+          <button className={providers.google ? '' : 'btn-primary'} disabled={busy} onClick={() => go('email-in')}>
             ✉️ להיכנס עם מייל
           </button>
           <button className="btn-ghost btn-small" disabled={busy} onClick={() => go('email-up')}>
@@ -88,16 +96,25 @@ export default function Login() {
             />
           </label>
 
-          <label>
-            <span className="dim">סיסמה (לפחות 6 תווים)</span>
+          <PasswordField
+            label="סיסמה (לפחות 6 תווים)"
+            value={password}
+            onChange={setPassword}
+            autoComplete={mode === 'email-up' ? 'new-password' : 'current-password'}
+            onEnter={() => canSubmit && void submit()}
+          />
+
+          <label className="row" style={{ gap: 8, alignItems: 'center', cursor: 'pointer' }}>
             <input
-              type="password"
-              dir="ltr"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === 'email-up' ? 'new-password' : 'current-password'}
-              onKeyDown={(e) => e.key === 'Enter' && canSubmit && void submit()}
+              type="checkbox"
+              checked={remember}
+              style={{ width: 22, minHeight: 22, margin: 0 }}
+              onChange={(e) => {
+                setRemember(e.target.checked);
+                setRemembered(e.target.checked);
+              }}
             />
+            <span>לזכור אותי בכניסה הבאה</span>
           </label>
 
           <button className="btn-primary" disabled={!canSubmit} onClick={() => void submit()}>
