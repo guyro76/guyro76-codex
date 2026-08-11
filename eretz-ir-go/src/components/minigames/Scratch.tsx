@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { sfx } from '../../lib/sound';
+import { PICKS, bestStreak, buildCard, progressFor } from '../../lib/scratchCard';
 import type { MiniGameProps } from './types';
 
 /**
@@ -8,48 +9,16 @@ import type { MiniGameProps } from './types';
  * מגרדים שלושה שדות מתוך שישה, ואם שלושה סמלים זהים מתגלים —
  * זוכים בבונוס המלא. אחרת מקבלים בונוס חלקי לפי כמה התקרבתם.
  *
- * הכרטיס מוגרל מראש והתוצאה קבועה מרגע הפתיחה: מה שמתגלה הוא מה
- * שהיה שם מלכתחילה, בלי שהמשחק "מחליט" תוך כדי.
+ * הכרטיס מוגרל מראש (ראו lib/scratchCard) והתוצאה קבועה מרגע הפתיחה.
  */
-const SYMBOLS = ['🍀', '⭐', '💎', '🍒', '🔔', '🎁'];
-const PICKS = 3;
-
-/** כרטיס עם סיכוי סביר לזכייה — שליש מהכרטיסים מנצחים */
-function buildCard(): string[] {
-  const cells: string[] = [];
-  if (Math.random() < 0.34) {
-    const winner = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-    cells.push(winner, winner, winner);
-    while (cells.length < 6) {
-      const other = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-      if (other !== winner) cells.push(other);
-    }
-  } else {
-    // כרטיס מפסיד: לכל היותר שני סמלים זהים
-    const counts = new Map<string, number>();
-    while (cells.length < 6) {
-      const s = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-      const n = counts.get(s) ?? 0;
-      if (n >= 2) continue;
-      counts.set(s, n + 1);
-      cells.push(s);
-    }
-  }
-  return cells.sort(() => Math.random() - 0.5);
-}
-
 export default function Scratch({ onDone, onSkip }: MiniGameProps) {
-  const card = useMemo(buildCard, []);
+  const card = useMemo(() => buildCard(), []);
   const [revealed, setRevealed] = useState<number[]>([]);
 
   const picked = revealed.map((i) => card[i]);
   const done = revealed.length >= PICKS;
-  const counts = picked.reduce<Record<string, number>>((acc, s) => {
-    acc[s] = (acc[s] ?? 0) + 1;
-    return acc;
-  }, {});
-  const best = Math.max(0, ...Object.values(counts));
-  const won = done && best === PICKS;
+  const best = bestStreak(picked);
+  const won = done && best >= PICKS;
 
   const scratch = (i: number) => {
     if (done || revealed.includes(i)) return;
@@ -60,9 +29,6 @@ export default function Scratch({ onDone, onSkip }: MiniGameProps) {
     else if (new Set(next.map((k) => card[k])).size === 1) sfx.win();
     else sfx.error();
   };
-
-  /** שלושה זהים = מלא, שניים זהים = חצי, אחרת מעט */
-  const progress = won ? 1 : best === 2 ? 0.5 : 0.2;
 
   return (
     <div className="center">
@@ -101,7 +67,7 @@ export default function Scratch({ onDone, onSkip }: MiniGameProps) {
           <h2 style={{ color: won ? 'var(--ok)' : 'var(--gold)' }}>
             {won ? 'שלושה זהים — זכייה! 🎉' : best === 2 ? 'שניים זהים — כמעט!' : 'לא הפעם, אבל יש בונוס קטן'}
           </h2>
-          <button className="btn-primary" onClick={() => onDone(progress)}>
+          <button className="btn-primary" onClick={() => onDone(progressFor(picked))}>
             {won ? 'לקחת את הפרס! 🏆' : 'ממשיכים לאות הבאה ←'}
           </button>
         </>
