@@ -5,6 +5,7 @@ import { GAME_LETTERS } from '../lib/hebrew';
 import { roundIntro } from '../lib/persona';
 import { primeAudio, sfx } from '../lib/sound';
 import { announce } from '../lib/announce';
+import LetterSwap from '../components/LetterSwap';
 
 export default function LetterDraw() {
   const { navigate, activeProfile } = useApp();
@@ -113,6 +114,10 @@ export default function LetterDraw() {
           >
             מתחילים! ⏱️
           </button>
+          {/* החלפת אות — עומדת בפני עצמה, לא תלויה בקלפי כוח.
+              באתגר היומי אין החלפה: האות זהה לכולם, וזה כל העניין. */}
+          {!dailyLetter && <LetterSwap onSwap={spin} />}
+
           {settings.powerCards && !power.swap && !dailyLetter && (
             <div style={{ marginTop: 10 }}>
               <button

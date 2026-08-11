@@ -178,3 +178,43 @@ test('🎲 אפשר לכבות את משימות הביניים בהגדרות',
 
   expect(errors, `שגיאות קונסול: ${errors.join(' | ')}`).toEqual([]);
 });
+
+test('🔄 החלפת אות: הראשונה חינם, השנייה דורשת קרדיט או חידה', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (msg) => msg.type() === 'error' && errors.push(msg.text()));
+  page.on('pageerror', (err) => errors.push(String(err)));
+
+  await startGame(page, '2');
+  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
+  await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
+  await page.getByRole('button', { name: /להגרלת האות/ }).click();
+  await page.locator('.letter-wheel').click();
+  await expect(page.getByRole('button', { name: /מתחילים/ })).toBeVisible({ timeout: 20_000 });
+
+  // ההחלפה הראשונה חינם — לחיצה אחת, בלי חלונית ובלי תשלום
+  const free = page.getByRole('button', { name: /החלפת אות — חינם/ });
+  await expect(free).toBeVisible();
+  await free.click();
+
+  // הגלגל מסתובב מחדש ונוחת על אות
+  await expect(page.getByRole('button', { name: /מתחילים/ })).toBeVisible({ timeout: 20_000 });
+
+  // עכשיו ההחלפה כבר לא חינם
+  await expect(free).toBeHidden();
+  const paid = page.getByRole('button', { name: /החלפת אות נוספת/ });
+  await expect(paid).toBeVisible();
+  await paid.click();
+
+  // בלי קרדיט שני אמצעי התשלום מושבתים — אבל מסלול החידה תמיד פתוח
+  await expect(page.getByRole('button', { name: /שטרות/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /יהלום/ })).toBeDisabled();
+  await page.getByRole('button', { name: /לפתור חידה/ }).click();
+
+  const answer = page.getByRole('textbox', { name: 'התשובה לחידה' });
+  await expect(answer).toBeVisible();
+  await answer.fill('תשובה שגויה לגמרי');
+  await page.getByRole('button', { name: 'זו התשובה!' }).click();
+  await expect(page.getByText(/לא בדיוק/)).toBeVisible();
+
+  expect(errors, `שגיאות קונסול: ${errors.join(' | ')}`).toEqual([]);
+});

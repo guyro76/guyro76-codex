@@ -9,6 +9,7 @@ import { normalizeHebrew } from '../lib/hebrew';
 import { completionBonus } from '../lib/scoring';
 import { db } from '../db/db';
 import { earn, roundEarnings } from '../lib/wallet';
+import { MAX_SWAPS } from '../lib/letterSwap';
 import type { KnowledgeItem } from '../types';
 
 export interface AnswerDraft {
@@ -46,6 +47,13 @@ interface GameState {
   dailyDate: string | null;
   /** קלפי כוח — מאגר משותף למשחק; דגל true = הקלף נוצל */
   power: { extraTime: boolean; swap: boolean; freeHint: boolean; double: { playerIdx: number; categoryId: string } | null };
+  /**
+   * כמה החלפות אות נוצלו במשחק הזה. הראשונה חינם, השנייה נקנית
+   * בקרדיט או בפתרון חידה. נספר למשחק כולו ולא לסיבוב.
+   */
+  letterSwapsUsed: number;
+  /** חידות שכבר הוצגו, כדי לא לחזור על אותה חידה פעמיים */
+  usedRiddleIds: string[];
   /** נקודות בונוס ממשימות הביניים, נצברות למשחק כולו */
   bonusPoints: number;
   /** משך הסיבוב שנבחר, כדי שאפשר יהיה לחזור אליו אחרי "בלי לחץ" */
@@ -64,6 +72,10 @@ interface GameState {
   addBonus: (points: number) => void;
   finishPlayer: () => Promise<void>;
   usePower: (kind: 'extraTime' | 'swap' | 'freeHint') => boolean;
+  /** רושם החלפת אות שנוצלה. מחזיר false כשנגמרו ההחלפות. */
+  consumeLetterSwap: () => boolean;
+  /** מסמן חידה כמוצגת, כדי שלא תחזור באותו משחק */
+  markRiddleUsed: (id: string) => void;
   setDoubleCategory: (categoryId: string) => void;
   continueToNextPlayer: () => void;
   nextRound: () => void;
@@ -97,6 +109,8 @@ export const useGame = create<GameState>((set, get) => ({
   coop: false,
   dailyDate: null,
   power: { extraTime: false, swap: false, freeHint: false, double: null },
+  letterSwapsUsed: 0,
+  usedRiddleIds: [],
 
   startMatch: (settings, categories, profiles, dailyDate) => {
     set({
@@ -119,6 +133,8 @@ export const useGame = create<GameState>((set, get) => ({
       coop: settings.mode === 'coop',
       dailyDate: dailyDate ?? null,
       power: { extraTime: false, swap: false, freeHint: false, double: null },
+      letterSwapsUsed: 0,
+      usedRiddleIds: [],
       bonusPoints: 0,
       lastTimedSeconds: settings.roundSeconds > 0 ? settings.roundSeconds : 180
     });
@@ -341,6 +357,15 @@ export const useGame = create<GameState>((set, get) => ({
     }
   },
 
+  consumeLetterSwap: () => {
+    const { letterSwapsUsed } = get();
+    if (letterSwapsUsed >= MAX_SWAPS) return false;
+    set({ letterSwapsUsed: letterSwapsUsed + 1 });
+    return true;
+  },
+
+  markRiddleUsed: (id) => set((s) => ({ usedRiddleIds: [...s.usedRiddleIds, id] })),
+
   usePower: (kind) => {
     const s0 = get();
     if (!s0.settings.powerCards || s0.power[kind]) return false;
@@ -457,6 +482,8 @@ export const useGame = create<GameState>((set, get) => ({
       coop: false,
       dailyDate: null,
       power: { extraTime: false, swap: false, freeHint: false, double: null },
+      letterSwapsUsed: 0,
+      usedRiddleIds: [],
       bonusPoints: 0
     });
   }
