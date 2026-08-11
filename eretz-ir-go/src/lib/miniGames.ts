@@ -6,7 +6,7 @@ import type { Wallet } from './wallet';
  * וממשיך לאות הבאה. אף פעם אין עונש על דילוג.
  */
 
-export type MiniGameId = 'hangman' | 'snake' | 'ninja' | 'bubbles';
+export type MiniGameId = 'hangman' | 'snake' | 'ninja' | 'bubbles' | 'tictactoe' | 'scratch';
 
 export interface MiniGameSpec {
   id: MiniGameId;
@@ -39,6 +39,20 @@ export const MINI_GAMES: MiniGameSpec[] = [
     icon: '🍉',
     how: 'מעבירים את האצבע על הפירות וחותכים את כולם',
     reward: { points: 12, wallet: { bills: 3, gems: 0 } }
+  },
+  {
+    id: 'tictactoe',
+    name: 'איקס עיגול',
+    icon: '❌⭕',
+    how: 'מנצחים את המחשב בשורה של שלושה — תיקו מזכה בחצי בונוס',
+    reward: { points: 12, wallet: { bills: 3, gems: 0 } }
+  },
+  {
+    id: 'scratch',
+    name: 'כרטיס גירוד',
+    icon: '🪙',
+    how: 'מגרדים שלושה שדות — שלושה סמלים זהים וזכיתם',
+    reward: { points: 14, wallet: { bills: 3, gems: 1 } }
   },
   {
     id: 'bubbles',

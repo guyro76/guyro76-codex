@@ -5,6 +5,8 @@ import Hangman from '../components/minigames/Hangman';
 import Snake from '../components/minigames/Snake';
 import FruitNinja from '../components/minigames/FruitNinja';
 import Bubbles from '../components/minigames/Bubbles';
+import TicTacToe from '../components/minigames/TicTacToe';
+import Scratch from '../components/minigames/Scratch';
 import { getKnowledgeBase } from '../lib/knowledge';
 import { partialReward, pickMiniGame } from '../lib/miniGames';
 import { addMiniGameWin, earn } from '../lib/wallet';
@@ -55,7 +57,14 @@ export default function MiniGame() {
     setEarned({ points: reward.points, bills: reward.wallet.bills, gems: reward.wallet.gems });
   };
 
-  const Game = { hangman: Hangman, snake: Snake, ninja: FruitNinja, bubbles: Bubbles }[spec.id];
+  const Game = {
+    hangman: Hangman,
+    snake: Snake,
+    ninja: FruitNinja,
+    bubbles: Bubbles,
+    tictactoe: TicTacToe,
+    scratch: Scratch
+  }[spec.id];
 
   if (earned) {
     return (

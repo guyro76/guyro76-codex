@@ -98,3 +98,23 @@ describe('הישגים למערכות החדשות', () => {
     expect(ACHIEVEMENTS.filter((a) => a.check(profile, ctx()))).toHaveLength(0);
   });
 });
+
+describe('שני משחקי הביניים החדשים', () => {
+  it('איקס-עיגול וכרטיס גירוד רשומים ומוגרלים כמו השאר', () => {
+    const ids = MINI_GAMES.map((g) => g.id);
+    expect(ids).toContain('tictactoe');
+    expect(ids).toContain('scratch');
+    expect(new Set(ids).size).toBe(ids.length);
+    // כל המשחקים אמורים לצאת בהגרלה על פני מספיק סיבובים
+    const drawn = new Set(Array.from({ length: 24 }, (_, i) => pickMiniGame(i, 'ק').id));
+    expect(drawn.size).toBe(MINI_GAMES.length);
+  });
+
+  it('לכל משחק יש שם, הסבר ובונוס חיובי', () => {
+    for (const g of MINI_GAMES) {
+      expect(g.name.length).toBeGreaterThan(2);
+      expect(g.how.length).toBeGreaterThan(10);
+      expect(g.reward.points).toBeGreaterThan(0);
+    }
+  });
+});
