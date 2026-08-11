@@ -26,7 +26,9 @@ export type Screen =
   | 'multiplayer-info'
   | 'blitz'
   | 'chain'
-  | 'mini-game';
+  | 'mini-game'
+  | 'admin'
+  | 'account';
 
 interface AppState {
   screen: Screen;

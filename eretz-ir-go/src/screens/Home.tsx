@@ -4,6 +4,7 @@ import { greeting, randomJoke } from '../lib/persona';
 import { tipOfTheDay } from '../data/tips';
 import { todayKey } from '../lib/daily';
 import WalletChip from '../components/WalletChip';
+import { authAvailable } from '../store/authStore';
 
 export default function Home() {
   const { activeProfile, navigate } = useApp();
@@ -78,6 +79,11 @@ export default function Home() {
         <button className="btn-small btn-ghost" onClick={() => navigate('parent')}>
           🔒 מצב הורה
         </button>
+        {authAvailable() && (
+          <button className="btn-small btn-ghost" onClick={() => navigate('account')}>
+            👤 החשבון שלי
+          </button>
+        )}
       </div>
     </div>
   );

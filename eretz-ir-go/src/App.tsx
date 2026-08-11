@@ -26,6 +26,11 @@ import Privacy from './screens/Privacy';
 import MiniGame from './screens/MiniGame';
 import SiteCredit from './components/SiteCredit';
 import LiveRegion from './components/LiveRegion';
+import Login from './screens/Login';
+import Globe from './components/Globe';
+import Admin from './screens/Admin';
+import Account from './screens/Account';
+import { authAvailable, useAuth } from './store/authStore';
 import MultiplayerInfo from './screens/MultiplayerInfo';
 import Blitz from './screens/Blitz';
 import Chain from './screens/Chain';
@@ -85,6 +90,13 @@ export default function App() {
   const screen = useApp((s) => s.screen);
   const loadProfiles = useApp((s) => s.loadProfiles);
   const loadCustomCategories = useApp((s) => s.loadCustomCategories);
+  const authReady = useAuth((s) => s.ready);
+  const session = useAuth((s) => s.session);
+  const initAuth = useAuth((s) => s.init);
+
+  useEffect(() => {
+    void initAuth();
+  }, [initAuth]);
 
   useEffect(() => {
     void loadProfiles();
@@ -124,8 +136,38 @@ export default function App() {
     'multiplayer-info': <MultiplayerInfo />,
     blitz: <Blitz />,
     chain: <Chain />,
-    'mini-game': <MiniGame />
+    'mini-game': <MiniGame />,
+    admin: <Admin />,
+    account: <Account />
   };
+
+  /**
+   * שער הכניסה. הוא נסגר רק כשההתחברות מוגדרת בסביבה — בלי הגדרות
+   * ענן (פיתוח מקומי, בדיקות) המשחק נפתח ישר, כפי שתמיד עבד.
+   * כל עוד לא ידוע אם קיים סשן שמור, מציגים את כדור הארץ במקום
+   * להבהב מסך התחברות למי שכבר מחובר.
+   */
+  const gated = authAvailable();
+  if (gated && !authReady) {
+    return (
+      <ErrorBoundary>
+        <div className="screen center">
+          <Globe />
+          <p className="dim" style={{ marginTop: 18 }}>רגע, בודקים אם אתם כבר מחוברים…</p>
+        </div>
+        <SiteCredit />
+      </ErrorBoundary>
+    );
+  }
+  if (gated && !session) {
+    return (
+      <ErrorBoundary>
+        <LiveRegion />
+        <Login />
+        <SiteCredit />
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <ErrorBoundary>

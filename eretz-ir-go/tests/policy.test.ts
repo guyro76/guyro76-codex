@@ -91,8 +91,24 @@ describe('מדיניות הפרטיות הציבורית', () => {
   });
 
   it('לא מבטיחה הבטחות שהקוד לא מקיים', () => {
-    // אין באפליקציה חשבונות, פרסומות או רכישות — והמדיניות אומרת זאת
-    expect(policy).toContain('אין לנו שרת');
+    // מרגע שיש חשבונות, אסור שהמדיניות תמשיך לטעון שאין שרת ואין מייל
+    expect(policy).not.toContain('אין לנו שרת');
+    expect(policy).not.toContain('אין חשבון משתמש');
     expect(policy).toMatch(/ללא פרסומות|אין.*פרסומות|פרסומות מכל סוג/);
+  });
+
+  it('מפרטת מה נשמר בשרת ומה נשאר במכשיר', () => {
+    expect(policy).toContain('Supabase');
+    expect(policy).toContain('כתובת מייל');
+    expect(policy).toMatch(/לא עולים לשרת|המכשיר בלבד/);
+  });
+
+  it('מסבירה את שלוש דרכי הכניסה ואת מה שלא מגיע אלינו', () => {
+    for (const s of ['Google', 'Apple', 'hash']) expect(policy).toContain(s);
+  });
+
+  it('דורשת הורה ליצירת חשבון לילד מתחת ל-13', () => {
+    expect(policy).toMatch(/מתחת לגיל 13/);
+    expect(policy).toMatch(/הורה או אפוטרופוס/);
   });
 });
