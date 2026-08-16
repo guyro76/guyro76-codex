@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { disableServiceWorker, stubWikipedia } from './helpers';
 
 /**
  * מסלול הקבלה מהאפיון:
@@ -22,6 +22,7 @@ test.beforeEach(async ({ page }) => {
     // כל הרצה מתחילה ממאגר נקי
     indexedDB.deleteDatabase('eretz-ir-go');
   });
+  await disableServiceWorker(page);
   await stubWikipedia(page);
 });
 

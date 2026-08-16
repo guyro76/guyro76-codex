@@ -16,6 +16,11 @@ watchInstallPrompt();
 
 // עדכון גרסה: מציג הודעה ידידותית כשקיימת גרסה חדשה
 const updateSW = registerSW({
+  /**
+   * במצב autoUpdate ה-Service Worker כבר מתקין את הגרסה החדשה לבד.
+   * ההודעה כאן היא רק כדי שהמשתמש יידע למה המסך מתרענן, והיא
+   * מפעילה את ההחלפה מיד במקום לחכות ללחיצה.
+   */
   onNeedRefresh() {
     const el = document.createElement('div');
     el.setAttribute('role', 'alert');
@@ -30,6 +35,8 @@ const updateSW = registerSW({
     btn.onclick = () => updateSW(true);
     el.appendChild(btn);
     document.body.appendChild(el);
+    // מתעדכן מעצמו גם בלי לחיצה — הבאנר רק מסביר מה קורה
+    setTimeout(() => void updateSW(true), 2500);
   }
 });
 

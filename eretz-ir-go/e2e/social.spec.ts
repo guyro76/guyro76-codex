@@ -134,3 +134,39 @@ test('📲 הצעת ההתקנה נסגרת ולא חוזרת', async ({ page })
   await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
   await expect(page.locator('.install-card')).toHaveCount(0);
 });
+
+test('🎯 לחיצה חוזרת על מצב משחק ממשיכה ישר הלאה', async ({ page }) => {
+  // דווח מהשטח: "לוחץ על משחק יחיד וזה לא מתקדם". הלחיצה סימנה בלבד,
+  // וכפתור ההמשך היה מתחת לקצה המסך.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await page.getByRole('heading', { name: 'אורי' }).click();
+  await page.getByRole('button', { name: /משחק חדש/ }).click();
+
+  const solo = page.getByRole('button', { name: /משחק יחיד/ }).first();
+  // בחירה מפורשת: קודם מצב אחר, ואז חזרה ליחיד — כך "יחיד" אינו
+  // עוד ברירת המחדל שכבר מסומנת אלא בחירה של ממש
+  await page.getByRole('button', { name: /תרגול חופשי/ }).first().click();
+  await solo.click();
+  await expect(solo).toHaveAttribute('aria-pressed', 'true');
+
+  // הלחיצה השנייה מתקדמת בלי לחפש את כפתור ההמשך
+  await solo.click();
+  await expect(page.getByRole('heading', { name: 'בחירת קטגוריות' })).toBeVisible({ timeout: 10_000 });
+});
+
+test('🤝 מצב שדורש יריב לא מדלג קדימה', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await page.getByRole('heading', { name: 'אורי' }).click();
+  await page.getByRole('button', { name: /משחק חדש/ }).click();
+
+  const duel = page.getByRole('button', { name: /דו-קרב/ }).first();
+  await duel.click();
+  await duel.click();
+  await duel.click();
+  // עדיין באותו מסך — חסרה בחירת יריב, ודילוג היה מוביל למסך חסר
+  await expect(page.getByRole('heading', { name: 'איך משחקים היום?' })).toBeVisible();
+});

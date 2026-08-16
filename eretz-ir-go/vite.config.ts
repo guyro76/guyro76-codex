@@ -14,7 +14,19 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      /**
+       * עדכון אוטומטי, ולא בקשת אישור.
+       *
+       * הסיבה מדווחת מהשטח: אחרי תיקון באג המשתמש המשיך לראות את
+       * הגרסה השבורה, כי ה-Service Worker הישן המשיך להגיש את
+       * החבילה הישנה עד שמישהו ילחץ "עדכון" — ובאנר שאף אחד לא
+       * שם לב אליו שקול לכך שהתיקון לא הגיע.
+       *
+       * skipWaiting + clientsClaim גורמים לגרסה החדשה להשתלט מיד,
+       * כך שרענון אחד מספיק. במשחק לילדים אין מצב עריכה שאפשר
+       * לאבד בהחלפה, ולכן אין כאן שום סיכון.
+       */
+      registerType: 'autoUpdate',
       includeAssets: ['icons/logo.svg'],
       manifest: {
         scope: base,
@@ -35,6 +47,11 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // ניקוי חבילות ישנות, כדי שהמטמון לא יגדל בלי גבול.
+        // skipWaiting/clientsClaim מוגדרים ממילא על ידי autoUpdate;
+        // הוספה מפורשת שלהם גרמה ל-Service Worker להשתלט על הדף
+        // באמצע חייו ולחתוך בקשות שכבר היו באוויר.
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: `${base}index.html`,
         runtimeCaching: [

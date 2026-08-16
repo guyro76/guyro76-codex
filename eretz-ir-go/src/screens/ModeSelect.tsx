@@ -55,6 +55,8 @@ export default function ModeSelect() {
   const [powerCards, setPowerCards] = useState(false);
 
   const needsSecond = mode === 'duel' || mode === 'coop' || mode === 'tournament';
+  /** האם המשתמש בחר מצב בעצמו, להבדיל מברירת המחדל שכבר מסומנת */
+  const [touched, setTouched] = useState(false);
   const others = profiles.filter((p) => p.id !== activeProfile?.id);
 
   const modes: { id: GameMode; icon: string; name: string; desc: string }[] = [
@@ -99,6 +101,33 @@ export default function ModeSelect() {
     navigate(quickModes[mode] ?? 'categories');
   };
 
+  /**
+   * בחירת מצב.
+   *
+   * דווח מהשטח: "אני לוחץ על משחק יחיד וזה לא מתקדם". הלחיצה כן
+   * עבדה — היא רק סימנה את הקלף, וכפתור ההמשך היה מתחת לקצה המסך.
+   * מבחינת המשתמש זה זהה לכפתור שבור.
+   *
+   * לכן: לחיצה על מצב שכבר נבחר ממשיכה ישר הלאה, ולחיצה ראשונה
+   * גוללת את כפתור ההמשך אל מול העיניים. מצב שדורש בחירת יריב לא
+   * מדלג — שם באמת חסר מידע, ודילוג היה מוביל למסך חסר.
+   */
+  const pickMode = (next: GameMode) => {
+    const second = next === 'duel' || next === 'coop' || next === 'tournament';
+    // רק לחיצה *אחרי* בחירה מפורשת מתקדמת. מצב ברירת המחדל כבר מסומן
+    // כשנכנסים למסך, ובלי התנאי הזה הלחיצה הראשונה הייתה מדלגת על
+    // בחירת מספר הסיבובים בלי שהמשתמש ביקש.
+    if (touched && mode === next && !second) {
+      start();
+      return;
+    }
+    setTouched(true);
+    setMode(next);
+    requestAnimationFrame(() => {
+      document.querySelector('.action-bar')?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    });
+  };
+
   return (
     <div className="screen">
       <TopBar title="איך משחקים היום?" />
@@ -110,8 +139,15 @@ export default function ModeSelect() {
             className="card clickable"
             role="button"
             tabIndex={0}
+            aria-pressed={mode === m.id}
             style={mode === m.id ? { borderColor: 'var(--turquoise)', background: 'rgba(51,214,195,0.12)' } : undefined}
-            onClick={() => setMode(m.id)}
+            onClick={() => pickMode(m.id)}
+            onKeyDown={(ev) => {
+              if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault();
+                pickMode(m.id);
+              }
+            }}
           >
             <div className="row">
               <span style={{ fontSize: '1.8rem' }} aria-hidden>

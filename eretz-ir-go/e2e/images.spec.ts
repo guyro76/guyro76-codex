@@ -15,6 +15,23 @@ const PIXEL =
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
 
+  /**
+   * מנטרלים את ה-Service Worker בבדיקה הזו בלבד.
+   *
+   * מאז שהמשחק עודכן לעדכון אוטומטי, ה-SW משתלט על הדף כבר בטעינה
+   * הראשונה ומיירט את בקשות התמונות מוויקישיתוף — כולל אלה שהבדיקה
+   * מזייפת. הבדיקה כאן בודקת את צינור התמונות שלנו, לא את המטמון
+   * של ה-SW, ולכן היא צריכה רשת "נקייה".
+   */
+  await page.addInitScript(() => {
+    if ('serviceWorker' in navigator) {
+      Object.defineProperty(navigator, 'serviceWorker', {
+        configurable: true,
+        value: { register: () => Promise.reject(new Error('disabled in test')), ready: new Promise(() => {}) }
+      });
+    }
+  });
+
   let searches = 0;
   await page.route('**he.wikipedia.org/w/api.php**', async (route) => {
     const url = new URL(route.request().url());
