@@ -41,7 +41,8 @@ describe('אימות אונליין — לעולם לא נתקע', () => {
     const promise = fetchImageCandidates('כרוב', 'ירק');
     await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS + 50);
 
-    await expect(promise).resolves.toEqual([]);
+    // null ולא [] — "לא הצלחנו לבדוק", ולא "בדקנו ואין תמונה"
+    await expect(promise).resolves.toBeNull();
   });
 
   it('שתי שאילתות החיפוש יוצאות במקביל — לא זו אחרי זו', async () => {
@@ -54,7 +55,7 @@ describe('אימות אונליין — לעולם לא נתקע', () => {
     expect(spy).toHaveBeenCalledTimes(2);
 
     await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS + 50);
-    await expect(promise).resolves.toEqual([]);
+    await expect(promise).resolves.toBeNull();
   });
 
   it('הבקשה באמת מבוטלת — לא רק ננטשת ברקע', async () => {
@@ -89,6 +90,44 @@ describe('אימות אונליין — לעולם לא נתקע', () => {
       Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({}) } as Response)
     ) as unknown as typeof fetch;
     await expect(verifyOnWikipedia('כלנית')).resolves.toEqual({ found: false });
-    await expect(fetchImageCandidates('כלנית')).resolves.toEqual([]);
+    await expect(fetchImageCandidates('כלנית')).resolves.toBeNull();
+  });
+
+  /**
+   * ההבחנה שבגללה התמונות נעלמו מהמכשיר: כישלון רשת נרשם במטמון
+   * כ"אין תמונה" ונזכר לחודש. מאז, רק חיפוש שבאמת חזר ריק מחזיר [].
+   */
+  it('חיפוש שחזר בלי תוצאות מחזיר מערך ריק — זו תשובה, לא תקלה', async () => {
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ query: { search: [] } })
+      } as Response)
+    ) as unknown as typeof fetch;
+
+    await expect(fetchImageCandidates('שדגכשדגכ')).resolves.toEqual([]);
+  });
+
+  it('שאילתה אחת שנכשלה לא מבטלת את התוצאות של השנייה', async () => {
+    let call = 0;
+    globalThis.fetch = vi.fn(() => {
+      call++;
+      if (call === 1) return Promise.reject(new Error('offline'));
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve(
+            call === 2
+              ? { query: { search: [{ title: 'כרוב' }] } }
+              : { query: { pages: { 1: { title: 'כרוב', extract: 'ירק ממשפחת המצליבים' } } } }
+          )
+      } as Response);
+    }) as unknown as typeof fetch;
+
+    const found = await fetchImageCandidates('כרוב', 'ירק');
+    expect(found).not.toBeNull();
+    expect(found?.[0]?.title).toBe('כרוב');
   });
 });

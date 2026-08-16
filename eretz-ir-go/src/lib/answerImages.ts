@@ -25,13 +25,27 @@ import type { KnowledgeItem } from '../types';
  */
 
 /** לכמה זמן זוכרים "לא נמצאה תמונה" לפני ניסיון נוסף */
-const MISS_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const MISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * תאריך שממנו והלאה סימוני "לא נמצאה תמונה" נחשבים אמינים.
+ *
+ * לפני התיקון, כישלון רשת נרשם במטמון בדיוק כמו "חיפשנו ואין תמונה",
+ * ונזכר לחודש. די היה בסיבוב אחד ברשת גרועה כדי שהתמונות ייעלמו
+ * מהמכשיר — וזה בדיוק מה שדווח. הרשומות השליליות שנוצרו אז מבוטלות
+ * כאן פעם אחת, בלי לגעת במבנה מסד הנתונים ובלי למחוק תמונות שנמצאו.
+ */
+const MISS_EPOCH = Date.parse('2026-08-16T00:00:00Z');
 
 /**
  * תקציב חיפושים חדשים — המשחק הוא Offline First, ולכן לא מציפים את
  * ויקיפדיה בבקשות. תמונות שכבר במטמון מוצגות תמיד, בלי קשר לתקציב.
+ *
+ * התקציב הועלה אחרי שהתברר שסיבוב עם שמונה קטגוריות, ועוד חלון
+ * "מילה חדשה" בסופו, חורג ממנו כבר בסיבוב הראשון — והתמונות
+ * האחרונות במסך פשוט לא הופיעו.
  */
-const LOOKUP_BUDGET = 6;
+const LOOKUP_BUDGET = 16;
 const BUDGET_WINDOW_MS = 60_000;
 let spent = 0;
 let windowStart = 0;
@@ -83,13 +97,17 @@ export async function resolveAnswerImage(name: string, categoryId: string): Prom
     if (cached.rejectedByUser) return null; // נפסלה ידנית — לא חוזרים אליה
     const hit = fromRow(cached);
     if (hit) return hit;
-    if (Date.now() - new Date(cached.fetchedAt).getTime() < MISS_TTL_MS) return null;
+    const at = new Date(cached.fetchedAt).getTime();
+    if (at >= MISS_EPOCH && Date.now() - at < MISS_TTL_MS) return null;
   }
 
   if (!isOnline() || !takeBudget()) return null;
 
   const hint = CATEGORIES.find((c) => c.id === categoryId)?.description;
   const candidates = await fetchImageCandidates(name.trim(), hint);
+  // הרשת נכשלה — לא יודעים אם יש תמונה, ולכן לא זוכרים כלום.
+  // הפעם הבאה תנסה שוב במקום להציג "אין תמונה" לשווא.
+  if (candidates === null) return null;
 
   let lastReason: RejectReason = 'no-image';
   for (const candidate of candidates) {

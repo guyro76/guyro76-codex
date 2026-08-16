@@ -607,11 +607,50 @@ img { max-width: 100%; border-radius: 12px; }
 }
 
 /* תא במגרש הנחש */
-.mg-cell { border-radius: 4px; }
+.mg-cell {
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(9px, 2.4vw, 15px);
+  line-height: 1;
+}
 .mg-cell.head { background: #2fbf71; box-shadow: inset 0 0 0 2px var(--mg-ink); }
 .mg-cell.body { background: #7fe0a5; }
-.mg-cell.food { background: #ff9f45; box-shadow: inset 0 0 0 2px var(--mg-ink); }
+.mg-cell.food { background: #ffd9a8; box-shadow: inset 0 0 0 2px var(--mg-ink); animation: food-pulse 1s ease-in-out infinite; }
 .mg-cell.empty { background: rgba(36, 18, 70, 0.07); }
+
+@keyframes food-pulse {
+  50% { transform: scale(1.14); }
+}
+
+/* כרטיס קונסולת הניהול — נראה למנהל בלבד, ולכן מותר לו לבלוט */
+.admin-banner {
+  border-color: rgba(255, 209, 102, 0.55) !important;
+  background:
+    linear-gradient(135deg, rgba(255, 209, 102, 0.14), rgba(255, 209, 102, 0)) ,
+    var(--glass-fill);
+}
+
+/* לוח כיוונים בצורת צלב — קל בהרבה לכוון ממנו מטור אחד של ארבעה */
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: repeat(2, 48px);
+  gap: 6px;
+  justify-content: center;
+  margin-top: 12px;
+  direction: ltr;
+}
+.dpad button { width: 100%; padding: 0; font-size: 1.15rem; }
+.dpad-up { grid-column: 2; grid-row: 1; }
+.dpad-left { grid-column: 1; grid-row: 2; }
+.dpad-down { grid-column: 2; grid-row: 2; }
+.dpad-right { grid-column: 3; grid-row: 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-cell.food { animation: none; }
+}
 
 /* לוח הנחש והנינג'ה */
 .mg-arena {
@@ -654,20 +693,47 @@ img { max-width: 100%; border-radius: 12px; }
 }
 
 /* היבשות והעננים נעים במהירויות שונות — ההפרש הוא מה שנקרא כעומק.
-   הרצועה כפולת הרוחב זזה בדיוק חצי, כך שהתפר בלתי נראה. */
+   הרצועה כפולת הרוחב זזה בדיוק עולם אחד, כך שהתפר בלתי נראה. */
 .globe-land { animation: globeDrift 26s linear infinite; will-change: transform; }
-.globe-clouds { animation: globeDrift 38s linear infinite; will-change: transform; }
+.globe-clouds { animation: globeDrift 40s linear infinite; will-change: transform; }
 
 @keyframes globeDrift {
   from { transform: translateX(0); }
-  to { transform: translateX(-120px); }
+  to { transform: translateX(-200px); }
+}
+
+/*
+   קווי האורך: כל מרידיאן נדחס לאפס ונפתח שוב, בהיסט זמן משלו.
+   הערכים הם קוסינוס — ולכן הקו מאט בקצוות ומהיר במרכז, בדיוק כמו
+   נקודה שמסתובבת סביב ציר. זה ההבדל בין "משהו זז" ל"משהו מסתובב".
+
+   מוזז ב-scaleX ולא ב-rx כי מאפייני גאומטריה כתכונות CSS נתמכים רק
+   בספארי חדש, ואצלנו זה חייב לעבוד גם באייפון ישן.
+*/
+.globe-meridians ellipse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: meridianSpin 26s linear infinite;
+}
+
+@keyframes meridianSpin {
+  0%   { transform: scaleX(1); }
+  12.5% { transform: scaleX(0.707); }
+  25%  { transform: scaleX(0); }
+  37.5% { transform: scaleX(-0.707); }
+  50%  { transform: scaleX(-1); }
+  62.5% { transform: scaleX(-0.707); }
+  75%  { transform: scaleX(0); }
+  87.5% { transform: scaleX(0.707); }
+  100% { transform: scaleX(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .globe-land, .globe-clouds { animation: none; }
+  .globe-land, .globe-clouds, .globe-meridians ellipse { animation: none; }
 }
 .reduced-motion .globe-land,
-.reduced-motion .globe-clouds { animation: none; }
+.reduced-motion .globe-clouds,
+.reduced-motion .globe-meridians ellipse { animation: none; }
 
 /* ===== ליטושי 2026 =====
    פרטים קטנים שמפרידים בין "עובד" ל"נראה יקר": מספרים ברוחב אחיד

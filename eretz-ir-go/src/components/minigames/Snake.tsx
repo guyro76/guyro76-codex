@@ -1,129 +1,105 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { sfx } from '../../lib/sound';
+import {
+  SIZE,
+  TARGET,
+  initialState,
+  isOver,
+  isWon,
+  samePoint,
+  step,
+  swipeDir,
+  turn,
+  type Dir,
+  type SnakeState
+} from '../../lib/snake';
 import type { MiniGameProps } from './types';
 
 /**
- * "נחשון האותיות" — סנייק מוקטן עם יעד קצר, כדי שלא יאריך את ההפסקה
- * בין הסיבובים. שליטה בהחלקה על המסך, בחצי המקלדת או בכפתורים.
- * המגרש טורואידלי: מי שיוצא מצד אחד נכנס מהצד השני, כך שמפסידים רק
- * מהתנגשות בעצמך — הרבה פחות מתסכל לילדים.
+ * "נחשון האותיות".
+ *
+ * שני דברים שברו את המשחק קודם ותוקנו כאן:
+ *
+ * 1. **הכיוונים היו הפוכים.** הדף כולו RTL, ורשת CSS בדף RTL מסדרת
+ *    עמודות מימין לשמאל — כלומר x=0 הופיע בקצה הימני. "ימינה" הזיז
+ *    את הנחש שמאלה על המסך. המגרש מוגדר כאן במפורש `direction: ltr`,
+ *    וזו הסיבה היחידה שהוא חורג מכיוון הדף.
+ * 2. **האכילה חושבה בתוך פונקציית עדכון של React**, שבמצב פיתוח
+ *    מורצת פעמיים — הפרי הוגרל פעמיים והמונה קפץ. כל החישוב עבר
+ *    ל-`lib/snake.ts` כפונקציה טהורה, וכאן נשארה רק התצוגה.
  */
-const SIZE = 12;
-const TARGET = 8;
-const TICK_MS = 190;
-
-type Point = { x: number; y: number };
-type Dir = 'up' | 'down' | 'left' | 'right';
-
-const STEP: Record<Dir, Point> = {
-  up: { x: 0, y: -1 },
-  down: { x: 0, y: 1 },
-  left: { x: -1, y: 0 },
-  right: { x: 1, y: 0 }
-};
-
-const OPPOSITE: Record<Dir, Dir> = { up: 'down', down: 'up', left: 'right', right: 'left' };
-
-function randomFood(taken: Point[]): Point {
-  for (;;) {
-    const p = { x: Math.floor(Math.random() * SIZE), y: Math.floor(Math.random() * SIZE) };
-    if (!taken.some((t) => t.x === p.x && t.y === p.y)) return p;
-  }
-}
+const TICK_MS = 260;
 
 export default function Snake({ onDone, onSkip }: MiniGameProps) {
-  const [snake, setSnake] = useState<Point[]>([{ x: 6, y: 6 }]);
-  const [food, setFood] = useState<Point>(() => randomFood([{ x: 6, y: 6 }]));
-  const [eaten, setEaten] = useState(0);
-  const [dead, setDead] = useState(false);
-  const dir = useRef<Dir>('right');
-  const pending = useRef<Dir | null>(null);
-
-  const won = eaten >= TARGET;
-  const over = won || dead;
-
-  const turn = useCallback((next: Dir) => {
-    if (next !== OPPOSITE[dir.current]) pending.current = next;
-  }, []);
+  const [state, setState] = useState<SnakeState>(() => initialState());
+  const over = isOver(state);
+  const won = isWon(state);
 
   useEffect(() => {
     if (over) return;
-    const t = setInterval(() => {
-      if (pending.current) {
-        dir.current = pending.current;
-        pending.current = null;
-      }
-      setSnake((prev) => {
-        const step = STEP[dir.current];
-        // מגרש טורואידלי — יוצאים מצד אחד ונכנסים מהשני
-        const head = {
-          x: (prev[0].x + step.x + SIZE) % SIZE,
-          y: (prev[0].y + step.y + SIZE) % SIZE
-        };
-        if (prev.some((s) => s.x === head.x && s.y === head.y)) {
-          setDead(true);
-          sfx.error();
-          return prev;
-        }
-        const grew = head.x === food.x && head.y === food.y;
-        const next = [head, ...prev];
-        if (grew) {
-          sfx.success();
-          setEaten((n) => n + 1);
-          setFood(randomFood(next));
-        } else {
-          next.pop();
-        }
-        return next;
-      });
-    }, TICK_MS);
+    const t = setInterval(() => setState((prev) => step(prev)), TICK_MS);
     return () => clearInterval(t);
-  }, [food, over]);
+  }, [over]);
 
+  // צלילים מגיבים למצב, ואינם רצים בתוך חישוב המצב עצמו
+  const prevEaten = useRef(0);
+  useEffect(() => {
+    if (state.eaten > prevEaten.current) sfx.success();
+    prevEaten.current = state.eaten;
+  }, [state.eaten]);
+  useEffect(() => {
+    if (state.dead) sfx.error();
+  }, [state.dead]);
   useEffect(() => {
     if (won) sfx.win();
   }, [won]);
 
+  const go = (d: Dir) => setState((prev) => turn(prev, d));
+
   useEffect(() => {
+    const map: Record<string, Dir> = {
+      ArrowUp: 'up',
+      ArrowDown: 'down',
+      ArrowLeft: 'left',
+      ArrowRight: 'right'
+    };
     const onKey = (ev: KeyboardEvent) => {
-      const map: Record<string, Dir> = {
-        ArrowUp: 'up',
-        ArrowDown: 'down',
-        ArrowLeft: 'left',
-        ArrowRight: 'right'
-      };
       const d = map[ev.key];
-      if (d) {
-        ev.preventDefault();
-        turn(d);
-      }
+      if (!d) return;
+      ev.preventDefault();
+      setState((prev) => turn(prev, d));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [turn]);
+  }, []);
 
-  const swipeStart = useRef<Point | null>(null);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+
+  const dpad: [Dir, string, string][] = [
+    ['up', '▲', 'למעלה'],
+    ['left', '◀', 'שמאלה'],
+    ['right', '▶', 'ימינה'],
+    ['down', '▼', 'למטה']
+  ];
 
   return (
     <div className="center">
-      <p className="dim">
-        נאכלו {eaten}/{TARGET}
+      <p className="dim" aria-live="polite">
+        🍎 נאכלו {state.eaten}/{TARGET}
       </p>
 
       <div
         role="application"
-        aria-label="מגרש הנחש — החליקו כדי לכוון"
+        aria-label="מגרש הנחש — החליקו או השתמשו בחצים כדי לכוון"
         onPointerDown={(ev) => (swipeStart.current = { x: ev.clientX, y: ev.clientY })}
         onPointerUp={(ev) => {
           const start = swipeStart.current;
           swipeStart.current = null;
           if (!start) return;
-          const dx = ev.clientX - start.x;
-          const dy = ev.clientY - start.y;
-          if (Math.abs(dx) < 16 && Math.abs(dy) < 16) return;
-          turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up');
+          const d = swipeDir(ev.clientX - start.x, ev.clientY - start.y);
+          if (d) go(d);
         }}
-        className="mg-arena"
+        className="mg-arena snake-arena"
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${SIZE}, 1fr)`,
@@ -133,34 +109,37 @@ export default function Snake({ onDone, onSkip }: MiniGameProps) {
           aspectRatio: '1',
           margin: '0 auto',
           padding: 6,
-          touchAction: 'none'
+          touchAction: 'none',
+          // חובה: בלי זה הרשת מתהפכת יחד עם הדף וכל הכיוונים מתחלפים
+          direction: 'ltr'
         }}
       >
         {Array.from({ length: SIZE * SIZE }, (_, i) => {
-          const x = i % SIZE;
-          const y = Math.floor(i / SIZE);
-          const isHead = snake[0].x === x && snake[0].y === y;
-          const isBody = !isHead && snake.some((s) => s.x === x && s.y === y);
-          const isFood = food.x === x && food.y === y;
+          const p = { x: i % SIZE, y: Math.floor(i / SIZE) };
+          const head = samePoint(state.snake[0], p);
+          const body = !head && state.snake.some((s) => samePoint(s, p));
+          const food = samePoint(state.food, p);
           return (
-            <div
-              key={i}
-              className={`mg-cell ${isHead ? 'head' : isBody ? 'body' : isFood ? 'food' : 'empty'}`}
-            />
+            <div key={i} className={`mg-cell ${head ? 'head' : body ? 'body' : food ? 'food' : 'empty'}`}>
+              {head ? '🐍' : food ? '🍎' : ''}
+            </div>
           );
         })}
       </div>
 
-      <div className="row" style={{ justifyContent: 'center', marginTop: 10, gap: 6 }}>
-        {(
-          [
-            ['up', '⬆️', 'למעלה'],
-            ['left', '⬅️', 'שמאלה'],
-            ['down', '⬇️', 'למטה'],
-            ['right', '➡️', 'ימינה']
-          ] as [Dir, string, string][]
-        ).map(([d, icon, label]) => (
-          <button key={d} className="btn-small" aria-label={label} onClick={() => turn(d)} disabled={over}>
+      <div className="dpad" aria-hidden={false}>
+        {dpad.map(([d, icon, label]) => (
+          <button
+            key={d}
+            className={`btn-small dpad-${d}`}
+            aria-label={label}
+            disabled={over}
+            onPointerDown={(ev) => {
+              ev.preventDefault(); // תגובה מיידית למגע, בלי להמתין ל-click
+              go(d);
+            }}
+            onClick={() => go(d)}
+          >
             {icon}
           </button>
         ))}
@@ -169,11 +148,18 @@ export default function Snake({ onDone, onSkip }: MiniGameProps) {
       {over ? (
         <>
           <h2 style={{ color: won ? 'var(--ok)' : 'var(--coral)' }}>
-            {won ? 'נחשון שבע! 🐍' : `התנגשתם — אכלתם ${eaten}`}
+            {won ? 'נחשון שבע! 🐍' : `התנגשתם — אכלתם ${state.eaten}`}
           </h2>
-          <button className="btn-primary" onClick={() => onDone(eaten / TARGET)}>
-            {won ? 'לקחת את הבונוס! 🏆' : 'ממשיכים לאות הבאה ←'}
-          </button>
+          <div className="row" style={{ justifyContent: 'center' }}>
+            <button className="btn-primary" onClick={() => onDone(state.eaten / TARGET)}>
+              {won ? 'לקחת את הבונוס! 🏆' : 'ממשיכים לאות הבאה ←'}
+            </button>
+            {!won && (
+              <button className="btn-small" onClick={() => setState(initialState())}>
+                עוד ניסיון 🔁
+              </button>
+            )}
+          </div>
         </>
       ) : (
         <button className="btn-ghost btn-small" style={{ marginTop: 10 }} onClick={onSkip}>

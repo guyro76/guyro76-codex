@@ -3,6 +3,7 @@ import { normalizeHebrew } from './hebrew';
 import { validateAnswer } from './validation';
 import { getKnowledgeBase, userItem } from './knowledge';
 import { isOnline, verifyOnWikipedia } from './verifyOnline';
+import { matchesCategory } from './imageVerify';
 import { originalityScore, scoreAnswer } from './scoring';
 import { db } from '../db/db';
 
@@ -81,7 +82,12 @@ export async function processRound(params: {
       // שלב 5: תשובה לא מוכרת — אימות אונליין לפני הכנסה למאגר
       if (validation.status === 'needs-review' && isOnline() && Date.now() < onlineDeadline) {
         const check = await verifyOnWikipedia(raw.text.trim());
-        if (check.found && check.source) {
+        // מילה שהמאגר מכיר בהקשר אחר ("כפיר" כשם של ילד, בקטגוריית
+        // "חי") מאושרת רק אם הערך עצמו מעיד על הקטגוריה הנכונה. בלי
+        // התנאי הזה גם "בננה" הייתה עוברת כבעל חיים.
+        const fits =
+          !validation.crossCategory || matchesCategory(check.evidence ?? '', category.id);
+        if (check.found && check.source && fits) {
           validation = {
             status: 'valid',
             reason: `אומת אונליין: ${check.title}`,

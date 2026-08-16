@@ -24,6 +24,40 @@ describe('מנוע בדיקת תשובות', () => {
     expect(r.status).toBe('wrong-category');
   });
 
+  /**
+   * הבדיקות האלה נולדו מדיווח: "כפיר" נפסל בקטגוריית "חי" ובלי אפשרות
+   * ערעור. עברית בונה שמות פרטיים ממילים רגילות, ולכן היעדר קטגוריה
+   * במאגר-הזרעים אינו הוכחה שהתשובה שגויה.
+   */
+  it('כפיר הוא אריה צעיר — מאושר בקטגוריית "חי"', () => {
+    const r = validateAnswer({ ...base, raw: 'כפיר', letter: 'כ', category: cat('animal') });
+    expect(r.status).toBe('valid');
+  });
+
+  it('מילה שמוכרת רק כשם פרטי נשלחת לבדיקה ולא נפסלת', () => {
+    // "ניצן" רשום אצלנו כשם בלבד, אבל הוא גם חלק של צמח
+    const r = validateAnswer({ ...base, raw: 'ניצן', letter: 'נ', category: cat('plant') });
+    expect(r.status).toBe('needs-review');
+    expect(r.crossCategory).toBe(true);
+  });
+
+  it('מילה שמוכרת בקטגוריה עניינית אחרת עדיין נפסלת — הדס אינו בעל חיים', () => {
+    const r = validateAnswer({ ...base, raw: 'הדס', letter: 'ה', category: cat('animal') });
+    expect(r.status).toBe('wrong-category');
+  });
+
+  it('כל מילה עשויה להיות שם — ולכן שם אינו נפסל מהמאגר', () => {
+    const r = validateAnswer({ ...base, raw: 'בננה', letter: 'ב', category: cat('boyname') });
+    expect(r.status).toBe('needs-review');
+    expect(r.crossCategory).toBe(true);
+  });
+
+  it('אבל חפיפה שאינה של שמות עדיין נפסלת — בננה אינה עיר', () => {
+    const r = validateAnswer({ ...base, raw: 'בננה', letter: 'ב', category: cat('city') });
+    expect(r.status).toBe('wrong-category');
+    expect(r.crossCategory).toBeUndefined();
+  });
+
   it('אות שגויה נפסלת', () => {
     const r = validateAnswer({ ...base, raw: 'צרפת', letter: 'מ', category: cat('country') });
     expect(r.status).toBe('wrong-letter');

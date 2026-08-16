@@ -9,6 +9,20 @@ import type { KnowledgeBase } from './knowledge';
  * 4) שגיאות כתיב (Fuzzy)  5) לא במאגר -> "נדרשת בדיקה" (אימות אונליין/הורה)
  * 6) חסימת ג'יבריש וכפילויות.
  */
+/**
+ * קטגוריות שבהן מילה אחת יכולה בהחלט להיות גם דבר אחר.
+ *
+ * שמות פרטיים בעברית נלקחים כמעט תמיד ממילים קיימות, ולכן כל שם חופף
+ * לכל קטגוריה אחרת ולהפך. זו הייתה הסיבה ש"כפיר" נפסל כבעל חיים.
+ */
+const NAME_CATEGORIES = new Set(['boyname', 'girlname']);
+
+function categoriesOverlap(asked: string, matched: KnowledgeItem[]): boolean {
+  const known = new Set(matched.flatMap((item) => item.categoryIds));
+  if (NAME_CATEGORIES.has(asked)) return true; // כל מילה עשויה להיות שם
+  return [...known].every((id) => NAME_CATEGORIES.has(id));
+}
+
 export function validateAnswer(params: {
   raw: string;
   letter: string;
@@ -83,6 +97,19 @@ export function validateAnswer(params: {
 
   // נמצא במאגר אבל בקטגוריה אחרת — "בננה היא לא עיר"
   if (exact.length > 0 && !category.custom) {
+    // …אלא אם החפיפה צפויה. עברית בונה שמות פרטיים ממילים רגילות:
+    // כפיר הוא אריה צעיר, יעל היא חיה, דקל וורד ותמר הם צמחים. המאגר
+    // שלנו הוא רשימת זרעים ולא מילון, ולכן היעדר קטגוריה בו אינו
+    // הוכחה. במקרים כאלה שולחים לבדיקה במקום לפסול — הבדיקה
+    // האונליין ב-roundEngine תדרוש עדות שהערך אכן מהקטגוריה הזו.
+    if (categoriesOverlap(category.id, exact)) {
+      return {
+        status: 'needs-review',
+        reason: 'המילה מוכרת לי בהקשר אחר — בודקים אם היא מתאימה גם כאן',
+        verificationSource: 'none',
+        crossCategory: true
+      };
+    }
     return {
       status: 'wrong-category',
       reason: 'התשובה מתחילה באות הנכונה, אבל אינה מתאימה לקטגוריה',

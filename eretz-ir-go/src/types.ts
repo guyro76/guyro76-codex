@@ -100,6 +100,12 @@ export interface AnswerValidation {
   matchedItem?: KnowledgeItem;
   suggestion?: string; // תיקון כתיב מוצע
   verificationSource: 'local-db' | 'personal' | 'online' | 'none';
+  /**
+   * המילה מוכרת למאגר, אך רק בקטגוריה חופפת (בעיקר שמות פרטיים).
+   * "כפיר" מופיע כשם של ילד, ובכל זאת הוא גם אריה צעיר. במקרה כזה
+   * אין לפסול על הסף — בודקים אונליין שהערך באמת מהקטגוריה הנכונה.
+   */
+  crossCategory?: boolean;
 }
 
 export interface SubmittedAnswer {

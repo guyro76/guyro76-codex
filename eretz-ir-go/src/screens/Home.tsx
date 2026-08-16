@@ -4,10 +4,13 @@ import { greeting, randomJoke } from '../lib/persona';
 import { tipOfTheDay } from '../data/tips';
 import { todayKey } from '../lib/daily';
 import WalletChip from '../components/WalletChip';
-import { authAvailable } from '../store/authStore';
+import { authAvailable, useAuth } from '../store/authStore';
 
 export default function Home() {
   const { activeProfile, navigate } = useApp();
+  // פאנל הניהול הוסתר קודם מאחורי כפתור רפאים זעיר בתחתית המסך, ואחריו
+  // עוד מסך — מנהל שנכנס פשוט לא מצא אותו. עכשיו הוא כרטיס משלו.
+  const isAdmin = useAuth((s) => s.account?.role === 'admin');
   const joke = useMemo(() => (activeProfile ? randomJoke(activeProfile.age) : ''), [activeProfile]);
 
   if (!activeProfile) {
@@ -45,6 +48,22 @@ export default function Home() {
           החלפת שחקן
         </button>
       </div>
+
+      {isAdmin && (
+        <button
+          className="card clickable admin-banner"
+          style={{ width: '100%', margin: '14px 0 0', textAlign: 'start' }}
+          onClick={() => navigate('admin')}
+        >
+          <span style={{ fontSize: '1.6rem' }} aria-hidden>
+            🛠️
+          </span>{' '}
+          <strong>קונסולת הניהול</strong>
+          <span className="dim" style={{ display: 'block', fontSize: '0.86rem', marginTop: 2 }}>
+            הזמנות, משתמשים וחבילות
+          </span>
+        </button>
+      )}
 
       <div className="card" style={{ margin: '14px 0' }}>
         <span aria-hidden>🤖</span> <strong>ארצי:</strong> {joke}

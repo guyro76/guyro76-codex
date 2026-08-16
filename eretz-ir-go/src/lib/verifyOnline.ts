@@ -18,6 +18,12 @@ export interface OnlineVerification {
   source?: string; // URL של הערך
   imageUrl?: string;
   imageAttribution?: string;
+  /**
+   * כל הטקסט שמעיד על מהות הערך — התיאור הקצר, הפתיח וקטגוריות
+   * ויקיפדיה. משמש לבדוק שהערך באמת מהקטגוריה שבה ענו, ולא רק
+   * שקיים ערך בשם הזה.
+   */
+  evidence?: string;
 }
 
 const WIKI_API = 'https://he.wikipedia.org/w/api.php';
@@ -75,33 +81,61 @@ export async function verifyOnWikipedia(term: string, signal?: AbortSignal): Pro
     const pageRes = await wikiFetch(
       wikiUrl({
         action: 'query',
-        prop: 'extracts|pageimages|info',
+        prop: 'extracts|pageimages|info|categories|pageprops',
         titles: hit.title,
         exintro: '1',
         explaintext: '1',
         exsentences: '2',
         piprop: 'thumbnail',
         pithumbsize: '400',
+        cllimit: '20',
         inprop: 'url'
       }),
       signal
     );
     if (!pageRes) return { found: true, title: hit.title };
     const pageData = (await pageRes.json()) as {
-      query?: { pages?: Record<string, { title: string; extract?: string; fullurl?: string; thumbnail?: { source: string } }> };
+      query?: {
+        pages?: Record<
+          string,
+          {
+            title: string;
+            extract?: string;
+            fullurl?: string;
+            thumbnail?: { source: string };
+            categories?: { title: string }[];
+            pageprops?: { 'wikibase-shortdesc'?: string };
+          }
+        >;
+      };
     };
     const page = Object.values(pageData.query?.pages ?? {})[0];
+    const { qualifier } = splitWikiTitle(page?.title ?? hit.title);
     return {
       found: true,
       title: page?.title ?? hit.title,
       description: page?.extract,
       source: page?.fullurl ?? `https://he.wikipedia.org/wiki/${encodeURIComponent(hit.title)}`,
       imageUrl: page?.thumbnail?.source,
-      imageAttribution: page?.thumbnail ? 'התמונה מוויקיפדיה/ויקישיתוף — ראו רישיון בעמוד הערך' : undefined
+      imageAttribution: page?.thumbnail ? 'התמונה מוויקיפדיה/ויקישיתוף — ראו רישיון בעמוד הערך' : undefined,
+      evidence: [
+        qualifier,
+        page?.pageprops?.['wikibase-shortdesc'],
+        page?.extract,
+        ...(page?.categories ?? []).map((c) => c.title.replace(/^קטגוריה:/, ''))
+      ]
+        .filter(Boolean)
+        .join(' | ')
     };
   } catch {
     return { found: false }; // Offline או שגיאת רשת — לא מאשרים ולא פוסלים
   }
+}
+
+/** "כפיר (בעל חיים)" -> { base: "כפיר", qualifier: "בעל חיים" } */
+function splitWikiTitle(title: string): { base: string; qualifier?: string } {
+  const m = /^(.*?)\s*\(([^)]*)\)\s*$/.exec(title.trim());
+  return m ? { base: m[1].trim(), qualifier: m[2].trim() } : { base: title.trim() };
 }
 
 function titleMatches(title: string, term: string): boolean {
@@ -126,12 +160,17 @@ export function isOnline(): boolean {
  *
  * מחפשים גם לפי המילה לבדה וגם עם רמז הקטגוריה, כדי שערך שגוי
  * ("כרוב" היצור המיתולוגי) לא יסתיר את הערך הנכון ("כרוב" הירק).
+ *
+ * מחזירה `null` כשהרשת נכשלה — להבדיל ממערך ריק, שמשמעותו "חיפשנו
+ * ובאמת אין". ההבחנה הזו קריטית: בלעדיה כישלון רשת חולף נזכר
+ * כ"אין תמונה" למשך חודש, וילד שחזר לשחק כשהרשת תקינה כבר לא רואה
+ * תמונות בכלל.
  */
 export async function fetchImageCandidates(
   term: string,
   categoryHint?: string,
   signal?: AbortSignal
-): Promise<ImageCandidateWithSource[]> {
+): Promise<ImageCandidateWithSource[] | null> {
   try {
     const queries = categoryHint ? [term, `${term} ${categoryHint}`] : [term];
 
@@ -144,13 +183,16 @@ export async function fetchImageCandidates(
           wikiUrl({ action: 'query', list: 'search', srsearch: q, srlimit: '4', srprop: '' }),
           signal
         );
-        if (!res) return [];
+        if (!res) return null;
         const data = (await res.json()) as { query?: { search?: { title: string }[] } };
         return (data.query?.search ?? []).map((hit) => hit.title);
       })
     );
 
-    const titles = new Set(searches.flat());
+    // אף שאילתה לא חזרה — זו תקלת רשת, לא היעדר תוצאות
+    if (searches.every((r) => r === null)) return null;
+
+    const titles = new Set(searches.flatMap((r) => r ?? []));
     if (titles.size === 0) return [];
 
     const res = await wikiFetch(
@@ -168,7 +210,7 @@ export async function fetchImageCandidates(
       }),
       signal
     );
-    if (!res) return [];
+    if (!res) return null;
     const data = (await res.json()) as {
       query?: {
         pages?: Record<
@@ -194,6 +236,6 @@ export async function fetchImageCandidates(
       pageUrl: page.fullurl
     }));
   } catch {
-    return []; // Offline או שגיאת רשת — פשוט אין תמונה
+    return null; // Offline או שגיאת רשת — לא "אין תמונה", אלא "לא ידוע"
   }
 }
