@@ -1,10 +1,13 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../store/appStore';
 import { greeting, randomJoke } from '../lib/persona';
 import { tipOfTheDay } from '../data/tips';
 import { todayKey } from '../lib/daily';
 import WalletChip from '../components/WalletChip';
+import InstallPrompt from '../components/InstallPrompt';
 import { authAvailable, useAuth } from '../store/authStore';
+import { db } from '../db/db';
+import { computeStreak, streakLabel, type StreakInfo } from '../lib/streak';
 
 export default function Home() {
   const { activeProfile, navigate } = useApp();
@@ -12,6 +15,26 @@ export default function Home() {
   // עוד מסך — מנהל שנכנס פשוט לא מצא אותו. עכשיו הוא כרטיס משלו.
   const isAdmin = useAuth((s) => s.account?.role === 'admin');
   const joke = useMemo(() => (activeProfile ? randomJoke(activeProfile.age) : ''), [activeProfile]);
+
+  // רצף ימי המשחק של השחקן הנוכחי, מחושב מהמשחקים ששמורים במכשיר
+  const [streak, setStreak] = useState<StreakInfo | null>(null);
+  const profileId = activeProfile?.id;
+  useEffect(() => {
+    if (!profileId) return;
+    let live = true;
+    void db.matches
+      .toArray()
+      .then((rows) =>
+        rows.filter((m) => m.playerIds.includes(profileId)).map((m) => m.playedAt)
+      )
+      .then((dates) => {
+        if (live) setStreak(computeStreak(dates));
+      })
+      .catch(() => undefined); // אחסון חסום — פשוט בלי רצף, המשחק ממשיך
+    return () => {
+      live = false;
+    };
+  }, [profileId]);
 
   if (!activeProfile) {
     navigate('profiles');
@@ -48,6 +71,22 @@ export default function Home() {
           החלפת שחקן
         </button>
       </div>
+
+      <InstallPrompt />
+
+      {streak && streak.current > 0 && (
+        <div className={`card streak-chip${streak.atRisk ? ' at-risk' : ''}`} style={{ margin: '14px 0 0' }}>
+          <span style={{ fontSize: '1.5rem' }} aria-hidden>
+            🔥
+          </span>{' '}
+          <strong>{streakLabel(streak)}</strong>
+          {streak.longest > streak.current && (
+            <span className="dim" style={{ display: 'block', fontSize: '0.84rem', marginTop: 2 }}>
+              השיא שלכם: {streak.longest} ימים
+            </span>
+          )}
+        </div>
+      )}
 
       {isAdmin && (
         <button

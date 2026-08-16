@@ -1,8 +1,9 @@
 import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { celebrate } from '../lib/persona';
 import { sfx } from '../lib/sound';
+import { buildShareText, shareText, type ShareOutcome } from '../lib/share';
 
 export default function MatchResults() {
   const { navigate, refreshActive } = useApp();
@@ -18,6 +19,33 @@ export default function MatchResults() {
     if (isRecord) sfx.fanfare();
     else sfx.win();
   }, [isRecord]);
+
+  const [shareState, setShareState] = useState<ShareOutcome | null>(null);
+
+  /**
+   * השיתוף נבנה מקומית ונמסר למערכת ההפעלה. שום דבר לא עובר דרכנו,
+   * ושום דבר לא נשלח בלי הלחיצה הזו.
+   */
+  const share = async () => {
+    // התשובות השמורות הן של הסיבוב האחרון בלבד, ולכן הנוסח בשיתוף
+    // הוא "מילה מקורית במיוחד" ולא "המילה הכי מקורית במשחק"
+    const best = game.players
+      .flatMap((p) => p.submitted)
+      .filter((a) => a.validation.status === 'valid')
+      .sort((a, b) => b.originality - a.originality)[0];
+
+    const outcome = await shareText(
+      buildShareText({
+        scores: sorted.map((p) => ({ name: p.profile.name, score: p.totalScore })),
+        letters: game.usedLetters,
+        rounds: game.settings.rounds,
+        coop: game.coop,
+        bestWord: best ? { text: best.rawText, originality: best.originality } : undefined
+      })
+    );
+    setShareState(outcome);
+    if (outcome === 'shared' || outcome === 'copied') sfx.success();
+  };
 
   const finish = async (to: 'home' | 'mode-select') => {
     await refreshActive();
@@ -71,8 +99,19 @@ export default function MatchResults() {
         <button className="btn-primary" onClick={() => void finish('mode-select')}>
           עוד משחק! 🔁
         </button>
+        <button onClick={() => void share()}>שיתוף התוצאה 📤</button>
         <button onClick={() => void finish('home')}>למסך הבית</button>
       </div>
+
+      {shareState && shareState !== 'cancelled' && (
+        <p className={shareState === 'failed' ? 'bad' : 'dim'} role="status" style={{ marginTop: 10 }}>
+          {shareState === 'copied'
+            ? '✅ התוצאה הועתקה — אפשר להדביק בכל מקום'
+            : shareState === 'shared'
+              ? '✅ שותף!'
+              : 'לא הצלחנו לשתף מהמכשיר הזה'}
+        </p>
+      )}
     </div>
   );
 }

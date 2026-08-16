@@ -3,11 +3,16 @@ import ReactDOM from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import { installAudioUnlock } from './lib/sound';
+import { watchInstallPrompt } from './lib/installPrompt';
 import './styles/global.css';
 
 // אודיו באייפון: ה-AudioContext חייב להיווצר בתוך מחווה של המשתמש.
 // המאזין הגלובלי דואג לזה כבר בנגיעה הראשונה במסך.
 installAudioUnlock();
+
+// חייב לרוץ כאן ולא בתוך רכיב: אירוע ההתקנה נורה עם טעינת הדף,
+// הרבה לפני שמסך הבית — שבו ההצעה מוצגת — בכלל קיים.
+watchInstallPrompt();
 
 // עדכון גרסה: מציג הודעה ידידותית כשקיימת גרסה חדשה
 const updateSW = registerSW({

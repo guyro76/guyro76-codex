@@ -3,6 +3,14 @@ import type { Session } from '@supabase/supabase-js';
 import { authConfigured, availableProviders, redirectTo, supabase } from '../lib/supabase';
 import { TIERS, effectiveTier, tierAfterExpiry, type Role, type Tier, type TierSpec } from '../lib/tiers';
 
+/** מה שקוד הזמנה מבטיח, עוד לפני שנרשמים */
+export interface InvitePreview {
+  ok: boolean;
+  message: string;
+  tier?: Tier;
+  days?: number;
+}
+
 export interface Account {
   id: string;
   email: string | null;
@@ -26,7 +34,9 @@ interface AuthState {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<boolean>;
-  signUpWithEmail: (email: string, password: string, name: string) => Promise<boolean>;
+  signUpWithEmail: (email: string, password: string, name: string, inviteCode?: string) => Promise<boolean>;
+  /** בדיקת קוד הזמנה לפני שיש חשבון — למסך הכניסה */
+  previewInvite: (code: string) => Promise<InvitePreview>;
   signOut: () => Promise<void>;
   refreshAccount: () => Promise<void>;
   redeemCode: (code: string) => Promise<{ ok: boolean; message: string }>;
@@ -135,7 +145,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     return true;
   },
 
-  signUpWithEmail: async (email, password, name) => {
+  signUpWithEmail: async (email, password, name, inviteCode) => {
     const client = supabase();
     if (!client) return false;
     set({ busy: true, error: null });
@@ -148,9 +158,24 @@ export const useAuth = create<AuthState>((set, get) => ({
       set({ error: humanError(error.message), busy: false });
       return false;
     }
+    // קוד שנבדק במסך הכניסה ממומש עכשיו, כשכבר יש חשבון לשייך אליו.
+    // כישלון כאן לא מפיל את ההרשמה: עדיף חשבון בלי שדרוג מאשר ילד
+    // שנתקע במסך הכניסה. הקוד נשאר תקף וניתן לממש אותו מהחשבון.
+    if (inviteCode?.trim()) await get().redeemCode(inviteCode.trim());
     await get().refreshAccount();
     set({ busy: false });
     return true;
+  },
+
+  previewInvite: async (code) => {
+    const client = supabase();
+    if (!client) return { ok: false, message: 'אין חיבור לשרת' };
+    const trimmed = code.trim();
+    if (!trimmed) return { ok: false, message: 'צריך להקליד קוד' };
+    const { data, error } = await client.rpc('preview_invitation', { invite_code: trimmed });
+    if (error) return { ok: false, message: humanError(error.message) };
+    const row = (Array.isArray(data) ? data[0] : data) as InvitePreview | undefined;
+    return row ?? { ok: false, message: 'לא התקבלה תשובה מהשרת' };
   },
 
   signOut: async () => {

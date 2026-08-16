@@ -843,3 +843,44 @@ body::after {
 
 /* התוכן חייב לשבת מעל שכבות הזכוכית */
 .card > * { position: relative; z-index: 1; }
+
+/* ===== קוד הזמנה במסך הכניסה ===== */
+/* מפריד "או" — קו דק משני צדי המילה, בלי להוסיף אלמנט מיותר ל-DOM */
+.invite-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin: 2px 0;
+}
+.invite-divider::before,
+.invite-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-glass);
+}
+
+/* הקוד שאושר, מוצג שוב בטופס ההרשמה כדי שהילד יראה שהוא לא אבד */
+.invite-chip {
+  border-color: rgba(255, 209, 102, 0.55) !important;
+  font-size: 0.9rem;
+}
+
+/* רצף ימי משחק. כתום כשהוא חי, זהוב-מהבהב כשעוד לא שיחקו היום —
+   תזכורת עדינה, בלי שום ניסוח של עונש או אזהרה. */
+.streak-chip { border-color: rgba(255, 138, 92, 0.5) !important; }
+.streak-chip.at-risk {
+  border-color: rgba(255, 209, 102, 0.6) !important;
+  animation: streakPulse 2.4s ease-in-out infinite;
+}
+@keyframes streakPulse {
+  50% { box-shadow: var(--shadow), 0 0 18px -4px rgba(255, 209, 102, 0.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .streak-chip.at-risk { animation: none; }
+}
+
+/* הצעת ההתקנה — נוכחת אך לא צעקנית, ונעלמת לתמיד בלחיצה אחת */
+.install-card { border-color: rgba(51, 214, 195, 0.45) !important; }
