@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(__dirname, '..');
 const vercel = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8')) as {
   headers: { source: string; headers: { key: string; value: string }[] }[];
+  git?: { deploymentEnabled?: Record<string, boolean> };
 };
 const netlify = readFileSync(resolve(root, 'netlify.toml'), 'utf8');
 const policy = readFileSync(resolve(root, 'public/privacy.html'), 'utf8');
@@ -110,5 +111,15 @@ describe('מדיניות הפרטיות הציבורית', () => {
   it('דורשת הורה ליצירת חשבון לילד מתחת ל-13', () => {
     expect(policy).toMatch(/מתחת לגיל 13/);
     expect(policy).toMatch(/הורה או אפוטרופוס/);
+  });
+
+  /**
+   * הענף gh-pages מכיל תוצרי בנייה בלבד — אין בו package.json ואין מה
+   * לבנות. Vercel ניסה לפרוס אותו בכל דחיפה ונכשל, כך שלצד כל פריסה
+   * מוצלחת הצטברה פריסה אדומה. זה לא שבר את האתר, אבל הפך את רשימת
+   * הפריסות לבלתי קריאה: אי אפשר לדעת אם כשל אמיתי מסתתר שם.
+   */
+  it('Vercel לא מנסה לפרוס את ענף התוצרים gh-pages', () => {
+    expect(vercel.git?.deploymentEnabled?.['gh-pages']).toBe(false);
   });
 });
