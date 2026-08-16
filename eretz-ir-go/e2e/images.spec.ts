@@ -74,9 +74,9 @@ test('🖼️ תשובה שאושרה מציגה תמונה אמיתית עם ק
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
-  await page.getByRole('button', { name: /משחק יחיד/ }).click();
+  // ההגדרות נמצאות מעל רשימת המצבים, כי לחיצה על מצב מתקדמת מיד
   await page.locator('select').first().selectOption('1');
-  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
   await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
   await page.getByRole('button', { name: /להגרלת האות/ }).click();
   await page.locator('.letter-wheel').click();

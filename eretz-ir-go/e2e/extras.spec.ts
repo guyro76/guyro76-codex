@@ -17,12 +17,13 @@ async function startGame(page: Page, rounds: string) {
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
-  await page.getByRole('button', { name: /משחק יחיד/ }).click();
+  // ההגדרות נמצאות מעל רשימת המצבים, כי לחיצה על מצב מתקדמת מיד
   await page.locator('select').first().selectOption(rounds);
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
 }
 
 async function intoRound(page: Page) {
-  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
+  // startGame כבר לחץ על המצב, ולחיצה על מצב מתקדמת ישירות לקטגוריות
   await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
   await page.getByRole('button', { name: /להגרלת האות/ }).click();
   await page.locator('.letter-wheel').click();
@@ -53,10 +54,14 @@ test('⏱️ אפשר לשחק על זמן וגם בלי ספירת זמן, ול
   page.on('console', (msg) => msg.type() === 'error' && errors.push(msg.text()));
   page.on('pageerror', (err) => errors.push(String(err)));
 
-  await startGame(page, '1');
-
-  // בוחרים "בלי ספירת זמן" עוד לפני שהמשחק התחיל
+  // ההגדרות נמצאות מעל רשימת המצבים; בוחרים אותן לפני שלוחצים על מצב
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await page.getByRole('heading', { name: 'אורי' }).click();
+  await page.getByRole('button', { name: /משחק חדש/ }).click();
+  await page.locator('select').first().selectOption('1');
   await page.getByRole('button', { name: /בלי ספירת זמן/ }).click();
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
   await intoRound(page);
   const toggle = page.getByRole('button', { name: 'החלפת מצב זמן' });
   await expect(page.getByText('♾️ בלי לחץ')).toBeVisible();
@@ -159,8 +164,8 @@ test('🎲 אפשר לכבות את משימות הביניים בהגדרות',
   await page.getByRole('button', { name: /חזרה|←/ }).first().click();
 
   await page.getByRole('button', { name: /משחק חדש/ }).click();
-  await page.getByRole('button', { name: /משחק יחיד/ }).click();
   await page.locator('select').first().selectOption('2');
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
   await intoRound(page);
   await page.getByRole('button', { name: /סיימתי/ }).click();
   await expect(page.getByRole('heading', { name: /תוצאות הסיבוב/ })).toBeVisible({ timeout: 20_000 });
@@ -185,7 +190,6 @@ test('🔄 החלפת אות: הראשונה חינם, השנייה דורשת �
   page.on('pageerror', (err) => errors.push(String(err)));
 
   await startGame(page, '2');
-  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
   await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
   await page.getByRole('button', { name: /להגרלת האות/ }).click();
   await page.locator('.letter-wheel').click();

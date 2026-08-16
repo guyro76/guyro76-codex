@@ -29,8 +29,8 @@ test.beforeEach(async ({ page }) => {
 test('⚡ ראש בראש: תשובה נכונה מוסיפה ניקוד, שגויה לא', async ({ page }) => {
   const errors = trackConsoleErrors(page);
   await gotoModeSelect(page);
+  // לחיצה על מצב מתקדמת ישירות למסך שלו
   await page.getByRole('button', { name: /ראש בראש/ }).click();
-  await page.getByRole('button', { name: /לבליץ/ }).click();
 
   // מסך הפתיחה של הבליץ מציג קטגוריה ואות
   await expect(page.getByText(/שניות\./)).toBeVisible();
@@ -53,8 +53,8 @@ test('⚡ ראש בראש: תשובה נכונה מוסיפה ניקוד, שגו
 test('🔗 שרשרת: החוליה הראשונה נדרשת באות שהוגרלה', async ({ page }) => {
   const errors = trackConsoleErrors(page);
   await gotoModeSelect(page);
+  // לחיצה על מצב מתקדמת ישירות למסך שלו
   await page.getByRole('button', { name: /שרשרת/ }).click();
-  await page.getByRole('button', { name: /מתחילים שרשרת/ }).click();
 
   await expect(page.getByText(/כל תשובה מתחילה באות האחרונה/)).toBeVisible();
   await page.getByRole('button', { name: /מוכנה|מוכן|מתחילים/ }).click();
@@ -76,8 +76,8 @@ test('🔗 שרשרת: החוליה הראשונה נדרשת באות שהוג�
 test('🎴 קלף מסתורי: הקטגוריות נחשפות רק אחרי הגרלת האות', async ({ page }) => {
   const errors = trackConsoleErrors(page);
   await gotoModeSelect(page);
+  // לחיצה על מצב מתקדמת ישירות למסך שלו
   await page.getByRole('button', { name: /קלף מסתורי/ }).click();
-  await page.getByRole('button', { name: /לגלות את הקלף המסתורי/ }).click();
 
   // לפני ההגרלה — אין חשיפה
   await expect(page.locator('.letter-wheel')).toBeVisible();

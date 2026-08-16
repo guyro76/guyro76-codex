@@ -78,9 +78,9 @@ for (const size of SIZES) {
 
     // מסך המשחק עצמו — הצפוף ביותר, ולכן הכי חשוף לחיתוך
     await page.getByRole('button', { name: /משחק חדש/ }).click();
-    await page.getByRole('button', { name: /משחק יחיד/ }).click();
     await check('בחירת מצב');
-    await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
+    // לחיצה על מצב מתקדמת ישירות לקטגוריות
+    await page.getByRole('button', { name: /משחק יחיד/ }).click();
     await check('קטגוריות');
     await page.getByRole('button', { name: /להגרלת האות/ }).click();
     await page.locator('.letter-wheel').click();

@@ -55,8 +55,6 @@ export default function ModeSelect() {
   const [powerCards, setPowerCards] = useState(false);
 
   const needsSecond = mode === 'duel' || mode === 'coop' || mode === 'tournament';
-  /** האם המשתמש בחר מצב בעצמו, להבדיל מברירת המחדל שכבר מסומנת */
-  const [touched, setTouched] = useState(false);
   const others = profiles.filter((p) => p.id !== activeProfile?.id);
 
   const modes: { id: GameMode; icon: string; name: string; desc: string }[] = [
@@ -73,17 +71,19 @@ export default function ModeSelect() {
   /** מצבי המשחק המהירים מנוהלים במסך משלהם ולא עוברים בבחירת קטגוריות */
   const quickModes: Partial<Record<GameMode, 'blitz' | 'chain'>> = { blitz: 'blitz', chain: 'chain' };
 
-  const start = () => {
+  const start = () => startWith(mode);
+
+  const startWith = (chosen: GameMode) => {
     // שומרים בזיכרון ומנווטים מיד; הכתיבה לדיסק רצה ברקע
-    saveModeDraft({ mode, rounds, seconds, powerCards });
+    saveModeDraft({ mode: chosen, rounds, seconds, powerCards });
 
     // קלף מסתורי: המשחק בוחר את הקטגוריות בעצמו ומדלג על מסך הבחירה
-    if (mode === 'mystery' && activeProfile) {
+    if (chosen === 'mystery' && activeProfile) {
       const pool = [...CLASSIC_CATEGORY_IDS, ...CATEGORIES.filter((c) => !c.classic).map((c) => c.id)];
       const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, 5);
       startMatch(
         {
-          mode,
+          mode: chosen,
           categoryIds: picked,
           roundSeconds: seconds,
           rounds,
@@ -98,7 +98,7 @@ export default function ModeSelect() {
       return;
     }
 
-    navigate(quickModes[mode] ?? 'categories');
+    navigate(quickModes[chosen] ?? 'categories');
   };
 
   /**
@@ -112,17 +112,26 @@ export default function ModeSelect() {
    * גוללת את כפתור ההמשך אל מול העיניים. מצב שדורש בחירת יריב לא
    * מדלג — שם באמת חסר מידע, ודילוג היה מוביל למסך חסר.
    */
+  /**
+   * לחיצה על מצב משחק מתקדמת מיד למסך הבא.
+   *
+   * זו הייתה בקשה חוזרת, ובצדק: קלף שנראה כמו כפתור ולא מוביל לשום
+   * מקום נקרא כשבור. ההגדרות (מספר סיבובים, קלפי כוח) נשארות במסך
+   * למי שגולל אליהן לפני הבחירה, ומי שלא נוגע בהן מקבל ברירות מחדל
+   * סבירות — וזה הרוב המוחלט.
+   *
+   * היוצא מן הכלל הוא מצב שדורש בחירת יריב. שם באמת חסר מידע,
+   * ודילוג קדימה היה מוביל למסך חסר, ולכן הוא רק נבחר וגולל אל
+   * בחירת השחקן השני.
+   */
   const pickMode = (next: GameMode) => {
     const second = next === 'duel' || next === 'coop' || next === 'tournament';
-    // רק לחיצה *אחרי* בחירה מפורשת מתקדמת. מצב ברירת המחדל כבר מסומן
-    // כשנכנסים למסך, ובלי התנאי הזה הלחיצה הראשונה הייתה מדלגת על
-    // בחירת מספר הסיבובים בלי שהמשתמש ביקש.
-    if (touched && mode === next && !second) {
-      start();
+    setMode(next);
+    if (!second) {
+      // ההתחלה נדחית לפריים הבא כדי ש-setMode יספיק להיקלט
+      requestAnimationFrame(() => startWith(next));
       return;
     }
-    setTouched(true);
-    setMode(next);
     requestAnimationFrame(() => {
       document.querySelector('.action-bar')?.scrollIntoView({ block: 'end', behavior: 'smooth' });
     });
@@ -131,38 +140,6 @@ export default function ModeSelect() {
   return (
     <div className="screen">
       <TopBar title="איך משחקים היום?" />
-
-      <div className="grid">
-        {modes.map((m) => (
-          <div
-            key={m.id}
-            className="card clickable"
-            role="button"
-            tabIndex={0}
-            aria-pressed={mode === m.id}
-            style={mode === m.id ? { borderColor: 'var(--turquoise)', background: 'rgba(51,214,195,0.12)' } : undefined}
-            onClick={() => pickMode(m.id)}
-            onKeyDown={(ev) => {
-              if (ev.key === 'Enter' || ev.key === ' ') {
-                ev.preventDefault();
-                pickMode(m.id);
-              }
-            }}
-          >
-            <div className="row">
-              <span style={{ fontSize: '1.8rem' }} aria-hidden>
-                {m.icon}
-              </span>
-              <div>
-                <strong>{m.name}</strong>
-                <p className="dim" style={{ margin: 0, fontSize: '0.9rem' }}>
-                  {m.desc}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
 
       <div className="card" style={{ marginTop: 14 }}>
         <button className="btn-ghost" style={{ width: '100%' }} onClick={() => navigate('multiplayer-info')}>
@@ -250,6 +227,45 @@ export default function ModeSelect() {
             ♾️ בלי ספירת זמן
           </button>
         </div>
+      </div>
+
+
+      {/*
+        ההגדרות מופיעות **לפני** רשימת המצבים, ולא אחריה.
+        הסיבה: לחיצה על מצב מתקדמת מיד למסך הבא, ולכן כל מה שנמצא
+        מתחת לרשימה כבר לא ניתן להגעה. מי שרוצה לשנות מספר סיבובים
+        או זמן עושה זאת כאן, ומי שלא — פשוט בוחר מצב וממשיך.
+      */}
+      <div className="grid">
+        {modes.map((m) => (
+          <div
+            key={m.id}
+            className="card clickable"
+            role="button"
+            tabIndex={0}
+            aria-pressed={mode === m.id}
+            style={mode === m.id ? { borderColor: 'var(--turquoise)', background: 'rgba(51,214,195,0.12)' } : undefined}
+            onClick={() => pickMode(m.id)}
+            onKeyDown={(ev) => {
+              if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault();
+                pickMode(m.id);
+              }
+            }}
+          >
+            <div className="row">
+              <span style={{ fontSize: '1.8rem' }} aria-hidden>
+                {m.icon}
+              </span>
+              <div>
+                <strong>{m.name}</strong>
+                <p className="dim" style={{ margin: 0, fontSize: '0.9rem' }}>
+                  {m.desc}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* פס פעולה נעוץ בתחתית: ברשימת מצבים ארוכה בטלפון הכפתור נפל

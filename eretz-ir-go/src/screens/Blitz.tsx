@@ -3,12 +3,14 @@ import { useApp } from '../store/appStore';
 import TopBar from '../components/TopBar';
 import { CATEGORIES, CLASSIC_CATEGORY_IDS } from '../data/categories';
 import { getKnowledgeBase } from '../lib/knowledge';
-import { buildLetterIndex, drawLetter } from '../lib/letters';
+import { buildLetterIndex, drawLetter, lettersForDifficulty } from '../lib/letters';
+import { blockList, loadRecent, pushRecent } from '../lib/recentLetters';
 import { validateAnswer } from '../lib/validation';
 import { blitzPoints } from '../lib/scoring';
 import { normalizeHebrew } from '../lib/hebrew';
 import { sfx } from '../lib/sound';
-import { celebrate, say } from '../lib/persona';
+import { say } from '../lib/persona';
+import { outcomeFor, outcomeHint } from '../lib/outcome';
 import { db } from '../db/db';
 
 const BLITZ_SECONDS = 45;
@@ -36,13 +38,26 @@ export default function Blitz() {
   const inputRef = useRef<HTMLInputElement>(null);
   const savedRef = useRef(false);
 
+  /**
+   * הגרלה שמדלגת על האותיות האחרונות שכבר שיחקו בהן. בלי זה כל
+   * הגרלה מתחילה מאפס ואותה אות חוזרת שוב ושוב — בדיוק מה שדווח.
+   */
   const roll = () => {
     const kb = getKnowledgeBase();
     const index = buildLetterIndex(kb.items);
     const catId = CLASSIC_CATEGORY_IDS[Math.floor(Math.random() * CLASSIC_CATEGORY_IDS.length)];
     const cat = CATEGORIES.find((c) => c.id === catId) ?? CATEGORIES[0];
+    const difficulty = activeProfile?.difficulty ?? 'medium';
     setCategory(cat);
-    setLetter(drawLetter([cat.id], activeProfile?.difficulty ?? 'medium', index));
+
+    void loadRecent().then((recent) => {
+      const pool = lettersForDifficulty(difficulty);
+      // האות הנוכחית נחסמת תמיד, כדי ש"הגרלה אחרת" באמת תחליף אותה
+      const exclude = [...new Set([...blockList(recent, pool.length), letter])];
+      const next = drawLetter([cat.id], difficulty, index, exclude);
+      setLetter(next);
+      void pushRecent(next);
+    });
   };
 
   useEffect(roll, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -185,14 +200,25 @@ export default function Blitz() {
             </div>
           )}
 
-          {phase === 'done' && (
-            <div className="card center" style={{ margin: '12px 0', borderColor: 'var(--gold)' }}>
-              <div className="confetti" aria-hidden>
-                ⚡🏆⚡
-              </div>
-              <h2>{celebrate(activeProfile)}</h2>
+          {phase === 'done' && (() => {
+            // אותה בעיה בדיוק כמו בשרשרת: אפס תשובות נכונות הציגו
+            // "ניצחת! אלוף!". יעד סביר לבליץ הוא חמש תשובות.
+            const correct = entries.filter((e) => e.ok).length;
+            const result = outcomeFor(activeProfile, correct, 5);
+            return (
+            <div
+              className="card center"
+              style={{ margin: '12px 0', borderColor: result.celebrate ? 'var(--gold)' : undefined }}
+            >
+              {result.celebrate && (
+                <div className="confetti" aria-hidden>
+                  ⚡🏆⚡
+                </div>
+              )}
+              <h2>{result.title}</h2>
+              <p className="dim" style={{ marginTop: 0 }}>{outcomeHint(result.tone)}</p>
               <p>
-                {entries.filter((e) => e.ok).length} תשובות נכונות · <strong className="gold">{score} נקודות</strong>
+                {correct} תשובות נכונות · <strong className="gold">{score} נקודות</strong>
               </p>
               <div className="row" style={{ justifyContent: 'center' }}>
                 <button
@@ -213,7 +239,8 @@ export default function Blitz() {
                 <button onClick={() => navigate('home')}>למסך הבית</button>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           <div>
             {entries.map((e, i) => (

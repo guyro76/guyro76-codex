@@ -8,7 +8,8 @@ import { validateAnswer } from '../lib/validation';
 import { blitzPoints } from '../lib/scoring';
 import { lastLetterOf, normalizeHebrew } from '../lib/hebrew';
 import { sfx } from '../lib/sound';
-import { celebrate, gentleFail, say } from '../lib/persona';
+import { gentleFail, say } from '../lib/persona';
+import { outcomeFor, outcomeHint } from '../lib/outcome';
 import { db } from '../db/db';
 
 const CHAIN_SECONDS = 90;
@@ -225,12 +226,22 @@ export default function Chain() {
             </div>
           )}
 
-          {phase === 'done' && (
-            <div className="card center" style={{ margin: '12px 0', borderColor: 'var(--gold)' }}>
-              <div className="confetti" aria-hidden>
-                🔗🏆🔗
-              </div>
-              <h2>{celebrate(activeProfile)}</h2>
+          {phase === 'done' && (() => {
+            // יעד סביר לשרשרת: חמש חוליות. פחות מזה עדיין שווה עידוד,
+            // אבל לא גביע — שבח שמגיע בלי קשר לתוצאה מאבד את ערכו.
+            const result = outcomeFor(activeProfile, chain.length, 5);
+            return (
+            <div
+              className="card center"
+              style={{ margin: '12px 0', borderColor: result.celebrate ? 'var(--gold)' : undefined }}
+            >
+              {result.celebrate && (
+                <div className="confetti" aria-hidden>
+                  🔗🏆🔗
+                </div>
+              )}
+              <h2>{result.title}</h2>
+              <p className="dim" style={{ marginTop: 0 }}>{outcomeHint(result.tone)}</p>
               <p>
                 שרשרת של {chain.length} חוליות · <strong className="gold">{score} נקודות</strong>
               </p>
@@ -241,7 +252,8 @@ export default function Chain() {
                 <button onClick={() => navigate('home')}>למסך הבית</button>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           <div className="row" style={{ gap: 8 }}>
             {chain.map((link, i) => (

@@ -47,9 +47,9 @@ test('מסלול מלא: פרופיל, קטגוריות, אות, מילוי, נ�
 
   // --- בחירת מצב: משחק יחיד, סיבוב אחד ---
   await expect(page.getByRole('heading', { name: 'איך משחקים היום?' })).toBeVisible();
+  // ההגדרות נמצאות מעל רשימת המצבים, כי לחיצה על מצב מתקדמת מיד
+  await page.locator('select').first().selectOption('1');
   await page.getByRole('button', { name: /משחק יחיד/ }).click();
-  await page.locator('select').first().selectOption('1'); // סיבוב אחד
-  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
 
   // --- קטגוריות: ברירת המחדל היא 9 הקלאסיות; מצמצמים ל-5 למשחק מהיר ---
   await expect(page.getByRole('heading', { name: 'בחירת קטגוריות' })).toBeVisible();
@@ -128,9 +128,9 @@ test('תשובה שגויה נצבעת אדום ולא מקבלת ניקוד, נ
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
-  await page.getByRole('button', { name: /משחק יחיד/ }).click();
+  // ההגדרות נמצאות מעל רשימת המצבים, כי לחיצה על מצב מתקדמת מיד
   await page.locator('select').first().selectOption('1');
-  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
 
   await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
   await page.getByRole('button', { name: /להגרלת האות/ }).click();

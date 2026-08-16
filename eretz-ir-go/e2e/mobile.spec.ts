@@ -62,8 +62,8 @@ test('📱 מסלול מלא במגע: כל כפתור בדרך למשחק מג�
   await expect(page.getByRole('heading', { name: 'איך משחקים היום?' })).toBeVisible();
 
   // הכרטיס הזה הוא div עם role=button — בדיוק מה שדווח כלא מגיב
+  // לחיצה על מצב מתקדמת ישירות למסך הקטגוריות
   await page.getByRole('button', { name: /משחק יחיד/ }).tap();
-  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).tap();
   await expect(page.getByRole('heading', { name: 'בחירת קטגוריות' })).toBeVisible();
 
   await page.getByRole('button', { name: /מהיר \(5\)/ }).tap();
@@ -92,8 +92,8 @@ test('📱 גם כשכתיבת IndexedDB תקועה — המשחק מתחיל', 
   await expect(page.getByRole('heading', { name: 'איך משחקים היום?' })).toBeVisible();
 
   // זו הלחיצה שדווחה כתקועה. חייבת להתקדם מיד, בלי להמתין לדיסק.
+  // לחיצה על מצב מתקדמת ישירות למסך הקטגוריות
   await page.getByRole('button', { name: /משחק יחיד/ }).tap();
-  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).tap();
   await expect(page.getByRole('heading', { name: 'בחירת קטגוריות' })).toBeVisible({ timeout: 5_000 });
 
   await page.getByRole('button', { name: /מהיר \(5\)/ }).tap();
@@ -136,12 +136,12 @@ test('📱 כפתור ההמשך נשאר על המסך גם ברשימת מצב
   await page.getByRole('heading', { name: 'אורי' }).tap();
   await page.getByRole('button', { name: /משחק חדש/ }).tap();
 
-  // בלי לגלול בכלל — הכפתור הראשי חייב להיות גלוי בתוך חלון התצוגה.
-  // זו בדיוק התקלה שדווחה: הכפתור נפל מתחת לקצה המסך בטלפון.
-  const cta = page.getByRole('button', { name: /המשך לבחירת קטגוריות/ });
-  await expect(cta).toBeInViewport();
+  // בלי לגלול בכלל — קלף המצב הראשון חייב להיות גלוי בתוך חלון התצוגה,
+  // כי לחיצה עליו היא הפעולה שמתקדמת הלאה.
+  const firstMode = page.getByRole('button', { name: /משחק יחיד/ }).first();
+  await expect(firstMode).toBeInViewport();
 
-  await cta.tap();
+  await firstMode.tap();
   await expect(page.getByRole('heading', { name: 'בחירת קטגוריות' })).toBeVisible();
 
   // גם במסך הקטגוריות, שהוא ארוך אף יותר

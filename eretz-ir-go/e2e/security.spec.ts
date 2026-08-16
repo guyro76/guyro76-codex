@@ -73,8 +73,8 @@ test('🛡️ המשחק עובד תחת ה-CSP האמיתי — מסלול מל
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
+  // לחיצה על מצב מתקדמת ישירות למסך הקטגוריות
   await page.getByRole('button', { name: /משחק יחיד/ }).click();
-  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
   await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
   await page.getByRole('button', { name: /להגרלת האות/ }).click();
   await page.locator('.letter-wheel').click();
@@ -107,8 +107,8 @@ test('♿ הכרזות לקורא מסך: האות שהוגרלה מוקראת',
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
+  // לחיצה על מצב מתקדמת ישירות למסך הקטגוריות
   await page.getByRole('button', { name: /משחק יחיד/ }).click();
-  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
   await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
   await page.getByRole('button', { name: /להגרלת האות/ }).click();
 

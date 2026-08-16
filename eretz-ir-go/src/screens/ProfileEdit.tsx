@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DEFAULT_AGE, clampAge, sanitizeAgeInput } from '../lib/ageField';
 import { useApp } from '../store/appStore';
 import TopBar from '../components/TopBar';
 import { db, deleteProfileData, exportProfile } from '../db/db';
@@ -15,7 +16,9 @@ export default function ProfileEdit() {
   // אין ברירת מחדל למגדר: מי שלא בוחר היה מקבל פנייה בלשון נקבה
   // בלי ששאלו אותו. הבחירה נדרשת לפני שמירה.
   const [gender, setGender] = useState<Gender | null>(null);
-  const [age, setAge] = useState(11);
+  const [age, setAge] = useState(DEFAULT_AGE);
+  /** מה שמוקלד כרגע. נשמר כטקסט כדי שהשדה לא ייכתב מחדש באמצע ההקלדה */
+  const [ageText, setAgeText] = useState(String(DEFAULT_AGE));
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -28,6 +31,7 @@ export default function ProfileEdit() {
       setColor(p.color);
       setGender(p.gender);
       setAge(p.age);
+      setAgeText(String(p.age));
       setDifficulty(p.difficulty);
     });
   }, [editingProfileId]);
@@ -35,14 +39,21 @@ export default function ProfileEdit() {
   const save = async () => {
     if (!name.trim() || !gender) return;
     if (editingProfileId != null) {
-      await db.profiles.update(editingProfileId, { name: name.trim(), avatar, color, gender, age, difficulty });
+      await db.profiles.update(editingProfileId, {
+        name: name.trim(),
+        avatar,
+        color,
+        gender,
+        age: clampAge(ageText, age),
+        difficulty
+      });
     } else {
       const fresh: Profile = {
         name: name.trim(),
         avatar,
         color,
         gender,
-        age,
+        age: clampAge(ageText, age),
         difficulty,
         soundOn: true,
         reducedMotion: false,
@@ -136,11 +147,17 @@ export default function ProfileEdit() {
         <label>
           גיל (המשחק יתבדח בהתאם 😉)
           <input
-            type="number"
-            min={5}
-            max={99}
-            value={age}
-            onChange={(ev) => setAge(Math.max(5, Math.min(99, Number(ev.target.value) || 5)))}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={2}
+            value={ageText}
+            onChange={(ev) => setAgeText(sanitizeAgeInput(ev.target.value))}
+            onBlur={() => {
+              const n = clampAge(ageText, age);
+              setAge(n);
+              setAgeText(String(n));
+            }}
           />
         </label>
 

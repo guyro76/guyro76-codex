@@ -124,17 +124,17 @@ test('🧭 כל מצבי המשחק נבחרים ומגיעים למסך הקט�
     if (!(await button.isVisible().catch(() => false))) continue;
     await button.click();
 
-    // לכל מצב יש נוסח משלו לכפתור ההמשך — כולם חייבים להיות פעילים ובמסך
-    const cta = page
-      .getByRole('button', {
-        name: /המשך לבחירת קטגוריות|יאללה, לבליץ|מתחילים שרשרת|לגלות את הקלף המסתורי/
-      })
-      .first();
-    await expect(cta).toBeVisible({ timeout: 10_000 });
-    await expect(cta).toBeInViewport();
-    await expect(cta).toBeEnabled();
+    // לחיצה על מצב מתקדמת מיד. לכל מצב יש מסך יעד אחר, ולכן נבדק
+    // מה שנכון לכולם: שיצאנו ממסך בחירת המצב. זה בדיוק מה שנשבר
+    // כשהקלף רק סימן את עצמו ולא הוביל לשום מקום.
+    await expect(page.getByRole('heading', { name: 'איך משחקים היום?' })).toHaveCount(0, {
+      timeout: 10_000
+    });
 
-    await page.getByRole('button', { name: /חזרה|←/ }).first().click();
+    // חוזרים דרך כפתור הבית שבכותרת. מסכי הבליץ והשרשרת נכנסים ישר
+    // למשחק ואין בהם "חזרה" — וזו בדיוק הסיבה שהכפתור הזה קיים בכל
+    // מסך. הבדיקה כאן מאמתת גם אותו.
+    await page.getByRole('button', { name: 'לדף הבית' }).click();
     await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible({ timeout: 10_000 });
   }
 
@@ -154,8 +154,8 @@ test('🌐 גם כשוויקיפדיה לא עונה בכלל — הסיבוב �
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
+  // לחיצה על מצב מתקדמת ישירות למסך הקטגוריות
   await page.getByRole('button', { name: /משחק יחיד/ }).click();
-  await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
   await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
   await page.getByRole('button', { name: /להגרלת האות/ }).click();
   await page.locator('.letter-wheel').click();
