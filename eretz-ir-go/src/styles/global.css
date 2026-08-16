@@ -884,3 +884,78 @@ body::after {
 
 /* הצעת ההתקנה — נוכחת אך לא צעקנית, ונעלמת לתמיד בלחיצה אחת */
 .install-card { border-color: rgba(51, 214, 195, 0.45) !important; }
+
+/* ===== כותרת קבועה: זהות מימין, מוצאים משמאל ===== */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 8px 16px 0;
+}
+.app-header-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0; /* בלי זה שם ארוך דוחף את הכפתורים מהמסך */
+}
+.app-header-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 46vw;
+}
+.app-header-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.app-header-actions button { padding: 0 12px; font-size: 1.1rem; }
+
+/* תמונת פרופיל אמיתית — עגולה, עם טבעת דקה שמפרידה אותה מהרקע */
+.avatar-photo {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 2px 8px -3px rgba(6, 2, 24, 0.7);
+  flex-shrink: 0;
+}
+
+/* ברכת השלום למשתמש המחובר */
+.hello-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  text-align: start;
+  margin: 6px auto 0;
+  max-width: 420px;
+}
+.hello-greeting { font-size: 1.25rem; font-weight: 800; }
+
+/* ===== ארצי האינטראקטיבי ===== */
+.artzi-card {
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5;
+  min-height: 0;
+  transition: transform var(--dur-fast) var(--ease-spring), border-color var(--dur-base) ease;
+}
+.artzi-card:hover { transform: translateY(-2px); }
+.artzi-card:active { transform: scale(0.99); }
+.artzi-face { display: inline-block; font-size: 1.3rem; }
+/* קפיצה קצרה כשמעירים אותו — סימן שהוא "ער" ולא תמונה סטטית */
+.artzi-face.awake { animation: artziHop 0.6s var(--ease-spring); }
+@keyframes artziHop {
+  0% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-9px) rotate(-12deg); }
+  55% { transform: translateY(0) rotate(9deg); }
+  75% { transform: translateY(-3px) rotate(-4deg); }
+  100% { transform: translateY(0) rotate(0); }
+}
+.artzi-hint { font-size: 0.78rem; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+  .artzi-face.awake { animation: none; }
+}

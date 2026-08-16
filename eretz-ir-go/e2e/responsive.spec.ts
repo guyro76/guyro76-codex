@@ -1,0 +1,95 @@
+import { test, expect, type Page } from '@playwright/test';
+import { stubWikipedia } from './helpers';
+
+/**
+ * התאמה למכשיר. הבדיקה נולדה מדרישה מפורשת: "שתמיד יוצג תקין ולא חתוך".
+ *
+ * שני דברים נבדקים בכל גודל מסך:
+ * 1. **אין גלילה אופקית.** רוחב התוכן לא חורג מרוחב החלון — זה
+ *    הסימן היחיד האמין ל"משהו נחתך", והוא תופס גם אלמנטים שדוחפים
+ *    את הדף מהצד בלי שרואים אותם.
+ * 2. **שום אלמנט אינו חורג מעבר לקצה.** נבדק לכל אלמנט נראה, כדי
+ *    לתפוס כפתור או כרטיס שיצא מהמסך דווקא במכשיר צר.
+ */
+const SIZES = [
+  { name: 'טלפון קטן', width: 320, height: 568 },
+  { name: 'אייפון', width: 390, height: 844 },
+  { name: 'טאבלט', width: 768, height: 1024 },
+  { name: 'מחשב נייד', width: 1440, height: 900 }
+];
+
+async function overflow(page: Page): Promise<{ horizontal: boolean; offenders: string[] }> {
+  return page.evaluate(() => {
+    const doc = document.documentElement;
+    const w = doc.clientWidth;
+    const offenders: string[] = [];
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      // סטייה של פיקסל אחד מותרת — עיגול תת-פיקסלי אינו חיתוך
+      if (r.right > w + 1 || r.left < -1) {
+        offenders.push(`${el.tagName.toLowerCase()}.${el.className || '—'} [${Math.round(r.left)}..${Math.round(r.right)}] של ${w}`);
+      }
+    }
+    return { horizontal: doc.scrollWidth > w + 1, offenders: offenders.slice(0, 5) };
+  });
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
+  await stubWikipedia(page);
+});
+
+for (const size of SIZES) {
+  test(`📐 ${size.name} (${size.width}px) — שום מסך לא נחתך`, async ({ page }) => {
+    await page.setViewportSize({ width: size.width, height: size.height });
+    const problems: string[] = [];
+
+    const check = async (label: string) => {
+      const { horizontal, offenders } = await overflow(page);
+      if (horizontal) problems.push(`${label}: גלילה אופקית`);
+      if (offenders.length) problems.push(`${label}: חורג — ${offenders.join(' | ')}`);
+    };
+
+    await page.goto('./');
+    await check('פתיחה');
+
+    await page.getByRole('button', { name: /בואו נשחק/ }).click();
+    await check('פרופילים');
+
+    await page.getByRole('heading', { name: 'אורי' }).click();
+    await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
+    await check('בית');
+
+    for (const [btn, heading, label] of [
+      [/אוסף המילים שלי/, /אוסף המילים שלי/, 'אלבום'],
+      [/הישגים/, /ההישגים שלי/, 'הישגים'],
+      [/לוח השיאים/, /לוח השיאים המשפחתי/, 'שיאים'],
+      [/הגדרות/, /הגדרות/, 'הגדרות']
+    ] as [RegExp, RegExp, string][]) {
+      const trigger = page.getByRole('button', { name: btn }).first();
+      if (!(await trigger.isVisible().catch(() => false))) continue;
+      await trigger.click();
+      await expect(page.getByRole('heading', { name: heading }).first()).toBeVisible({ timeout: 10_000 });
+      await check(label);
+      await page.getByRole('button', { name: /חזרה|←/ }).first().click();
+      await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
+    }
+
+    // מסך המשחק עצמו — הצפוף ביותר, ולכן הכי חשוף לחיתוך
+    await page.getByRole('button', { name: /משחק חדש/ }).click();
+    await page.getByRole('button', { name: /משחק יחיד/ }).click();
+    await check('בחירת מצב');
+    await page.getByRole('button', { name: /המשך לבחירת קטגוריות/ }).click();
+    await check('קטגוריות');
+    await page.getByRole('button', { name: /להגרלת האות/ }).click();
+    await page.locator('.letter-wheel').click();
+    await expect(page.getByRole('button', { name: /מתחילים/ })).toBeVisible({ timeout: 15_000 });
+    await check('הגרלת אות');
+    await page.getByRole('button', { name: /מתחילים/ }).click();
+    await expect(page.locator('.cat-card').first()).toBeVisible();
+    await check('משחק');
+
+    expect(problems, `בעיות תצוגה ב-${size.name}:\n${problems.join('\n')}`).toEqual([]);
+  });
+}

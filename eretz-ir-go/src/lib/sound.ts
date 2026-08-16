@@ -21,13 +21,55 @@ let ctx: AudioContext | null = null;
 let enabled = true;
 let unlocked = false;
 
-void getSetting('sound').then((v) => {
-  enabled = v !== '0';
-});
+/**
+ * שלושה מצבי אודיו, ולא מתג אחד:
+ *  all  — מוזיקת רקע וגם צלילי מערכת
+ *  sfx  — בלי מוזיקה, אבל עם צלילי המשחק (הפופולרי ביותר בפועל:
+ *         מוזיקה מתישה בשימוש ארוך, אבל בלי צליל על תשובה נכונה
+ *         המשחק מרגיש מת)
+ *  none — שקט מוחלט
+ */
+export type AudioMode = 'all' | 'sfx' | 'none';
+
+let mode: AudioMode = 'all';
+const modeListeners = new Set<(m: AudioMode) => void>();
+
+/** טעינת ההעדפה השמורה, כולל תאימות למתג הבוליאני הישן */
+void (async () => {
+  const saved = await getSetting('audio-mode');
+  if (saved === 'all' || saved === 'sfx' || saved === 'none') {
+    mode = saved;
+  } else {
+    const legacy = await getSetting('sound');
+    mode = legacy === '0' ? 'none' : 'all';
+  }
+  enabled = mode !== 'none';
+  for (const fn of modeListeners) fn(mode);
+})();
+
+export function getAudioMode(): AudioMode {
+  return mode;
+}
+
+export function onAudioModeChange(fn: (m: AudioMode) => void): () => void {
+  modeListeners.add(fn);
+  return () => modeListeners.delete(fn);
+}
+
+export function setAudioMode(next: AudioMode): void {
+  mode = next;
+  enabled = next !== 'none';
+  if (enabled) primeAudio();
+  for (const fn of modeListeners) fn(next);
+}
+
+/** ה-AudioContext המשותף — מוזיקת הרקע מנגנת דרך אותו אחד */
+export function audioContext(): AudioContext | null {
+  return ctx;
+}
 
 export function setSoundEnabled(on: boolean): void {
-  enabled = on;
-  if (on) primeAudio();
+  setAudioMode(on ? 'all' : 'none');
 }
 
 function ctor(): Ctor | null {

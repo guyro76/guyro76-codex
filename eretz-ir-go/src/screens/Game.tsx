@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { startMusic, stopMusic } from '../lib/music';
 import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
 import CategoryCard from '../components/CategoryCard';
@@ -64,6 +65,17 @@ export default function Game() {
   }, [game.roundStartedAt]);
 
   // ניווט לפי שלב המשחק
+  /**
+   * מוזיקת הרקע מלווה את הסיבוב עצמו בלבד — מתחילה כשמתחילים לכתוב
+   * ונעצרת ברגע שהסיבוב נסגר, גם אם נסגר בגלל שהזמן אזל. מוזיקה
+   * שממשיכה מעל מסך התוצאות היא בדיוק מה שגורם לאנשים להשתיק.
+   */
+  useEffect(() => {
+    if (game.phase === 'playing') startMusic();
+    else stopMusic();
+    return () => stopMusic();
+  }, [game.phase]);
+
   useEffect(() => {
     if (game.phase === 'passing') navigate('pass-device');
     if (game.phase === 'round-done') navigate('round-results');

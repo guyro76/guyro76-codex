@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../store/appStore';
-import { greeting, randomJoke } from '../lib/persona';
+import { greeting } from '../lib/persona';
 import { tipOfTheDay } from '../data/tips';
 import { todayKey } from '../lib/daily';
 import WalletChip from '../components/WalletChip';
 import InstallPrompt from '../components/InstallPrompt';
+import Artzi from '../components/Artzi';
 import { authAvailable, useAuth } from '../store/authStore';
 import { db } from '../db/db';
 import { computeStreak, streakLabel, type StreakInfo } from '../lib/streak';
@@ -14,7 +15,6 @@ export default function Home() {
   // פאנל הניהול הוסתר קודם מאחורי כפתור רפאים זעיר בתחתית המסך, ואחריו
   // עוד מסך — מנהל שנכנס פשוט לא מצא אותו. עכשיו הוא כרטיס משלו.
   const isAdmin = useAuth((s) => s.account?.role === 'admin');
-  const joke = useMemo(() => (activeProfile ? randomJoke(activeProfile.age) : ''), [activeProfile]);
 
   // רצף ימי המשחק של השחקן הנוכחי, מחושב מהמשחקים ששמורים במכשיר
   const [streak, setStreak] = useState<StreakInfo | null>(null);
@@ -104,8 +104,8 @@ export default function Home() {
         </button>
       )}
 
-      <div className="card" style={{ margin: '14px 0' }}>
-        <span aria-hidden>🤖</span> <strong>ארצי:</strong> {joke}
+      <div style={{ margin: '14px 0' }}>
+        <Artzi />
       </div>
 
       <div className="grid grid-2">

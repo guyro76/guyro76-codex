@@ -25,6 +25,7 @@ import Credits from './screens/Credits';
 import Privacy from './screens/Privacy';
 import MiniGame from './screens/MiniGame';
 import SiteCredit from './components/SiteCredit';
+import AppHeader from './components/AppHeader';
 import LiveRegion from './components/LiveRegion';
 import Login from './screens/Login';
 import Globe from './components/Globe';
@@ -172,6 +173,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <OfflineBanner />
+      <AppHeader />
       <LiveRegion />
       {screens[screen] ?? <Splash />}
       <SiteCredit />
