@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Avatar from '../components/Avatar';
 import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
 import TopBar from '../components/TopBar';
@@ -143,7 +144,7 @@ export default function ModeSelect() {
                 className={`chip${secondProfile?.id === p.id ? ' on' : ''}`}
                 onClick={() => selectSecondProfile(p)}
               >
-                {p.avatar} {p.name}
+                <Avatar avatar={p.avatar} photo={p.photo} name={p.name} size={24} /> {p.name}
               </button>
             ))}
             {others.length === 0 && <p className="dim">אין עוד פרופילים — אפשר ליצור אחד במסך הפרופילים</p>}

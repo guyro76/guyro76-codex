@@ -1,6 +1,6 @@
 import React, { Component, useEffect, useState, type ReactNode } from 'react';
 import { useApp } from './store/appStore';
-import { getSetting } from './db/db';
+import { getSetting, repairPhotoAvatars } from './db/db';
 import { loadContentIntoKnowledge, maybeAutoUpdate } from './lib/contentPack';
 import { loadUserKnowledge } from './lib/knowledge';
 import Splash from './screens/Splash';
@@ -100,7 +100,8 @@ export default function App() {
   }, [initAuth]);
 
   useEffect(() => {
-    void loadProfiles();
+    // התיקון רץ לפני הטעינה, כדי שפרופיל פגום לא יוצג אפילו לרגע
+    void repairPhotoAvatars().then(() => loadProfiles());
     void loadCustomCategories();
     void getSetting('reducedMotion').then((v) => {
       document.body.classList.toggle('reduced-motion', v === '1');

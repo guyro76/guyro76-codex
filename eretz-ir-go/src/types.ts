@@ -48,7 +48,16 @@ export interface ImageAsset {
 export interface Profile {
   id?: number;
   name: string;
+  /** אמוג'י בלבד. תמונה אמיתית נשמרת ב-photo — ראו את ההערה שם */
   avatar: string;
+  /**
+   * תמונת פרופיל אמיתית כ-data URI, אם המשתמש בחר בה.
+   *
+   * השדה הזה נולד מבאג אמיתי: תמונת גוגל נשמרה בתוך `avatar`, וכל
+   * מסך שהדפיס `{profile.avatar}` הציג מחרוזת base64 ענקית על פני
+   * הקלף. `avatar` הוא טקסט להצגה, ולכן לתמונה מגיע שדה משלה.
+   */
+  photo?: string;
   color: string;
   gender: Gender;
   age: number;

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Avatar from '../components/Avatar';
 import { useApp } from '../store/appStore';
 import { greeting } from '../lib/persona';
 import { tipOfTheDay } from '../data/tips';
@@ -55,7 +56,7 @@ export default function Home() {
       <div className="row spread" style={{ paddingTop: 8 }}>
         <div className="row">
           <div className="avatar-big" style={{ width: 54, height: 54, fontSize: '1.6rem', borderColor: activeProfile.color }}>
-            {activeProfile.avatar}
+            <Avatar avatar={activeProfile.avatar} photo={activeProfile.photo} name={activeProfile.name} size={48} />
           </div>
           <div>
             <h2 style={{ margin: 0 }}>{greeting(activeProfile)}</h2>

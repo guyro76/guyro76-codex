@@ -1,4 +1,5 @@
 import { useApp } from '../store/appStore';
+import Avatar from '../components/Avatar';
 import TopBar from '../components/TopBar';
 
 export default function Profiles() {
@@ -26,7 +27,7 @@ export default function Profiles() {
             }}
           >
             <div className="avatar-big" style={{ margin: '0 auto', borderColor: p.color }}>
-              {p.avatar}
+              <Avatar avatar={p.avatar} photo={p.photo} name={p.name} size={64} />
             </div>
             <h3>{p.name}</h3>
             <p className="dim" style={{ margin: 0 }}>

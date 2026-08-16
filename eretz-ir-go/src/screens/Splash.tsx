@@ -74,7 +74,8 @@ export default function Splash() {
     setCreating(true);
     const profile: Omit<Profile, 'id'> = {
       name: identity.firstName,
-      avatar: photo ?? '🙂',
+      avatar: '🙂',
+      photo: photo ?? undefined,
       color: '#7c5cff',
       gender: 'other',
       age: 11,
@@ -119,7 +120,7 @@ export default function Splash() {
 
       {identity ? (
         <div className="hello-row">
-          {photo && <Avatar avatar={photo} name={identity.fullName} size={54} />}
+          {photo && <Avatar avatar="🙂" photo={photo} name={identity.fullName} size={54} />}
           <div>
             <div className="hello-greeting">שלום, {identity.fullName}! 👋</div>
             <p className="dim" style={{ margin: 0, fontSize: '0.9rem' }}>

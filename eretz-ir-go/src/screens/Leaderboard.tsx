@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Avatar from '../components/Avatar';
 import TopBar from '../components/TopBar';
 import { db } from '../db/db';
 import type { MatchRecord, Profile } from '../types';
@@ -67,7 +68,8 @@ export default function Leaderboard() {
         <div key={row.p.id} className="card" style={{ marginBottom: 10 }}>
           <div className="row spread">
             <span style={{ fontSize: '1.1rem' }}>
-              {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`} {row.p.avatar} <strong>{row.p.name}</strong>
+              {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}{' '}
+              <Avatar avatar={row.p.avatar} photo={row.p.photo} name={row.p.name} size={26} /> <strong>{row.p.name}</strong>
             </span>
             <strong className="gold" style={{ fontSize: '1.2rem' }}>
               {row.score} נק׳

@@ -1,4 +1,5 @@
 import { useApp } from '../store/appStore';
+import Avatar from '../components/Avatar';
 import { useGame } from '../store/gameStore';
 import { say } from '../lib/persona';
 
@@ -23,7 +24,7 @@ export default function PassDevice() {
       <h1>עכשיו התור של {next.profile.name}!</h1>
       <p className="dim">מעבירים את המכשיר... בלי להציץ בתשובות! 🙈</p>
       <div className="avatar-big" style={{ margin: '16px auto', borderColor: next.profile.color }}>
-        {next.profile.avatar}
+        <Avatar avatar={next.profile.avatar} photo={next.profile.photo} name={next.profile.name} size={72} />
       </div>
       <button
         className="btn-primary"

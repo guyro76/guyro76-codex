@@ -13,18 +13,24 @@ import { isPhotoAvatar } from '../lib/identity';
  */
 export default function Avatar({
   avatar,
+  photo,
   name,
   size = 40
 }: {
   avatar: string;
+  /** תמונה אמיתית, אם יש. גוברת על האמוג'י */
+  photo?: string;
   name: string;
   size?: number;
 }) {
-  if (isPhotoAvatar(avatar)) {
+  // גם `avatar` נבדק, כדי שפרופילים ישנים שבהם התמונה נשמרה שם
+  // ייראו נכון גם לפני שהתיקון האוטומטי הספיק לרוץ
+  const image = photo ?? (isPhotoAvatar(avatar) ? avatar : undefined);
+  if (image) {
     return (
       <img
         className="avatar-photo"
-        src={avatar}
+        src={image}
         alt={name}
         width={size}
         height={size}
@@ -34,7 +40,7 @@ export default function Avatar({
   }
   return (
     <span aria-hidden style={{ fontSize: size * 0.82, lineHeight: 1 }}>
-      {avatar}
+      {isPhotoAvatar(avatar) ? '🙂' : avatar}
     </span>
   );
 }

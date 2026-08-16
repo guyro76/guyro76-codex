@@ -149,6 +149,27 @@ function withTimeout<T>(work: Promise<T>, fallback: T): Promise<T> {
   });
 }
 
+/**
+ * תיקון חד-פעמי לפרופילים שנוצרו לפני שהופרד השדה `photo`.
+ *
+ * בגרסה קודמת תמונת גוגל נשמרה בתוך `avatar`, וכל מסך שהדפיס אותו
+ * הציג מחרוזת base64 ענקית על פני הקלף. כאן מעבירים את התמונה
+ * לשדה הנכון ומחזירים אמוג'י ל-`avatar`. רץ בעליית האפליקציה,
+ * ולא נוגע בפרופילים תקינים.
+ */
+export async function repairPhotoAvatars(): Promise<void> {
+  try {
+    const rows = await db.profiles.toArray();
+    for (const p of rows) {
+      if (p.id && p.avatar?.startsWith('data:image/')) {
+        await db.profiles.update(p.id, { photo: p.avatar, avatar: '🙂' });
+      }
+    }
+  } catch {
+    // אחסון חסום — המסכים ממילא יודעים להציג תמונה גם מ-avatar
+  }
+}
+
 export async function getSetting(key: string): Promise<string | undefined> {
   return withTimeout(
     db.settings.get(key).then((row) => row?.value),

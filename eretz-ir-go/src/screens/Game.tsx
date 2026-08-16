@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import Avatar from '../components/Avatar';
 import { startMusic, stopMusic } from '../lib/music';
 import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
@@ -98,7 +99,7 @@ export default function Game() {
             style={{ width: 44, height: 44, fontSize: '1.3rem', borderColor: activePlayerProfile.color }}
             aria-hidden
           >
-            {activePlayerProfile.avatar}
+            <Avatar avatar={activePlayerProfile.avatar} photo={activePlayerProfile.photo} name={activePlayerProfile.name} size={34} />
           </span>
           <div>
             <strong>{activePlayerProfile.name}</strong>

@@ -60,6 +60,7 @@ export default function AppHeader() {
             <>
               <Avatar
                 avatar={activeProfile?.avatar ?? '🙂'}
+                photo={activeProfile?.photo}
                 name={identity.fullName}
                 size={32}
               />

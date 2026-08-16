@@ -1,4 +1,5 @@
 import { useApp } from '../store/appStore';
+import Avatar from '../components/Avatar';
 import { useGame } from '../store/gameStore';
 import { useEffect, useState } from 'react';
 import { celebrate } from '../lib/persona';
@@ -85,7 +86,8 @@ export default function MatchResults() {
         {sorted.map((p, i) => (
           <div key={i} className="row spread" style={{ padding: '8px 0', borderBottom: '1px solid var(--border-glass)' }}>
             <span>
-              {i === 0 && !game.coop ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '·'} {p.profile.avatar} {p.profile.name}
+              {i === 0 && !game.coop ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '·'}{' '}
+              <Avatar avatar={p.profile.avatar} photo={p.profile.photo} name={p.profile.name} size={26} /> {p.profile.name}
             </span>
             <strong className="gold">{p.totalScore}</strong>
           </div>
