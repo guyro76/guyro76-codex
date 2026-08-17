@@ -13,6 +13,7 @@ export type Screen =
   | 'letter-draw'
   | 'game'
   | 'pass-device'
+  | 'bot-turn'
   | 'round-results'
   | 'match-results'
   | 'leaderboard'

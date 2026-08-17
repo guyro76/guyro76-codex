@@ -288,7 +288,12 @@ export const useGame = create<GameState>((set, get) => ({
 
   finishPlayer: async () => {
     const state = get();
-    const isDuel = state.settings.mode === 'duel' || state.settings.mode === 'tournament';
+    // מצב "נגד ארצי" מתנהג בדיוק כמו דו-קרב: השחקן הראשון מסיים,
+    // ורק אחר כך היריב משחק. ההבדל היחיד הוא מי היריב.
+    const isDuel =
+      state.settings.mode === 'duel' ||
+      state.settings.mode === 'tournament' ||
+      state.settings.mode === 'bot';
 
     if (isDuel && state.currentPlayerIdx < state.players.length - 1) {
       // מסמנים שהשחקן סיים ועוברים למסך "העברת מכשיר"

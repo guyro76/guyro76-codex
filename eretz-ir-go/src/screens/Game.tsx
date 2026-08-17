@@ -78,7 +78,8 @@ export default function Game() {
   }, [game.phase]);
 
   useEffect(() => {
-    if (game.phase === 'passing') navigate('pass-device');
+    // נגד ארצי אין למי להעביר את המכשיר — עוברים ישר לתור שלו
+    if (game.phase === 'passing') navigate(game.settings.mode === 'bot' ? 'bot-turn' : 'pass-device');
     if (game.phase === 'round-done') navigate('round-results');
   }, [game.phase, navigate]);
 

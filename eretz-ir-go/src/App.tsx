@@ -14,6 +14,7 @@ import CategoryCreate from './screens/CategoryCreate';
 import LetterDraw from './screens/LetterDraw';
 import Game from './screens/Game';
 import PassDevice from './screens/PassDevice';
+import BotTurn from './screens/BotTurn';
 import RoundResults from './screens/RoundResults';
 import MatchResults from './screens/MatchResults';
 import Leaderboard from './screens/Leaderboard';
@@ -130,6 +131,7 @@ export default function App() {
     'letter-draw': <LetterDraw />,
     game: <Game />,
     'pass-device': <PassDevice />,
+    'bot-turn': <BotTurn />,
     'round-results': <RoundResults />,
     'match-results': <MatchResults />,
     leaderboard: <Leaderboard />,

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ARTZI_PROFILE } from '../data/botProfile';
 import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
 import TopBar from '../components/TopBar';
@@ -56,10 +57,13 @@ export default function Categories() {
     // שמירה ברקע: המעבר למשחק לא ממתין לדיסק
     void setSetting('favoriteCategorySet', JSON.stringify(selected));
     const cats = selected.map((id) => all.find((c) => c.id === id)).filter((c) => c != null);
+    // נגד ארצי: היריב אינו פרופיל שנבחר אלא שחקן שהמשחק מוסיף
     const players =
-      draft.mode === 'duel' || draft.mode === 'coop' || draft.mode === 'tournament'
-        ? [activeProfile, secondProfile].filter((p) => p != null)
-        : [activeProfile];
+      draft.mode === 'bot'
+        ? [activeProfile, ARTZI_PROFILE]
+        : draft.mode === 'duel' || draft.mode === 'coop' || draft.mode === 'tournament'
+          ? [activeProfile, secondProfile].filter((p) => p != null)
+          : [activeProfile];
     startMatch(
       {
         mode: draft.mode,

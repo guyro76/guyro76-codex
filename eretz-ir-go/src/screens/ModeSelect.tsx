@@ -59,6 +59,7 @@ export default function ModeSelect() {
 
   const modes: { id: GameMode; icon: string; name: string; desc: string }[] = [
     { id: 'solo', icon: '⏱️', name: 'משחק יחיד', desc: 'לבד נגד השעון — שיפור השיא האישי' },
+    { id: 'bot', icon: '🤖', name: 'נגד ארצי', desc: 'יריב אמיתי גם כשאין עם מי לשחק — ארצי עונה לפי הרמה שלכם' },
     { id: 'duel', icon: '⚔️', name: 'דו-קרב', desc: 'שניים על אותו מכשיר, תור אחרי תור' },
     { id: 'coop', icon: '🤝', name: 'שיתוף פעולה', desc: 'ממלאים יחד לוח אחד — ניקוד קבוצתי' },
     { id: 'tournament', icon: '🏆', name: 'טורניר משפחתי', desc: 'כמה סיבובים, טבלה מצטברת וגביע' },

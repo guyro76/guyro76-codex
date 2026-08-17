@@ -136,7 +136,7 @@ export interface SubmittedAnswer {
   duplicateWithOtherPlayer: boolean;
 }
 
-export type GameMode = 'solo' | 'duel' | 'coop' | 'tournament' | 'daily' | 'practice' | 'blitz' | 'chain' | 'mystery';
+export type GameMode = 'solo' | 'bot' | 'duel' | 'coop' | 'tournament' | 'daily' | 'practice' | 'blitz' | 'chain' | 'mystery';
 
 export interface GameSettings {
   mode: GameMode;
