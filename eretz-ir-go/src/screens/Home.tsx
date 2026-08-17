@@ -46,6 +46,7 @@ export default function Home() {
     { icon: '🎮', label: 'משחק חדש', to: 'mode-select' as const, primary: true },
     { icon: '📅', label: 'האתגר היומי', to: 'daily' as const },
     { icon: '🃏', label: 'אוסף המילים שלי', to: 'album' as const },
+    { icon: '🧩', label: 'הפאזלים שלי', to: 'puzzles' as const },
     { icon: '🏆', label: 'לוח השיאים', to: 'leaderboard' as const },
     { icon: '🎖️', label: 'הישגים', to: 'achievements' as const },
     { icon: '⚙️', label: 'הגדרות', to: 'settings' as const }

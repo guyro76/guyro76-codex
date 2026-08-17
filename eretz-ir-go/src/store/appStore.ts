@@ -18,6 +18,7 @@ export type Screen =
   | 'match-results'
   | 'leaderboard'
   | 'album'
+  | 'puzzles'
   | 'achievements'
   | 'daily'
   | 'settings'

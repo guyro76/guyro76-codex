@@ -15,6 +15,7 @@ import LetterDraw from './screens/LetterDraw';
 import Game from './screens/Game';
 import PassDevice from './screens/PassDevice';
 import BotTurn from './screens/BotTurn';
+import Puzzles from './screens/Puzzles';
 import RoundResults from './screens/RoundResults';
 import MatchResults from './screens/MatchResults';
 import Leaderboard from './screens/Leaderboard';
@@ -132,6 +133,7 @@ export default function App() {
     game: <Game />,
     'pass-device': <PassDevice />,
     'bot-turn': <BotTurn />,
+    puzzles: <Puzzles />,
     'round-results': <RoundResults />,
     'match-results': <MatchResults />,
     leaderboard: <Leaderboard />,

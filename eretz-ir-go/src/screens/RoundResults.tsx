@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Avatar from '../components/Avatar';
 import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
@@ -10,6 +10,11 @@ import type { SubmittedAnswer } from '../types';
 import { getKnowledgeBase } from '../lib/knowledge';
 import AnswerImage from '../components/AnswerImage';
 import { announce } from '../lib/announce';
+import { grantRoundPiece } from '../lib/puzzleStore';
+import { puzzleById } from '../data/puzzles';
+import type { Award } from '../lib/puzzlePieces';
+import PuzzleBoard from '../components/PuzzleBoard';
+import { sfx } from '../lib/sound';
 
 function statusClass(a: SubmittedAnswer): string {
   if (a.validation.status === 'valid') return 'status-text-ok';
@@ -32,10 +37,37 @@ export default function RoundResults() {
   const [appealSent, setAppealSent] = useState<Set<string>>(new Set());
   // אפשר לכבות את משימות הביניים בהגדרות — למשפחות שרוצות משחק קצר
   const [miniGamesOn, setMiniGamesOn] = useState(true);
+  const [award, setAward] = useState<Award | null>(null);
+  const [owned, setOwned] = useState<number[]>([]);
+  const grantedRef = useRef(false);
 
   useEffect(() => {
     void getSetting('miniGames').then((v) => setMiniGamesOn(v !== '0'));
   }, []);
+
+  /**
+   * חלק פאזל על סיום הסיבוב — פרס ודאי ולא הגרלה.
+   *
+   * ה-ref מונע הענקה כפולה: המסך הזה מתרנדר מחדש בכל שינוי מצב,
+   * והענקה בכל רינדור הייתה מרוקנת את כל הפאזלים תוך סיבוב אחד.
+   */
+  useEffect(() => {
+    if (!activeProfile?.id || grantedRef.current) return;
+    grantedRef.current = true;
+    void grantRoundPiece(activeProfile.id).then((result) => {
+      if (!result) return;
+      const { award: won, owned } = result;
+      setAward(won);
+      setOwned(owned);
+      const puzzle = puzzleById(won.puzzleId);
+      if (won.completed) sfx.fanfare();
+      announce(
+        won.completed
+          ? `השלמת את הפאזל ${puzzle?.name ?? ''}!`
+          : `קיבלת חלק פאזל: ${puzzle?.name ?? ''}, ${won.have} מתוך ${won.total}`
+      );
+    });
+  }, [activeProfile?.id]);
 
   // סיכום הסיבוב מוצג בצבעים ובאייקונים — מכריזים אותו פעם אחת בכניסה
   // למסך, כך שגם מי שלא רואה יודע מה קרה בלי לסרוק את כל הקלפים
@@ -78,6 +110,27 @@ export default function RoundResults() {
       <h1 className="center">
         תוצאות הסיבוב — האות {game.letter} {game.coop ? '🤝' : ''}
       </h1>
+
+      {award && (
+        <div className="card puzzle-award" style={{ marginBottom: 14 }}>
+          <div className="row" style={{ gap: 12, alignItems: 'center' }}>
+            <PuzzleBoard puzzleId={award.puzzleId} owned={owned} highlight={award.piece} compact />
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <strong>
+                {award.completed ? '🎉 השלמתם את הפאזל!' : '🧩 קיבלתם חלק פאזל!'}
+              </strong>
+              <p className="dim" style={{ margin: '2px 0 0', fontSize: '0.88rem' }}>
+                {award.completed
+                  ? `${puzzleById(award.puzzleId)?.name ?? ''} — התמונה המלאה מחכה במסך הפאזלים`
+                  : `${puzzleById(award.puzzleId)?.name ?? ''} · ${award.have} מתוך ${award.total}`}
+              </p>
+              <button className="btn-small btn-ghost" style={{ marginTop: 6 }} onClick={() => navigate('puzzles')}>
+                לפאזלים שלי ←
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {shownPlayers.map((p, pi) => (
         <div key={pi} className="card" style={{ marginBottom: 14 }}>

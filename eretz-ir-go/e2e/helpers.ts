@@ -7,7 +7,14 @@ import type { Page } from '@playwright/test';
  */
 export async function stubWikipedia(page: Page): Promise<void> {
   await page.route('**he.wikipedia.org/**', (route) =>
-    route.fulfill({ contentType: 'application/json', body: JSON.stringify({ query: { search: [] } }) })
+    route.fulfill({
+      contentType: 'application/json',
+      // ה-API האמיתי מחזיר CORS. בלי הכותרת הזו הדפדפן פוסל את
+      // התשובה המזויפת ומדווח net::ERR_FAILED — שגיאת קונסול שנראית
+      // כמו באג במשחק אבל היא באג בבדיקה.
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ query: { search: [] } })
+    })
   );
 }
 

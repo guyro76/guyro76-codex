@@ -1082,3 +1082,45 @@ body::after {
 @media (max-width: 380px) {
   .choice-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== פאזלים ===== */
+.puzzle-grid {
+  display: grid;
+  gap: 3px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--border-glass);
+}
+.puzzle-grid.done { gap: 0; }
+/* משבצת שלא נאספה: שטוחה ועמומה. משבצת שנאספה: מוארת — גם כשהתמונה
+   עוד לא ירדה. בלי זה החלקים שכן נאספו נראים דווקא כהים יותר, וזה
+   קורא הפוך ממה שקרה. */
+.puzzle-cell {
+  display: grid;
+  place-items: center;
+  background-color: color-mix(in srgb, var(--text) 8%, transparent);
+  background-repeat: no-repeat;
+  font-size: 1.2rem;
+  color: var(--text);
+  opacity: 0.45;
+  transition: opacity 220ms ease;
+}
+.puzzle-cell.has {
+  opacity: 1;
+  background-color: color-mix(in srgb, var(--turquoise) 24%, var(--bg-deep));
+}
+/* החלק שנפל עכשיו — הבהוב קצר שאומר "זה החדש", בלי להקפיץ פריסה */
+.puzzle-cell.just-won {
+  animation: puzzle-pop 900ms ease-out 2;
+  box-shadow: inset 0 0 0 2px var(--gold);
+}
+@keyframes puzzle-pop {
+  0% { filter: brightness(2.1); }
+  100% { filter: brightness(1); }
+}
+.puzzle-award { border-color: var(--gold); }
+.reduced-motion .puzzle-cell.just-won { animation: none; }
+/* בתוצאות הסיבוב הפאזל הוא בשורה ולא הכותרת: הניקוד הוא מה
+   שבאים לראות, והפרס מלווה אותו ולא דוחף אותו מתחת לקצה המסך. */
+.puzzle.compact { width: 132px; flex: 0 0 auto; }
+.puzzle.compact .puzzle-cell { font-size: 0.8rem; }
