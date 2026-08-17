@@ -6,6 +6,8 @@ import type { PersonalAnswer } from '../types';
 import { CATEGORIES } from '../data/categories';
 import { getKnowledgeBase } from '../lib/knowledge';
 import AnswerImage from '../components/AnswerImage';
+import WorldMap, { placesFromAnswers } from '../components/WorldMap';
+import { PLACE_COUNTS } from '../data/places';
 
 type Filter = 'all' | 'fav' | 'hint' | 'rare';
 
@@ -37,6 +39,13 @@ export default function Album() {
       .sort((a, b) => b.discoveredAt.localeCompare(a.discoveredAt));
   }, [words, filter, catFilter, kb]);
 
+  /**
+   * המפה נבנית מכל האוסף ולא מהמסונן: פילטר של "מועדפות" לא אמור
+   * למחוק מקומות מהמפה — היא רשומה של איפה היית, לא תצוגה של מה
+   * שמסומן כרגע.
+   */
+  const foundPlaces = useMemo(() => placesFromAnswers(words), [words]);
+
   const toggleFav = async (w: PersonalAnswer) => {
     if (!w.id) return;
     await db.personalAnswers.update(w.id, { favorite: !w.favorite });
@@ -49,6 +58,18 @@ export default function Album() {
       <p className="dim">
         {words.length} מילים באוסף של {activeProfile?.name}
       </p>
+
+      {foundPlaces.length > 0 && (
+        <div className="card" style={{ marginBottom: 14 }}>
+          <div className="row spread" style={{ marginBottom: 8 }}>
+            <strong>🗺️ המפה שלי</strong>
+            <span className="dim" style={{ fontSize: '0.85rem' }}>
+              {foundPlaces.length} מתוך {PLACE_COUNTS.countries + PLACE_COUNTS.cities}
+            </span>
+          </div>
+          <WorldMap found={foundPlaces} />
+        </div>
+      )}
 
       <div className="row" style={{ marginBottom: 10 }}>
         {(

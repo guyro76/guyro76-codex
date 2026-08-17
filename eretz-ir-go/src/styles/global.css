@@ -1015,3 +1015,34 @@ body::after {
   display: block;
   transform-origin: top right;
 }
+
+/* ===== המפה האישית ===== */
+.world-map {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-deep);
+}
+.wm-ocean {
+  fill: color-mix(in srgb, var(--turquoise) 8%, var(--bg-deep));
+}
+.wm-grid line {
+  stroke: var(--border-glass);
+  stroke-width: 0.6;
+}
+.wm-land {
+  fill: color-mix(in srgb, var(--text) 14%, transparent);
+  stroke: color-mix(in srgb, var(--text) 28%, transparent);
+  stroke-width: 0.5;
+  fill-rule: evenodd;
+}
+.wm-dot {
+  cursor: pointer;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 0.8;
+}
+.wm-dot.country { fill: var(--turquoise); }
+.wm-dot.city { fill: var(--gold); }
+.wm-dot:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
