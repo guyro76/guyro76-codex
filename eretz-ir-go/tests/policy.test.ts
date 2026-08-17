@@ -39,7 +39,9 @@ describe('כותרות אבטחה', () => {
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("connect-src 'self' https://he.wikipedia.org");
     expect(csp).toContain("object-src 'none'");
-    expect(csp).toContain("frame-ancestors 'none'");
+    // 'self' ולא 'none': התצוגה המקדימה בניהול מסגרת את המשחק מאותו מקור.
+    // המסגור מצד אתר זר — הסיכון האמיתי — נשאר חסום. ראו את הבדיקה הייעודית למטה.
+    expect(csp).toContain("frame-ancestors 'self'");
     expect(csp).toContain("base-uri 'self'");
   });
 
@@ -126,6 +128,22 @@ describe('מדיניות הפרטיות הציבורית', () => {
    * הבדיקה מוודאת את שניהם, אחרת מספיק שאחד ייעלם והפריסות האדומות
    * יחזרו בלי שאיש ישים לב.
    */
+  /**
+   * מסגור: צד שלישי חסום, אנחנו עצמנו מותרים.
+   *
+   * ההקלה הזו נדרשת לתצוגה המקדימה במסך הניהול, שמריצה את המשחק
+   * עצמו ב-iframe מאותו מקור. הסיכון האמיתי בקליקג'קינג הוא אתר זר
+   * שמסגר אותנו כדי לגנוב לחיצות — וזה נשאר חסום לחלוטין. אם מישהו
+   * ישנה את זה ל-'*' או יסיר את הכותרת, הבדיקה תיפול.
+   */
+  it('רק אנחנו רשאים למסגר את המשחק — לא אף אתר אחר', () => {
+    expect(header('Content-Security-Policy')).toContain("frame-ancestors 'self'");
+    expect(header('Content-Security-Policy')).not.toContain('frame-ancestors *');
+    expect(header('X-Frame-Options')).toBe('SAMEORIGIN');
+    expect(netlify).toContain("frame-ancestors 'self'");
+    expect(netlify).toContain('X-Frame-Options = "SAMEORIGIN"');
+  });
+
   it('Vercel לא מנסה לפרוס את ענף התוצרים gh-pages', () => {
     expect(vercel.git?.deploymentEnabled?.['gh-pages']).toBe(false);
 

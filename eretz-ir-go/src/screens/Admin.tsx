@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import DevicePreview from '../components/DevicePreview';
 import TopBar from '../components/TopBar';
 import { useAuth } from '../store/authStore';
 import { supabase } from '../lib/supabase';
@@ -259,6 +260,8 @@ export default function Admin() {
           </div>
         )}
       </div>
+
+      <DevicePreview />
     </div>
   );
 }

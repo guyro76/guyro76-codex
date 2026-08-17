@@ -1000,3 +1000,18 @@ body::after {
   color: var(--turquoise);
   font-weight: 900;
 }
+
+/* ===== תצוגה מקדימה במכשירים (מסך הניהול) ===== */
+.device-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-deep);
+}
+/* המסגרת מוקטנת מהפינה הנכונה גם בדף RTL, אחרת היא בורחת מהמסך */
+.device-frame iframe {
+  border: 0;
+  display: block;
+  transform-origin: top right;
+}
