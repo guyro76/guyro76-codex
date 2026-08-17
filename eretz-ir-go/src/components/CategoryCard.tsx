@@ -4,6 +4,8 @@ import { useGame, type AnswerDraft } from '../store/gameStore';
 import { db } from '../db/db';
 import { normalizeHebrew, unfinalize } from '../lib/hebrew';
 import { artziSays } from '../lib/artzi';
+import { buildChoices } from '../lib/choices';
+import { getKnowledgeBase } from '../lib/knowledge';
 import Modal from './Modal';
 import { ANSWER_PRICE, canAfford, getWallet, spendOnAnswer, type PayMethod, type Wallet } from '../lib/wallet';
 import { notifyWalletChanged } from './WalletChip';
@@ -31,6 +33,7 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
   const coop = useGame((s) => s.coop);
   const currentPlayerIdx = useGame((s) => s.currentPlayerIdx);
   const powerCardsOn = useGame((s) => s.settings.powerCards);
+  const choiceMode = useGame((s) => s.settings.choiceMode === true);
   const doublePick = useGame((s) => s.power.double);
   const setDoubleCategory = useGame((s) => s.setDoubleCategory);
 
@@ -86,6 +89,29 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
     return () => document.removeEventListener('mousedown', close);
   }, []);
 
+  /**
+   * מצב בחירה: ארבע אפשרויות במקום הקלדה.
+   *
+   * המערך נבנה פעם אחת לקלף ולאות — אחרת כל הקלדה או רינדור מחדש
+   * היו מגרילים אפשרויות חדשות, והילד היה רואה את הכפתורים קופצים
+   * מתחת לאצבע.
+   */
+  const choices = useMemo(
+    () =>
+      choiceMode
+        ? buildChoices({
+            categoryId: category.id,
+            letter,
+            items: getKnowledgeBase().items,
+            exclude: usedElsewhere
+          })
+        : null,
+    // usedElsewhere משתנה עם כל תשובה בסיבוב, ולכן לא נכלל בכוונה:
+    // הוא נלקח בחשבון פעם אחת, בבנייה
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [choiceMode, category.id, letter]
+  );
+
   const letterNorm = unfinalize(letter);
   const filtered = suggestions
     .filter((s) => s.normalized.startsWith(letterNorm) || s.normalized.startsWith(`ה${letterNorm}`))
@@ -123,34 +149,79 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
             ×2
           </button>
         )}
-        <button
-          className="btn-small btn-ghost"
-          aria-label={`רמז מארצי לקטגוריה ${category.name}, נשארו ${hintsLeft} רמזים`}
-          disabled={hintsLeft <= 0 && hintsUsed === 0}
-          onClick={() => {
-            if (hintsUsed < 3) askHint(category.id);
-            setShowHint(true);
-          }}
-        >
-          💡 {hintsUsed > 0 ? `רמז ${Math.min(hintsUsed, 3)}/3` : 'רמז'}
-        </button>
-        {/* קניית תשובה מהקרדיט שנצבר במשחק — לא כסף אמיתי */}
-        <button
-          className="btn-small btn-ghost"
-          aria-label={`קניית תשובה לקטגוריה ${category.name} מהקרדיט`}
-          disabled={!profileId || draft?.revealed}
-          onClick={() => {
-            if (!profileId) return;
-            void getWallet(profileId).then((w) => {
-              setWallet(w);
-              setShowBuy(true);
-            });
-          }}
-        >
-          🛒 קנו תשובה
-        </button>
+        {/* רמז וקניית תשובה מיותרים כשהתשובה ממילא על המסך */}
+        {!choices && (
+          <>
+            <button
+              className="btn-small btn-ghost"
+              aria-label={`רמז מארצי לקטגוריה ${category.name}, נשארו ${hintsLeft} רמזים`}
+              disabled={hintsLeft <= 0 && hintsUsed === 0}
+              onClick={() => {
+                if (hintsUsed < 3) askHint(category.id);
+                setShowHint(true);
+              }}
+            >
+              💡 {hintsUsed > 0 ? `רמז ${Math.min(hintsUsed, 3)}/3` : 'רמז'}
+            </button>
+            {/* קניית תשובה מהקרדיט שנצבר במשחק — לא כסף אמיתי */}
+            <button
+              className="btn-small btn-ghost"
+              aria-label={`קניית תשובה לקטגוריה ${category.name} מהקרדיט`}
+              disabled={!profileId || draft?.revealed}
+              onClick={() => {
+                if (!profileId) return;
+                void getWallet(profileId).then((w) => {
+                  setWallet(w);
+                  setShowBuy(true);
+                });
+              }}
+            >
+              🛒 קנו תשובה
+            </button>
+          </>
+        )}
       </div>
 
+      {choices ? (
+        <div className="choice-grid" role="radiogroup" aria-label={`${category.name} באות ${letter}`}>
+          {choices.options.map((option) => (
+            <button
+              key={option}
+              role="radio"
+              aria-checked={text === option}
+              className={`choice-btn${text === option ? ' on' : ''}`}
+              onClick={() => {
+                // לחיצה חוזרת מבטלת — ילד שלחץ בטעות צריך דרך לחזור בו
+                setAnswer(category.id, text === option ? '' : option);
+                sfx.tick();
+              }}
+            >
+              {option}
+              {aloud && canSpeak() && (
+                <span
+                  className="choice-speak"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`להקריא: ${option}`}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    speak(option);
+                  }}
+                  onKeyDown={(ev) => {
+                    if (ev.key === 'Enter' || ev.key === ' ') {
+                      ev.preventDefault();
+                      ev.stopPropagation();
+                      speak(option);
+                    }
+                  }}
+                >
+                  🔊
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      ) : (
       <div ref={wrapRef} style={{ position: 'relative' }}>
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           <input
@@ -200,6 +271,7 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
           </div>
         )}
       </div>
+      )}
 
       {showHint && lastHint && (
         <div className="artzi-bubble">

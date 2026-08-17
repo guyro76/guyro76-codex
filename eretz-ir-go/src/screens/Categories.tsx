@@ -72,7 +72,8 @@ export default function Categories() {
         rounds: draft.rounds,
         difficulty: activeProfile.difficulty,
         hintsPerRound: draft.mode === 'practice' ? 99 : 3,
-        powerCards: draft.powerCards
+        powerCards: draft.powerCards,
+        choiceMode: draft.choiceMode
       },
       cats,
       players

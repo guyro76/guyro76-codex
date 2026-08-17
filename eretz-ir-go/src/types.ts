@@ -146,6 +146,13 @@ export interface GameSettings {
   difficulty: Difficulty;
   hintsPerRound: number;
   powerCards: boolean;
+  /**
+   * מצב בחירה: במקום הקלדה מוצגות ארבע אפשרויות.
+   *
+   * נועד לילדים שעדיין לא כותבים. אופציונלי כדי שמשחקים שמורים
+   * מגרסאות קודמות ימשיכו לעבוד בלי המרה.
+   */
+  choiceMode?: boolean;
 }
 
 export interface PlayerRoundResult {

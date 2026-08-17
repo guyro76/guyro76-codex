@@ -12,9 +12,16 @@ export interface ModeDraft {
   rounds: number;
   seconds: number;
   powerCards: boolean;
+  choiceMode: boolean;
 }
 
-const DEFAULT_DRAFT: ModeDraft = { mode: 'solo', rounds: 3, seconds: 180, powerCards: false };
+const DEFAULT_DRAFT: ModeDraft = {
+  mode: 'solo',
+  rounds: 3,
+  seconds: 180,
+  powerCards: false,
+  choiceMode: false
+};
 
 /**
  * טיוטת ההגדרות נשמרת קודם כול בזיכרון, ורק אחר כך (ובלי להמתין) לדיסק.
@@ -38,7 +45,8 @@ export async function loadModeDraft(): Promise<ModeDraft> {
       mode: parsed.mode ?? DEFAULT_DRAFT.mode,
       rounds: parsed.rounds ?? DEFAULT_DRAFT.rounds,
       seconds: parsed.seconds ?? DEFAULT_DRAFT.seconds,
-      powerCards: parsed.powerCards ?? DEFAULT_DRAFT.powerCards
+      powerCards: parsed.powerCards ?? DEFAULT_DRAFT.powerCards,
+      choiceMode: parsed.choiceMode ?? DEFAULT_DRAFT.choiceMode
     };
   } catch {
     draftCache = { ...DEFAULT_DRAFT };
@@ -53,6 +61,11 @@ export default function ModeSelect() {
   const [rounds, setRounds] = useState(3);
   const [seconds, setSeconds] = useState(180);
   const [powerCards, setPowerCards] = useState(false);
+  /**
+   * מצב בחירה מוצע מראש לילדים קטנים, אבל נשאר החלטה של המבוגר:
+   * גיל הוא ניחוש טוב לגבי מי עדיין לא כותב, לא קביעה.
+   */
+  const [choiceMode, setChoiceMode] = useState((activeProfile?.age ?? 8) <= 6);
 
   const needsSecond = mode === 'duel' || mode === 'coop' || mode === 'tournament';
   const others = profiles.filter((p) => p.id !== activeProfile?.id);
@@ -76,7 +89,7 @@ export default function ModeSelect() {
 
   const startWith = (chosen: GameMode) => {
     // שומרים בזיכרון ומנווטים מיד; הכתיבה לדיסק רצה ברקע
-    saveModeDraft({ mode: chosen, rounds, seconds, powerCards });
+    saveModeDraft({ mode: chosen, rounds, seconds, powerCards, choiceMode });
 
     // קלף מסתורי: המשחק בוחר את הקטגוריות בעצמו ומדלג על מסך הבחירה
     if (chosen === 'mystery' && activeProfile) {
@@ -90,7 +103,8 @@ export default function ModeSelect() {
           rounds,
           difficulty: activeProfile.difficulty,
           hintsPerRound: 3,
-          powerCards
+          powerCards,
+          choiceMode
         },
         picked.map((id) => CATEGORIES.find((c) => c.id === id)!).filter(Boolean),
         [activeProfile]
@@ -166,19 +180,43 @@ export default function ModeSelect() {
         </div>
       )}
 
+      {/*
+        שני המתגים יושבים בשורה אחת של צ'יפים ולא כשתי שורות מלאות.
+        הסיבה מדידה: כל שורה שנוספת מעל רשימת המצבים דוחפת את הקלף
+        הראשון אל מחוץ למסך הטלפון, ואז לחיצה עליו נראית כמו כפתור
+        שבור. יש על זה בדיקת E2E שנופלת אם זה חוזר.
+      */}
       {!quickModes[mode] && (
         <div className="card" style={{ marginTop: 14 }}>
-          <label className="row spread">
-            <span>
-              🎴 <strong>קלפי כוח</strong> — ⏳ זמן נוסף, 🔁 החלפת אות, 💡 רמז מתנה, ✖️2 ניקוד כפול
-            </span>
-            <input
-              type="checkbox"
-              style={{ width: 28, minHeight: 28 }}
-              checked={powerCards}
-              onChange={(ev) => setPowerCards(ev.target.checked)}
-            />
-          </label>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }} role="group" aria-label="תוספות למשחק">
+            <button
+              className={`chip${powerCards ? ' on' : ''}`}
+              role="switch"
+              aria-checked={powerCards}
+              aria-label="קלפי כוח"
+              onClick={() => setPowerCards((v) => !v)}
+            >
+              🎴 קלפי כוח
+            </button>
+            <button
+              className={`chip${choiceMode ? ' on' : ''}`}
+              role="switch"
+              aria-checked={choiceMode}
+              aria-label="מצב בחירה"
+              onClick={() => setChoiceMode((v) => !v)}
+            >
+              🧒 מצב בחירה
+            </button>
+          </div>
+          <p className="dim" style={{ margin: '6px 0 0', fontSize: '0.8rem' }}>
+            {powerCards && choiceMode
+              ? 'קלפי כוח: זמן נוסף, החלפת אות, רמז ו-×2 · מצב בחירה: 4 אפשרויות במקום הקלדה'
+              : powerCards
+                ? '⏳ זמן נוסף, 🔁 החלפת אות, 💡 רמז מתנה, ✖️2 ניקוד כפול'
+                : choiceMode
+                  ? '4 אפשרויות במקום הקלדה — למי שעדיין לא כותב'
+                  : 'אפשר להוסיף קלפי כוח, או מצב בחירה לילדים שעדיין לא כותבים'}
+          </p>
         </div>
       )}
 

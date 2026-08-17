@@ -1046,3 +1046,39 @@ body::after {
 .wm-dot.country { fill: var(--turquoise); }
 .wm-dot.city { fill: var(--gold); }
 .wm-dot:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* ===== מצב בחירה (לילדים שעדיין לא כותבים) ===== */
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.choice-btn {
+  position: relative;
+  min-height: 56px;
+  padding: 10px 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-glass);
+  background: var(--card-glass);
+  color: var(--text);
+  cursor: pointer;
+}
+.choice-btn.on {
+  border-color: var(--turquoise);
+  background: color-mix(in srgb, var(--turquoise) 18%, transparent);
+}
+.choice-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+/* הרמקול יושב בפינה ולא בזרימת הטקסט, אחרת הוא דוחף מילים ארוכות לשורה שנייה */
+.choice-speak {
+  position: absolute;
+  inset-inline-start: 6px;
+  bottom: 4px;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+@media (max-width: 380px) {
+  .choice-grid { grid-template-columns: 1fr; }
+}
