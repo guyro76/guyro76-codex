@@ -1,6 +1,7 @@
 import React, { Component, useEffect, useState, type ReactNode } from 'react';
 import { useApp } from './store/appStore';
 import { getSetting, repairPhotoAvatars } from './db/db';
+import { applySkin, savedSkinId } from './data/skins';
 import { loadContentIntoKnowledge, maybeAutoUpdate } from './lib/contentPack';
 import { loadUserKnowledge } from './lib/knowledge';
 import Splash from './screens/Splash';
@@ -103,6 +104,10 @@ export default function App() {
     // התיקון רץ לפני הטעינה, כדי שפרופיל פגום לא יוצג אפילו לרגע
     void repairPhotoAvatars().then(() => loadProfiles());
     void loadCustomCategories();
+    // הערכה מוחלת מיד מהאחסון המהיר, ורק אחר כך מסתנכרנת עם מסד
+    // הנתונים — כך אין הבהוב של ערכת ברירת המחדל בטעינה
+    applySkin(savedSkinId());
+    void getSetting('skin').then((v) => v && applySkin(v));
     void getSetting('reducedMotion').then((v) => {
       document.body.classList.toggle('reduced-motion', v === '1');
     });

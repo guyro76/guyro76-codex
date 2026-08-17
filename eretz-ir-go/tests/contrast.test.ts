@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { SKINS } from '../src/data/skins';
 
 /**
  * ניגודיות צבעים, נמדדת מתוך גיליון הסגנונות עצמו.
@@ -86,5 +87,64 @@ describe('ניגודיות צבעים — WCAG AA', () => {
 
   it('הקרדיט בסגול חציל נקרא על רקע הדף', () => {
     expect(ratio(hex(token('eggplant')), hex(token('bg-deep')))).toBeGreaterThanOrEqual(AA_NORMAL);
+  });
+});
+
+/**
+ * כל ערכת צבעים נבדקת באותם קריטריונים בדיוק.
+ *
+ * ערכה יפה שאי אפשר לקרוא בה היא באג, לא עניין של טעם — וילד לא
+ * יודע לומר "הניגודיות נמוכה", הוא פשוט מפסיק לשחק. בלי הבדיקה
+ * הזו, ערכה שנוסיף בעתיד תוכל להיכנס ולשבור קריאות בלי שאיש ישים
+ * לב, כי ברירת המחדל תמשיך להיראות תקינה.
+ */
+describe('ניגודיות בכל ערכות הצבע', () => {
+  for (const skin of SKINS) {
+    const bg = hex(skin.vars['--bg-mid']);
+    const glassOnSkin = over([255, 255, 255], GLASS_PEAK_ALPHA, bg);
+
+    it(`ערכת "${skin.name}" — טקסט רגיל נקרא`, () => {
+      expect(ratio(hex(token('text')), glassOnSkin)).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
+    it(`ערכת "${skin.name}" — קישורים וצבעי מצב נקראים`, () => {
+      for (const key of ['--link', '--gold']) {
+        const value = skin.vars[key];
+        expect(value, `${key} חסר בערכה ${skin.id}`).toBeTruthy();
+        const r = ratio(hex(value), glassOnSkin);
+        expect(r, `${key} בערכה "${skin.name}" נותן ${r.toFixed(2)}`).toBeGreaterThanOrEqual(AA_NORMAL);
+      }
+    });
+
+    it(`ערכת "${skin.name}" — הקרדיט נקרא על רקע הדף`, () => {
+      // הקרדיט יושב על רקע הדף עצמו ולא על קלף זכוכית, ולכן הוא
+      // נמדד מול המשטח שבו הוא באמת מוצג
+      const r = ratio(hex(skin.vars['--eggplant']), hex(skin.vars['--bg-deep']));
+      expect(r, `--eggplant בערכה "${skin.name}" נותן ${r.toFixed(2)}`).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
+    it(`ערכת "${skin.name}" — ירוק ואדום שומרים על משמעותם ונקראים`, () => {
+      // אלה לא משתנים בין ערכות בכוונה: ירוק תמיד "נכון", אדום תמיד "לא"
+      for (const name of ['ok', 'bad']) {
+        expect(ratio(hex(token(name)), glassOnSkin)).toBeGreaterThanOrEqual(AA_NORMAL);
+      }
+    });
+  }
+
+  it('לכל ערכה יש שם, אייקון, דוגמית וכל המשתנים', () => {
+    const required = Object.keys(SKINS[0].vars);
+    for (const skin of SKINS) {
+      expect(skin.name.length, skin.id).toBeGreaterThan(1);
+      expect(skin.icon.length, skin.id).toBeGreaterThan(0);
+      expect(skin.swatch, skin.id).toHaveLength(3);
+      for (const key of required) {
+        expect(skin.vars[key], `${key} חסר בערכה ${skin.id}`).toBeTruthy();
+      }
+    }
+  });
+
+  it('אין שתי ערכות עם אותו מזהה', () => {
+    const ids = SKINS.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

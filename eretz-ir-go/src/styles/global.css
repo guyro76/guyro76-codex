@@ -65,10 +65,12 @@ body {
   direction: rtl;
   font-family: 'Heebo', 'Segoe UI', 'Arial Hebrew', system-ui, sans-serif;
   color: var(--text);
+  /* ההילות הן משתנים כדי שהחלפת ערכת צבע תצבע את כל הדף, ולא רק
+     את הכפתורים. ערכי ברירת המחדל כאן זהים לערכת "חלל סגול". */
   background:
-    radial-gradient(900px 620px at 88% -8%, rgba(124, 92, 255, 0.42), transparent 62%),
-    radial-gradient(760px 560px at -12% 108%, rgba(51, 214, 195, 0.26), transparent 58%),
-    radial-gradient(680px 520px at 12% 18%, rgba(255, 92, 138, 0.14), transparent 60%),
+    radial-gradient(900px 620px at 88% -8%, var(--glow-1, rgba(124, 92, 255, 0.42)), transparent 62%),
+    radial-gradient(760px 560px at -12% 108%, var(--glow-2, rgba(51, 214, 195, 0.26)), transparent 58%),
+    radial-gradient(680px 520px at 12% 18%, var(--glow-3, rgba(255, 92, 138, 0.14)), transparent 60%),
     linear-gradient(160deg, var(--bg-deep), var(--bg-mid) 52%, var(--night));
   background-attachment: fixed;
   /* מונע השהיית מגע של 300ms בלחיצה כפולה */
@@ -958,4 +960,43 @@ body::after {
 .artzi-hint { font-size: 0.78rem; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) {
   .artzi-face.awake { animation: none; }
+}
+
+/* ===== בורר ערכות הצבע ===== */
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.skin-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  min-height: 84px;
+  text-align: start;
+}
+.skin-card.on {
+  border-color: var(--turquoise);
+  box-shadow: var(--glass-highlight), 0 0 0 2px var(--turquoise) inset;
+}
+/* דוגמית של שלושה צבעים — כך בוחרים בלי לנסות ערכה-ערכה */
+.skin-swatch {
+  display: flex;
+  width: 100%;
+  height: 26px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-glass);
+}
+.skin-swatch > span { flex: 1; }
+.skin-name { font-size: 0.92rem; font-weight: 700; }
+.skin-check {
+  position: absolute;
+  inset-inline-end: 10px;
+  top: 8px;
+  color: var(--turquoise);
+  font-weight: 900;
 }

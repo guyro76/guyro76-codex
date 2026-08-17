@@ -45,8 +45,23 @@ test('©️ הקרדיט מופיע בתחתית כל מסך', async ({ page }) 
   // סגול חציל ומודגש, כפי שהוגדר
   const weight = await credit.evaluate((el) => getComputedStyle(el).fontWeight);
   expect(Number(weight)).toBeGreaterThanOrEqual(700);
-  const color = await credit.evaluate((el) => getComputedStyle(el).color);
-  expect(color).toBe('rgb(192, 123, 216)');
+  // נבדק מול הטוקן ולא מול ערך קבוע: הצבע משתנה בין ערכות הצבע,
+  // ומה שחשוב הוא שהקרדיט משתמש בטוקן הנכון — הניגודיות עצמה
+  // נאכפת לכל ערכה ב-tests/contrast
+  const [color, token] = await credit.evaluate((el) => [
+    getComputedStyle(el).color,
+    getComputedStyle(document.documentElement).getPropertyValue('--eggplant').trim()
+  ]);
+  const asRgb = await credit.evaluate((el, hex) => {
+    el.style.setProperty('--probe', hex);
+    const probe = document.createElement('span');
+    probe.style.color = hex;
+    document.body.appendChild(probe);
+    const c = getComputedStyle(probe).color;
+    probe.remove();
+    return c;
+  }, token);
+  expect(color).toBe(asRgb);
 });
 
 test('⏱️ אפשר לשחק על זמן וגם בלי ספירת זמן, ולהחליף באמצע הסיבוב', async ({ page }) => {

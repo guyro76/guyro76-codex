@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import SkinPicker from '../components/SkinPicker';
+import { DEFAULT_SKIN } from '../data/skins';
 import TopBar from '../components/TopBar';
 import { useApp } from '../store/appStore';
 import { db, getSetting, setSetting, importProfile } from '../db/db';
@@ -8,6 +10,7 @@ import { iosSilentSwitchLikely, primeAudio, setSoundEnabled, sfx } from '../lib/
 export default function Settings() {
   const { loadProfiles, navigate } = useApp();
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [skin, setSkin] = useState<string | undefined>(undefined);
   const [bigText, setBigText] = useState(false);
   const [sound, setSound] = useState(true);
   const [miniGames, setMiniGames] = useState(true);
@@ -19,6 +22,7 @@ export default function Settings() {
   const [packBusy, setPackBusy] = useState(false);
 
   useEffect(() => {
+    void getSetting('skin').then((v) => setSkin(v ?? DEFAULT_SKIN));
     void getSetting('reducedMotion').then((v) => setReducedMotion(v === '1'));
     void getSetting('bigText').then((v) => setBigText(v === '1'));
     void getSetting('sound').then((v) => setSound(v !== '0'));
@@ -53,6 +57,14 @@ export default function Settings() {
   return (
     <div className="screen">
       <TopBar title="⚙️ הגדרות" />
+
+      <div className="card" style={{ marginBottom: 14 }}>
+        <strong>🎨 ערכת צבעים</strong>
+        <p className="dim" style={{ margin: '4px 0 12px', fontSize: '0.88rem' }}>
+          בוחרים איך המשחק ייראה. ההחלפה מיידית, וכל ערכה נבדקה שהטקסט בה נקרא היטב.
+        </p>
+        <SkinPicker current={skin} />
+      </div>
 
       <div className="card grid" style={{ gap: 14 }}>
         <label className="row spread">
