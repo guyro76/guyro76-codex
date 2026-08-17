@@ -8,6 +8,7 @@ import Modal from './Modal';
 import { ANSWER_PRICE, canAfford, getWallet, spendOnAnswer, type PayMethod, type Wallet } from '../lib/wallet';
 import { notifyWalletChanged } from './WalletChip';
 import { sfx } from '../lib/sound';
+import { canSpeak, letterSpeech, onReadAloudChange, readAloudOn, speak } from '../lib/speak';
 import type { Gender } from '../types';
 
 interface Props {
@@ -38,7 +39,11 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
   const [showHint, setShowHint] = useState(false);
   const [showBuy, setShowBuy] = useState(false);
   const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [aloud, setAloud] = useState(readAloudOn());
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  // ההגדרה נטענת מהמסד אחרי שהקלף כבר עלה, ולכן מאזינים לשינוי
+  useEffect(() => onReadAloudChange(setAloud), []);
 
   const text = draft?.text ?? '';
   const lastHint = draft?.lastHint;
@@ -97,6 +102,17 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
           {category.name}
           {doublePick?.categoryId === category.id && <span className="gold"> ×2</span>}
         </span>
+        {aloud && canSpeak() && (
+          <button
+            className="btn-small btn-ghost"
+            aria-label={`להקריא בקול: ${category.name} באות ${letter}`}
+            title="להקריא בקול"
+            /* מוקרא רק מה שהמשחק ביקש — לעולם לא מה שהילד הקליד */
+            onClick={() => speak(`${category.name}, באות ${letterSpeech(letter)}`)}
+          >
+            🔊
+          </button>
+        )}
         {powerCardsOn && !doublePick && (
           <button
             className="btn-small btn-ghost"

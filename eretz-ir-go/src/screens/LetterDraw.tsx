@@ -5,6 +5,7 @@ import { GAME_LETTERS } from '../lib/hebrew';
 import { roundIntro } from '../lib/persona';
 import { primeAudio, sfx } from '../lib/sound';
 import { announce } from '../lib/announce';
+import { letterSpeech, speak } from '../lib/speak';
 import LetterSwap from '../components/LetterSwap';
 
 export default function LetterDraw() {
@@ -58,6 +59,8 @@ export default function LetterDraw() {
         sfx.select();
         // הגלגל עוצר בתנועה ובצליל — מי שלא רואה ולא שומע צריך שיוקרא לו
         announce(`האות שהוגרלה היא ${target}`);
+        // בשם האות ולא בתו הבודד, אחרת המכשיר מגמגם עליו
+        speak(`האות היא ${letterSpeech(target)}`);
         if ('vibrate' in navigator) navigator.vibrate?.([40, 60, 90]);
         return;
       }

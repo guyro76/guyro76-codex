@@ -6,6 +6,7 @@ import { useApp } from '../store/appStore';
 import { db, getSetting, setSetting, importProfile } from '../db/db';
 import { applyContentPack, fetchContentPack } from '../lib/contentPack';
 import { iosSilentSwitchLikely, primeAudio, setSoundEnabled, sfx } from '../lib/sound';
+import { canSpeak, readAloudOn, setReadAloud, speak } from '../lib/speak';
 
 export default function Settings() {
   const { loadProfiles, navigate } = useApp();
@@ -14,6 +15,7 @@ export default function Settings() {
   const [bigText, setBigText] = useState(false);
   const [sound, setSound] = useState(true);
   const [miniGames, setMiniGames] = useState(true);
+  const [aloud, setAloud] = useState(readAloudOn());
   const [storageUse, setStorageUse] = useState<string>('...');
   const [packVersion, setPackVersion] = useState<string | null>(null);
   const [packCount, setPackCount] = useState(0);
@@ -27,6 +29,7 @@ export default function Settings() {
     void getSetting('bigText').then((v) => setBigText(v === '1'));
     void getSetting('sound').then((v) => setSound(v !== '0'));
     void getSetting('miniGames').then((v) => setMiniGames(v !== '0'));
+    void getSetting('read-aloud').then((v) => setAloud(v === '1'));
     void getSetting('contentPackVersion').then((v) => setPackVersion(v ?? null));
     void getSetting('packAutoUpdate').then((v) => setPackAuto(v !== '0'));
     void db.contentItems.count().then(setPackCount);
@@ -104,6 +107,31 @@ export default function Settings() {
             }}
           />
         </label>
+        {canSpeak() && (
+          <label className="row spread">
+            <span>
+              🗣️ הקראה בקול
+              <span className="dim" style={{ display: 'block', fontSize: '0.8rem' }}>
+                לילדים שעדיין לא קוראים — הקטגוריה והאות נאמרות בקול.
+                תשובות שהילד כותב לא מוקראות אף פעם.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              style={{ width: 28, minHeight: 28 }}
+              checked={aloud}
+              onChange={(ev) => {
+                const next = ev.target.checked;
+                setAloud(next);
+                setReadAloud(next);
+                void setSetting('read-aloud', next ? '1' : '0');
+                // דוגמית מיד, מתוך המחווה עצמה — כך ההורה שומע אם
+                // יש בכלל קול עברי במכשיר ולא מגלה את זה באמצע משחק
+                if (next) speak('שלום! עכשיו אני מקריא לך.');
+              }}
+            />
+          </label>
+        )}
         <label className="row spread">
           <span>🎲 משימות ביניים בין סיבובים</span>
           <input
