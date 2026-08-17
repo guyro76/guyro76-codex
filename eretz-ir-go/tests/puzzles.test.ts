@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PUZZLES, pieceCount, puzzleById } from '../src/data/puzzles';
+import { PUZZLES, lookupTitle, pieceCount, puzzleById } from '../src/data/puzzles';
+import { isBadImageKind } from '../src/lib/imageVerify';
 import { hasScene } from '../src/components/PuzzleScene';
 import {
   applyAward,
@@ -58,12 +59,53 @@ describe('הגדרת הפאזלים', () => {
 
   /**
    * ההבטחה של הפיצ'ר היא שהחלקים מתחברים לתמונה. פאזל בלי איור
-   * שמור בחבילה שובר אותה בדיוק ברגע הכי גרוע — אחרי שהילד אסף
-   * את כל החלקים.
+   * גיבוי שמור בחבילה שובר אותה בדיוק ברגע הכי גרוע — אחרי שהילד
+   * אסף את כל החלקים ואין לו רשת.
    */
-  it('לכל פאזל יש איור בתוך החבילה — לא תלוי ברשת', () => {
+  it('לכל פאזל יש איור גיבוי בתוך החבילה — לא תלוי ברשת', () => {
     const missing = PUZZLES.filter((p) => !hasScene(p.id)).map((p) => p.name);
     expect(missing, `פאזלים בלי איור: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  /**
+   * כותרות החיפוש נבדקו מול ה-API האמיתי של ויקיפדיה העברית, ושתיים
+   * מהן נכשלו ותוקנו: "עין גדי" הוא דף פירושונים (השער פוסל אותו),
+   * ולערך "עכו" יש סמל עיר כתמונה ראשית ולא צילום (השער פוסל גם
+   * אותו). הבדיקה נועלת את התיקון, כדי שמישהו לא "יפשט" אותו בחזרה
+   * לשם התצוגה ויחזיר לוחות בלי צילום.
+   */
+  it('הפאזלים שדורשים כותרת ערך אחרת שומרים עליה', () => {
+    expect(lookupTitle(puzzleById('ein-gedi')!)).toBe('נחל דוד');
+    expect(lookupTitle(puzzleById('akko')!)).toBe('נמל עכו');
+    // ובלי lookup — מחפשים לפי שם התצוגה
+    expect(lookupTitle(puzzleById('masada')!)).toBe('מצדה');
+  });
+
+  it('כותרת החיפוש לא ריקה לאף פאזל', () => {
+    for (const p of PUZZLES) expect(lookupTitle(p).trim().length, p.id).toBeGreaterThan(1);
+  });
+
+  /**
+   * התמונות שהוחזרו בפועל עבור כל שמונת הפאזלים, כפי שנבדקו מול
+   * ה-API. הבדיקה מוודאת שאף אחת מהן אינה נפסלת כמפה/דגל/סמל —
+   * זה בדיוק מה שקרה לערך "עכו".
+   */
+  it('הצילומים שנבדקו עוברים את שער "לא מפה ולא סמל"', () => {
+    const resolved: Record<string, string> = {
+      מצדה: 'Israel-2013-Aerial-Masada.jpg',
+      'ים המלח': 'Dead_sea.jpg',
+      הכנרת: 'Sea_of_Galilee.jpg',
+      'מכתש רמון': 'MakhteshRamonMar2.jpg',
+      'נחל דוד': 'שמורת עין גדי2.jpg',
+      'ראש הנקרה': 'Mediterranean_Sea_Rosh_Hanikra.jpg',
+      'נמל עכו': 'עכו001.jpg',
+      קיסריה: 'קיסריה.jpg'
+    };
+    for (const [title, file] of Object.entries(resolved)) {
+      expect(isBadImageKind(`https://upload.wikimedia.org/x/${file}`), title).toBe(false);
+    }
+    // ולהפך: הסמל של עכו, שהיה התמונה הראשית של הערך "עכו", אכן נפסל
+    expect(isBadImageKind('https://upload.wikimedia.org/x/Coat_of_arms_of_Akko.svg')).toBe(true);
   });
 });
 

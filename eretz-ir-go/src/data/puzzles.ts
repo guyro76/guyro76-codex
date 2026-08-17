@@ -17,8 +17,18 @@
  */
 export interface Puzzle {
   id: string;
-  /** שם התצוגה — וגם מה שמחפשים בוויקיפדיה */
+  /** שם התצוגה לילד */
   name: string;
+  /**
+   * כותרת הערך בוויקיפדיה העברית, כשהיא שונה משם התצוגה.
+   *
+   * שער האימות דורש התאמה מלאה בין כותרת הערך לשם המבוקש, ולכן
+   * שם עממי לא תמיד עובד. שתי דוגמאות אמיתיות שנבדקו מול ה-API:
+   * "עין גדי" הוא דף פירושונים, והצילום נמצא תחת "נחל דוד";
+   * ולערך "עכו" יש סמל עיר כתמונה ראשית ולא צילום, בעוד
+   * "נמל עכו" מחזיר צילום אמיתי של הנמל.
+   */
+  lookup?: string;
   icon: string;
   region: string;
   /** מה מספרים לילד כשהפאזל הושלם */
@@ -76,6 +86,7 @@ export const PUZZLES: Puzzle[] = [
   {
     id: 'ein-gedi',
     name: 'עין גדי',
+    lookup: 'נחל דוד',
     icon: '🐐',
     region: 'מדבר יהודה',
     fact: 'בעין גדי זורמים מעיינות בלב המדבר, ומסתובבים שם יעלים כמו בבית.',
@@ -94,6 +105,7 @@ export const PUZZLES: Puzzle[] = [
   {
     id: 'akko',
     name: 'עכו',
+    lookup: 'נמל עכו',
     icon: '🏰',
     region: 'מפרץ חיפה',
     fact: 'בעכו העתיקה יש עיר צלבנית שלמה מתחת לרחובות של היום.',
@@ -117,4 +129,9 @@ export function puzzleById(id: string): Puzzle | undefined {
 
 export function pieceCount(puzzle: Puzzle): number {
   return puzzle.cols * puzzle.rows;
+}
+
+/** מה שמחפשים בוויקיפדיה עבור הפאזל */
+export function lookupTitle(puzzle: Puzzle): string {
+  return puzzle.lookup ?? puzzle.name;
 }

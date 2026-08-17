@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PUZZLE_CATEGORY, pieceCount, puzzleById } from '../data/puzzles';
+import { PUZZLE_CATEGORY, lookupTitle, pieceCount, puzzleById } from '../data/puzzles';
 import { cachedAnswerImage, resolveAnswerImage, type ResolvedImage } from '../lib/answerImages';
 import { isComplete } from '../lib/puzzlePieces';
 import PuzzleScene from './PuzzleScene';
@@ -34,30 +34,36 @@ export default function PuzzleBoard({
 
   const done = puzzle ? isComplete(puzzle, owned) : false;
 
+  /**
+   * הצילום האמיתי הוא תמונת הפאזל.
+   *
+   * קודם המטמון המקומי — כך הלוח נפתח מיד וגם בלי רשת. אם אין
+   * במטמון והמסך הוא המסך המלא, מביאים מוויקישיתוף דרך אותו צינור
+   * מאומת של תמונות התשובות (כותרת ערך זהה בדיוק, לא דף פירושונים,
+   * לא מפה או סמל) ושומרים. מהפעם הבאה זה מקומי.
+   *
+   * הלוח המוקטן בתוצאות הסיבוב לא יוצא לרשת: הוא מציג מה שכבר
+   * במטמון, ואם אין — את האיור.
+   */
   useEffect(() => {
     if (!puzzle) return;
     let live = true;
     setPhoto(null);
-    void cachedAnswerImage(puzzle.name, PUZZLE_CATEGORY).then((hit) => {
+    void cachedAnswerImage(lookupTitle(puzzle), PUZZLE_CATEGORY).then((hit) => {
       if (!live) return;
       if (hit) {
         setPhoto(hit);
         return;
       }
-      /**
-       * יוצאים לרשת רק בשביל צילום של פאזל שהושלם, ורק במסך המלא.
-       * הצילום הוא תוספת, לא הלוח עצמו — ולכן הוא לא מצדיק בקשה
-       * בכל פעם שמסך תוצאות נפתח.
-       */
-      if (compact || !done) return;
-      void resolveAnswerImage(puzzle.name, PUZZLE_CATEGORY).then((found) => {
+      if (compact) return;
+      void resolveAnswerImage(lookupTitle(puzzle), PUZZLE_CATEGORY).then((found) => {
         if (live) setPhoto(found);
       });
     });
     return () => {
       live = false;
     };
-  }, [puzzle, compact, done]);
+  }, [puzzle, compact]);
 
   if (!puzzle) return null;
 
@@ -88,7 +94,12 @@ export default function PuzzleBoard({
         }
       >
         <div className="puzzle-art">
-          <PuzzleScene puzzleId={puzzle.id} cols={puzzle.cols} rows={puzzle.rows} />
+          {photo ? (
+            <img src={photo.url} alt={`צילום של ${puzzle.name}`} loading="lazy" />
+          ) : (
+            /* איור גיבוי: הפאזל חייב להסתדר גם כשאין רשת ואין צילום */
+            <PuzzleScene puzzleId={puzzle.id} cols={puzzle.cols} rows={puzzle.rows} />
+          )}
         </div>
 
         <div
@@ -107,29 +118,32 @@ export default function PuzzleBoard({
             );
           })}
         </div>
-      </div>
 
-      {done && !compact && (
-        <>
-          <p className="puzzle-fact">💡 {puzzle.fact}</p>
-          {photo && (
-            <div className="puzzle-photo">
-              <img src={photo.url} alt={`צילום של ${puzzle.name}`} loading="lazy" />
-              <p className="puzzle-credit">
-                כך זה נראה במציאות · {photo.attribution ?? 'ויקיפדיה/ויקישיתוף'}
+        {/* קרדיט קטן בתחתית התמונה עצמה: רצועה כהה וכתב בהיר ומודגש,
+            כך שהוא נקרא מעל כל צילום ולא נעלם על שמיים בהירים */}
+          {!compact && (
+          <p className="puzzle-credit">
+            {photo ? (
+              <>
+                📷 צילום · {photo.attribution ?? 'ויקיפדיה/ויקישיתוף'}
                 {photo.pageUrl && (
                   <>
                     {' · '}
                     <a href={photo.pageUrl} target="_blank" rel="noopener noreferrer">
-                      עמוד המקור
+                      מקור
                     </a>
                   </>
                 )}
-              </p>
-            </div>
+              </>
+            ) : (
+              '✏️ איור — הצילום ייטען כשתהיה רשת'
+            )}
+          </p>
           )}
-        </>
-      )}
+      </div>
+
+      {done && !compact && <p className="puzzle-fact">💡 {puzzle.fact}</p>}
+
     </div>
   );
 }
