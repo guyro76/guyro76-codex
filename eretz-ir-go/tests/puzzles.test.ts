@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PUZZLES, pieceCount, puzzleById } from '../src/data/puzzles';
+import { hasScene } from '../src/components/PuzzleScene';
 import {
   applyAward,
   awardPiece,
@@ -53,6 +54,16 @@ describe('הגדרת הפאזלים', () => {
 
   it('יש מספיק פאזלים כדי שהאיסוף יימשך', () => {
     expect(PUZZLES.length).toBeGreaterThanOrEqual(6);
+  });
+
+  /**
+   * ההבטחה של הפיצ'ר היא שהחלקים מתחברים לתמונה. פאזל בלי איור
+   * שמור בחבילה שובר אותה בדיוק ברגע הכי גרוע — אחרי שהילד אסף
+   * את כל החלקים.
+   */
+  it('לכל פאזל יש איור בתוך החבילה — לא תלוי ברשת', () => {
+    const missing = PUZZLES.filter((p) => !hasScene(p.id)).map((p) => p.name);
+    expect(missing, `פאזלים בלי איור: ${missing.join(', ')}`).toEqual([]);
   });
 });
 

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { SKINS } from '../src/data/skins';
@@ -146,5 +146,101 @@ describe('ניגודיות בכל ערכות הצבע', () => {
   it('אין שתי ערכות עם אותו מזהה', () => {
     const ids = SKINS.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+/**
+ * כלל הברזל: לעולם לא פונט כהה על רקע כהה ולא בהיר על בהיר, ותמיד
+ * כתב קריא ומודגש.
+ *
+ * הבדיקות שלמעלה מודדות ניגודיות של הטוקנים. הבדיקות כאן אוכפות את
+ * *הדרך* שבה כותבים צבעים, כי שם נולדות ההפרות: ערך צבע קבוע בקוד
+ * לא מתאים את עצמו לערכה שנבחרה — הוא נראה טוב באחת ונעלם בשנייה —
+ * ורקע שנקבע בלי צבע טקסט משאיר את הטקסט בצבע שהיה קודם.
+ */
+describe('כלל הברזל — קריאות', () => {
+  const srcDir = resolve(__dirname, '..', 'src');
+
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory()
+        ? walk(resolve(dir, e.name))
+        : /\.tsx$/.test(e.name)
+          ? [resolve(dir, e.name)]
+          : []
+    );
+
+  const files = walk(srcDir);
+
+  it('צבעי טקסט ברכיבים תמיד מטוקנים ולא ערכים קבועים', () => {
+    /**
+     * חריגים מתועדים:
+     *  - Splash.tsx מצייר את מסך הפתיחה לפני שנטענה ערכה, ולכן חייב
+     *    ערך קבוע. הצבע שם נבדק ידנית מול הרקע הקבוע של אותו מסך.
+     *  - Globe/PuzzleScene הם איורים: הצבעים שלהם הם ציור, לא טקסט.
+     */
+    const allowed = ['Splash.tsx', 'Globe.tsx', 'PuzzleScene.tsx'];
+    const offenders: string[] = [];
+
+    for (const file of files) {
+      if (allowed.some((a) => file.endsWith(a))) continue;
+      const body = readFileSync(file, 'utf8');
+      for (const [i, line] of body.split('\n').entries()) {
+        // color: '#abc' / color: "white" — אבל לא color: var(--x)
+        if (/\bcolor:\s*['"`](#|black\b|white\b|rgb)/.test(line)) {
+          offenders.push(`${file.replace(srcDir, 'src')}:${i + 1}`);
+        }
+      }
+    }
+
+    expect(offenders, `צבע טקסט קבוע (לא טוקן) ב:\n${offenders.join('\n')}`).toEqual([]);
+  });
+
+  it('אין טקסט דק — כתב פונקציונלי מודגש', () => {
+    const offenders: string[] = [];
+    for (const file of [...files, resolve(srcDir, 'styles/global.css')]) {
+      const body = readFileSync(file, 'utf8');
+      for (const [i, line] of body.split('\n').entries()) {
+        const m = line.match(/font-weight:\s*['"]?(\d{3})/);
+        if (m && Number(m[1]) < 400) offenders.push(`${file.replace(srcDir, 'src')}:${i + 1}`);
+      }
+    }
+    expect(offenders, `משקל גופן דק מדי ב:\n${offenders.join('\n')}`).toEqual([]);
+  });
+
+  /**
+   * רקע בהיר מחייב צבע טקסט כהה — זה הדפוס שיוצר "בהיר על בהיר"
+   * בלי שאיש מתכוון לזה.
+   *
+   * הבדיקה מתחשבת בהורשה: `.mg-key.miss` שמחליף רק רקע יורש את
+   * הצבע מ-`.mg-key`, ולכן מותר לו לא להגדיר צבע בעצמו. בלי זה
+   * הבדיקה נופלת על כל מודיפיקטור תקין ומאבדת את הערך שלה.
+   */
+  it('כל רקע בהיר בגיליון הסגנונות מגיע עם צבע טקסט כהה', () => {
+    const clean = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const rules = [...clean.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+      selector: m[1].trim(),
+      body: m[2]
+    }));
+
+    /** מחלקות שקיים להן כלל שקובע צבע טקסט */
+    const setsColor = new Set<string>();
+    for (const rule of rules) {
+      if (!/(^|;|\s)color:/.test(rule.body)) continue;
+      for (const cls of rule.selector.match(/\.[a-z0-9-]+/gi) ?? []) setsColor.add(cls);
+    }
+
+    const offenders: string[] = [];
+    for (const rule of rules) {
+      // רקע לבן או כמעט־לבן, אטום
+      if (!/background(?:-color)?:\s*(#f[0-9a-f]{5}\b|#fff\b|white\b)/i.test(rule.body)) continue;
+      if (/(^|;|\s)color:/.test(rule.body)) continue;
+      const classes = rule.selector.match(/\.[a-z0-9-]+/gi) ?? [];
+      // מותר אם אחת המחלקות בבורר כבר מקבלת צבע טקסט מכלל אחר
+      if (classes.some((c) => setsColor.has(c))) continue;
+      offenders.push(rule.selector);
+    }
+
+    expect(offenders, `רקע בהיר בלי צבע טקסט:\n${offenders.join('\n')}`).toEqual([]);
   });
 });

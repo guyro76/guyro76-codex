@@ -57,7 +57,14 @@
 
 * { box-sizing: border-box; }
 
-html { font-size: var(--font-size-base); }
+/* רשת ביטחון לכלל הברזל: הרקע המדורג של הדף משתמש ב-
+   background-attachment: fixed, ובאייפון ובגלילה ארוכה הוא לא תמיד
+   מכסה את כל גובה התוכן. צבע אטום כאן מבטיח שמתחת לטקסט הבהיר
+   לעולם לא ייחשף לבן — בהיר על בהיר הוא טקסט שלא קיים. */
+html {
+  font-size: var(--font-size-base);
+  background: var(--night);
+}
 
 body {
   margin: 0;
@@ -551,8 +558,11 @@ img { max-width: 100%; border-radius: 12px; }
 /* ===== משחקי הביניים: מראה דו-מימדי וצבעוני =====
    בלי גרדיאנטים "זכוכיתיים" — צבעים מלאים, מסגרת תחתונה עבה שנותנת
    תחושת מדבקה, ופלטה עליזה יותר מזו של מסכי המשחק הרגילים. */
+/* לוח המשחקים בהיר, ולכן הדיו שלו נקבע כאן במפורש: טקסט שיישב בו
+   בעתיד יירש כתב כהה ולא את הכתב הבהיר של המשחק. כלל הברזל. */
 .mg-board {
   --mg-ink: #241246;
+  color: var(--mg-ink);
   background: #fff7e6;
   border: 3px solid var(--mg-ink);
   border-radius: 20px;
@@ -565,6 +575,7 @@ img { max-width: 100%; border-radius: 12px; }
 
 /* בועה / כפתור עגול צבעוני */
 .mg-bubble {
+  color: var(--mg-ink);
   aspect-ratio: 1;
   min-height: 0;
   padding: 0;
@@ -610,6 +621,7 @@ img { max-width: 100%; border-radius: 12px; }
 
 /* תא במגרש הנחש */
 .mg-cell {
+  color: var(--mg-ink);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -1085,42 +1097,80 @@ body::after {
 
 /* ===== פאזלים ===== */
 .puzzle-grid {
-  display: grid;
-  gap: 3px;
+  position: relative;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: var(--border-glass);
+  border: 2px solid var(--border-glass);
+  background: var(--bg-deep);
 }
-.puzzle-grid.done { gap: 0; }
-/* משבצת שלא נאספה: שטוחה ועמומה. משבצת שנאספה: מוארת — גם כשהתמונה
-   עוד לא ירדה. בלי זה החלקים שכן נאספו נראים דווקא כהים יותר, וזה
-   קורא הפוך ממה שקרה. */
+/* האיור נמצא מתחת ללוח כולו — ולכן החלקים מתחברים לתמונה רציפה
+   בלי תפרים ובלי חישובי מיקום לכל משבצת */
+.puzzle-art {
+  position: absolute;
+  inset: 0;
+}
+.puzzle-art svg { display: block; width: 100%; height: 100%; }
+/* המשבצות הן מכסים מעל האיור: מה שנאסף נעלם, ומה שלא — מסתיר */
+.puzzle-cover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  gap: 0;
+}
 .puzzle-cell {
   display: grid;
   place-items: center;
-  background-color: color-mix(in srgb, var(--text) 8%, transparent);
-  background-repeat: no-repeat;
-  font-size: 1.2rem;
-  color: var(--text);
-  opacity: 0.45;
-  transition: opacity 220ms ease;
+  font-size: 1.1rem;
+  font-weight: 800;
+  /* מכסה: כהה ואטום, עם סימן שאלה בהיר וקריא עליו — כלל הברזל */
+  color: rgba(255, 255, 255, 0.92);
+  background: #1a1030;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  transition: opacity 260ms ease;
 }
 .puzzle-cell.has {
-  opacity: 1;
-  background-color: color-mix(in srgb, var(--turquoise) 24%, var(--bg-deep));
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
 }
-/* החלק שנפל עכשיו — הבהוב קצר שאומר "זה החדש", בלי להקפיץ פריסה */
+/* החלק שנפל עכשיו — מסגרת זהב קצרה שאומרת "זה החדש" */
 .puzzle-cell.just-won {
+  box-shadow: inset 0 0 0 3px var(--gold);
   animation: puzzle-pop 900ms ease-out 2;
-  box-shadow: inset 0 0 0 2px var(--gold);
 }
 @keyframes puzzle-pop {
-  0% { filter: brightness(2.1); }
-  100% { filter: brightness(1); }
+  0% { box-shadow: inset 0 0 0 3px var(--gold), inset 0 0 40px rgba(255, 215, 92, 0.85); }
+  100% { box-shadow: inset 0 0 0 3px var(--gold); }
+}
+.reduced-motion .puzzle-cell.just-won { animation: none; }
+
+.puzzle-count {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+.puzzle-count.done { color: var(--gold); }
+.puzzle-region { font-weight: 600; color: var(--text-dim); }
+.puzzle-fact {
+  margin: 8px 0 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.puzzle-photo { margin-top: 10px; }
+.puzzle-photo img {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  display: block;
+}
+.puzzle-credit {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dim);
 }
 .puzzle-award { border-color: var(--gold); }
-.reduced-motion .puzzle-cell.just-won { animation: none; }
-/* בתוצאות הסיבוב הפאזל הוא בשורה ולא הכותרת: הניקוד הוא מה
-   שבאים לראות, והפרס מלווה אותו ולא דוחף אותו מתחת לקצה המסך. */
+/* בתוצאות הסיבוב הפאזל מלווה את הניקוד ולא דוחף אותו מתחת לקצה המסך */
 .puzzle.compact { width: 132px; flex: 0 0 auto; }
-.puzzle.compact .puzzle-cell { font-size: 0.8rem; }
+.puzzle.compact .puzzle-cell { font-size: 0.75rem; }

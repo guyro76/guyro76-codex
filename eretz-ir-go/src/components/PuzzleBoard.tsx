@@ -2,18 +2,19 @@ import { useEffect, useState } from 'react';
 import { PUZZLE_CATEGORY, pieceCount, puzzleById } from '../data/puzzles';
 import { cachedAnswerImage, resolveAnswerImage, type ResolvedImage } from '../lib/answerImages';
 import { isComplete } from '../lib/puzzlePieces';
+import PuzzleScene from './PuzzleScene';
 
 /**
  * לוח פאזל אחד.
  *
- * המשבצות הן חלונות אל אותה תמונה: כל תא מציג את התמונה כרקע
- * ממוקם (`background-position`), כך שחלק שנאסף חושף בדיוק את
- * הריבוע שלו והחלקים מתחברים לתמונה אחת רציפה. תא שלא נאסף נשאר
- * כהה עם סימן שאלה.
+ * המבנה: **שכבה אחת של תמונה, ומעליה מכסים**. האיור נמצא מתחת ללוח
+ * במלואו, והמשבצות שעדיין לא נאספו הן מכסים אטומים שמונחים עליו.
+ * כך החלקים מתחברים לתמונה אחת רציפה בלי תפרים ובלי חישובי מיקום —
+ * ואיסוף החלק האחרון פשוט מסיר את המכסה האחרון.
  *
- * התמונה מגיעה מאותו צינור מאומת של תמונות התשובות, כולל הקרדיט
- * והקישור לעמוד המקור. אם היא לא נמצאה — אין תמונה שגויה ואין
- * תמונה מומצאת: הלוח מוצג במסגרות ריקות עם הסבר.
+ * למה איור ולא צילום: פאזל חייב להסתדר תמיד. איור נמצא בתוך החבילה
+ * ולכן עובד גם בלי רשת. הצילום האמיתי מוויקיפדיה מוצג בנוסף,
+ * כשהפאזל הושלם וכשיש רשת, עם קרדיט וקישור למקור.
  */
 export default function PuzzleBoard({
   puzzleId,
@@ -29,49 +30,39 @@ export default function PuzzleBoard({
   compact?: boolean;
 }) {
   const puzzle = puzzleById(puzzleId);
-  const [image, setImage] = useState<ResolvedImage | null>(null);
-  const [tried, setTried] = useState(false);
+  const [photo, setPhoto] = useState<ResolvedImage | null>(null);
+
+  const done = puzzle ? isComplete(puzzle, owned) : false;
 
   useEffect(() => {
     if (!puzzle) return;
     let live = true;
-    setImage(null);
-    setTried(false);
-    // קודם המטמון המקומי — כך הפאזל נפתח מיד וגם בלי רשת
+    setPhoto(null);
     void cachedAnswerImage(puzzle.name, PUZZLE_CATEGORY).then((hit) => {
       if (!live) return;
       if (hit) {
-        setImage(hit);
-        setTried(true);
+        setPhoto(hit);
         return;
       }
       /**
-       * חיפוש תמונה חדשה נעשה רק במסך הפאזלים.
-       *
-       * הלוח המוקטן בתוצאות הסיבוב הוא 130 פיקסלים ומוצג לרגע —
-       * לצאת בשבילו לרשת זה בזבוז, ובעיקר זה מכניס בקשה רשתית לתוך
-       * מסך שכל תפקידו להראות ניקוד. החלקים נשמרים בכל מקרה.
+       * יוצאים לרשת רק בשביל צילום של פאזל שהושלם, ורק במסך המלא.
+       * הצילום הוא תוספת, לא הלוח עצמו — ולכן הוא לא מצדיק בקשה
+       * בכל פעם שמסך תוצאות נפתח.
        */
-      if (compact) {
-        setTried(true);
-        return;
-      }
+      if (compact || !done) return;
       void resolveAnswerImage(puzzle.name, PUZZLE_CATEGORY).then((found) => {
-        if (!live) return;
-        setImage(found);
-        setTried(true);
+        if (live) setPhoto(found);
       });
     });
     return () => {
       live = false;
     };
-  }, [puzzle, compact]);
+  }, [puzzle, compact, done]);
 
   if (!puzzle) return null;
 
   const total = pieceCount(puzzle);
   const have = owned.length;
-  const done = isComplete(puzzle, owned);
   const ownedSet = new Set(owned);
 
   return (
@@ -79,73 +70,65 @@ export default function PuzzleBoard({
       <div className="row spread" style={{ marginBottom: 8 }}>
         <strong>
           <span aria-hidden>{puzzle.icon}</span> {puzzle.name}
-          {!compact && <span className="dim"> · {puzzle.region}</span>}
+          {!compact && <span className="puzzle-region"> · {puzzle.region}</span>}
         </strong>
-        <span className={done ? 'gold' : 'dim'} style={{ fontSize: '0.9rem' }}>
+        <span className={`puzzle-count${done ? ' done' : ''}`}>
           {done ? '✔ הושלם' : `${have} / ${total}`}
         </span>
       </div>
 
       <div
         className={`puzzle-grid${done ? ' done' : ''}`}
-        style={{
-          gridTemplateColumns: `repeat(${puzzle.cols}, 1fr)`,
-          aspectRatio: `${puzzle.cols} / ${puzzle.rows}`
-        }}
+        style={{ aspectRatio: `${puzzle.cols} / ${puzzle.rows}` }}
         role="img"
-        aria-label={`פאזל ${puzzle.name}: ${have} חלקים מתוך ${total}`}
+        aria-label={
+          done
+            ? `פאזל ${puzzle.name} — הושלם`
+            : `פאזל ${puzzle.name}: ${have} חלקים מתוך ${total}`
+        }
       >
-        {Array.from({ length: total }, (_, i) => {
-          const col = i % puzzle.cols;
-          const row = Math.floor(i / puzzle.cols);
-          const has = ownedSet.has(i);
-          return (
-            <div
-              key={i}
-              className={`puzzle-cell${has ? ' has' : ''}${i === highlight ? ' just-won' : ''}`}
-              style={
-                has && image
-                  ? {
-                      backgroundImage: `url(${image.url})`,
-                      backgroundSize: `${puzzle.cols * 100}% ${puzzle.rows * 100}%`,
-                      // חלוקה ב-(n-1) כי 0% ו-100% הם הקצוות, לא הצעד
-                      backgroundPosition: `${puzzle.cols > 1 ? (col / (puzzle.cols - 1)) * 100 : 50}% ${
-                        puzzle.rows > 1 ? (row / (puzzle.rows - 1)) * 100 : 50
-                      }%`
-                    }
-                  : undefined
-              }
-            >
-              {!has && <span aria-hidden>❔</span>}
-              {has && !image && tried && <span aria-hidden>🧩</span>}
-            </div>
-          );
-        })}
+        <div className="puzzle-art">
+          <PuzzleScene puzzleId={puzzle.id} cols={puzzle.cols} rows={puzzle.rows} />
+        </div>
+
+        <div
+          className="puzzle-cover"
+          style={{ gridTemplateColumns: `repeat(${puzzle.cols}, 1fr)` }}
+        >
+          {Array.from({ length: total }, (_, i) => {
+            const has = ownedSet.has(i);
+            return (
+              <div
+                key={i}
+                className={`puzzle-cell${has ? ' has' : ''}${i === highlight ? ' just-won' : ''}`}
+              >
+                {!has && <span aria-hidden>❔</span>}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {done && !compact && <p style={{ margin: '8px 0 0', fontSize: '0.9rem' }}>💡 {puzzle.fact}</p>}
-
-      {compact ? null : image ? (
-        <p className="dim" style={{ margin: '6px 0 0', fontSize: '0.72rem' }}>
-          {image.attribution ?? 'ויקיפדיה/ויקישיתוף'}
-          {image.pageUrl && (
-            <>
-              {' · '}
-              <a href={image.pageUrl} target="_blank" rel="noopener noreferrer">
-                עמוד המקור
-              </a>
-            </>
+      {done && !compact && (
+        <>
+          <p className="puzzle-fact">💡 {puzzle.fact}</p>
+          {photo && (
+            <div className="puzzle-photo">
+              <img src={photo.url} alt={`צילום של ${puzzle.name}`} loading="lazy" />
+              <p className="puzzle-credit">
+                כך זה נראה במציאות · {photo.attribution ?? 'ויקיפדיה/ויקישיתוף'}
+                {photo.pageUrl && (
+                  <>
+                    {' · '}
+                    <a href={photo.pageUrl} target="_blank" rel="noopener noreferrer">
+                      עמוד המקור
+                    </a>
+                  </>
+                )}
+              </p>
+            </div>
           )}
-        </p>
-      ) : (
-        /* רק בלוח שכבר התחיל: על לוח ריק ההערה היא רעש, ובמסך עם
-           שמונה לוחות היא חוזרת שמונה פעמים */
-        tried &&
-        have > 0 && (
-          <p className="dim" style={{ margin: '6px 0 0', fontSize: '0.75rem' }}>
-            התמונה תיטען כשתהיה רשת — החלקים שאספתם נשמרים בכל מקרה.
-          </p>
-        )
+        </>
       )}
     </div>
   );
