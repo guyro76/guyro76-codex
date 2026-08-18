@@ -100,15 +100,23 @@ jobs:
         run: |
           cd eretz-ir-go/dist
           touch .nojekyll
-          # Vercel עוקב אחרי כל ענף במאגר, וגם gh-pages נכלל בזה. הענף
-          # הזה מכיל רק תוצרי בנייה, ולכן ספריית השורש של הפרויקט
-          # ("eretz-ir-go") פשוט לא קיימת בו — וכל דחיפה יצרה פריסה
-          # אדומה ב-Vercel לצד הפריסה התקינה מ-main.
+          # Vercel עוקב אחרי כל ענף במאגר, וגם gh-pages נכלל בזה — והענף
+          # הזה מכיל רק תוצרי בנייה. לכן כל דחיפה שלו יצרה פריסה אדומה
+          # ומייל "Failed preview deployment", בלי קשר למשחק עצמו.
           #
-          # לא מספיק להגדיר את החסימה ב-eretz-ir-go/vercel.json שבמאגר:
-          # Vercel נכשל על ספריית השורש החסרה עוד לפני שהוא קורא את
-          # הקובץ. לכן הקובץ נוצר כאן, בתוך התוצר עצמו — כך הספרייה
-          # קיימת, ההגדרה נקראת, והפריסה מדולגת מרצון במקום להיכשל.
+          # שני פרויקטים ב-Vercel עוקבים אחרי המאגר, ולכל אחד מהם
+          # ספריית שורש אחרת — ולכן כל אחד קורא vercel.json אחר:
+          #   • eretz-ir-go   → ספריית השורש "eretz-ir-go"
+          #   • guyro76-codex → ספריית השורש של המאגר, framework=Next.js
+          # ההצהרה שבמאגר עצמו לא עוזרת כאן, כי Vercel קורא את הקובץ
+          # מתוך הענף שהוא פורס — וב-gh-pages יש רק את התוצר. לכן שני
+          # העותקים נוצרים כאן, בתוך התוצר.
+          #
+          # בלי העותק בשורש, guyro76-codex ניגש לבנות את gh-pages כפרויקט
+          # Next.js, לא מוצא את "next" ב-package.json, ונכשל ב-
+          # "No Next.js version detected".
+          printf '{ "git": { "deploymentEnabled": { "gh-pages": false } } }\n' \
+            > vercel.json
           mkdir -p eretz-ir-go
           printf '{ "git": { "deploymentEnabled": { "gh-pages": false } } }\n' \
             > eretz-ir-go/vercel.json

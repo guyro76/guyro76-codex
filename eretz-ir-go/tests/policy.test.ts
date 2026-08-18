@@ -148,11 +148,7 @@ describe('מדיניות הפרטיות הציבורית', () => {
 
   /**
    * המאגר הזה הוא monorepo: לצד המשחק יושבים בו פרויקטים אחרים
-   * (organo, paprika) שלכל אחד מהם vercel.json משלו. כל דחיפה לענף
-   * פיתוח של המשחק הפעילה בנייה של אותם פרויקטים — בנייה שנכשלת —
-   * והפיקה מייל "Failed preview deployment" על כל קומיט. השגיאה לא
-   * נגעה למשחק כלל, אבל היא הציפה את תיבת הדואר והסתירה כשלים
-   * אמיתיים.
+   * שלכל אחד מהם vercel.json משלו. רק המשחק אמור להיפרס אוטומטית.
    *
    * Vercel קורא את vercel.json מספריית השורש של הפרויקט, ולכן ההצהרה
    * בשורש המאגר לא חלה על פרויקט שספריית השורש שלו היא תת-ספרייה.
@@ -169,14 +165,35 @@ describe('מדיניות הפרטיות הציבורית', () => {
     expect(paprika.git?.deploymentEnabled).toBe(false);
   });
 
-  it('Vercel לא מנסה לפרוס את ענף התוצרים gh-pages', () => {
+  /**
+   * הענף gh-pages מכיל תוצרי בנייה בלבד, ולכן אין בו Next.js ואין בו
+   * את ספריית השורש של המשחק. **שני** פרויקטים ב-Vercel עוקבים אחרי
+   * המאגר, ולכל אחד ספריית שורש אחרת:
+   *
+   *   eretz-ir-go    → ספריית השורש "eretz-ir-go"
+   *   guyro76-codex  → שורש המאגר, framework=Next.js
+   *
+   * כל אחד מהם קורא vercel.json ממקום אחר, ולכן חסימה אחת לא מספיקה.
+   * כשהייתה רק החסימה המקוננת, guyro76-codex המשיך לבנות את gh-pages
+   * ונכשל ב-"No Next.js version detected" — מייל כושל על כל דחיפה.
+   *
+   * Vercel קורא את הקובץ **מתוך הענף שהוא פורס**, ולכן ההצהרה שבמאגר
+   * לא חלה על gh-pages כלל: שני העותקים חייבים להיכתב לתוך התוצר.
+   */
+  it('אף פרויקט ב-Vercel לא מנסה לפרוס את ענף התוצרים gh-pages', () => {
     expect(vercel.git?.deploymentEnabled?.['gh-pages']).toBe(false);
 
     const workflow = readFileSync(
       resolve(root, '..', '.github/workflows/eretz-ir-go-pages.yml'),
       'utf8'
     );
+    // העותק לפרויקט שספריית השורש שלו היא שורש המאגר
+    expect(workflow).toMatch(/> vercel\.json$/m);
+    // והעותק לפרויקט שספריית השורש שלו היא ספריית המשחק
     expect(workflow).toContain('mkdir -p eretz-ir-go');
-    expect(workflow).toMatch(/deploymentEnabled.*gh-pages.*false/);
+    expect(workflow).toMatch(/> eretz-ir-go\/vercel\.json$/m);
+    // שניהם — ולא אחד שנשאר אחרי ש"פישטו" את השני
+    const blocks = workflow.match(/deploymentEnabled.*gh-pages.*false/g) ?? [];
+    expect(blocks, 'צריך עותק לכל אחת משתי ספריות השורש').toHaveLength(2);
   });
 });
