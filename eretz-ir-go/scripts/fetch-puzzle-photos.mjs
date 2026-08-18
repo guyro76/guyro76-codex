@@ -89,20 +89,29 @@ async function fetchOne(puzzle) {
   const ii = Object.values(info.query.pages)[0]?.imageinfo?.[0];
   const em = ii?.extmetadata ?? {};
 
-  const author = strip(em.Artist?.value) || strip(em.Credit?.value);
   const license = strip(em.LicenseShortName?.value) || strip(em.UsageTerms?.value);
   const pageUrl = ii?.descriptionurl;
-  if (!author || !license || !pageUrl) throw new Error('חסר יוצר או רישיון');
+  if (!license || !pageUrl) throw new Error('חסר רישיון או קישור למקור');
+
+  // ברישיונות ממשפחת CC-BY מתן הקרדיט הוא תנאי של הרישיון עצמו, ולכן
+  // תמונה בלי יוצר נפסלת. ביצירות בנחלת הכלל אין דרישה כזו, ויוצר לא
+  // ידוע הוא מצב לגיטימי — המקור עצמו עדיין מזוהה ומקושר.
+  const publicDomain = /public domain|^cc0|pd-/i.test(license);
+  let author = strip(em.Artist?.value) || strip(em.Credit?.value);
+  if (!author) {
+    if (!publicDomain) throw new Error(`חסר יוצר ברישיון ${license}`);
+    author = 'יוצר לא מצוין';
+  }
 
   const bytes = Buffer.from(
     await fetch(src, { headers: { 'User-Agent': UA } }).then((r) => r.arrayBuffer())
   );
 
   // חיתוך ליחס הלוח לפני ההקטנה: פאזל 3×2 שמקבל תמונה מרובעת נמתח
-  const [w, h] = puzzle.cols === puzzle.rows ? [560, 560] : [660, 440];
+  const [w, h] = puzzle.cols === puzzle.rows ? [500, 500] : [600, 400];
   const webp = await sharp(bytes)
     .resize(w, h, { fit: 'cover', position: 'attention' })
-    .webp({ quality: 76, effort: 6 })
+    .webp({ quality: 70, effort: 6 })
     .toBuffer();
 
   const name = `${puzzle.id}.webp`;
@@ -137,7 +146,7 @@ const body = Object.entries(entries)
   .join(',\n');
 
 const next = current.replace(
-  /export const PUZZLE_PHOTOS: Record<string, PuzzlePhoto> = \{[\s\S]*?\n\};/,
+  /export const PUZZLE_PHOTOS: Record<string, PuzzlePhoto> = \{[\s\S]*?\};/,
   `export const PUZZLE_PHOTOS: Record<string, PuzzlePhoto> = {${body ? `\n${body}\n` : ''}};`
 );
 if (next === current && body) throw new Error('לא נמצאה טבלת PUZZLE_PHOTOS להחלפה');

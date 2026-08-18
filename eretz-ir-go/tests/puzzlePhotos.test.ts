@@ -95,7 +95,21 @@ describe('סקריפט האריזה', () => {
     expect(script, 'שער הכותרת המדויקת').toContain('page.title !== puzzle.lookup');
     expect(script, 'שער דף הפירושונים').toContain('disambiguation');
     expect(script, 'שער המפה/הסמל').toContain('isBadImageKind');
-    expect(script, 'שער היוצר והרישיון').toContain('חסר יוצר או רישיון');
+    expect(script, 'שער הרישיון והקישור').toContain('חסר רישיון או קישור למקור');
+    expect(script, 'שער היוצר ברישיונות CC-BY').toContain('חסר יוצר ברישיון');
+  });
+
+
+  /**
+   * ההקלה היחידה בשער הייחוס: ביצירה בנחלת הכלל אין דרישה חוקית
+   * לקרדיט, ויוצר לא ידוע הוא מצב לגיטימי — המקור עצמו עדיין מזוהה.
+   * ברישיון CC-BY לעומת זאת הקרדיט הוא תנאי של הרישיון, ולכן שם
+   * תמונה בלי יוצר חייבת להיפסל.
+   */
+  it('מקל על יוצר חסר רק בנחלת הכלל, ולא ברישיון CC-BY', () => {
+    expect(script).toContain('publicDomain');
+    const gate = script.slice(script.indexOf('const publicDomain'));
+    expect(gate).toMatch(/if \(!publicDomain\)[\s\S]{0,80}throw/);
   });
 
   it('קורא את רשימת הפאזלים מ-puzzles.ts ולא מחזיק עותק משלו', () => {
