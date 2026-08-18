@@ -41,15 +41,15 @@ export const PUZZLE_PHOTOS: Record<string, PuzzlePhoto> = {
   },
   'dead-sea': {
     file: 'dead-sea.webp',
-    author: "NASA, earthobservatory, https://earthobservatory.nasa.gov",
-    license: "Public domain",
-    pageUrl: "https://commons.wikimedia.org/wiki/File:Dead_sea.jpg"
+    author: "עצמי",
+    license: "CC BY-SA 4.0",
+    pageUrl: "https://commons.wikimedia.org/wiki/File:2%D7%97%D7%95%D7%A3_%D7%99%D7%9D_%D7%94%D7%9E%D7%9C%D7%97.jpg"
   },
   'kinneret': {
     file: 'kinneret.webp',
-    author: "יוצר לא מצוין",
-    license: "Public domain",
-    pageUrl: "https://commons.wikimedia.org/wiki/File:Sea_of_Galilee.jpg"
+    author: "דן סיידה",
+    license: "CC BY-SA 4.0",
+    pageUrl: "https://commons.wikimedia.org/wiki/File:2%D7%94%D7%93%D7%A8%D7%9A_%D7%9C%D7%9E%D7%95%D7%A9%D7%91%D7%AA_%D7%9B%D7%A0%D7%A8%D7%AA_%D7%91%D7%90%D7%95%D7%95%D7%99%D7%A8%D7%94_%D7%A7%D7%99%D7%A6%D7%99%D7%AA.jpg"
   },
   'ramon': {
     file: 'ramon.webp',
