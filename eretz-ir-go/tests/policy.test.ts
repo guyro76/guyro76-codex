@@ -10,6 +10,8 @@ import { describe, expect, it } from 'vitest';
  * המדיניות בלי הסעיפים שנדרשים לאישור בחנות.
  */
 const root = resolve(__dirname, '..');
+/** שורש ה-monorepo, מעל ספריית המשחק */
+const root2 = resolve(__dirname, '..', '..');
 const vercel = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8')) as {
   headers: { source: string; headers: { key: string; value: string }[] }[];
   git?: { deploymentEnabled?: Record<string, boolean> };
@@ -142,6 +144,29 @@ describe('מדיניות הפרטיות הציבורית', () => {
     expect(header('X-Frame-Options')).toBe('SAMEORIGIN');
     expect(netlify).toContain("frame-ancestors 'self'");
     expect(netlify).toContain('X-Frame-Options = "SAMEORIGIN"');
+  });
+
+  /**
+   * המאגר הזה הוא monorepo: לצד המשחק יושבים בו פרויקטים אחרים
+   * (organo, paprika) שלכל אחד מהם vercel.json משלו. כל דחיפה לענף
+   * פיתוח של המשחק הפעילה בנייה של אותם פרויקטים — בנייה שנכשלת —
+   * והפיקה מייל "Failed preview deployment" על כל קומיט. השגיאה לא
+   * נגעה למשחק כלל, אבל היא הציפה את תיבת הדואר והסתירה כשלים
+   * אמיתיים.
+   *
+   * Vercel קורא את vercel.json מספריית השורש של הפרויקט, ולכן ההצהרה
+   * בשורש המאגר לא חלה על פרויקט שספריית השורש שלו היא תת-ספרייה.
+   * הדגל חייב להופיע בשני המקומות.
+   */
+  it('רק המשחק נפרס אוטומטית — שאר הפרויקטים במאגר לא', () => {
+    const root = JSON.parse(readFileSync(resolve(root2, 'vercel.json'), 'utf8')) as {
+      git?: { deploymentEnabled?: unknown };
+    };
+    const paprika = JSON.parse(readFileSync(resolve(root2, 'paprika-app/vercel.json'), 'utf8')) as {
+      git?: { deploymentEnabled?: unknown };
+    };
+    expect(root.git?.deploymentEnabled).toBe(false);
+    expect(paprika.git?.deploymentEnabled).toBe(false);
   });
 
   it('Vercel לא מנסה לפרוס את ענף התוצרים gh-pages', () => {
