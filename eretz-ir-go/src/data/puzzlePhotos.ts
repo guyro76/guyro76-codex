@@ -32,7 +32,56 @@ export interface PuzzlePhoto {
  * ריק עד שהסקריפט רץ בפעם הראשונה. ריק זה מצב תקין ולא שבור: כל
  * הפאזלים פשוט משתמשים בצינור החי ובאיור, בדיוק כמו קודם.
  */
-export const PUZZLE_PHOTOS: Record<string, PuzzlePhoto> = {};
+export const PUZZLE_PHOTOS: Record<string, PuzzlePhoto> = {
+  'masada': {
+    file: 'masada.webp',
+    author: "Godot13",
+    license: "CC BY-SA 4.0",
+    pageUrl: "https://commons.wikimedia.org/wiki/File:Israel-2013-Aerial_21-Masada.jpg"
+  },
+  'dead-sea': {
+    file: 'dead-sea.webp',
+    author: "NASA, earthobservatory, https://earthobservatory.nasa.gov",
+    license: "Public domain",
+    pageUrl: "https://commons.wikimedia.org/wiki/File:Dead_sea.jpg"
+  },
+  'kinneret': {
+    file: 'kinneret.webp',
+    author: "יוצר לא מצוין",
+    license: "Public domain",
+    pageUrl: "https://commons.wikimedia.org/wiki/File:Sea_of_Galilee.jpg"
+  },
+  'ramon': {
+    file: 'ramon.webp',
+    author: "Hagai Agmon-Snir حچاي اچمون-سنير חגי אגמון-שניר",
+    license: "CC BY-SA 4.0",
+    pageUrl: "https://commons.wikimedia.org/wiki/File:MakhteshRamonMar262022_01.jpg"
+  },
+  'ein-gedi': {
+    file: 'ein-gedi.webp',
+    author: "דג קטן",
+    license: "CC BY-SA 4.0",
+    pageUrl: "https://commons.wikimedia.org/wiki/File:%D7%A9%D7%9E%D7%95%D7%A8%D7%AA_%D7%A2%D7%99%D7%9F_%D7%92%D7%93%D7%992.jpg"
+  },
+  'rosh-hanikra': {
+    file: 'rosh-hanikra.webp',
+    author: "בר",
+    license: "CC BY-SA 3.0",
+    pageUrl: "https://commons.wikimedia.org/wiki/File:Mediterranean_Sea_from_Rosh_HaNikra.jpg"
+  },
+  'akko': {
+    file: 'akko.webp',
+    author: "Erez Ashkenazi",
+    license: "CC BY-SA 4.0",
+    pageUrl: "https://commons.wikimedia.org/wiki/File:%D7%A2%D7%9B%D7%95001.jpg"
+  },
+  'caesarea': {
+    file: 'caesarea.webp',
+    author: "Idomeir",
+    license: "CC BY-SA 4.0",
+    pageUrl: "https://commons.wikimedia.org/wiki/File:%D7%A7%D7%99%D7%A1%D7%A8%D7%99%D7%94_%D7%94%D7%A2%D7%AA%D7%99%D7%A7%D7%94.jpg"
+  }
+};
 
 export function puzzlePhoto(puzzleId: string): PuzzlePhoto | undefined {
   return PUZZLE_PHOTOS[puzzleId];
