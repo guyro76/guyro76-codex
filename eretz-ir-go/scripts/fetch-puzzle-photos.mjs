@@ -136,31 +136,55 @@ async function fetchOne(puzzle) {
     .filter((f) => f !== lead);
   const order = [...(lead ? [lead] : []), ...rest];
 
-  let picked = null;
-  let file = null;
-  for (const cand of order) {
-    picked = await candidate(cand);
-    if (picked) {
-      file = cand;
-      break;
-    }
-  }
-  if (!picked) throw new Error(`אף אחת מ-${order.length} התמונות בערך לא עברה את השערים`);
-
-  const bytes = Buffer.from(
-    await fetch(picked.src, { headers: { 'User-Agent': UA } }).then((r) => r.arrayBuffer())
-  );
-
-  // חיתוך ליחס הלוח לפני ההקטנה: פאזל 3×2 שמקבל תמונה מרובעת נמתח
+  /**
+   * בוחרים לפי **כמות הפרטים**, לא לפי הראשונה שעוברת.
+   *
+   * פאזל מתמונה שרובה חול אחיד ושמיים אחידים הוא פאזל שאי אפשר
+   * להרכיב — כל החלקים נראים אותו דבר. אחרי דחיסה ל-WebP בגודל קבוע,
+   * משקל הקובץ הוא בדיוק מדד לכמות הפרטים: תמונת ים המלח השטוחה
+   * שקלה 12KB, בעוד שאר הצילומים שקלו 45KB ומעלה.
+   *
+   * לכן מקודדים כמה מועמדות ולוקחים את העשירה ביותר, ועוצרים מוקדם
+   * ברגע שאחת מהן מספיק טובה — כדי לא למשוך את כל תמונות הערך.
+   */
   const [w, h] = puzzle.cols === puzzle.rows ? [500, 500] : [600, 400];
-  const webp = await sharp(bytes)
-    .resize(w, h, { fit: 'cover', position: 'attention' })
-    .webp({ quality: 70, effort: 6 })
-    .toBuffer();
+  const encode = async (src) => {
+    const bytes = Buffer.from(
+      await fetch(src, { headers: { 'User-Agent': UA } }).then((r) => r.arrayBuffer())
+    );
+    return sharp(bytes)
+      .resize(w, h, { fit: 'cover', position: 'attention' })
+      .webp({ quality: 70, effort: 6 })
+      .toBuffer();
+  };
 
+  const RICH_ENOUGH = 40_000;
+  const MAX_TRIES = 6;
+
+  let best = null;
+  let tried = 0;
+  for (const cand of order) {
+    if (tried >= MAX_TRIES) break;
+    const info = await candidate(cand);
+    if (!info) continue;
+    tried++;
+
+    let webp;
+    try {
+      webp = await encode(info.src);
+    } catch {
+      continue; // קובץ פגום או פורמט שאין לו מקודד — פשוט ממשיכים
+    }
+    if (!best || webp.length > best.webp.length) best = { ...info, webp, source: cand };
+    if (webp.length >= RICH_ENOUGH) break;
+  }
+  if (!best) throw new Error(`אף אחת מ-${order.length} התמונות בערך לא עברה את השערים`);
+
+  const webp = best.webp;
   const name = `${puzzle.id}.webp`;
   await writeFile(resolve(OUT_DIR, name), webp);
-  return { file: name, source: file, ...picked, bytes: webp.length };
+  const { author, license, pageUrl, source } = best;
+  return { file: name, source, author, license, pageUrl, bytes: webp.length };
 }
 
 const puzzles = await readPuzzles();

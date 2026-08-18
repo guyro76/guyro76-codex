@@ -126,6 +126,24 @@ describe('סקריפט האריזה', () => {
     expect(script).toContain('for (const cand of order)');
   });
 
+  /**
+   * פאזל שרובו חול אחיד ושמיים אחידים הוא פאזל שאי אפשר להרכיב.
+   * אחרי דחיסה בגודל קבוע משקל הקובץ הוא מדד לכמות הפרטים, ולכן
+   * הבחירה היא לפי המשקל ולא לפי "הראשונה שעברה".
+   */
+  it('בוחר את התמונה העשירה בפרטים, ולא את הראשונה שעוברת', () => {
+    expect(script).toContain('webp.length > best.webp.length');
+    expect(script).toContain('RICH_ENOUGH');
+  });
+
+  /** בלי תקרה, פאזל בעייתי היה מושך עשרות תמונות בכל ריצה */
+  it('חוסם את מספר המועמדות שנמשכות', () => {
+    const m = script.match(/const MAX_TRIES = (\d+);/);
+    expect(m, 'אין תקרת מועמדות').not.toBeNull();
+    expect(Number(m![1])).toBeLessThanOrEqual(10);
+    expect(script).toContain('tried >= MAX_TRIES');
+  });
+
   it('קורא את רשימת הפאזלים מ-puzzles.ts ולא מחזיק עותק משלו', () => {
     expect(script).toContain("'src/data/puzzles.ts'");
     for (const p of PUZZLES) expect(script).not.toContain(`'${p.name}'`);
