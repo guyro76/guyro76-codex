@@ -41,9 +41,9 @@ export const PUZZLE_PHOTOS: Record<string, PuzzlePhoto> = {
   },
   'dead-sea': {
     file: 'dead-sea.webp',
-    author: "עצמי",
+    author: "xta11",
     license: "CC BY-SA 4.0",
-    pageUrl: "https://commons.wikimedia.org/wiki/File:2%D7%97%D7%95%D7%A3_%D7%99%D7%9D_%D7%94%D7%9E%D7%9C%D7%97.jpg"
+    pageUrl: "https://commons.wikimedia.org/wiki/File:DeadSeaIsrael.jpg"
   },
   'kinneret': {
     file: 'kinneret.webp',
