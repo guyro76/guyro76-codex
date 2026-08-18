@@ -114,3 +114,33 @@ describe('סקריפט האריזה', () => {
     expect(script).toContain("'User-Agent'");
   });
 });
+
+/**
+ * התהליך כותב לענף שממנו הוא רץ, ולכן לולאה כאן היא לולאה אינסופית
+ * שמציפה את ה-CI. ההגנה היחידה עליה היא שרשימת הנתיבים שמפעילה את
+ * התהליך לא חופפת לקבצים שהוא עצמו מקמט. הבדיקה נועלת את זה.
+ */
+describe('תהליך האריזה ב-CI', () => {
+  const workflow = readFileSync(
+    resolve(root, '..', '.github/workflows/eretz-ir-go-puzzle-photos.yml'),
+    'utf8'
+  );
+
+  it('הקבצים שהתהליך כותב אינם מפעילים אותו מחדש', () => {
+    const paths = [...workflow.matchAll(/^\s+- '([^']+)'$/gm)].map((m) => m[1]);
+    const triggers = paths.filter((p) => !p.startsWith('claude/') && p !== 'main');
+    expect(triggers.length, 'לא נמצאה רשימת נתיבים').toBeGreaterThan(0);
+
+    const written = ['eretz-ir-go/public/puzzles', 'eretz-ir-go/src/data/puzzlePhotos.ts'];
+    for (const w of written) {
+      for (const t of triggers) {
+        expect(t.startsWith(w), `הקומיט ל-${w} יפעיל מחדש את ${t} — לולאה`).toBe(false);
+      }
+    }
+  });
+
+  it('התהליך מוודא שהתוצאה מתקמפלת לפני שהיא נדחפת', () => {
+    expect(workflow).toContain('npx tsc -b');
+    expect(workflow).toContain('npm test');
+  });
+});
