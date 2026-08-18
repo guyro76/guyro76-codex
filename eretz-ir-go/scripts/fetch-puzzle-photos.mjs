@@ -58,15 +58,67 @@ const strip = (html) => String(html ?? '').replace(/<[^>]+>/g, '').replace(/\s+/
 
 /** מפה/דגל/סמל — נפוץ מספיק כדי להצדיק שער ייעודי */
 function isBadImageKind(file) {
-  return /(map|karte|flag|coat[_ ]of[_ ]arms|crest|seal|logo|locator|blank|\.svg$)/i.test(file);
+  return /(map|karte|flag|coat[_ ]of[_ ]arms|crest|seal|logo|locator|blank|icon|\.svg$|\.png$)/i.test(file);
+}
+
+/**
+ * צילום לוויין — פסול לפאזל, גם כשהוא צילום אמיתי לגמרי.
+ *
+ * הכנרת וים המלח חזרו בדיוק כך: תצלומי לוויין נכונים ומרשימים, אבל
+ * ילד שמרכיב פאזל אמור לזהות את המקום, ומלמעלה הם נראים כמו מפה —
+ * וזה בדיוק מה שהכלל פוסל.
+ *
+ * שם הקובץ לבדו לא מספיק ("Dead_sea.jpg" הוא תצלום לוויין של נאס"א),
+ * ולכן נבדק גם הייחוס.
+ */
+function isSatellite(file, credit) {
+  const hay = `${file} ${credit}`;
+  return /(satellite|landsat|sentinel|copernicus|modis|earthobservatory|from[_ ]space|astronaut|\bISS\b|\bESA\b|NASA)/i.test(hay);
+}
+
+/** שולף את הייחוס של קובץ בודד, ומחזיר null אם הוא לא עובר את השערים */
+async function candidate(file) {
+  if (isBadImageKind(file)) return null;
+
+  const info = await api({
+    action: 'query',
+    prop: 'imageinfo',
+    iiprop: 'extmetadata|url',
+    iiurlwidth: '1200',
+    titles: `File:${file}`
+  });
+  const ii = Object.values(info.query.pages)[0]?.imageinfo?.[0];
+  if (!ii) return null;
+  const em = ii.extmetadata ?? {};
+
+  const license = strip(em.LicenseShortName?.value) || strip(em.UsageTerms?.value);
+  const pageUrl = ii.descriptionurl;
+  const src = ii.thumburl || ii.url;
+  if (!license || !pageUrl || !src) return null;
+
+  /**
+   * דורשים יוצר בשם — גם ביצירות בנחלת הכלל, שבהן אין חובה חוקית כזו.
+   *
+   * שתי סיבות. הראשונה: קרדיט "יוצר לא מצוין" לא אומר לילד כלום.
+   * השנייה, והמעשית: תצלום של אתר מפורסם בלי שום יוצר הוא כמעט תמיד
+   * צילום מוסדי מלמעלה. כך בדיוק נבחרה הכנרת בריצה הקודמת — תצלום
+   * לוויין ששום דבר בשמו או בייחוסו לא הסגיר. הדרישה הזו פוסלת אותו
+   * בלי צורך לזהות את סוג הצילום, והמעבר על שאר תמונות הערך ממילא
+   * מוצא צילום קרקע במקומו.
+   */
+  const author = strip(em.Artist?.value) || strip(em.Credit?.value);
+  if (!author) return null;
+
+  if (isSatellite(file, `${author} ${strip(em.Credit?.value)}`)) return null;
+  return { author, license, pageUrl, src };
 }
 
 async function fetchOne(puzzle) {
   const q = await api({
     action: 'query',
-    prop: 'pageimages|pageprops',
-    piprop: 'thumbnail|name',
-    pithumbsize: '1200',
+    prop: 'pageimages|pageprops|images',
+    piprop: 'name',
+    imlimit: '60',
     titles: puzzle.lookup
   });
   const page = Object.values(q.query.pages)[0];
@@ -75,36 +127,28 @@ async function fetchOne(puzzle) {
   if (page.title !== puzzle.lookup) throw new Error(`כותרת שונה: ${page.title}`);
   if (page.pageprops?.disambiguation !== undefined) throw new Error('דף פירושונים');
 
-  const file = page.pageimage;
-  const src = page.thumbnail?.source;
-  if (!file || !src) throw new Error('אין תמונה ראשית');
-  if (isBadImageKind(file)) throw new Error(`לא צילום: ${file}`);
+  // התמונה הראשית נבדקת ראשונה, ואם היא נפסלת עוברים על שאר תמונות
+  // הערך. בלי המעבר הזה פאזל שהתמונה הראשית שלו היא לוויין או סמל
+  // נשאר בלי צילום, למרות שבערך עצמו יש צילומים מצוינים.
+  const lead = page.pageimage;
+  const rest = (page.images ?? [])
+    .map((i) => i.title.replace(/^File:|^קובץ:/, ''))
+    .filter((f) => f !== lead);
+  const order = [...(lead ? [lead] : []), ...rest];
 
-  const info = await api({
-    action: 'query',
-    prop: 'imageinfo',
-    iiprop: 'extmetadata|url',
-    titles: `File:${file}`
-  });
-  const ii = Object.values(info.query.pages)[0]?.imageinfo?.[0];
-  const em = ii?.extmetadata ?? {};
-
-  const license = strip(em.LicenseShortName?.value) || strip(em.UsageTerms?.value);
-  const pageUrl = ii?.descriptionurl;
-  if (!license || !pageUrl) throw new Error('חסר רישיון או קישור למקור');
-
-  // ברישיונות ממשפחת CC-BY מתן הקרדיט הוא תנאי של הרישיון עצמו, ולכן
-  // תמונה בלי יוצר נפסלת. ביצירות בנחלת הכלל אין דרישה כזו, ויוצר לא
-  // ידוע הוא מצב לגיטימי — המקור עצמו עדיין מזוהה ומקושר.
-  const publicDomain = /public domain|^cc0|pd-/i.test(license);
-  let author = strip(em.Artist?.value) || strip(em.Credit?.value);
-  if (!author) {
-    if (!publicDomain) throw new Error(`חסר יוצר ברישיון ${license}`);
-    author = 'יוצר לא מצוין';
+  let picked = null;
+  let file = null;
+  for (const cand of order) {
+    picked = await candidate(cand);
+    if (picked) {
+      file = cand;
+      break;
+    }
   }
+  if (!picked) throw new Error(`אף אחת מ-${order.length} התמונות בערך לא עברה את השערים`);
 
   const bytes = Buffer.from(
-    await fetch(src, { headers: { 'User-Agent': UA } }).then((r) => r.arrayBuffer())
+    await fetch(picked.src, { headers: { 'User-Agent': UA } }).then((r) => r.arrayBuffer())
   );
 
   // חיתוך ליחס הלוח לפני ההקטנה: פאזל 3×2 שמקבל תמונה מרובעת נמתח
@@ -116,7 +160,7 @@ async function fetchOne(puzzle) {
 
   const name = `${puzzle.id}.webp`;
   await writeFile(resolve(OUT_DIR, name), webp);
-  return { file: name, author, license, pageUrl, bytes: webp.length };
+  return { file: name, source: file, ...picked, bytes: webp.length };
 }
 
 const puzzles = await readPuzzles();
@@ -129,7 +173,7 @@ for (const puzzle of puzzles) {
   try {
     const got = await fetchOne(puzzle);
     entries[puzzle.id] = got;
-    console.log(`  ✓ ${puzzle.id.padEnd(14)} ${String(got.bytes).padStart(6)}B  ${got.license} · ${got.author}`);
+    console.log(`  ✓ ${puzzle.id.padEnd(14)} ${String(got.bytes).padStart(6)}B  ${got.source}  ${got.license} · ${got.author}`);
   } catch (err) {
     console.log(`  ✗ ${puzzle.id.padEnd(14)} ${err.message} — נשאר עם האיור`);
   }

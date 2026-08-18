@@ -95,21 +95,35 @@ describe('סקריפט האריזה', () => {
     expect(script, 'שער הכותרת המדויקת').toContain('page.title !== puzzle.lookup');
     expect(script, 'שער דף הפירושונים').toContain('disambiguation');
     expect(script, 'שער המפה/הסמל').toContain('isBadImageKind');
-    expect(script, 'שער הרישיון והקישור').toContain('חסר רישיון או קישור למקור');
-    expect(script, 'שער היוצר ברישיונות CC-BY').toContain('חסר יוצר ברישיון');
+    expect(script, 'שער היוצר').toContain('if (!author) return null;');
+    expect(script, 'שער הלוויין').toContain('isSatellite');
   });
 
 
   /**
-   * ההקלה היחידה בשער הייחוס: ביצירה בנחלת הכלל אין דרישה חוקית
-   * לקרדיט, ויוצר לא ידוע הוא מצב לגיטימי — המקור עצמו עדיין מזוהה.
-   * ברישיון CC-BY לעומת זאת הקרדיט הוא תנאי של הרישיון, ולכן שם
-   * תמונה בלי יוצר חייבת להיפסל.
+   * הכנרת וים המלח חזרו בריצה הראשונה כתצלומי לוויין — צילומים
+   * אמיתיים, אבל מלמעלה הם נראים כמו מפה, וזה בדיוק מה שהכלל פוסל.
+   * שם הקובץ לבדו לא הסגיר אותם, ולכן נבדק גם הייחוס.
    */
-  it('מקל על יוצר חסר רק בנחלת הכלל, ולא ברישיון CC-BY', () => {
-    expect(script).toContain('publicDomain');
-    const gate = script.slice(script.indexOf('const publicDomain'));
-    expect(gate).toMatch(/if \(!publicDomain\)[\s\S]{0,80}throw/);
+  it('פוסל צילומי לוויין, ולא פוסל תצלום אווירי רגיל', () => {
+    const re = /function isSatellite[\s\S]*?return (\/.*?\/i)\.test/;
+    const m = script.match(re);
+    expect(m, 'לא נמצא שער הלוויין').not.toBeNull();
+    const pattern = new RegExp(m![1].slice(1, -2), 'i');
+
+    expect(pattern.test('Dead_sea.jpg NASA earthobservatory'), 'לוויין של נאסא').toBe(true);
+    expect(pattern.test('Landsat_view.jpg x'), 'לנדסאט').toBe(true);
+    // מצדה הוא תצלום אווירי — קרוב, מזוהה, וחייב לעבור
+    expect(pattern.test('Israel-2013-Aerial-Masada.jpg Godot13'), 'תצלום אווירי').toBe(false);
+  });
+
+  /**
+   * בלי המעבר על שאר תמונות הערך, פאזל שהתמונה הראשית שלו נפסלת
+   * נשאר בלי צילום — גם כשבערך עצמו יש צילומים מצוינים.
+   */
+  it('עובר על שאר תמונות הערך כשהראשית נפסלת', () => {
+    expect(script).toContain("prop: 'pageimages|pageprops|images'");
+    expect(script).toContain('for (const cand of order)');
   });
 
   it('קורא את רשימת הפאזלים מ-puzzles.ts ולא מחזיק עותק משלו', () => {
