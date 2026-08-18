@@ -52,7 +52,7 @@ export default defineConfig({
         // הוספה מפורשת שלהם גרמה ל-Service Worker להשתלט על הדף
         // באמצע חייו ולחתוך בקשות שכבר היו באוויר.
         cleanupOutdatedCaches: true,
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         navigateFallback: `${base}index.html`,
         runtimeCaching: [
           {

@@ -1,0 +1,55 @@
+name: ארץ-עיר GO! — אריזת צילומי הפאזלים
+
+# הרצה ידנית בלבד. הצילומים משתנים לעיתים נדירות מאוד, ואין שום סיבה
+# לפנות לשרתי ויקימדיה בכל דחיפה. מריצים את זה כשמוסיפים פאזל, או
+# כשצילום בוויקיפדיה הוחלף.
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'הענף שאליו ייכתבו הצילומים'
+        default: claude/eretz-ir-go-game-3kvtm3
+
+permissions:
+  contents: write
+
+jobs:
+  vendor-photos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # sharp נחוץ רק כאן, ולכן הוא לא נכנס ל-devDependencies של המשחק:
+      # אין סיבה שכל מי שמתקין את הפרויקט יוריד ספריית עיבוד תמונה.
+      - name: התקנת sharp
+        working-directory: eretz-ir-go
+        run: npm install --no-save sharp
+
+      - name: משיכת הצילומים מוויקיפדיה
+        working-directory: eretz-ir-go
+        run: node scripts/fetch-puzzle-photos.mjs
+
+      - name: בדיקה שהתוצאה מתקמפלת ועוברת את הבדיקות
+        working-directory: eretz-ir-go
+        run: |
+          npm ci
+          npx tsc -b
+          npm test
+
+      - name: קומיט ודחיפה
+        run: |
+          if git diff --quiet; then
+            echo "::notice::שום צילום לא השתנה — אין מה לדחוף"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add eretz-ir-go/public/puzzles eretz-ir-go/src/data/puzzlePhotos.ts
+          git commit -m "chore(puzzles): אריזת צילומי הפאזלים מוויקיפדיה"
+          git push origin HEAD:${{ inputs.branch }}

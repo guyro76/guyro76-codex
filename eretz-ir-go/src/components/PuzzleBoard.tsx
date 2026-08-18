@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PUZZLE_CATEGORY, lookupTitle, pieceCount, puzzleById } from '../data/puzzles';
 import { cachedAnswerImage, resolveAnswerImage, type ResolvedImage } from '../lib/answerImages';
+import { puzzlePhoto, puzzlePhotoCredit, puzzlePhotoUrl } from '../data/puzzlePhotos';
 import { isComplete } from '../lib/puzzlePieces';
 import PuzzleScene from './PuzzleScene';
 
@@ -12,9 +13,10 @@ import PuzzleScene from './PuzzleScene';
  * כך החלקים מתחברים לתמונה אחת רציפה בלי תפרים ובלי חישובי מיקום —
  * ואיסוף החלק האחרון פשוט מסיר את המכסה האחרון.
  *
- * למה איור ולא צילום: פאזל חייב להסתדר תמיד. איור נמצא בתוך החבילה
- * ולכן עובד גם בלי רשת. הצילום האמיתי מוויקיפדיה מוצג בנוסף,
- * כשהפאזל הושלם וכשיש רשת, עם קרדיט וקישור למקור.
+ * מאיפה מגיעה התמונה, לפי סדר: **צילום ארוז בחבילה** (מיידי, עובד
+ * בלי רשת), אחריו המטמון המקומי, אחריו הצינור החי מוויקיפדיה, ורק
+ * בסוף איור הגיבוי. לכל אחת מהאפשרויות יש קרדיט משלה — אין מצב שבו
+ * מוצג צילום בלי לומר מי צילם ותחת איזה רישיון.
  */
 export default function PuzzleBoard({
   puzzleId,
@@ -49,6 +51,18 @@ export default function PuzzleBoard({
     if (!puzzle) return;
     let live = true;
     setPhoto(null);
+
+    // צילום ארוז — אין מה לחכות ואין למי לפנות
+    const bundled = puzzlePhoto(puzzle.id);
+    if (bundled) {
+      setPhoto({
+        url: puzzlePhotoUrl(bundled),
+        pageUrl: bundled.pageUrl,
+        attribution: puzzlePhotoCredit(bundled)
+      });
+      return;
+    }
+
     void cachedAnswerImage(lookupTitle(puzzle), PUZZLE_CATEGORY).then((hit) => {
       if (!live) return;
       if (hit) {
