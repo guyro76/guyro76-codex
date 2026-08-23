@@ -10,7 +10,9 @@ import type { SubmittedAnswer } from '../types';
 import { getKnowledgeBase } from '../lib/knowledge';
 import AnswerImage from '../components/AnswerImage';
 import { announce } from '../lib/announce';
-import { grantRoundPiece } from '../lib/puzzleStore';
+import { awardCompletionBonus, grantRoundPiece } from '../lib/puzzleStore';
+import { COMPLETION_BONUS } from '../lib/puzzlePieces';
+import { notifyWalletChanged } from '../components/WalletChip';
 import { puzzleById } from '../data/puzzles';
 import type { Award } from '../lib/puzzlePieces';
 import PuzzleBoard from '../components/PuzzleBoard';
@@ -54,16 +56,31 @@ export default function RoundResults() {
   useEffect(() => {
     if (!activeProfile?.id || grantedRef.current) return;
     grantedRef.current = true;
-    void grantRoundPiece(activeProfile.id).then((result) => {
+    // נשמר בקבוע: בתוך ה-callback TypeScript כבר לא זוכר שהבדיקה נעשתה
+    const profileId = activeProfile.id;
+    void grantRoundPiece(profileId).then((result) => {
       if (!result) return;
       const { award: won, owned } = result;
       setAward(won);
       setOwned(owned);
       const puzzle = puzzleById(won.puzzleId);
-      if (won.completed) sfx.fanfare();
+      if (won.completed) {
+        sfx.fanfare();
+        /**
+         * הפרס על השלמה ניתן גם כאן וגם בקנייה, כי אפשר להשלים לוח
+         * בשתי הדרכים — וילד שהשלים לוח בזכות משחק לא אמור לקבל פחות
+         * ממי שקנה את החלק האחרון.
+         *
+         * ההענקה נפרדת מהענקת החלק בכוונה: החלק כבר נשמר, ותקלה
+         * בארנק לא אמורה לבטל אותו.
+         */
+        void awardCompletionBonus(profileId).then((next) => {
+          if (next) notifyWalletChanged();
+        });
+      }
       announce(
         won.completed
-          ? `השלמת את הפאזל ${puzzle?.name ?? ''}!`
+          ? `השלמת את הפאזל ${puzzle?.name ?? ''}! בונוס ${COMPLETION_BONUS.bills} שטרות`
           : `קיבלת חלק פאזל: ${puzzle?.name ?? ''}, ${won.have} מתוך ${won.total}`
       );
     });

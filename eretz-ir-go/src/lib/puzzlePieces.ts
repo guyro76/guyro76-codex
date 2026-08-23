@@ -119,3 +119,41 @@ export function prune(progress: PuzzleProgress): PuzzleProgress {
   }
   return clean;
 }
+
+/**
+ * מחיר חלק חסר.
+ *
+ * ילד שנתקע עם חלק אחד חסר ולא מצליח להשלים אותו נוטש את הלוח. אפשר
+ * לקנות אותו במטבע המשחק — אותו ארנק של קניית תשובה, ובלי שום קשר
+ * לכסף אמיתי.
+ *
+ * המחיר גבוה מזה של תשובה בכוונה: קנייה היא מוצא אחרון ולא הדרך
+ * הרגילה להשלים לוח. הדרך הרגילה היא לשחק עוד סיבוב.
+ */
+export const PIECE_PRICE = { bills: 8, gems: 4 } as const;
+
+/**
+ * הפרס על השלמת לוח.
+ *
+ * זה הרגע שהתמונה נחשפת במלואה, והוא צריך להרגיש כמו הישג — לא כמו
+ * עוד סיבוב. לכן הפרס גדול משמעותית מרווח של סיבוב רגיל.
+ */
+export const COMPLETION_BONUS = { bills: 25, gems: 3 } as const;
+
+/** אילו חלקים עדיין חסרים בלוח */
+export function missingPieces(puzzle: Puzzle, owned: number[] | undefined): number[] {
+  const have = new Set(owned ?? []);
+  const out: number[] = [];
+  for (let i = 0; i < pieceCount(puzzle); i++) if (!have.has(i)) out.push(i);
+  return out;
+}
+
+/**
+ * כמה חלקים נשארו עד שהלוח נחשף.
+ *
+ * מוצג לילד כדי שהמרחק מהיעד יהיה תמיד ברור — "עוד 2" מניע להמשיך,
+ * "5 מתוך 9" פחות.
+ */
+export function remaining(puzzle: Puzzle, owned: number[] | undefined): number {
+  return Math.max(0, pieceCount(puzzle) - (owned?.length ?? 0));
+}

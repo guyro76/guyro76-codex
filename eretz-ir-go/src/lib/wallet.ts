@@ -20,9 +20,27 @@ export const EMPTY_WALLET: Wallet = { bills: 0, gems: 0 };
 /** מחיר קניית תשובה — אפשר לשלם בשטרות או ביהלומים */
 export const ANSWER_PRICE: Wallet = { bills: 3, gems: 2 };
 
-/** הארנק נשמר לכל פרופיל בנפרד */
-function key(profileId: number): string {
+/**
+ * הארנק נשמר לכל פרופיל בנפרד.
+ *
+ * מיוצא כי `puzzleStore` קורא וכותב את אותה רשומה בתוך טרנזקציה
+ * משלו. עותק שני של המפתח כאן ושם היה נשבר בשקט ביום שבו אחד מהם
+ * ישתנה — ואז הילד היה רואה ארנק ריק ואוסף שנעלם.
+ */
+export function walletKey(profileId: number): string {
   return `wallet-${profileId}`;
+}
+const key = walletKey;
+
+/** פענוח רשומת ארנק גולמית, עם הגנה על ערכים שליליים ועל JSON פגום */
+export function parseWallet(raw: string | undefined): Wallet {
+  if (!raw) return { ...EMPTY_WALLET };
+  try {
+    const parsed = JSON.parse(raw) as Partial<Wallet>;
+    return { bills: Math.max(0, parsed.bills ?? 0), gems: Math.max(0, parsed.gems ?? 0) };
+  } catch {
+    return { ...EMPTY_WALLET };
+  }
 }
 
 export async function getWallet(profileId: number): Promise<Wallet> {

@@ -3,26 +3,40 @@ import { PUZZLE_CATEGORY, lookupTitle, pieceCount, puzzleById } from '../data/pu
 import { cachedAnswerImage, resolveAnswerImage, type ResolvedImage } from '../lib/answerImages';
 import { puzzlePhoto, puzzlePhotoCredit, puzzlePhotoUrl } from '../data/puzzlePhotos';
 import { isComplete } from '../lib/puzzlePieces';
+import { jigsawCut } from '../lib/jigsaw';
 import PuzzleScene from './PuzzleScene';
 
 /**
  * לוח פאזל אחד.
  *
- * המבנה: **שכבה אחת של תמונה, ומעליה מכסים**. האיור נמצא מתחת ללוח
- * במלואו, והמשבצות שעדיין לא נאספו הן מכסים אטומים שמונחים עליו.
- * כך החלקים מתחברים לתמונה אחת רציפה בלי תפרים ובלי חישובי מיקום —
- * ואיסוף החלק האחרון פשוט מסיר את המכסה האחרון.
+ * המבנה: **שכבה אחת של תמונה, ומעליה מכסים**. התמונה נמצאת מתחת
+ * ללוח במלואה, והחלקים שעדיין לא נאספו הם מכסים אטומים שמונחים
+ * עליה. כך החלקים מתחברים לתמונה אחת רציפה בלי תפרים ובלי חישובי
+ * מיקום — ואיסוף החלק האחרון פשוט מסיר את המכסה האחרון.
+ *
+ * המכסים הם **צורות פאזל אמיתיות** ולא ריבועים: `jigsawCut` גוזר את
+ * הלוח פעם אחת לגבולות עם פינים ושקעים, ושני שכנים מקבלים את אותו
+ * גבול — אחד הפוך — כך שהם מתחברים בלי רווח. הגזירה נגזרת ממזהה
+ * הפאזל, ולכן היא קבועה: ילד שחוזר מחר רואה את אותם חלקים.
  *
  * מאיפה מגיעה התמונה, לפי סדר: **צילום ארוז בחבילה** (מיידי, עובד
  * בלי רשת), אחריו המטמון המקומי, אחריו הצינור החי מוויקיפדיה, ורק
  * בסוף איור הגיבוי. לכל אחת מהאפשרויות יש קרדיט משלה — אין מצב שבו
  * מוצג צילום בלי לומר מי צילם ותחת איזה רישיון.
  */
+/**
+ * מערכת הצירים של הגזירה. שרירותית לגמרי — ה-SVG נמתח על התמונה —
+ * אבל חייבת להיות קבועה כדי שהמסלולים יהיו זהים בכל מסך.
+ */
+const CUT_W = 600;
+const CUT_H = 400;
+
 export default function PuzzleBoard({
   puzzleId,
   owned,
   highlight,
-  compact = false
+  compact = false,
+  onBuy
 }: {
   puzzleId: string;
   owned: number[];
@@ -30,6 +44,8 @@ export default function PuzzleBoard({
   highlight?: number;
   /** גרסה מקוצרת למסך תוצאות הסיבוב */
   compact?: boolean;
+  /** אם ניתן — לחיצה על חלק חסר מציעה לקנות אותו */
+  onBuy?: (piece: number) => void;
 }) {
   const puzzle = puzzleById(puzzleId);
   const [photo, setPhoto] = useState<ResolvedImage | null>(null);
@@ -84,6 +100,13 @@ export default function PuzzleBoard({
   const total = pieceCount(puzzle);
   const have = owned.length;
   const ownedSet = new Set(owned);
+  const cut = jigsawCut({
+    cols: puzzle.cols,
+    rows: puzzle.rows,
+    width: CUT_W,
+    height: CUT_H,
+    seed: puzzle.id
+  });
 
   return (
     <div className={`puzzle${compact ? ' compact' : ''}`}>
@@ -116,22 +139,42 @@ export default function PuzzleBoard({
           )}
         </div>
 
-        <div
+        {/* המכסים כשכבת SVG אחת מעל התמונה. viewBox קבוע ו-preserveAspectRatio
+            כבוי — כך הגזירה נמתחת בדיוק על התמונה בכל רוחב מסך. */}
+        <svg
           className="puzzle-cover"
-          style={{ gridTemplateColumns: `repeat(${puzzle.cols}, 1fr)` }}
+          viewBox={`0 0 ${CUT_W} ${CUT_H}`}
+          preserveAspectRatio="none"
+          aria-hidden
         >
           {Array.from({ length: total }, (_, i) => {
             const has = ownedSet.has(i);
-            return (
-              <div
+            if (has && i !== highlight) return null;
+            const path = cut.piecePath(i);
+            return has ? (
+              // חלק שהתקבל ממש עכשיו — מהבהב רגע ואז נעלם
+              <path key={i} d={path} className="puzzle-piece just-won" />
+            ) : onBuy ? (
+              <path
                 key={i}
-                className={`puzzle-cell${has ? ' has' : ''}${i === highlight ? ' just-won' : ''}`}
-              >
-                {!has && <span aria-hidden>❔</span>}
-              </div>
+                d={path}
+                className="puzzle-piece missing buyable"
+                role="button"
+                tabIndex={0}
+                aria-label={`קנו את החלק החסר מספר ${i + 1}`}
+                onClick={() => onBuy(i)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onBuy(i);
+                  }
+                }}
+              />
+            ) : (
+              <path key={i} d={path} className="puzzle-piece missing" />
             );
           })}
-        </div>
+        </svg>
 
         {/* קרדיט קטן בתחתית התמונה עצמה: רצועה כהה וכתב בהיר ומודגש,
             כך שהוא נקרא מעל כל צילום ולא נעלם על שמיים בהירים */}

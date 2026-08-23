@@ -1118,40 +1118,47 @@ body::after {
      גם כשיחס הצילום שונה מיחס הלוח */
   object-fit: cover;
 }
-/* המשבצות הן מכסים מעל האיור: מה שנאסף נעלם, ומה שלא — מסתיר */
+/* המכסים הם שכבת SVG אחת מעל התמונה. כל חלק שלא נאסף הוא צורת פאזל
+   אטומה; חלק שנאסף פשוט לא מצויר, והתמונה מתגלה בצורתו המדויקת. */
 .puzzle-cover {
   position: absolute;
   inset: 0;
-  display: grid;
-  gap: 0;
-}
-.puzzle-cell {
-  display: grid;
-  place-items: center;
-  font-size: 1.1rem;
-  font-weight: 800;
-  /* מכסה: כהה ואטום, עם סימן שאלה בהיר וקריא עליו — כלל הברזל */
-  color: rgba(255, 255, 255, 0.92);
-  background: #1a1030;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-  transition: opacity 260ms ease;
-}
-.puzzle-cell.has {
-  background: transparent;
-  box-shadow: none;
-  opacity: 0;
+  width: 100%;
+  height: 100%;
+  /* ה-SVG עצמו שקוף ללחיצות; רק החלקים החסרים הניתנים לקנייה תופסים */
   pointer-events: none;
 }
-/* החלק שנפל עכשיו — מסגרת זהב קצרה שאומרת "זה החדש" */
-.puzzle-cell.just-won {
-  box-shadow: inset 0 0 0 3px var(--gold);
-  animation: puzzle-pop 900ms ease-out 2;
+.puzzle-piece.missing {
+  /* מכסה כהה ואטום מעל התמונה — ניגודיות מלאה מול הצילום שמתחת */
+  fill: #1a1030;
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1.5;
+}
+/* חלק שאפשר לקנות: רמז זהוב עדין, ומגיב למגע ולמקלדת */
+.puzzle-piece.buyable {
+  pointer-events: auto;
+  cursor: pointer;
+  transition: fill 160ms ease, stroke 160ms ease;
+}
+.puzzle-piece.buyable:hover,
+.puzzle-piece.buyable:focus-visible {
+  fill: #2a1c4a;
+  stroke: var(--gold);
+  stroke-width: 2.5;
+  outline: none;
+}
+/* החלק שנפל עכשיו — הבזק זהב בצורת החלק, ואז הוא נעלם ומגלה תמונה */
+.puzzle-piece.just-won {
+  fill: rgba(255, 215, 92, 0.55);
+  stroke: var(--gold);
+  stroke-width: 3;
+  animation: puzzle-pop 900ms ease-out 2 forwards;
 }
 @keyframes puzzle-pop {
-  0% { box-shadow: inset 0 0 0 3px var(--gold), inset 0 0 40px rgba(255, 215, 92, 0.85); }
-  100% { box-shadow: inset 0 0 0 3px var(--gold); }
+  0% { fill: rgba(255, 215, 92, 0.85); }
+  100% { fill: rgba(255, 215, 92, 0); }
 }
-.reduced-motion .puzzle-cell.just-won { animation: none; }
+.reduced-motion .puzzle-piece.just-won { animation: none; fill: rgba(255, 215, 92, 0); }
 
 .puzzle-count {
   font-size: 0.92rem;
@@ -1196,4 +1203,4 @@ body::after {
 .puzzle-award { border-color: var(--gold); }
 /* בתוצאות הסיבוב הפאזל מלווה את הניקוד ולא דוחף אותו מתחת לקצה המסך */
 .puzzle.compact { width: 132px; flex: 0 0 auto; }
-.puzzle.compact .puzzle-cell { font-size: 0.75rem; }
+.puzzle.compact .puzzle-piece { stroke-width: 2; }

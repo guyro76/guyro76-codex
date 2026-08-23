@@ -3,14 +3,19 @@ import { PUZZLES, lookupTitle, pieceCount, puzzleById } from '../src/data/puzzle
 import { isBadImageKind } from '../src/lib/imageVerify';
 import { hasScene } from '../src/components/PuzzleScene';
 import {
+  COMPLETION_BONUS,
+  PIECE_PRICE,
   applyAward,
   awardPiece,
   isComplete,
+  missingPieces,
   openPuzzles,
   prune,
+  remaining,
   summary,
   type PuzzleProgress
 } from '../src/lib/puzzlePieces';
+import { ANSWER_PRICE } from '../src/lib/wallet';
 
 /** גנרטור דטרמיניסטי לפי seed */
 const rngFor = (seed: number) => {
@@ -222,5 +227,50 @@ describe('שמירה ושחזור', () => {
     expect(stats.completed).toBe(1);
     expect(stats.pieces).toBe(pieceCount(puzzle) + 2);
     expect(stats.total).toBe(PUZZLES.length);
+  });
+});
+
+
+describe('חלק חסר — קנייה ופרס', () => {
+  const puzzle = PUZZLES[0];
+  const total = pieceCount(puzzle);
+
+  it('מזהה בדיוק אילו חלקים חסרים', () => {
+    expect(missingPieces(puzzle, [0, 2])).toEqual(
+      Array.from({ length: total }, (_, i) => i).filter((i) => i !== 0 && i !== 2)
+    );
+    expect(missingPieces(puzzle, undefined)).toHaveLength(total);
+    expect(missingPieces(puzzle, Array.from({ length: total }, (_, i) => i))).toEqual([]);
+  });
+
+  it('סופר כמה נשאר, ולא יורד מתחת לאפס', () => {
+    expect(remaining(puzzle, [])).toBe(total);
+    expect(remaining(puzzle, [0, 1])).toBe(total - 2);
+    // נתון פגום עם יותר חלקים מהלוח לא אמור להחזיר מספר שלילי
+    expect(remaining(puzzle, Array.from({ length: total + 3 }, (_, i) => i))).toBe(0);
+  });
+
+  /**
+   * קנייה היא מוצא אחרון ולא הדרך הרגילה להשלים לוח. אם חלק יעלה
+   * כמו תשובה, משתלם יותר לקנות את כל הלוח מאשר לשחק — וזה הופך את
+   * הפאזל מפרס לחנות.
+   */
+  it('חלק יקר משמעותית מתשובה', () => {
+    expect(PIECE_PRICE.bills).toBeGreaterThan(ANSWER_PRICE.bills);
+    expect(PIECE_PRICE.gems).toBeGreaterThan(ANSWER_PRICE.gems);
+  });
+
+  /**
+   * הפרס על השלמה חייב להיות גדול מהמחיר של חלק בודד, אחרת אין שום
+   * טעם לקנות את החלק האחרון — והפיצ'ר מת בדיוק ברגע שהוא הכי נחוץ.
+   */
+  it('הפרס על השלמה גדול ממחיר החלק האחרון', () => {
+    expect(COMPLETION_BONUS.bills).toBeGreaterThan(PIECE_PRICE.bills);
+    expect(COMPLETION_BONUS.gems).toBeGreaterThan(0);
+  });
+
+  it('הפרס על השלמה מורגש לעומת רווח של סיבוב רגיל', () => {
+    // סיבוב מושלם של 5 קטגוריות מכניס 7 שטרות; השלמת לוח צריכה להיות יותר
+    expect(COMPLETION_BONUS.bills).toBeGreaterThan(7);
   });
 });
