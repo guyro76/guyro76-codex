@@ -15,14 +15,15 @@
  * מוגדרים `on delete cascade`, והזמנות שהמשתמש יצר עוברות ל-null
  * ולא נמחקות, כדי שהיסטוריית ההזמנות של אחרים לא תישבר.
  *
- * פריסה:
+ * פריסה: נפרסה לפרויקט ppucndvetyzteyhwrarh עם verify_jwt פעיל.
  *   supabase functions deploy delete-account
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  // הלקוח שולח גם apikey; בלעדיו הדפדפן חוסם את הבקשה ב-preflight
+  'Access-Control-Allow-Headers': 'authorization, content-type, apikey',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
