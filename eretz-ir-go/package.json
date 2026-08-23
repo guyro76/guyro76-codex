@@ -12,9 +12,13 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "icons": "node scripts/gen-icons.mjs",
-    "seed:report": "node scripts/seed-report.mjs"
+    "seed:report": "node scripts/seed-report.mjs",
+    "native:sync": "npm run build && npx cap sync",
+    "native:open": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
     "@supabase/supabase-js": "^2.112.3",
     "dexie": "^4.0.11",
     "react": "^19.2.0",
@@ -22,6 +26,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
     "@playwright/test": "^1.62.0",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.0",
