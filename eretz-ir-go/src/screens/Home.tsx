@@ -12,7 +12,7 @@ import { db } from '../db/db';
 import { computeStreak, streakLabel, type StreakInfo } from '../lib/streak';
 
 export default function Home() {
-  const { activeProfile, navigate } = useApp();
+  const { activeProfile, navigate, setEditingProfile } = useApp();
   // פאנל הניהול הוסתר קודם מאחורי כפתור רפאים זעיר בתחתית המסך, ואחריו
   // עוד מסך — מנהל שנכנס פשוט לא מצא אותו. עכשיו הוא כרטיס משלו.
   const isAdmin = useAuth((s) => s.account?.role === 'admin');
@@ -38,7 +38,9 @@ export default function Home() {
   }, [profileId]);
 
   if (!activeProfile) {
-    navigate('profiles');
+    // אין שחקן — חוזרים לפתיחה, שם הוא נבחר או נוצר. הפניה ל-home
+    // הייתה לולאה אינסופית: זה המסך הזה עצמו.
+    navigate('splash');
     return null;
   }
 
@@ -69,8 +71,14 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <button className="btn-small btn-ghost" onClick={() => navigate('profiles')}>
-          החלפת שחקן
+        <button
+          className="btn-small btn-ghost"
+          onClick={() => {
+            setEditingProfile(activeProfile.id ?? null);
+            navigate('profile-edit');
+          }}
+        >
+          ✏️ הפרופיל שלי
         </button>
       </div>
 

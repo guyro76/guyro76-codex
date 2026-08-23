@@ -53,9 +53,7 @@ test('📱 מסלול מלא במגע: כל כפתור בדרך למשחק מג�
   await page.goto('./');
 
   await page.getByRole('button', { name: /בואו נשחק/ }).tap();
-  await expect(page.getByRole('heading', { name: 'מי משחק היום?' })).toBeVisible();
 
-  await page.getByRole('heading', { name: 'אורי' }).tap();
   await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
 
   await page.getByRole('button', { name: /משחק חדש/ }).tap();
@@ -87,7 +85,6 @@ test('📱 גם כשכתיבת IndexedDB תקועה — המשחק מתחיל', 
   await page.goto('./');
 
   await page.getByRole('button', { name: /בואו נשחק/ }).tap();
-  await page.getByRole('heading', { name: 'אורי' }).tap();
   await page.getByRole('button', { name: /משחק חדש/ }).tap();
   await expect(page.getByRole('heading', { name: 'איך משחקים היום?' })).toBeVisible();
 
@@ -112,7 +109,6 @@ test('📱 מסכי התפריט נפתחים וחוזרים במגע', async ({
 
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).tap();
-  await page.getByRole('heading', { name: 'אורי' }).tap();
 
   for (const [label, heading] of [
     [/אוסף המילים שלי/, /אוסף המילים שלי/],
@@ -133,7 +129,6 @@ test('📱 מסכי התפריט נפתחים וחוזרים במגע', async ({
 test('📱 כפתור ההמשך נשאר על המסך גם ברשימת מצבים ארוכה', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).tap();
-  await page.getByRole('heading', { name: 'אורי' }).tap();
   await page.getByRole('button', { name: /משחק חדש/ }).tap();
 
   // בלי לגלול בכלל — קלף המצב הראשון חייב להיות גלוי בתוך חלון התצוגה,

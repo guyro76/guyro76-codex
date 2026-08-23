@@ -134,7 +134,7 @@ export default function Blitz() {
   };
 
   if (!activeProfile) {
-    navigate('profiles');
+    navigate('home');
     return null;
   }
 

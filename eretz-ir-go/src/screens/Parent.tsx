@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import TopBar from '../components/TopBar';
+import Avatar from '../components/Avatar';
 import { db, getSetting, setSetting } from '../db/db';
+import { useApp } from '../store/appStore';
+import { otherProfiles } from '../lib/activePlayer';
 import { normalizeHebrew } from '../lib/hebrew';
 import { CATEGORIES } from '../data/categories';
 
@@ -13,6 +16,8 @@ interface Appeal {
 
 /** מצב הורה: מוגן ב-PIN, אישור ערעורים וניהול המאגר המקומי */
 export default function Parent() {
+  const { profiles, activeProfile, selectProfile, navigate } = useApp();
+  const others = otherProfiles(profiles, activeProfile);
   const [pinSet, setPinSet] = useState<string | null>(null);
   const [entered, setEntered] = useState('');
   const [unlocked, setUnlocked] = useState(false);
@@ -136,6 +141,40 @@ export default function Parent() {
         ))}
         {userWords.length === 0 && <p className="dim">עדיין לא נוספו מילים חדשות למאגר</p>}
       </div>
+
+      {/* מכשיר שהיה בשימוש לפני שהיו חשבונות יכול להחזיק עוד פרופילים.
+          הם לא נמחקו — התקדמות של ילד שנעלמת היא אובדן נתונים ולא
+          ניקיון — אבל הם גם לא מוצגים לילד שנכנס. כאן, מאחורי ה-PIN,
+          הורה יכול להעביר את המכשיר לשחקן אחר. */}
+      {others.length > 0 && (
+        <div className="card" style={{ marginTop: 14 }}>
+          <strong>👥 שחקנים נוספים במכשיר</strong>
+          <p className="dim" style={{ margin: '4px 0 10px', fontSize: '0.88rem' }}>
+            נשמרו מהתקופה שבה כמה ילדים שיחקו על אותו מכשיר. הילד שמשחק לא רואה
+            אותם — רק אתם, כאן.
+          </p>
+          {others.map((p) => (
+            <div key={p.id} className="row spread" style={{ marginBottom: 8 }}>
+              <span className="row" style={{ gap: 8 }}>
+                <Avatar avatar={p.avatar} photo={p.photo} name={p.name} size={28} />
+                <strong>{p.name}</strong>
+                <span className="dim" style={{ fontSize: '0.85rem' }}>
+                  {p.gamesPlayed} משחקים
+                </span>
+              </span>
+              <button
+                className="btn-small"
+                onClick={() => {
+                  selectProfile(p);
+                  navigate('home');
+                }}
+              >
+                החלפה
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="card" style={{ marginTop: 14 }}>
         <strong>🔑 החלפת קוד PIN</strong>

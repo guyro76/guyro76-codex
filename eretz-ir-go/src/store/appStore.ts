@@ -4,7 +4,6 @@ import { db, ensureDefaultProfiles } from '../db/db';
 
 export type Screen =
   | 'splash'
-  | 'profiles'
   | 'profile-edit'
   | 'home'
   | 'mode-select'

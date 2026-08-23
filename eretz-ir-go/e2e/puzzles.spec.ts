@@ -23,7 +23,6 @@ async function playRound(page: Page, fresh = true) {
   if (fresh) {
     await page.goto('./');
     await page.getByRole('button', { name: /בואו נשחק/ }).click();
-    await page.getByRole('heading', { name: 'אורי' }).click();
   }
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   await page.locator('select').first().selectOption('1');

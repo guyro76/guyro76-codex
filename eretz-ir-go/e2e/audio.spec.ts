@@ -63,7 +63,6 @@ test('🔊 האודיו נפתח כבר בלחיצה הראשונה ומנגן �
   expect(after.contexts).toBe(1);
   expect(after.state).toBe('running');
 
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   // ההגדרות נמצאות מעל רשימת המצבים, כי לחיצה על מצב מתקדמת מיד
   await page.locator('select').first().selectOption('1');

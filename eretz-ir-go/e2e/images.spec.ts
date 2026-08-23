@@ -72,7 +72,6 @@ test('🖼️ תשובה שאושרה מציגה תמונה אמיתית עם ק
 
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   // ההגדרות נמצאות מעל רשימת המצבים, כי לחיצה על מצב מתקדמת מיד
   await page.locator('select').first().selectOption('1');

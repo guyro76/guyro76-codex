@@ -16,7 +16,6 @@ test.beforeEach(async ({ page }) => {
 async function toRound(page: import('@playwright/test').Page, choice: boolean) {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   await page.locator('select').first().selectOption('1');
   const toggle = page.getByRole('switch', { name: 'מצב בחירה' });

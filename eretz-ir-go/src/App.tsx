@@ -5,7 +5,6 @@ import { applySkin, savedSkinId } from './data/skins';
 import { loadContentIntoKnowledge, maybeAutoUpdate } from './lib/contentPack';
 import { loadUserKnowledge } from './lib/knowledge';
 import Splash from './screens/Splash';
-import Profiles from './screens/Profiles';
 import ProfileEdit from './screens/ProfileEdit';
 import Home from './screens/Home';
 import ModeSelect from './screens/ModeSelect';
@@ -123,7 +122,6 @@ export default function App() {
 
   const screens: Record<string, React.ReactElement> = {
     splash: <Splash />,
-    profiles: <Profiles />,
     'profile-edit': <ProfileEdit />,
     home: <Home />,
     'mode-select': <ModeSelect />,

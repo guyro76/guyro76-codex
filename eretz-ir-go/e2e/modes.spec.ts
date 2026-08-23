@@ -12,11 +12,10 @@ function trackConsoleErrors(page: Page): string[] {
   return errors;
 }
 
-/** פתיחה → פרופיל אורי → מסך בחירת המצב */
+/** פתיחה → ישר לאזור האישי → מסך בחירת המצב */
 async function gotoModeSelect(page: Page) {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   await expect(page.getByRole('heading', { name: 'איך משחקים היום?' })).toBeVisible();
 }

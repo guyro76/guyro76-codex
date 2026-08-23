@@ -4,6 +4,7 @@ import { useAuth } from '../store/authStore';
 import { tipOfTheDay } from '../data/tips';
 import { todayKey } from '../lib/daily';
 import { identityFrom, photoAsDataUri } from '../lib/identity';
+import { resolveActivePlayer } from '../lib/activePlayer';
 import { db, getSetting, setSetting } from '../db/db';
 import { getInstallEvent, onInstallChange, runInstallPrompt } from '../lib/installPrompt';
 import Avatar from '../components/Avatar';
@@ -22,6 +23,25 @@ export default function Splash() {
   useEffect(() => onInstallChange(() => setInstallEvent(getInstallEvent())), []);
 
   const [photo, setPhoto] = useState<string | null>(null);
+
+  const selectProfile = useApp((s) => s.selectProfile);
+
+  /**
+   * כניסה למשחק: פותרים את השחקן היחיד ונכנסים לאזור האישי.
+   *
+   * אין כאן מסך "מי משחק היום?" — חשבון אחד הוא שחקן אחד, ומי שנכנס
+   * לא אמור לראות ילדים אחרים שמשחקים על אותו מכשיר.
+   */
+  const enter = useCallback(async () => {
+    const player = await resolveActivePlayer(
+      identity ? { firstName: identity.firstName, photo } : null
+    );
+    if (!player) return; // אחסון חסום — נשארים במסך ולא קופצים לריק
+    selectProfile(player);
+    await loadProfiles();
+    navigate('home');
+  }, [identity, photo, selectProfile, loadProfiles, navigate]);
+
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -98,8 +118,8 @@ export default function Splash() {
     await db.profiles.add(profile as Profile);
     await loadProfiles();
     setCreating(false);
-    navigate('profiles');
-  }, [identity, photo, navigate, loadProfiles]);
+    await enter();
+  }, [identity, photo, loadProfiles, enter]);
 
   return (
     <div className="screen center" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -153,7 +173,7 @@ export default function Splash() {
       <button
         className="btn-primary"
         style={{ fontSize: '1.3rem', padding: '14px 44px' }}
-        onClick={() => navigate('profiles')}
+        onClick={() => void enter()}
       >
         בואו נשחק! 🚀
       </button>

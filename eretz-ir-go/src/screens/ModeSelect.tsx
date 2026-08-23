@@ -55,7 +55,8 @@ export async function loadModeDraft(): Promise<ModeDraft> {
 }
 
 export default function ModeSelect() {
-  const { navigate, profiles, activeProfile, secondProfile, selectSecondProfile } = useApp();
+  const { navigate, profiles, activeProfile, secondProfile, selectSecondProfile, setEditingProfile } =
+    useApp();
   const startMatch = useGame((g) => g.startMatch);
   const [mode, setMode] = useState<GameMode>('solo');
   const [rounds, setRounds] = useState(3);
@@ -175,7 +176,25 @@ export default function ModeSelect() {
                 <Avatar avatar={p.avatar} photo={p.photo} name={p.name} size={24} /> {p.name}
               </button>
             ))}
-            {others.length === 0 && <p className="dim">אין עוד פרופילים — אפשר ליצור אחד במסך הפרופילים</p>}
+            {others.length === 0 && (
+              <div>
+                <p className="dim" style={{ margin: '0 0 8px' }}>
+                  אין עוד שחקנים במכשיר. משחק על מכשיר אחד דורש שני שחקנים מקומיים.
+                </p>
+                {/* מסך הפרופילים הוסר (חשבון אחד = שחקן אחד), ולכן ההפניה
+                    היא ישירות ליצירת שחקן — אחרת משחק זוגי על מכשיר אחד
+                    היה נשאר בלי שום דרך להתחיל. */}
+                <button
+                  className="btn-small"
+                  onClick={() => {
+                    setEditingProfile(null);
+                    navigate('profile-edit');
+                  }}
+                >
+                  ➕ להוסיף שחקן למכשיר
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

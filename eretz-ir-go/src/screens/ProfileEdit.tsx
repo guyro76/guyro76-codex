@@ -74,12 +74,12 @@ export default function ProfileEdit() {
     }
     await loadProfiles();
     await refreshActive();
-    navigate('profiles');
+    navigate('home');
   };
 
   return (
     <div className="screen">
-      <TopBar title={editingProfileId != null ? 'עריכת פרופיל' : 'פרופיל חדש'} back="profiles" />
+      <TopBar title={editingProfileId != null ? 'עריכת פרופיל' : 'פרופיל חדש'} back="home" />
 
       <div className="card grid" style={{ gap: 16 }}>
         <label>
@@ -206,7 +206,7 @@ export default function ProfileEdit() {
                     onClick={() =>
                       void deleteProfileData(editingProfileId).then(async () => {
                         await loadProfiles();
-                        navigate('profiles');
+                        navigate('home');
                       })
                     }
                   >

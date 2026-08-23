@@ -35,11 +35,10 @@ test('מסלול מלא: פרופיל, קטגוריות, אות, מילוי, נ�
   await expect(page.getByRole('heading', { name: 'ארץ-עיר GO!' })).toBeVisible();
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
 
-  // --- בחירת פרופיל: אורי ומאיה קיימות כברירת מחדל ---
-  await expect(page.getByRole('heading', { name: 'מי משחק היום?' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'אורי' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'מאיה' })).toBeVisible();
-  await page.getByRole('heading', { name: 'אורי' }).click();
+  // --- אין מסך "מי משחק היום?": חשבון אחד הוא שחקן אחד, ונכנסים
+  // ישר לאזור האישי. מסך שמציג ילדים אחרים הוא בדיוק מה שהוסר. ---
+  await expect(page.getByRole('heading', { name: 'מי משחק היום?' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
 
   // --- מסך הבית: פנייה אישית ---
   await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
@@ -126,7 +125,6 @@ test('תשובה שגויה נצבעת אדום ולא מקבלת ניקוד, נ
   const errors = trackConsoleErrors(page);
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   // ההגדרות נמצאות מעל רשימת המצבים, כי לחיצה על מצב מתקדמת מיד
   await page.locator('select').first().selectOption('1');

@@ -71,7 +71,6 @@ test('🛡️ המשחק עובד תחת ה-CSP האמיתי — מסלול מל
   await expect(page.getByRole('button', { name: /בואו נשחק/ })).toBeVisible();
 
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   // לחיצה על מצב מתקדמת ישירות למסך הקטגוריות
   await page.getByRole('button', { name: /משחק יחיד/ }).click();
@@ -105,7 +104,6 @@ test('📄 עמוד מדיניות הפרטיות נגיש ומוגש כעמוד
 test('♿ הכרזות לקורא מסך: האות שהוגרלה מוקראת', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   // לחיצה על מצב מתקדמת ישירות למסך הקטגוריות
   await page.getByRole('button', { name: /משחק יחיד/ }).click();

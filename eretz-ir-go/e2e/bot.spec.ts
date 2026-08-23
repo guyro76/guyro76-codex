@@ -20,7 +20,6 @@ test('🤖 סיבוב מלא נגד ארצי מסתיים בטבלה עם שני
 
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   await page.locator('select').first().selectOption('1');
 
@@ -54,7 +53,6 @@ test('🤖 סיבוב מלא נגד ארצי מסתיים בטבלה עם שני
 test('🤖 ארצי עונה תשובות אמיתיות באות שהוגרלה', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   await page.locator('select').first().selectOption('1');
   await page.getByRole('button', { name: /נגד ארצי/ }).click();

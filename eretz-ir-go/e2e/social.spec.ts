@@ -24,7 +24,6 @@ function watchErrors(page: Page): string[] {
 async function playShortGame(page: Page): Promise<void> {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   // ההגדרות נמצאות מעל רשימת המצבים, כי לחיצה על מצב מתקדמת מיד
   await page.locator('select').first().selectOption('1');
@@ -119,7 +118,6 @@ test('📲 הצעת ההתקנה נסגרת ולא חוזרת', async ({ page })
 
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
 
   const card = page.locator('.install-card');
   await expect(card).toBeVisible();
@@ -130,7 +128,6 @@ test('📲 הצעת ההתקנה נסגרת ולא חוזרת', async ({ page })
   // הרענון מחזיר למסך הפתיחה, ולכן חוזרים למסך הבית באותו מסלול.
   await page.reload();
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
   await expect(page.locator('.install-card')).toHaveCount(0);
 });
@@ -141,7 +138,6 @@ test('🎯 לחיצה על מצב משחק מתקדמת מיד למסך הבא',
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
 
   await page.getByRole('button', { name: /משחק יחיד/ }).first().click();
@@ -152,7 +148,6 @@ test('🎴 קלף מסתורי מדלג ישר להגרלת האות', async ({ 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
 
   await page.getByRole('button', { name: /קלף מסתורי/ }).first().click();
@@ -163,7 +158,6 @@ test('🤝 מצב שדורש יריב לא מדלג קדימה', async ({ page }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
 
   const duel = page.getByRole('button', { name: /דו-קרב/ }).first();

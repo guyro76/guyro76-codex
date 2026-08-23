@@ -82,7 +82,6 @@ test('🧭 כל מסכי התפריט נפתחים, בלי שגיאות ובלי
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   problems.push(...(await auditButtons(page, 'פרופילים')));
 
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
   problems.push(...(await auditButtons(page, 'בית')));
 
@@ -115,7 +114,6 @@ test('🧭 כל מצבי המשחק נבחרים ומגיעים למסך הקט�
 
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
 
   const modes = [/משחק יחיד/, /ראש בראש/, /שרשרת/, /קלף מסתורי/];
   for (const mode of modes) {
@@ -152,7 +150,6 @@ test('🌐 גם כשוויקיפדיה לא עונה בכלל — הסיבוב �
 
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   // לחיצה על מצב מתקדמת ישירות למסך הקטגוריות
   await page.getByRole('button', { name: /משחק יחיד/ }).click();

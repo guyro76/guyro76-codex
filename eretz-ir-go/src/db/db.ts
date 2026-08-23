@@ -100,10 +100,30 @@ class EretzIrDB extends Dexie {
 export const db = new EretzIrDB();
 
 /** פרופילי ברירת המחדל — ניתנים לעריכה ולמחיקה */
+/**
+ * שחקן ברירת מחדל למכשיר שאין בו אף אחד.
+ *
+ * פעם נוצרו כאן שני שחקנים, אורי ומאיה, כי המשחק היה למכשיר משפחתי
+ * אחד עם מסך "מי משחק היום?". מאז יש חשבונות, וחשבון אחד הוא שחקן
+ * אחד — ושני שחקני ברירת מחדל הפכו לבאג ממש: משתמש חדש שנכנס
+ * בחשבון שלו היה מקבל את הפרופיל של אורי, כי הוא פשוט היה הראשון
+ * ברשימה.
+ *
+ * לכן נוצר **שחקן אחד בלבד**, ורק כשאין אף אחד. במכשיר עם חשבון
+ * הפרופיל נוצר ממילא מהשם והתמונה של החשבון (`resolveActivePlayer`),
+ * וזה כאן משרת את המצב שבו אין חשבון כלל — פיתוח מקומי, או בנייה
+ * בלי Supabase.
+ *
+ * מכשיר שכבר יש בו פרופילים לא נוגעים בו: התנאי הוא "אין אף אחד".
+ */
 export async function ensureDefaultProfiles(): Promise<void> {
   const count = await db.profiles.count();
   if (count > 0) return;
-  const base: Omit<Profile, 'id' | 'name' | 'avatar' | 'color' | 'gender'> = {
+  await db.profiles.add({
+    name: 'אורי',
+    avatar: '🦄',
+    color: '#33d6c3',
+    gender: 'other',
     age: 11,
     difficulty: 'medium',
     soundOn: true,
@@ -120,11 +140,7 @@ export async function ensureDefaultProfiles(): Promise<void> {
     lastDailyDate: '',
     achievements: [],
     createdAt: new Date().toISOString()
-  };
-  await db.profiles.bulkAdd([
-    { ...base, name: 'אורי', avatar: '🦄', color: '#33d6c3', gender: 'girl' },
-    { ...base, name: 'מאיה', avatar: '🐬', color: '#ff5c9d', gender: 'girl' }
-  ]);
+  } as Profile);
 }
 
 /**

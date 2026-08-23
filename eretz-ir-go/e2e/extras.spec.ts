@@ -15,7 +15,6 @@ test.beforeEach(async ({ page }) => {
 async function startGame(page: Page, rounds: string) {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   // ההגדרות נמצאות מעל רשימת המצבים, כי לחיצה על מצב מתקדמת מיד
   await page.locator('select').first().selectOption(rounds);
@@ -37,7 +36,6 @@ test('©️ הקרדיט מופיע בתחתית כל מסך', async ({ page }) 
 
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await expect(credit).toBeVisible();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await expect(credit).toBeVisible();
   await page.getByRole('button', { name: /הגדרות/ }).click();
   await expect(credit).toBeVisible();
@@ -72,7 +70,6 @@ test('⏱️ אפשר לשחק על זמן וגם בלי ספירת זמן, ול
   // ההגדרות נמצאות מעל רשימת המצבים; בוחרים אותן לפני שלוחצים על מצב
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   await page.locator('select').first().selectOption('1');
   await page.getByRole('button', { name: /בלי ספירת זמן/ }).click();
@@ -173,7 +170,6 @@ test('🎲 אפשר לכבות את משימות הביניים בהגדרות',
 
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /הגדרות/ }).click();
   await page.getByLabel(/משימות ביניים/).uncheck();
   await page.getByRole('button', { name: /חזרה|←/ }).first().click();

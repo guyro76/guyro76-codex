@@ -143,7 +143,7 @@ export default function Chain() {
   };
 
   if (!activeProfile) {
-    navigate('profiles');
+    navigate('home');
     return null;
   }
 

@@ -17,7 +17,6 @@ const readBg = () => getComputedStyle(document.documentElement).getPropertyValue
 test('🎨 החלפת ערכה צובעת את כל הדף ושורדת רענון', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).first().click();
   await page.getByRole('button', { name: /הגדרות/ }).first().click();
 
   const bgOf = () => page.evaluate(readBg);
@@ -39,7 +38,6 @@ test('🎨 כל הערכות נבחרות בפועל ואף אחת לא מפיל
 
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).first().click();
   await page.getByRole('button', { name: /הגדרות/ }).first().click();
 
   const options = page.getByRole('radio');

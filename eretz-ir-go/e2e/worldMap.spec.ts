@@ -47,7 +47,6 @@ test('🗺️ מדינה שנענתה נכון נדלקת על המפה באלב
 
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
   await page.locator('select').first().selectOption('1');
   await page.getByRole('button', { name: /משחק יחיד/ }).click();
@@ -91,7 +90,6 @@ test('🗺️ מדינה שנענתה נכון נדלקת על המפה באלב
 test('🗺️ בלי מקומות באוסף אין מפה ריקה שתופסת מסך', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
-  await page.getByRole('heading', { name: 'אורי' }).click();
   await page.getByRole('button', { name: /אוסף המילים/ }).click();
   await expect(page.locator('.world-map')).toHaveCount(0);
 });

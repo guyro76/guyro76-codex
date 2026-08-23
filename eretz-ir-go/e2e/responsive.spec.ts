@@ -57,7 +57,6 @@ for (const size of SIZES) {
     await page.getByRole('button', { name: /בואו נשחק/ }).click();
     await check('פרופילים');
 
-    await page.getByRole('heading', { name: 'אורי' }).click();
     await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
     await check('בית');
 
