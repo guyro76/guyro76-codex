@@ -1,5 +1,6 @@
 import { useApp } from '../store/appStore';
 import Avatar from '../components/Avatar';
+import Podium from '../components/Podium';
 import { useGame } from '../store/gameStore';
 import { useEffect, useState } from 'react';
 import { celebrate } from '../lib/persona';
@@ -82,11 +83,19 @@ export default function MatchResults() {
         )
       )}
 
+      {/* פודיום רק כשבאמת יש דירוג.
+          בשיתוף פעולה אין מקומות, במשחק יחיד אין מול מי, ובתיקו אין
+          מקום ראשון — פודיום שמציב אחד מהשניים על המדרגה הגבוהה
+          סותר את "שניכם אלופים" שמופיע ממש מעליו. */}
+      {!game.coop && !isTie && sorted.length > 1 && <Podium players={sorted} />}
+
       <div className="card" style={{ maxWidth: 420, margin: '14px auto' }}>
+        {/* מי שלא עלה לפודיום עדיין מופיע כאן — משחק של חמישה שחקנים
+            לא אמור להעלים את הרביעי והחמישי */}
         {sorted.map((p, i) => (
           <div key={i} className="row spread" style={{ padding: '8px 0', borderBottom: '1px solid var(--border-glass)' }}>
             <span>
-              {i === 0 && !game.coop ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '·'}{' '}
+              {i === 0 && !game.coop ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}{' '}
               <Avatar avatar={p.profile.avatar} photo={p.profile.photo} name={p.profile.name} size={26} /> {p.profile.name}
             </span>
             <strong className="gold">{p.totalScore}</strong>

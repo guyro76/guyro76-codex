@@ -1204,3 +1204,87 @@ body::after {
 /* בתוצאות הסיבוב הפאזל מלווה את הניקוד ולא דוחף אותו מתחת לקצה המסך */
 .puzzle.compact { width: 132px; flex: 0 0 auto; }
 .puzzle.compact .puzzle-piece { stroke-width: 2; }
+
+/* ===== פודיום הזוכים ===== */
+/* שלוש מדרגות בשורה אחת, מיושרות לתחתית — כך ההבדל בגובה קורא כמו
+   פודיום ולא כמו שלושה כרטיסים. הסדר (שני·ראשון·שלישי) נקבע בקוד
+   ולא ב-CSS, כדי שלא ישתנה עם כיוון הדף. */
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  margin: 16px auto 0;
+  max-width: 420px;
+  /* direction מפורש: הסדר כאן הוא סדר אולימפי ולא סדר קריאה */
+  direction: ltr;
+}
+.podium-slot {
+  flex: 1 1 0;
+  max-width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* התוכן עצמו נשאר בעברית ובכיוון הנכון */
+  direction: rtl;
+}
+.podium-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-bottom: 6px;
+  text-align: center;
+}
+.podium-medal { font-size: 1.5rem; line-height: 1; }
+.podium-avatar {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 3px solid var(--border-glass);
+  background: var(--bg-deep);
+  overflow: hidden;
+}
+.place-1 .podium-avatar { width: 68px; height: 68px; border-color: var(--gold); }
+.podium-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text);
+  /* שם ארוך לא דוחף את המדרגות ולא נשבר לשתי שורות */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.podium-score {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+/* המדרגה: רקע בהיר, ולכן המספר עליה כהה ומודגש — כלל הברזל */
+.podium-step {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: 10px 10px 0 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #241243;
+  background: linear-gradient(180deg, #cbb7ff, #9a7bff);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+.place-1 .podium-step {
+  height: 96px;
+  background: linear-gradient(180deg, #ffe27a, #f0b429);
+}
+.place-2 .podium-step { height: 68px; }
+.place-3 .podium-step { height: 48px; }
+
+@media (max-width: 380px) {
+  .podium { gap: 6px; }
+  .podium-name { font-size: 0.85rem; }
+  .place-1 .podium-avatar { width: 56px; height: 56px; }
+  .podium-avatar { width: 46px; height: 46px; }
+}
