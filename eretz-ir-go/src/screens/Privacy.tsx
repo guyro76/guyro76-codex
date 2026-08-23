@@ -42,9 +42,16 @@ export default function Privacy() {
         <p className="dim">
           הנוסח המלא, כולל פרטיות ילדים (COPPA/GDPR-K) ודרך יצירת קשר, נמצא בעמוד קבוע וציבורי.
         </p>
-        <a href="/privacy.html" target="_blank" rel="noopener noreferrer">
-          <button>פתיחת מדיניות הפרטיות ↗</button>
-        </a>
+        <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+          <a href="/privacy.html" target="_blank" rel="noopener noreferrer">
+            <button>פתיחת מדיניות הפרטיות ↗</button>
+          </a>
+          {/* החנויות דורשות שתנאי השימוש יהיו נגישים מתוך האפליקציה,
+              ולא רק מדף החנות */}
+          <a href="/terms.html" target="_blank" rel="noopener noreferrer">
+            <button>תנאי שימוש ↗</button>
+          </a>
+        </div>
       </div>
 
       <div className="card" style={{ marginTop: 14, borderColor: 'var(--bad)' }}>

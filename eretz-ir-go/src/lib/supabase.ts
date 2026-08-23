@@ -109,3 +109,49 @@ export async function availableProviders(): Promise<{ google: boolean; apple: bo
 export function redirectTo(): string {
   return `${window.location.origin}${window.location.pathname}`;
 }
+
+/**
+ * תוצאת מחיקת חשבון.
+ *
+ * `local-only` הוא מצב תקין ולא שגיאה: בבנייה בלי Supabase אין חשבון
+ * בשרת מלכתחילה, ויש רק מידע במכשיר. המסך צריך לומר את זה לילד
+ * ולהורה בבירור, ולא להציג כשל.
+ */
+export type DeleteAccountResult = 'deleted' | 'local-only' | 'not-signed-in' | 'failed';
+
+/**
+ * מוחק את חשבון המשתמש בשרת.
+ *
+ * הקריאה עוברת דרך פונקציית Edge, כי מחיקת משתמש דורשת מפתח service
+ * role — ומפתח כזה לא ייכנס לקוד צד לקוח לעולם. מכאן נשלח רק ה-JWT
+ * של המשתמש עצמו, והשרת גוזר ממנו את הזהות. לכן אי אפשר למחוק דרך
+ * הקריאה הזו חשבון של מישהו אחר, גם לא בכוונה.
+ *
+ * המחיקה המקומית **לא** נעשית כאן. היא נפרדת בכוונה: מחיקת המכשיר
+ * צריכה לקרות גם כשאין חשבון בכלל, וגם אם השרת נכשל.
+ */
+export async function deleteAccount(): Promise<DeleteAccountResult> {
+  if (!authConfigured()) return 'local-only';
+  const sb = supabase();
+  if (!sb) return 'local-only';
+
+  const { data } = await sb.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return 'not-signed-in';
+
+  try {
+    const res = await fetch(`${url}/functions/v1/delete-account`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: anonKey!,
+        'Content-Type': 'application/json'
+      },
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!res.ok) return 'failed';
+    return 'deleted';
+  } catch {
+    return 'failed';
+  }
+}

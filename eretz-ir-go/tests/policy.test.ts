@@ -18,6 +18,7 @@ const vercel = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8')) as
 };
 const netlify = readFileSync(resolve(root, 'netlify.toml'), 'utf8');
 const policy = readFileSync(resolve(root, 'public/privacy.html'), 'utf8');
+const terms = readFileSync(resolve(root, 'public/terms.html'), 'utf8');
 
 const globalHeaders = vercel.headers.find((h) => h.source === '/(.*)')!;
 const header = (key: string) => globalHeaders.headers.find((h) => h.key === key)?.value ?? '';
@@ -65,6 +66,40 @@ describe('כותרות אבטחה', () => {
 
   it('Netlify ו-Vercel מגדירים את אותו CSP — שלא יהיה הבדל בין הפלטפורמות', () => {
     expect(netlify).toContain(header('Content-Security-Policy'));
+  });
+});
+
+/**
+ * מנוי בתשלום מחייב תנאי שימוש שמסדירים חידוש אוטומטי, ביטול והחזרים.
+ * אלה סעיפים שהחנויות בודקות בפועל, ובלעדיהם ההגשה נדחית.
+ */
+describe('תנאי השימוש', () => {
+  it('בעברית ובכיוון RTL', () => {
+    expect(terms).toContain('lang="he"');
+    expect(terms).toContain('dir="rtl"');
+  });
+
+  it('מסדירים את כל מה שנוגע למנוי', () => {
+    for (const section of ['חידוש אוטומטי', 'ביטול', 'החזרים', 'שינוי מחיר']) {
+      expect(terms, `חסר בתנאים: ${section}`).toContain(section);
+    }
+  });
+
+  it('אומרים במפורש שאפשר למחוק את החשבון מתוך האפליקציה', () => {
+    expect(terms).toMatch(/למחוק את החשבון מתוך האפליקציה/);
+  });
+
+  it('מפנים לביטול דרך החנות ולא אלינו', () => {
+    expect(terms).toMatch(/הגדרות החנות/);
+  });
+
+  it('מציינים דרך יצירת קשר', () => {
+    expect(terms).toMatch(/mailto:[^"]+@[^"]+/);
+  });
+
+  it('נגישים מתוך האפליקציה ולא רק מדף החנות', () => {
+    const screen = readFileSync(resolve(root, 'src/screens/Privacy.tsx'), 'utf8');
+    expect(screen).toContain('/terms.html');
   });
 });
 

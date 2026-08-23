@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import TopBar from '../components/TopBar';
+import Modal from '../components/Modal';
 import { useApp } from '../store/appStore';
 import { useAuth, useCapabilities } from '../store/authStore';
 import { TIERS, TIER_ORDER, remainingLabel } from '../lib/tiers';
+import { deleteAccount, type DeleteAccountResult } from '../lib/supabase';
+import { db } from '../db/db';
 
 /**
  * החשבון של המשתמש: מי הוא, איזו חבילה יש לו, ומימוש קוד הזמנה.
@@ -14,6 +17,41 @@ export default function Account() {
   const signOut = useAuth((s) => s.signOut);
   const redeemCode = useAuth((s) => s.redeemCode);
   const caps = useCapabilities();
+  const loadProfiles = useApp((s) => s.loadProfiles);
+  const [erasing, setErasing] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [wiping, setWiping] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  /** המילה שצריך להקליד כדי לאשר — מגן מפני לחיצה אחת בטעות */
+  const CONFIRM_WORD = 'מחיקה';
+
+  /**
+   * מחיקת חשבון: קודם השרת, אחר כך המכשיר.
+   *
+   * הסדר חשוב. אם מוחקים קודם את המכשיר ואז השרת נכשל, נשאר חשבון
+   * בשרת בלי שום דרך להגיע אליו — בדיוק ההפך ממה שהמחיקה הבטיחה.
+   * לכן כשהשרת נכשל עוצרים ואומרים זאת, בלי למחוק כלום.
+   */
+  const eraseEverything = async () => {
+    if (wiping) return;
+    setWiping(true);
+    setFailed(false);
+
+    const result: DeleteAccountResult = await deleteAccount();
+    if (result === 'failed') {
+      setWiping(false);
+      setFailed(true);
+      return;
+    }
+
+    // המידע במכשיר נמחק בכל מקרה — גם בבנייה בלי חשבונות כלל
+    await db.delete();
+    await db.open();
+    await loadProfiles();
+    await signOut();
+    navigate('splash');
+  };
 
   const [code, setCode] = useState('');
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -137,6 +175,74 @@ export default function Account() {
       >
         יציאה מהחשבון
       </button>
+
+      {/* מחיקת חשבון מתוך האפליקציה — דרישה של אפל מרגע שיש הרשמה,
+          וגם ההבטחה שמדיניות הפרטיות כבר נותנת. */}
+      <div className="card" style={{ marginTop: 18 }}>
+        <h3 style={{ marginTop: 0 }}>🗑️ מחיקת החשבון</h3>
+        <p className="dim" style={{ margin: '4px 0 10px', fontSize: '0.9rem' }}>
+          מוחק את החשבון מהשרת ואת כל המידע מהמכשיר — פרופילים, אוסף המילים,
+          פאזלים והישגים. אי אפשר לשחזר.
+        </p>
+        <button className="btn-coral" onClick={() => setErasing(true)}>
+          מחיקת החשבון והמידע…
+        </button>
+      </div>
+
+      {erasing && (
+        <Modal
+          onClose={() => {
+            setErasing(false);
+            setConfirmText('');
+            setFailed(false);
+          }}
+        >
+          <div>
+            <h2 style={{ marginTop: 0 }}>🗑️ למחוק את החשבון?</h2>
+            <p>
+              כל מה שנצבר יימחק לתמיד: הפרופילים, אוסף המילים, הפאזלים, ההישגים והארנק.
+              <strong> אין דרך לשחזר.</strong>
+            </p>
+            <p className="dim" style={{ fontSize: '0.9rem' }}>
+              כדי לאשר, הקלידו <strong>{CONFIRM_WORD}</strong>:
+            </p>
+            <input
+              type="text"
+              aria-label={`הקלידו ${CONFIRM_WORD} כדי לאשר מחיקה`}
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              style={{ width: '100%' }}
+            />
+
+            {failed && (
+              <p className="bad" role="status" style={{ fontSize: '0.9rem' }}>
+                לא הצלחנו למחוק את החשבון בשרת, ולכן לא נמחק כלום. נסו שוב כשיש חיבור לאינטרנט.
+              </p>
+            )}
+
+            <div className="row" style={{ justifyContent: 'center', gap: 8, marginTop: 12 }}>
+              <button
+                className="btn-coral"
+                disabled={wiping || confirmText.trim() !== CONFIRM_WORD}
+                onClick={() => void eraseEverything()}
+              >
+                {wiping ? 'מוחקים…' : 'כן, למחוק הכול'}
+              </button>
+              <button
+                className="btn-primary"
+                disabled={wiping}
+                onClick={() => {
+                  setErasing(false);
+                  setConfirmText('');
+                  setFailed(false);
+                }}
+              >
+                ביטול
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
