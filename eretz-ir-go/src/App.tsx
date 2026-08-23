@@ -34,6 +34,7 @@ import Globe from './components/Globe';
 import Admin from './screens/Admin';
 import Account from './screens/Account';
 import { authAvailable, useAuth } from './store/authStore';
+import { listenForAuthDeepLink } from './lib/supabase';
 import MultiplayerInfo from './screens/MultiplayerInfo';
 import Blitz from './screens/Blitz';
 import Chain from './screens/Chain';
@@ -100,6 +101,21 @@ export default function App() {
   useEffect(() => {
     void initAuth();
   }, [initAuth]);
+
+  /**
+   * חזרה מהתחברות באפליקציה עטופה.
+   *
+   * בדפדפן supabase-js קורא את הכתובת לבד. באפליקציה הספק מחזיר
+   * לסכמת ה-URL של האפליקציה, והיא מתעוררת עם כתובת שאיש לא קורא —
+   * בלי המאזין הזה ההתחברות פשוט "לא קורית". בדפדפן זה לא עושה כלום.
+   */
+  useEffect(() => {
+    let stop: (() => void) | undefined;
+    void listenForAuthDeepLink().then((off) => {
+      stop = off;
+    });
+    return () => stop?.();
+  }, []);
 
   useEffect(() => {
     // התיקון רץ לפני הטעינה, כדי שפרופיל פגום לא יוצג אפילו לרגע
