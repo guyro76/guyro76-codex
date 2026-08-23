@@ -180,6 +180,34 @@ describe('מדיניות הפרטיות הציבורית', () => {
    * Vercel קורא את הקובץ **מתוך הענף שהוא פורס**, ולכן ההצהרה שבמאגר
    * לא חלה על gh-pages כלל: שני העותקים חייבים להיכתב לתוך התוצר.
    */
+  /**
+   * מקור ה-Pages של מאגר הוא או ענף או Actions — לא שניהם. היו כאן
+   * שתי הדרכים במקביל, והמאגר מוגדר לשרת מהענף, ולכן ג'וב הפרסום
+   * הרשמי נדחה על ידי סביבת github-pages לפני שהתחיל: הוא נכשל תוך
+   * שתי שניות בלי אף צעד, ב-12 מתוך 12 הריצות על main, וייצר מייל
+   * כישלון על כל דחיפה.
+   *
+   * נשארה הדרך שעובדת. הבדיקה מוודאת שלא יחזירו את השנייה לצידה בלי
+   * לשנות קודם את מקור ה-Pages בהגדרות המאגר.
+   */
+  it('יש דרך אחת בלבד לפרוס ל-Pages — הענף, ולא גם Actions', () => {
+    const workflow = readFileSync(
+      resolve(root, '..', '.github/workflows/eretz-ir-go-pages.yml'),
+      'utf8'
+    );
+    expect(workflow, 'הדרך שעובדת').toContain('gh-pages');
+    // רק צעדים אמיתיים נחשבים. ההערות מסבירות דווקא *למה* הדרך השנייה
+    // הוסרה, ואסור שהן ייחשבו כאילו היא חזרה.
+    const uses = [...workflow.matchAll(/^\s*-?\s*uses:\s*(\S+)/gm)].map((m) => m[1]);
+    for (const action of ['deploy-pages', 'upload-pages-artifact', 'configure-pages']) {
+      expect(
+        uses.some((u) => u.includes(action)),
+        `${action} מחזיר את הכפילות שנכשלה`
+      ).toBe(false);
+    }
+    expect(uses.length, 'לא נמצאו צעדי uses — הביטוי כנראה לא תפס').toBeGreaterThan(0);
+  });
+
   it('אף פרויקט ב-Vercel לא מנסה לפרוס את ענף התוצרים gh-pages', () => {
     expect(vercel.git?.deploymentEnabled?.['gh-pages']).toBe(false);
 

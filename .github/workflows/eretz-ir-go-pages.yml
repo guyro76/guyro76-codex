@@ -6,15 +6,24 @@ on:
     paths: ['eretz-ir-go/**', '.github/workflows/eretz-ir-go-pages.yml']
   workflow_dispatch:
 
-# פורסים בשתי דרכים במקביל כדי שהאתר יעלה בלי שאף אחד ייגע בהגדרות:
-# 1. Pages רשמי דרך Actions — `configure-pages` עם enablement מדליק את
-#    Pages בעצמו אם הוא כבוי, ומעביר אותו למצב Actions.
-# 2. דחיפה לענף gh-pages — רשת ביטחון אם המאגר מוגדר לשרת מענף.
-# ה-GITHUB_TOKEN המובנה מספיק לשתיהן — אין צורך בשום סוד חיצוני.
+# פורסים ל-Pages בדרך אחת בלבד: דחיפה לענף gh-pages.
+#
+# קודם היו כאן שתי דרכים במקביל — גם דחיפה לענף וגם פרסום רשמי דרך
+# `deploy-pages`. הן סותרות זו את זו: מקור ה-Pages של המאגר יכול להיות
+# או ענף או Actions, לא שניהם. המאגר מוגדר לשרת מהענף, ולכן ג'וב
+# הפרסום נדחה על ידי סביבת github-pages עוד לפני שהתחיל — הוא נכשל
+# תוך שתי שניות, בלי אף צעד, ב-**כל** ריצה על main (12 מתוך 12), וייצר
+# מייל כישלון על כל דחיפה.
+#
+# `configure-pages` עם enablement לא הציל: הוא מדליק את Pages כשהוא
+# כבוי, אבל לא מחליף מקור שכבר מוגדר — ולכן הוא הצליח בשקט בזמן
+# שהפרסום המשיך להיכשל.
+#
+# הדרך שנשארה היא זו שעובדת בפועל. מי שירצה דווקא את המסלול הרשמי
+# צריך קודם לשנות ב-Settings ← Pages את המקור ל-GitHub Actions.
+# ה-GITHUB_TOKEN המובנה מספיק — אין צורך בשום סוד חיצוני.
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: eretz-ir-go-pages
@@ -80,20 +89,6 @@ jobs:
             --prod \
             --message "ארץ-עיר GO! מ-${GITHUB_SHA::7}"
 
-      # חייב לרוץ בג'וב בלי `environment`: שער הסביבה נבדק לפני שהג'וב
-      # מתחיל, ולכן אי אפשר ליצור את הסביבה מתוך ג'וב שכפוף לה.
-      - name: הפעלת GitHub Pages והעברתו למצב Actions
-        if: github.ref == 'refs/heads/main'
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
-      - name: אריזת האתר כארטיפקט של Pages
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: eretz-ir-go/dist
-
       - name: פריסה לענף gh-pages
         # רק מהענף הראשי של הפיתוח — כדי שענפי ניסוי לא ידרסו את האתר החי
         if: github.ref == 'refs/heads/claude/eretz-ir-go-game-3kvtm3' || github.ref == 'refs/heads/main'
@@ -129,17 +124,3 @@ jobs:
             "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" \
             gh-pages
           echo "::notice::הענף gh-pages עודכן. כדי שהאתר יהיה חי צריך שמקור Pages יהיה הענף gh-pages (Settings ← Pages ← Deploy from a branch), או שהעבודה תמוזג ל-main."
-
-  # פרסום רשמי ל-Pages. סביבת github-pages מוגבלת לענף הראשי, ולכן זה
-  # רץ רק מ-main — הרצה מענף פיתוח נדחית מיד על ידי GitHub.
-  publish-pages:
-    needs: build-and-deploy
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.pages-deploy.outputs.page_url }}
-    steps:
-      - name: פרסום ל-GitHub Pages
-        id: pages-deploy
-        uses: actions/deploy-pages@v4
