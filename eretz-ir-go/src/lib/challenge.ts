@@ -1,5 +1,6 @@
 import { GAME_LETTERS } from './hebrew';
 import { GAME_URL } from './share';
+import { isKnownPhrase, phraseLabel } from './quickChat';
 
 /**
  * אתגר לחבר — משחק מול מישהו שלא נמצא לידך, בלי שרת ובלי צ'אט.
@@ -55,6 +56,13 @@ export interface Challenge {
   secs: number;
   /** הניקוד של המאתגר לכל קטגוריה, באותו סדר בדיוק כמו `cats` */
   pts: number[];
+  /**
+   * משפט מוכן שהמאתגר בחר, כמזהה מתוך `quickChat`.
+   *
+   * **מספר ולא טקסט** — זו כל ההגנה. ראו את ההסבר ב-`quickChat.ts`:
+   * ערוץ שמעביר בחירה מתוך רשימה סגורה אינו יכול לשאת הודעה.
+   */
+  msg?: number;
 }
 
 /**
@@ -92,6 +100,8 @@ export interface ChallengeInput {
   seconds: number;
   /** ניקוד לכל קטגוריה, לפי מזהה */
   pointsByCategory: Record<string, number>;
+  /** מזהה משפט מוכן, אם נבחר אחד */
+  messageId?: number | null;
 }
 
 /**
@@ -110,7 +120,7 @@ export function buildChallenge(input: ChallengeInput): Challenge | null {
     .slice(0, MAX_CATEGORIES);
   if (!cats.length) return null;
 
-  return {
+  const challenge: Challenge = {
     v: CHALLENGE_VERSION,
     id: challengeId(),
     by: sanitizeNickname(input.nickname),
@@ -119,6 +129,9 @@ export function buildChallenge(input: ChallengeInput): Challenge | null {
     secs: clampSeconds(input.seconds),
     pts: cats.map((id) => clampPoints(input.pointsByCategory[id] ?? 0))
   };
+  // נוסף רק כשהוא באמת תקף, כדי שלא ייווצר שדה עם ערך חסר משמעות
+  if (isKnownPhrase(input.messageId)) challenge.msg = input.messageId;
+  return challenge;
 }
 
 /** סך הניקוד של המאתגר */
@@ -211,7 +224,7 @@ export function decodeChallenge(payload: string): Challenge | null {
     return null;
   }
 
-  return {
+  const out: Challenge = {
     v: CHALLENGE_VERSION,
     id: o.id,
     // מנוקה שוב, כי מי ששלח את הקישור יכול היה לערוך אותו
@@ -221,6 +234,13 @@ export function decodeChallenge(payload: string): Challenge | null {
     secs: clampSeconds(o.secs),
     pts: (o.pts as number[]).map(clampPoints)
   };
+  /**
+   * מזהה שאינו ברשימה נזרק **בשקט** ולא פוסל את האתגר כולו: קישור
+   * מגרסה חדשה יותר עם משפט שעוד לא קיים אצלנו צריך עדיין להיות
+   * בר-משחק. מה שלא יקרה הוא הצגת טקסט שהגיע מבחוץ.
+   */
+  if (isKnownPhrase(o.msg)) out.msg = o.msg;
+  return out;
 }
 
 /** הפרמטר ב-hash. ב-hash ולא ב-query — hash לא נשלח לשרת בבקשת הדף. */
@@ -246,8 +266,10 @@ export function readChallengeFromHash(hash: string): Challenge | null {
 
 /** טקסט ההזמנה שנשלח בוואטסאפ. בלי תשובות ובלי פרטים מזהים. */
 export function challengeInviteText(c: Challenge): string {
+  const said = phraseLabel(c.msg);
   return [
     `${c.by} מאתגר אותך בארץ-עיר GO! 🎯`,
+    ...(said ? ['', `"${said}"`] : []),
     '',
     `האות: ${c.letter}`,
     `${c.cats.length} קטגוריות · ${c.secs ? `${c.secs} שניות` : 'בלי הגבלת זמן'}`,

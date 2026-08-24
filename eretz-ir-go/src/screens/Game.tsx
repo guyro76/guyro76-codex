@@ -8,6 +8,7 @@ import { say } from '../lib/persona';
 import { sfx } from '../lib/sound';
 import WalletChip from '../components/WalletChip';
 import { announce } from '../lib/announce';
+import QuickChatBar from '../components/QuickChatBar';
 
 export default function Game() {
   const { navigate } = useApp();
@@ -207,6 +208,10 @@ export default function Game() {
       >
         {game.phase === 'validating' ? 'בודקים את התשובות… 🔍' : 'סיימתי! ✋'}
       </button>
+
+      {/* שורת ההודעות אחרונה בעמוד, מתחת ל"סיימתי" — היא נלווית
+          למשחק ולא חלק ממנו, ואסור שתידחף בין הקטגוריות לכפתור */}
+      <QuickChatBar />
     </div>
   );
 }

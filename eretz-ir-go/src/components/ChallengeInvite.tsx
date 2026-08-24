@@ -6,6 +6,8 @@ import { buildChallenge, challengeInviteText } from '../lib/challenge';
 import { shareText, type ShareOutcome } from '../lib/share';
 import { CATEGORIES } from '../data/categories';
 import { sfx } from '../lib/sound';
+import { QUICK_PHRASES, phraseById } from '../lib/quickChat';
+import { useChallenge } from '../store/challengeStore';
 
 /**
  * "לאתגר חבר" — הופך את הסיבוב שהרגע נגמר לקישור.
@@ -22,6 +24,18 @@ export default function ChallengeInvite() {
   const navigate = useApp((s) => s.navigate);
   const game = useGame();
   const [state, setState] = useState<ShareOutcome | 'empty' | null>(null);
+  /**
+   * המשפט שנבחר בשורת ההודעות בזמן המשחק משמש כברירת מחדל: מי
+   * שכבר בחר "כל הכבוד!" באמצע האתגר לא צריך לבחור שוב.
+   */
+  const replyFromGame = useChallenge((s) => s.reply);
+  /**
+   * שלושה מצבים, ולכן לא בוליאני: `null` = לא נגעו, ואז חל המשפט
+   * שנבחר במשחק; `0` = ביטלו במפורש, ואז לא נשלח משפט (0 אינו
+   * מזהה תקף ו-`buildChallenge` יסנן אותו); מספר אחר = הבחירה כאן.
+   */
+  const [messageId, setMessageId] = useState<number | null>(null);
+  const chosen = messageId ?? replyFromGame;
 
   const me = game.players[0];
   if (!me) return null;
@@ -59,7 +73,8 @@ export default function ChallengeInvite() {
         custom: c.custom ?? !CATEGORIES.some((known) => known.id === c.id)
       })),
       seconds: game.settings.roundSeconds,
-      pointsByCategory
+      pointsByCategory,
+      messageId: chosen
     });
 
     if (!challenge) {
@@ -78,6 +93,25 @@ export default function ChallengeInvite() {
       <p className="dim" style={{ marginTop: 4 }}>
         שולחים קישור, החבר משחק את אותה אות ואותן קטגוריות מתי שנוח לו — ורואה אם הצליח לעבור אותך.
       </p>
+      {/* בחירת משפט לפני השליחה. רשימה סגורה ולא תיבת הקלדה —
+          ההסבר המלא ב-quickChat.ts */}
+      <p className="dim" style={{ margin: '10px 0 4px', fontSize: '0.86rem' }}>
+        להוסיף משפט? (לא חובה)
+      </p>
+      <ul className="quick-chat-list">
+        {QUICK_PHRASES.map((ph) => (
+          <li key={ph.id}>
+            <button
+              className={chosen === ph.id ? 'quick-chat-pick on' : 'quick-chat-pick'}
+              aria-pressed={chosen === ph.id}
+              onClick={() => setMessageId(chosen === ph.id ? 0 : ph.id)}
+            >
+              <span aria-hidden>{ph.icon}</span> {ph.text}
+            </button>
+          </li>
+        ))}
+      </ul>
+
       <button className="btn-primary" onClick={() => void send()}>
         לשלוח אתגר 📤
       </button>
@@ -95,7 +129,8 @@ export default function ChallengeInvite() {
       )}
 
       <p className="dim" style={{ fontSize: '0.8rem', marginBottom: 0 }}>
-        נשלחים האות, הקטגוריות והניקוד שלך. התשובות עצמן לא נשלחות.
+        נשלחים האות, הקטגוריות, הניקוד שלך {phraseById(chosen) ? 'והמשפט שבחרת' : ''}. התשובות עצמן לא
+        נשלחות, ואי אפשר לכתוב הודעה חופשית.
       </p>
     </div>
   );

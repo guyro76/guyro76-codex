@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { stubWikipedia } from './helpers';
 import { SEED_ENTRIES } from '../src/data/seed';
+import { QUICK_PHRASES } from '../src/lib/quickChat';
 
 /**
  * אתגר לחבר — המסלול המלא, משני הצדדים.
@@ -177,5 +178,68 @@ test('🎯 אפליקציה שכבר פתוחה קולטת קישור בלי ט�
 
   await expect(page.locator('.challenge-letter')).toBeVisible();
   expect(page.url()).not.toContain('#c=');
+  expect(errors, errors.join('\n')).toHaveLength(0);
+});
+
+test('💬 משפט מוכן עובר לחבר, ובקישור נוסע מספר ולא טקסט', async ({ page, baseURL }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (err) => errors.push(String(err)));
+
+  await captureShares(page);
+  await page.goto('./');
+  await playOneRound(page, true);
+
+  // בוחרים משפט לפני השליחה
+  const phrase = QUICK_PHRASES[0];
+  await page.getByRole('button', { name: new RegExp(phrase.text) }).first().click();
+  await page.getByRole('button', { name: /לשלוח אתגר/ }).click();
+  const invite = (await shared(page)).find((t) => t.includes('#c='))!;
+
+  /**
+   * הכלל שנשמר כאן: בקישור נוסע **מזהה מספרי**. אם מישהו יחליף את
+   * זה בטקסט, הכלל "ללא צ'אט פתוח בין ילדים" נשבר — וזו הבדיקה
+   * שתתפוס את זה.
+   */
+  const payload = invite.match(/#c=([A-Za-z0-9_-]+)/)![1];
+  const decoded = await page.evaluate((p) => {
+    const b = p.replace(/-/g, '+').replace(/_/g, '/');
+    return atob(b + '='.repeat((4 - (b.length % 4)) % 4));
+  }, payload);
+  const parsed = JSON.parse(decoded) as { msg?: unknown };
+  expect(parsed.msg).toBe(phrase.id);
+  expect(decoded).not.toContain(phrase.text);
+
+  // ===== אצל החבר =====
+  await page.goto('about:blank');
+  await page.goto(new URL(invite.slice(invite.indexOf('#')), baseURL).toString());
+
+  // המשפט מוצג במסך קבלת האתגר
+  await expect(page.getByText(phrase.text).first()).toBeVisible();
+
+  // ובתחתית מסך המשחק, עם השם של מי שאמר אותו
+  await page.getByRole('button', { name: /מתחילים/ }).click();
+  const bar = page.locator('.quick-chat');
+  await expect(bar).toBeVisible();
+  await expect(bar.getByText(phrase.text)).toBeVisible();
+
+  // אין תיבת הקלדה בשורת ההודעות — רק בחירה מרשימה
+  await expect(bar.locator('input, textarea')).toHaveCount(0);
+
+  // בוחרים תשובה, והיא נשמרת עד השליחה החוזרת
+  const answer = QUICK_PHRASES[1];
+  await bar.getByRole('button', { name: /להגיב/ }).click();
+  await bar.getByRole('button', { name: new RegExp(answer.text) }).click();
+  await expect(bar.getByText(/יישלח עם האתגר החוזר/)).toBeVisible();
+
+  await page.getByRole('button', { name: /סיימתי|סיום/ }).first().click();
+  await page.getByRole('button', { name: /הבא|סיום|לתוצאות/ }).first().click();
+
+  // התשובה שנבחרה במשחק היא ברירת המחדל לאתגר החוזר
+  const back = page.locator('.challenge-invite');
+  await expect(back.getByRole('button', { name: new RegExp(answer.text) })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+
   expect(errors, errors.join('\n')).toHaveLength(0);
 });

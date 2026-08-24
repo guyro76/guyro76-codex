@@ -1535,3 +1535,57 @@ body::after {
 }
 .challenge-table th:not(:first-child),
 .challenge-table td:not(:first-child) { text-align: center; width: 22%; }
+
+/* ===== משפטים מוכנים (שורת ההודעות) ===== */
+.quick-chat {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text);
+}
+/* מה שהחבר אמר — טקסט מלא ולא מעומעם: זו לא הערת שוליים */
+.quick-chat-said {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.quick-chat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.quick-chat-toggle {
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 8px 14px;
+}
+.quick-chat-note { font-size: 0.8rem; font-weight: 600; color: var(--text-dim); }
+
+.quick-chat-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.quick-chat-pick {
+  padding: 8px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+/* הנבחר מסומן במסגרת ובצבע כיתוב, בלי רקע בהיר — אותו שיקול
+   כמו בכרטיס המנצח: רקע בהיר כאן היה מחייב היפוך צבע טקסט */
+.quick-chat-pick.on {
+  border-color: var(--turquoise);
+  background: var(--bg-card-strong);
+  color: var(--turquoise);
+}

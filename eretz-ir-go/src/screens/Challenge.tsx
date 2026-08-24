@@ -5,6 +5,7 @@ import { useGame } from '../store/gameStore';
 import { useChallenge } from '../store/challengeStore';
 import { CATEGORIES } from '../data/categories';
 import { challengeTotal } from '../lib/challenge';
+import { phraseById } from '../lib/quickChat';
 import { sfx } from '../lib/sound';
 import { resolveActivePlayer } from '../lib/activePlayer';
 import { identityFrom } from '../lib/identity';
@@ -137,6 +138,13 @@ export default function Challenge() {
       <div className="card challenge-card">
         <p className="dim" style={{ margin: 0 }}>מישהו אתגר אותך</p>
         <h2 className="challenge-by">{incoming.by}</h2>
+
+        {/* מה שהחבר אמר, אם בחר משפט. מגיע כמזהה ולא כטקסט. */}
+        {phraseById(incoming.msg) && (
+          <p className="quick-chat-said">
+            <span aria-hidden>{phraseById(incoming.msg)!.icon}</span> {phraseById(incoming.msg)!.text}
+          </p>
+        )}
 
         <div className="challenge-letter" aria-label={`האות ${incoming.letter}`}>
           {incoming.letter}
