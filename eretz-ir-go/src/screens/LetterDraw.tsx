@@ -7,8 +7,13 @@ import { primeAudio, sfx } from '../lib/sound';
 import { announce } from '../lib/announce';
 import { letterSpeech, speak } from '../lib/speak';
 import LetterSwap from '../components/LetterSwap';
+import AdBreak from '../components/AdBreak';
+import { shouldShowAd } from '../lib/ads';
+import { useAdsEnabled } from '../store/authStore';
 
 export default function LetterDraw() {
+  const ads = useAdsEnabled();
+  const [adPending, setAdPending] = useState(false);
   const { navigate, activeProfile } = useApp();
   const rollLetter = useGame((s) => s.rollLetter);
   const beginRound = useGame((s) => s.beginRound);
@@ -71,6 +76,23 @@ export default function LetterDraw() {
     timerRef.current = setTimeout(tick, 55);
   };
 
+  /**
+   * הפסקת הפרסומת תופסת את המסך במקום להיפתח מעליו.
+   * חלון צף היה מזמין לחיצה בטעות בדיוק על המודעה.
+   */
+  if (adPending) {
+    return (
+      <AdBreak
+        slot="before-round"
+        onDone={() => {
+          setAdPending(false);
+          beginRound();
+          navigate('game');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="screen center">
       <h1>
@@ -111,6 +133,12 @@ export default function LetterDraw() {
             className="btn-primary"
             style={{ fontSize: '1.2rem', padding: '14px 40px' }}
             onClick={() => {
+              // בגרסה החינמית נכנסת כאן הפסקת פרסומת; הסיבוב עצמו
+              // מתחיל רק אחריה, כדי שהשעון לא ירוץ בזמן המודעה
+              if (shouldShowAd(ads, 'before-round')) {
+                setAdPending(true);
+                return;
+              }
               beginRound();
               navigate('game');
             }}

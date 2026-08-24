@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Avatar from '../components/Avatar';
 import { useApp } from '../store/appStore';
+import { useCapabilities } from '../store/authStore';
 import { greeting } from '../lib/persona';
 import { tipOfTheDay } from '../data/tips';
 import { todayKey } from '../lib/daily';
@@ -13,6 +14,7 @@ import { computeStreak, streakLabel, type StreakInfo } from '../lib/streak';
 
 export default function Home() {
   const { activeProfile, navigate, setEditingProfile } = useApp();
+  const caps = useCapabilities();
   // פאנל הניהול הוסתר קודם מאחורי כפתור רפאים זעיר בתחתית המסך, ואחריו
   // עוד מסך — מנהל שנכנס פשוט לא מצא אותו. עכשיו הוא כרטיס משלו.
   const isAdmin = useAuth((s) => s.account?.role === 'admin');
@@ -44,14 +46,22 @@ export default function Home() {
     return null;
   }
 
+  /**
+   * התפריט נגזר מהחבילה.
+   *
+   * בגרסה החינמית מוסתרים הפאזלים וההישגים — הם לא קיימים בה, ותפריט
+   * שמוביל למסך ריק גרוע יותר מתפריט קצר. מה שכן מוצג הוא כפתור אחד
+   * שמסביר מה יש בגרסה המלאה.
+   */
   const items = [
     { icon: '🎮', label: 'משחק חדש', to: 'mode-select' as const, primary: true },
     { icon: '📅', label: 'האתגר היומי', to: 'daily' as const },
     { icon: '🃏', label: 'אוסף המילים שלי', to: 'album' as const },
-    { icon: '🧩', label: 'הפאזלים שלי', to: 'puzzles' as const },
+    ...(caps.puzzles ? [{ icon: '🧩', label: 'הפאזלים שלי', to: 'puzzles' as const }] : []),
     { icon: '🏆', label: 'לוח השיאים', to: 'leaderboard' as const },
-    { icon: '🎖️', label: 'הישגים', to: 'achievements' as const },
-    { icon: '⚙️', label: 'הגדרות', to: 'settings' as const }
+    ...(caps.rewards ? [{ icon: '🎖️', label: 'הישגים', to: 'achievements' as const }] : []),
+    { icon: '⚙️', label: 'הגדרות', to: 'settings' as const },
+    ...(caps.id === 'free' ? [{ icon: '💎', label: 'מה יש בגרסה המלאה', to: 'pricing' as const }] : [])
   ];
 
   return (
@@ -63,12 +73,17 @@ export default function Home() {
           </div>
           <div>
             <h2 style={{ margin: 0 }}>{greeting(activeProfile)}</h2>
+            {/* הדרישה: שיהיה רשום לשחקן שסוג המשחק הוא גרסת חינם */}
+            {caps.id === 'free' && <span className="free-badge">גרסת חינם</span>}
             <p className="dim" style={{ margin: 0, fontSize: '0.9rem' }}>
               🔥 רצף יומי: {activeProfile.dailyStreak} · 🏅 {activeProfile.wins} ניצחונות
             </p>
-            <div style={{ marginTop: 6 }}>
-              <WalletChip profileId={activeProfile.id} />
-            </div>
+            {/* הארנק שייך לפרסים, ובגרסה החינמית אין כאלה */}
+            {caps.rewards && (
+              <div style={{ marginTop: 6 }}>
+                <WalletChip profileId={activeProfile.id} />
+              </div>
+            )}
           </div>
         </div>
         <button

@@ -1,10 +1,16 @@
 /**
  * חבילות שימוש.
  *
- * העיקרון שמנחה את החלוקה: **המשחק עצמו לא נחסם לעולם.** גם בחבילה
- * החינמית אפשר לשחק כל יום, בכל המצבים ובלי פרסומות — מה שמשתנה הוא
- * הכמות והנוחות (כמה פרופילים, כמה סיבובים, כמה תוספות).
- * ילד שלא שילם לא אמור להרגיש נעול מחוץ למשחק של החברים שלו.
+ * **החינם הוא המשחק בלבד.** סיבוב ארץ-עיר לבד מול השעון, וזהו: בלי
+ * פאזלים, בלי ארנק ופרסים, בלי משחק מול אחרים, בלי משחקי ביניים —
+ * ועם פרסומות בין השלבים. מי שמשלם מקבל את כל אלה ובלי פרסומות.
+ *
+ * זו החלטה מסחרית מפורשת, והיא מחליפה מדיניות קודמת שבה החינם היה
+ * מלא ובלי פרסומות. שני דברים נגזרים ממנה ואסור לשכוח אותם:
+ *  1. מדיניות הפרטיות חייבת לומר שיש פרסומות — היא הצהירה שאין.
+ *  2. עם פרסום צד שלישי המשחק אינו עומד בתנאי קטגוריית הילדים של
+ *     אפל. ב-Google Play Families זה אפשרי עם SDK מאושר, ורק בפרסום
+ *     שאינו מותאם אישית — ולכן `personalisedAds` לא קיים כאן בכלל.
  */
 export type Tier = 'free' | 'bronze' | 'silver' | 'gold';
 export type Role = 'user' | 'admin';
@@ -34,23 +40,35 @@ export interface TierSpec {
   cloudSync: boolean;
   /** לוח שיאים משפחתי מקוון */
   onlineLeaderboard: boolean;
+  /** פרסומות בין השלבים */
+  ads: boolean;
+  /** לוחות הפאזל ואיסוף החלקים */
+  puzzles: boolean;
+  /** ארנק, פרסים וקלפי כוח */
+  rewards: boolean;
+  /** משחק מול שחקן אחר — במכשיר או ברשת */
+  multiplayer: boolean;
 }
 
 export const TIERS: Record<Tier, TierSpec> = {
   free: {
     id: 'free',
-    name: 'חינם',
+    name: 'גרסת חינם',
     icon: '🎈',
-    blurb: 'כל המשחק, בלי פרסומות — עם מגבלות נוחות',
-    maxProfiles: 2,
-    maxRounds: 5,
+    blurb: 'המשחק הבסיסי — סיבוב לבד, עם פרסומות בין השלבים',
+    maxProfiles: 1,
+    maxRounds: 3,
     customCategories: false,
-    miniGames: true,
-    answerImages: true,
+    miniGames: false,
+    answerImages: false,
     onlineVerification: true,
-    letterSwaps: 1,
+    letterSwaps: 0,
     cloudSync: false,
-    onlineLeaderboard: false
+    onlineLeaderboard: false,
+    ads: true,
+    puzzles: false,
+    rewards: false,
+    multiplayer: false
   },
   bronze: {
     id: 'bronze',
@@ -65,7 +83,11 @@ export const TIERS: Record<Tier, TierSpec> = {
     onlineVerification: true,
     letterSwaps: 2,
     cloudSync: false,
-    onlineLeaderboard: false
+    onlineLeaderboard: false,
+    ads: false,
+    puzzles: true,
+    rewards: true,
+    multiplayer: true
   },
   silver: {
     id: 'silver',
@@ -80,7 +102,11 @@ export const TIERS: Record<Tier, TierSpec> = {
     onlineVerification: true,
     letterSwaps: 3,
     cloudSync: true,
-    onlineLeaderboard: true
+    onlineLeaderboard: true,
+    ads: false,
+    puzzles: true,
+    rewards: true,
+    multiplayer: true
   },
   gold: {
     id: 'gold',
@@ -95,7 +121,11 @@ export const TIERS: Record<Tier, TierSpec> = {
     onlineVerification: true,
     letterSwaps: 5,
     cloudSync: true,
-    onlineLeaderboard: true
+    onlineLeaderboard: true,
+    ads: false,
+    puzzles: true,
+    rewards: true,
+    multiplayer: true
   }
 };
 
@@ -124,4 +154,26 @@ export function remainingLabel(expiresAt: string | null): string | null {
   if (days === 1) return 'יום אחרון';
   if (days <= 30) return `עוד ${days} ימים`;
   return `עוד ${Math.ceil(days / 30)} חודשים`;
+}
+
+/**
+ * היכולות בפועל, לפי מצב החשבון ולפי סוג הבנייה.
+ *
+ * `entitlementsEnforced` הוא בדיוק "האם קיימת בבנייה הזו מערכת
+ * חשבונות" (`authConfigured()`). הוא נקבע בזמן בנייה ממשתני סביבה,
+ * ולכן אינו ניתן לשינוי מהדפדפן — זו לא דלת אחורית.
+ *
+ * כשהוא `false` אין שרת, אין ממי לקנות חבילה ואין מה לאכוף: זו
+ * בנייה מקומית, בדיקה או פיתוח, והמשחק פתוח במלואו — בדיוק ההבטחה
+ * שכתובה ב-`supabase.ts`, שהמשחק המקומי אף פעם לא היה תלוי בענן.
+ * הבניות שנשלחות לחנויות ולאתר כן מוגדרות, ולכן שם מי שאין לו
+ * חשבון בתשלום מקבל את הגרסה החינמית — הבסיסית, עם הפרסומות.
+ */
+export function capabilitiesFor(
+  account: { tier: Tier; role: Role } | null,
+  entitlementsEnforced: boolean
+): TierSpec {
+  if (!entitlementsEnforced) return TIERS.gold;
+  if (!account) return TIERS.free;
+  return effectiveTier(account.tier, account.role);
 }

@@ -13,6 +13,9 @@ import { announce } from '../lib/announce';
 import { awardCompletionBonus, grantRoundPiece } from '../lib/puzzleStore';
 import { COMPLETION_BONUS } from '../lib/puzzlePieces';
 import { notifyWalletChanged } from '../components/WalletChip';
+import AdBreak from '../components/AdBreak';
+import { shouldShowAd } from '../lib/ads';
+import { useAdsEnabled, useCapabilities } from '../store/authStore';
 import { puzzleById } from '../data/puzzles';
 import type { Award } from '../lib/puzzlePieces';
 import PuzzleBoard from '../components/PuzzleBoard';
@@ -32,6 +35,13 @@ function statusIcon(a: SubmittedAnswer): string {
 }
 
 export default function RoundResults() {
+  const caps = useCapabilities();
+  const ads = useAdsEnabled();
+  /**
+   * בגרסה החינמית מוצגת פרסומת **לפני** התוצאות.
+   * מתחיל כ-true כדי שהניקוד לא יבזיק לרגע לפני שהמודעה עולה.
+   */
+  const [adPending, setAdPending] = useState(() => shouldShowAd(ads, 'after-round'));
   const { navigate, activeProfile } = useApp();
   const game = useGame();
   const [newWordIdx, setNewWordIdx] = useState(0);
@@ -54,6 +64,8 @@ export default function RoundResults() {
    * והענקה בכל רינדור הייתה מרוקנת את כל הפאזלים תוך סיבוב אחד.
    */
   useEffect(() => {
+    // אין פאזלים בגרסה החינמית — ולכן גם אין חלק בסוף הסיבוב
+    if (!caps.puzzles) return;
     if (!activeProfile?.id || grantedRef.current) return;
     grantedRef.current = true;
     // נשמר בקבוע: בתוך ה-callback TypeScript כבר לא זוכר שהבדיקה נעשתה
@@ -84,18 +96,21 @@ export default function RoundResults() {
           : `קיבלת חלק פאזל: ${puzzle?.name ?? ''}, ${won.have} מתוך ${won.total}`
       );
     });
-  }, [activeProfile?.id]);
+  }, [activeProfile?.id, caps.puzzles]);
 
   // סיכום הסיבוב מוצג בצבעים ובאייקונים — מכריזים אותו פעם אחת בכניסה
-  // למסך, כך שגם מי שלא רואה יודע מה קרה בלי לסרוק את כל הקלפים
+  // למסך, כך שגם מי שלא רואה יודע מה קרה בלי לסרוק את כל הקלפים.
+  // בזמן הפרסומת לא מכריזים: מי שמקשיב היה שומע את הניקוד לפני שהוא
+  // מוצג, וזו בדיוק הנקודה שהפרסומת אמורה לבוא לפניה.
   useEffect(() => {
+    if (adPending) return;
     const me = game.players[0];
     if (!me) return;
     const ok = me.submitted.filter((a) => a.validation.status === 'valid').length;
     const total = me.submitted.length;
     const points = me.submitted.reduce((sum, a) => sum + a.totalScore, 0);
     announce(`תוצאות הסיבוב: ${ok} תשובות נכונות מתוך ${total}, ${points} נקודות`);
-  }, [game.players]);
+  }, [game.players, adPending]);
 
   const kb = getKnowledgeBase();
 
@@ -118,6 +133,10 @@ export default function RoundResults() {
     });
     setAppealSent((prev) => new Set(prev).add(`${a.categoryId}|${a.rawText}`));
   };
+
+  if (adPending) {
+    return <AdBreak slot="after-round" onDone={() => setAdPending(false)} />;
+  }
 
   const isLastRound = game.roundIndex + 1 >= game.settings.rounds;
   const shownPlayers = game.coop ? [game.players[0]] : game.players;

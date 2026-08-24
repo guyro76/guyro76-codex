@@ -32,7 +32,7 @@ export default defineConfig({
         scope: base,
         name: 'ארץ-עיר GO!',
         short_name: 'ארץ-עיר GO!',
-        description: 'משחק ארץ-עיר משפחתי חכם — עובד גם בלי אינטרנט, בלי פרסומות ובלי איסוף מידע',
+        description: 'משחק ארץ-עיר משפחתי חכם — עובד גם בלי אינטרנט ובלי איסוף מידע',
         dir: 'rtl',
         lang: 'he',
         display: 'standalone',

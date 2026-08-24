@@ -1372,3 +1372,66 @@ body::after {
   .plan-grid { grid-template-columns: repeat(2, 1fr); }
   .plan-amount { font-size: 1.35rem; }
 }
+
+/* ===== הפסקת פרסומת ===== */
+.ad-break {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 70vh;
+}
+/* התווית חייבת להיות קריאה ולא "מוסתרת בעדינות" — ילד צריך לזהות
+   שזו מודעה. אותיות מרווחות על רקע כהה, בכתב בהיר ומודגש. */
+.ad-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.ad-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 340px;
+  padding: 22px 18px;
+  border-radius: var(--radius);
+  border: 2px dashed var(--border-glass);
+  background: var(--card);
+  text-align: center;
+}
+.ad-headline { margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text); }
+.ad-body { margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--text-dim); }
+/* מרווח אמיתי בין המודעה לכפתור ההמשך — מונע לחיצה מטעה */
+.ad-continue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 26px;
+}
+
+/* תג הגרסה החינמית — רקע בהיר ולכן כתב כהה ומודגש */
+.free-badge {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #241243;
+  background: #cbb7ff;
+}
+
+/* מצב נעול בגרסה החינמית — עדיין לחיץ, ומוביל למסך החבילות.
+   בכוונה **בלי** opacity על הכרטיס: שקיפות מורידה את הניגודיות של
+   הטקסט בלי שאף בדיקה תראה את זה, וזה בדיוק מה שכלל הברזל אוסר.
+   הנעילה מסומנת במסגרת מקווקוות ובמנעול, והטקסט נשאר בעוצמה מלאה. */
+.card.mode-locked {
+  border-style: dashed;
+}

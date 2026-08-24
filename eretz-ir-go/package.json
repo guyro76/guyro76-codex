@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:free": "tsc -b && VITE_SUPABASE_URL=https://e2e-free.test VITE_SUPABASE_ANON_KEY=e2e-free vite build --outDir dist-free",
     "preview": "vite preview",
+    "preview:free": "vite preview --outDir dist-free",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

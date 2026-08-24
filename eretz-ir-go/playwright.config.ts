@@ -32,10 +32,27 @@ export default defineConfig({
   },
   webServer: externalBase
     ? undefined
-    : {
-        command: 'npm run preview -- --port 4173 --host 127.0.0.1',
-        url: 'http://127.0.0.1:4173/',
-        reuseExistingServer: true,
-        timeout: 120_000
-      }
+    : [
+        {
+          command: 'npm run preview -- --port 4173 --host 127.0.0.1',
+          url: 'http://127.0.0.1:4173/',
+          reuseExistingServer: true,
+          timeout: 120_000
+        },
+        /**
+         * בנייה שנייה, על פורט 4174, שבה משתני הסביבה של החשבונות
+         * מוגדרים — ולכן היא הבנייה היחידה שבה הגרסה החינמית באמת
+         * נאכפת (ראו `capabilitiesFor`). בלעדיה אי אפשר לבדוק את
+         * הפרסומות ואת הנעילות בזרימה אמיתית אלא רק בקריאת קוד.
+         */
+        {
+          command: 'npm run build:free && npm run preview:free -- --port 4174 --host 127.0.0.1',
+          url: 'http://127.0.0.1:4174/',
+          reuseExistingServer: true,
+          timeout: 180_000
+        }
+      ]
 });
+
+/** הכתובת של בניית הגרסה החינמית, לשימוש הבדיקות שנוגעות בה */
+export const FREE_BASE_URL = 'http://127.0.0.1:4174/';

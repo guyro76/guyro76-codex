@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Avatar from '../components/Avatar';
 import { useApp } from '../store/appStore';
+import { useCapabilities } from '../store/authStore';
 import { useGame } from '../store/gameStore';
 import TopBar from '../components/TopBar';
 import type { GameMode } from '../types';
@@ -54,6 +55,12 @@ export async function loadModeDraft(): Promise<ModeDraft> {
   return draftCache;
 }
 
+/**
+ * מצבים שדורשים יריב — במכשיר, ברשת או מול המחשב.
+ * אלה בדיוק המצבים שאינם קיימים בגרסה החינמית, שבה יש משחק עצמי בלבד.
+ */
+const VERSUS_MODES: GameMode[] = ['duel', 'coop', 'tournament', 'bot'];
+
 export default function ModeSelect() {
   const { navigate, profiles, activeProfile, secondProfile, selectSecondProfile, setEditingProfile } =
     useApp();
@@ -68,7 +75,9 @@ export default function ModeSelect() {
    */
   const [choiceMode, setChoiceMode] = useState((activeProfile?.age ?? 8) <= 6);
 
+  const caps = useCapabilities();
   const needsSecond = mode === 'duel' || mode === 'coop' || mode === 'tournament';
+  const locked = (id: GameMode) => !caps.multiplayer && VERSUS_MODES.includes(id);
   const others = profiles.filter((p) => p.id !== activeProfile?.id);
 
   const modes: { id: GameMode; icon: string; name: string; desc: string }[] = [
@@ -295,35 +304,44 @@ export default function ModeSelect() {
         או זמן עושה זאת כאן, ומי שלא — פשוט בוחר מצב וממשיך.
       */}
       <div className="grid">
-        {modes.map((m) => (
-          <div
-            key={m.id}
-            className="card clickable"
-            role="button"
-            tabIndex={0}
-            aria-pressed={mode === m.id}
-            style={mode === m.id ? { borderColor: 'var(--turquoise)', background: 'rgba(51,214,195,0.12)' } : undefined}
-            onClick={() => pickMode(m.id)}
-            onKeyDown={(ev) => {
-              if (ev.key === 'Enter' || ev.key === ' ') {
-                ev.preventDefault();
-                pickMode(m.id);
-              }
-            }}
-          >
-            <div className="row">
-              <span style={{ fontSize: '1.8rem' }} aria-hidden>
-                {m.icon}
-              </span>
-              <div>
-                <strong>{m.name}</strong>
-                <p className="dim" style={{ margin: 0, fontSize: '0.9rem' }}>
-                  {m.desc}
-                </p>
+        {modes.map((m) => {
+          const isLocked = locked(m.id);
+          return (
+            <div
+              key={m.id}
+              className={`card clickable${isLocked ? ' mode-locked' : ''}`}
+              role="button"
+              tabIndex={0}
+              aria-pressed={mode === m.id}
+              /* בכוונה **לא** aria-disabled: הכרטיס הנעול הוא כן לחיץ,
+                 והוא הדרך למסך החבילות. סימון "מושבת" היה אומר לקורא
+                 מסך שאין מה לעשות כאן, ודווקא בו החוסם מוסבר. */
+              aria-label={isLocked ? `${m.name} — נעול, בגרסה המלאה` : undefined}
+              style={mode === m.id ? { borderColor: 'var(--turquoise)', background: 'rgba(51,214,195,0.12)' } : undefined}
+              onClick={() => (isLocked ? navigate('pricing') : pickMode(m.id))}
+              onKeyDown={(ev) => {
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                  ev.preventDefault();
+                  if (isLocked) navigate('pricing');
+                  else pickMode(m.id);
+                }
+              }}
+            >
+              <div className="row">
+                <span style={{ fontSize: '1.8rem' }} aria-hidden>
+                  {isLocked ? '🔒' : m.icon}
+                </span>
+                <div>
+                  <strong>{m.name}</strong>
+                  <p className="dim" style={{ margin: 0, fontSize: '0.9rem' }}>
+                    {/* מצב נעול אומר מה חסר ולאן ללכת, במקום פשוט לא להגיב */}
+                    {isLocked ? 'בגרסה המלאה — משחק מול יריב, במכשיר או ברשת' : m.desc}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* פס פעולה נעוץ בתחתית: ברשימת מצבים ארוכה בטלפון הכפתור נפל

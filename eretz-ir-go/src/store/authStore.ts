@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Session } from '@supabase/supabase-js';
 import { authConfigured, availableProviders, redirectTo, supabase } from '../lib/supabase';
-import { TIERS, effectiveTier, tierAfterExpiry, type Role, type Tier, type TierSpec } from '../lib/tiers';
+import { capabilitiesFor, tierAfterExpiry, type Role, type Tier, type TierSpec } from '../lib/tiers';
 
 /** מה שקוד הזמנה מבטיח, עוד לפני שנרשמים */
 export interface InvitePreview {
@@ -199,11 +199,30 @@ export const useAuth = create<AuthState>((set, get) => ({
   clearError: () => set({ error: null })
 }));
 
-/** היכולות בפועל של המשתמש הנוכחי. בלי חשבון — החבילה החינמית. */
+/**
+ * היכולות בפועל של המשתמש הנוכחי.
+ *
+ * בבנייה שיש בה מערכת חשבונות (החנויות והאתר) מי שאין לו חבילה
+ * בתשלום מקבל את הגרסה החינמית. בבנייה בלי שרת חשבונות אין ממי
+ * לקנות, ולכן המשחק המקומי פתוח — ראו `capabilitiesFor`.
+ */
 export function useCapabilities(): TierSpec {
   const account = useAuth((s) => s.account);
-  if (!account) return TIERS.free;
-  return effectiveTier(account.tier, account.role);
+  return capabilitiesFor(account, authConfigured());
+}
+
+/**
+ * האם להציג פרסומות למשתמש הזה.
+ *
+ * ה-`ready` כאן אינו קישוט: בטעינה הראשונה החשבון עדיין null, ולכן
+ * `useCapabilities` מחזיר לרגע את החבילה החינמית. בלי ההמתנה הזו
+ * לקוח משלם היה רואה מודעה מהבהבת לפני שהסשן שלו נטען — וזו בדיוק
+ * ההבטחה היחידה שאסור לשבור כאן.
+ */
+export function useAdsEnabled(): boolean {
+  const ready = useAuth((s) => s.ready);
+  const caps = useCapabilities();
+  return ready && caps.ads;
 }
 
 /** האם יש בכלל התחברות בסביבה הזו */

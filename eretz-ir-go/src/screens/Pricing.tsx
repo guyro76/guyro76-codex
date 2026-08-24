@@ -58,9 +58,9 @@ export default function Pricing() {
       <TopBar title="💎 החבילות" back="settings" />
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>🎈 חינם — ונשאר חינם</h3>
+        <h3 style={{ marginTop: 0 }}>🎈 גרסת חינם</h3>
         <p className="dim" style={{ margin: '2px 0 10px' }}>
-          המשחק עצמו לא נחסם אף פעם. אלה לא ניסיון — זה מה שיש תמיד:
+          המשחק הבסיסי, בלי הגבלת זמן ובלי תשלום. מה שיש בה:
         </p>
         <ul className="plan-list">
           {FREE_FEATURES.map((f) => (
