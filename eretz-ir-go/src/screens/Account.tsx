@@ -102,6 +102,14 @@ export default function Account() {
         </ul>
       </div>
 
+      <button
+        className="btn-gold"
+        style={{ width: '100%', marginTop: 14 }}
+        onClick={() => navigate('pricing')}
+      >
+        💎 החבילות והמחירים
+      </button>
+
       <div className="card" style={{ marginTop: 14 }}>
         <h3 style={{ marginTop: 0 }}>🎁 יש לכם קוד הזמנה?</h3>
         <p className="dim" style={{ marginTop: 0 }}>

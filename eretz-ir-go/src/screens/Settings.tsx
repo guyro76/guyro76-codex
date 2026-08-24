@@ -241,6 +241,9 @@ export default function Settings() {
       </div>
 
       <div className="row" style={{ marginTop: 14 }}>
+        {/* המחירים נגישים גם בלי חשבון: הורה שוקל לקנות *לפני* שהוא
+            נרשם, ומסך שמוסתר מאחורי הרשמה פשוט לא נקרא. */}
+        <button onClick={() => navigate('pricing')}>💎 החבילות והמחירים</button>
         <button onClick={() => navigate('privacy')}>🔐 פרטיות ומחיקת מידע</button>
         <button onClick={() => navigate('credits')}>📜 מקורות וקרדיטים</button>
         <button onClick={() => navigate('parent')}>🔒 מצב הורה</button>

@@ -29,7 +29,8 @@ export type Screen =
   | 'chain'
   | 'mini-game'
   | 'admin'
-  | 'account';
+  | 'account'
+  | 'pricing';
 
 interface AppState {
   screen: Screen;

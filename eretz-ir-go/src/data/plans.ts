@@ -1,0 +1,74 @@
+/**
+ * חבילות התשלום.
+ *
+ * **חבילה אחת בתשלום, שנמכרת בארבעה משכים.** לא ארבע רמות שונות:
+ * הורה שעומד בחנות צריך להחליט החלטה אחת — כמה זמן — ולא גם מה הוא
+ * מקבל בכל רמה. פחות בלבול, המרה גבוהה יותר.
+ *
+ * המחירים נקבעו מול מחירי שוק שנבדקו: חבילת Sago Mini + Toca Boca
+ * עולה 29.99$ לשנה והיא כ-10 אפליקציות, ולכן משחק אחד חייב לשבת
+ * מתחת לזה. "לכל החיים" הוא פי 2.5 מהשנתי — היחס המקובל בענף.
+ *
+ * המחיר הוא הנתון היחיד שנשמר. המחיר לחודש והחיסכון **נגזרים** ממנו,
+ * כדי שלא ייווצר מצב שבו הטבלה מבטיחה חיסכון שהמחיר לא נותן.
+ */
+export interface Plan {
+  id: 'q' | 'h' | 'y' | 'life';
+  name: string;
+  /** משך בחודשים; לרכישה חד-פעמית אין משך */
+  months?: number;
+  /** מחיר בשקלים, כולל מע"מ — כך הוא מוצג בחנות */
+  price: number;
+  note?: string;
+  recommended?: boolean;
+}
+
+export const PLANS: Plan[] = [
+  { id: 'q', name: '3 חודשים', months: 3, price: 29.9 },
+  { id: 'h', name: 'חצי שנה', months: 6, price: 49.9 },
+  { id: 'y', name: 'שנה', months: 12, price: 79.9, recommended: true },
+  { id: 'life', name: 'לכל החיים', price: 199.9, note: 'תשלום אחד, בלי חידוש' }
+];
+
+/** המחיר לחודש; לרכישה חד-פעמית אין כזה */
+export function perMonth(plan: Plan): number | null {
+  return plan.months ? plan.price / plan.months : null;
+}
+
+/**
+ * כמה חוסכים ביחס לחבילה הקצרה ביותר.
+ *
+ * זו ההשוואה שהורה עושה בראש ממילא, ולכן עדיף להציג אותה מאשר
+ * לתת לו לחשב. מחזיר 0 לחבילה הקצרה עצמה ולרכישה חד-פעמית.
+ */
+export function savingsPercent(plan: Plan): number {
+  const base = perMonth(PLANS[0]);
+  const mine = perMonth(plan);
+  if (!base || !mine) return 0;
+  return Math.round((1 - mine / base) * 100);
+}
+
+/** תוך כמה חודשים "לכל החיים" מחזירה את עצמה מול המנוי השנתי */
+export function lifetimeBreakEvenMonths(): number {
+  const life = PLANS.find((p) => p.id === 'life')!;
+  const year = PLANS.find((p) => p.id === 'y')!;
+  return Math.round((life.price / year.price) * 12);
+}
+
+/** מה שהחבילה בתשלום פותחת — מנוסח מצד ההורה, לא מצד הקוד */
+export const PAID_FEATURES = [
+  'עד 6 פרופילים למשפחה',
+  'סיבובים בלי הגבלה',
+  'קטגוריות משלכם',
+  'סנכרון בין מכשירים',
+  'לוח שיאים משפחתי מקוון',
+  'יותר החלפות אות'
+];
+
+/** מה שנשאר חינם תמיד — העיקרון שהמשחק לא נחסם */
+export const FREE_FEATURES = [
+  'כל מצבי המשחק',
+  'כל הפאזלים והאוסף',
+  'בלי פרסומות, לתמיד',
+  'עובד בלי אינטרנט'
+];

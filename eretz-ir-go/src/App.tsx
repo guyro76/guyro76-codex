@@ -33,6 +33,7 @@ import Login from './screens/Login';
 import Globe from './components/Globe';
 import Admin from './screens/Admin';
 import Account from './screens/Account';
+import Pricing from './screens/Pricing';
 import { authAvailable, useAuth } from './store/authStore';
 import { listenForAuthDeepLink } from './lib/supabase';
 import MultiplayerInfo from './screens/MultiplayerInfo';
@@ -163,7 +164,8 @@ export default function App() {
     chain: <Chain />,
     'mini-game': <MiniGame />,
     admin: <Admin />,
-    account: <Account />
+    account: <Account />,
+    pricing: <Pricing />
   };
 
   /**
