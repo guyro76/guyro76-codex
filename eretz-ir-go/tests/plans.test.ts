@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   FREE_FEATURES,
+  FREE_LIMITS,
   PAID_FEATURES,
   PLANS,
   lifetimeBreakEvenMonths,
@@ -72,7 +73,27 @@ describe('סולם החבילות', () => {
    * הבדיקה נועלת את הגילוי — לא את קיום הפרסומות.
    */
   it('הגרסה החינמית מצהירה על הפרסומות ולא מסתירה אותן', () => {
-    expect(FREE_FEATURES.join(' ')).toMatch(/פרסומות/);
+    expect(FREE_LIMITS.join(' ')).toMatch(/פרסומ/);
+  });
+
+  /**
+   * מגבלה שמסומנת ✅ ברשימת היתרונות היא הסתרה בתחפושת. שתי
+   * הרשימות נפרדות כדי שזה לא יקרה, ולכן נבדק שהן באמת נפרדות.
+   */
+  it('המגבלות אינן מוצגות כיתרונות', () => {
+    const good = FREE_FEATURES.join(' ');
+    expect(good).not.toMatch(/פרסומ/);
+    expect(good).not.toMatch(/בלי |דורש/);
+  });
+
+  /**
+   * הרשימה הזו הבטיחה פעם "עובד בלי אינטרנט". בגרסה החינמית בדיקת
+   * התשובות דורשת רשת, ולכן ההבטחה הזו אסורה כאן — והמגבלה נאמרת
+   * במפורש.
+   */
+  it('לא מבטיחה שהגרסה החינמית עובדת בלי אינטרנט', () => {
+    expect(FREE_FEATURES.join(' ')).not.toMatch(/בלי אינטרנט|ללא אינטרנט|אופליין/);
+    expect(FREE_LIMITS.join(' ')).toMatch(/אינטרנט/);
   });
 
   /** ומה שמשלמים עליו קודם כול — שקט מפרסומות */

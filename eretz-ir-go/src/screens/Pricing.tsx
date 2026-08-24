@@ -1,6 +1,7 @@
 import TopBar from '../components/TopBar';
 import {
   FREE_FEATURES,
+  FREE_LIMITS,
   PAID_FEATURES,
   PLANS,
   lifetimeBreakEvenMonths,
@@ -60,11 +61,19 @@ export default function Pricing() {
       <div className="card">
         <h3 style={{ marginTop: 0 }}>🎈 גרסת חינם</h3>
         <p className="dim" style={{ margin: '2px 0 10px' }}>
-          המשחק הבסיסי, בלי הגבלת זמן ובלי תשלום. מה שיש בה:
+          פונקציות בסיסיות, בלי תשלום ובלי הגבלת זמן. מה שיש בה:
         </p>
         <ul className="plan-list">
           {FREE_FEATURES.map((f) => (
             <li key={f}>✅ {f}</li>
+          ))}
+        </ul>
+        {/* המגבלות מופיעות באותו כרטיס ובאותו גודל, ולא בהערת שוליים —
+            הורה צריך לראות אותן לפני ההורדה ולא אחריה */}
+        <p className="dim" style={{ margin: '10px 0 2px' }}>וכדאי לדעת:</p>
+        <ul className="plan-list">
+          {FREE_LIMITS.map((f) => (
+            <li key={f}>ℹ️ {f}</li>
           ))}
         </ul>
       </div>
