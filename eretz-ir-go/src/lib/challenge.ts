@@ -1,6 +1,7 @@
 import { GAME_LETTERS } from './hebrew';
 import { GAME_URL } from './share';
 import { isKnownPhrase, phraseLabel } from './quickChat';
+import { safeDisplayName } from './wordFilter';
 
 /**
  * אתגר לחבר — משחק מול מישהו שלא נמצא לידך, בלי שרת ובלי צ'אט.
@@ -68,18 +69,14 @@ export interface Challenge {
 /**
  * ניקוי כינוי.
  *
- * מותר: אותיות עבריות, אותיות לטיניות, ספרות, רווח, גרש וגרשיים.
- * כל השאר יורד. זה מה שמונע מהשדה להפוך למחברת הודעות: אין ניקוד,
- * אין אימוג'י, אין שורות חדשות, ואורך קצוב.
+ * זהו **השדה היחיד בקישור שאינו מספר**, ולכן הוא הערוץ היחיד שדרכו
+ * ילד יכול לשלוח טקסט לילד אחר. הגרסה הראשונה כאן הרשתה רווחים
+ * ועד 12 תווים, כלומר "בוא נריב" ו-"0501234567" עברו — קללה או
+ * ניסיון ליצור קשר מחוץ למשחק. הניקוי עבר ל-`wordFilter`, ששם
+ * מוסבר למה מילה אחת בלבד היא ההגנה החשובה מכולן.
  */
 export function sanitizeNickname(raw: string): string {
-  const cleaned = (raw ?? '')
-    .replace(/[^֐-׿a-zA-Z0-9 '״׳"]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, MAX_NICKNAME)
-    .trim();
-  return cleaned || 'שחקן';
+  return safeDisplayName(raw, MAX_NICKNAME);
 }
 
 /** מזהה קצר וקריא. לא סוד ולא מפתח — רק כדי לזהות אתגר חוזר. */

@@ -226,3 +226,38 @@ describe('טקסט ההזמנה', () => {
     expect(text).not.toMatch(/תשוב/);
   });
 });
+
+describe('אין שדה טקסט נוסף שעובר בין ילדים', () => {
+  /**
+   * המבנה שנבנה בפענוח הוא allowlist: הוא נבנה מאפס עם המפתחות
+   * הידועים בלבד. לכן שדה שהוסיפו לקישור ביד לא שורד — גם אם
+   * הוא נראה תמים. זו ההגנה שמונעת ממישהו להוסיף "note" ולהפוך
+   * את הקישור לערוץ הודעות בלי לגעת בקוד שלנו.
+   */
+  it('שדה שהוברח לקישור נזרק ולא מגיע למסך', () => {
+    const smuggled = payloadOf({
+      ...base,
+      note: 'בוא ניפגש אחרי בית ספר',
+      text: 'שלום',
+      by2: 'הודעה'
+    });
+    const out = decodeChallenge(smuggled)!;
+    expect(out).not.toBeNull();
+    expect(Object.keys(out).sort()).toEqual(['by', 'cats', 'id', 'letter', 'pts', 'secs', 'v']);
+    expect(JSON.stringify(out)).not.toContain('ניפגש');
+  });
+
+  /**
+   * השדות היחידים שאינם מספרים הם `by` (מסונן ב-wordFilter),
+   * `letter` (אות אחת מרשימה סגורה), `id` (אותיות וספרות בלבד)
+   * ו-`cats` (מזהי קטגוריות). אין ביניהם אחד שיכול לשאת משפט.
+   */
+  it('כל שדה טקסט חסום באורך או ברשימה סגורה', () => {
+    const out = decodeChallenge(encodeChallenge({ ...base, by: 'אורי' }))!;
+    expect(out.by.length).toBeLessThanOrEqual(12);
+    expect(out.by).not.toMatch(/\s/);
+    expect(out.letter).toHaveLength(1);
+    expect(out.id).toMatch(/^[a-z0-9]+$/);
+    for (const c of out.cats) expect(c).toMatch(/^[a-z][a-z0-9-]*$/);
+  });
+});
