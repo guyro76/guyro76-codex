@@ -8,6 +8,7 @@ import { gentleFail, randomJoke } from '../lib/persona';
 import { db, getSetting } from '../db/db';
 import type { SubmittedAnswer } from '../types';
 import { getKnowledgeBase } from '../lib/knowledge';
+import { normalizeHebrew } from '../lib/hebrew';
 import AnswerImage from '../components/AnswerImage';
 import { announce } from '../lib/announce';
 import { awardCompletionBonus, grantRoundPiece } from '../lib/puzzleStore';
@@ -47,6 +48,8 @@ export default function RoundResults() {
   const [newWordIdx, setNewWordIdx] = useState(0);
   const [showNewWords, setShowNewWords] = useState(true);
   const [appealSent, setAppealSent] = useState<Set<string>>(new Set());
+  /** מילים שהילד הוסיף למילון שלו מהמסך הזה */
+  const [learned, setLearned] = useState<Set<string>>(new Set());
   // אפשר לכבות את משימות הביניים בהגדרות — למשפחות שרוצות משחק קצר
   const [miniGamesSetting, setMiniGamesSetting] = useState(true);
   /**
@@ -130,6 +133,40 @@ export default function RoundResults() {
       ),
     [game.players]
   );
+
+  /**
+   * "להוסיף למילון שלי".
+   *
+   * נשמר ב-`personalAnswers` ולא ב-`userKnowledge`, ושתי סיבות לכך:
+   *  1. `personalAnswers` הוא **לפי פרופיל**, וזה מה ש"המילון שלי"
+   *     אומר. `roundEngine` בונה ממנו את `personalDictionary`, ולכן
+   *     המילה באמת תיחשב בסיבוב הבא — זו לא הבטחה על תנאי.
+   *  2. `userKnowledge` מוזרם ל-`KnowledgeBase` המשותף, שממנו נבנים
+   *     אוסף המילים והתמונות. מילה שילד אישר לעצמו אינה ידע מאומת,
+   *     ואין לה מקום שם.
+   *
+   * בכוונה **לא** מזכה בניקוד עכשיו: ילד שיכול לאשר לעצמו תשובה
+   * באותו סיבוב הופך את הניקוד לחסר משמעות. מה שכתוב על המסך —
+   * "בפעם הבאה תיחשב" — הוא בדיוק מה שקורה, לא פחות ולא יותר.
+   */
+  const learn = async (a: SubmittedAnswer) => {
+    const text = a.rawText.trim();
+    if (!text || !activeProfile?.id) return;
+    await db.personalAnswers.add({
+      profileId: activeProfile.id,
+      categoryId: a.categoryId,
+      letter: a.letter,
+      text,
+      normalized: normalizeHebrew(text),
+      timesUsed: 0,
+      discoveredAt: new Date().toISOString(),
+      viaHint: false,
+      favorite: false
+    });
+    setLearned((prev) => new Set(prev).add(`${a.categoryId}|${a.rawText}`));
+    sfx.success();
+    announce(`${text} נוסף למילון שלך`);
+  };
 
   const appeal = async (a: SubmittedAnswer) => {
     // ערעור: נשמר לאישור הורה במצב הורה
@@ -224,23 +261,59 @@ export default function RoundResults() {
                 )}
                 {a.validation.status === 'valid' && <AnswerImage item={item} label={a.rawText} categoryId={a.categoryId} discover />}
 
+                {/* ההסבר למה נפסלה תשובה אינו הערת שוליים אלא הדבר
+                    שהילד הכי רוצה לדעת ברגע הזה, ולכן הוא לא מעומעם */}
                 {a.validation.status !== 'valid' && a.validation.status !== 'empty' && a.rawText && (
-                  <p className="dim" style={{ margin: '4px 0 0', fontSize: '0.88rem' }}>
+                  <p className="why-failed">
                     {a.validation.reason}
-                    {a.validation.suggestion && ` · אולי: "${a.validation.suggestion}"`}
                     {activeProfile && a.validation.status !== 'duplicate' && ` · ${gentleFail(activeProfile.gender)}`}
                   </p>
                 )}
 
-                {a.validation.status === 'needs-review' && (
+                {/*
+                  שגיאת כתיב: המשחק **כבר יודע** מה המילה הנכונה — הוא
+                  הציע אותה בעצמו. לפסול ילד על אות אחת כשההצעה על המסך
+                  היה הרגע הכי מתסכל במשחק, ולכן יש כאן לחיצה אחת.
+                */}
+                {a.validation.status === 'spelling' && a.validation.suggestion && (
                   <button
-                    className="btn-small"
+                    className="btn-small accept-spelling"
                     style={{ marginTop: 6 }}
-                    disabled={appealSent.has(key)}
-                    onClick={() => void appeal(a)}
+                    onClick={() => {
+                      const gained = game.acceptSpelling(a.categoryId, a.validation.suggestion!);
+                      if (gained > 0) sfx.success();
+                      announce(`התשובה תוקנה ל${a.validation.suggestion}, ${gained} נקודות`);
+                    }}
                   >
-                    {appealSent.has(key) ? '⏳ נשלח לאישור הורה' : '⚖️ ערעור — לבדיקת הורה'}
+                    ✅ כן, התכוונתי ל״{a.validation.suggestion}״
                   </button>
+                )}
+
+                {/*
+                  תשובה שהמשחק לא מכיר. קודם היה כאן מסלול יחיד —
+                  "ערעור לבדיקת הורה" — שהילד לא יכול לסגור בעצמו,
+                  והוא נגמר ב"⏳ נשלח" בלי שום המשך. עכשיו יש קודם
+                  פעולה שהילד *כן* יכול לעשות, והערעור נשאר לצידה.
+                */}
+                {a.validation.status === 'needs-review' && (
+                  <div className="row" style={{ marginTop: 6, gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      className="btn-small"
+                      disabled={learned.has(key)}
+                      onClick={() => void learn(a)}
+                    >
+                      {learned.has(key) ? '📗 נוסף למילון שלי' : '📗 להוסיף למילון שלי'}
+                    </button>
+                    <button className="btn-small" disabled={appealSent.has(key)} onClick={() => void appeal(a)}>
+                      {appealSent.has(key) ? '⏳ נשלח לאישור הורה' : '⚖️ שהורה יבדוק'}
+                    </button>
+                  </div>
+                )}
+
+                {learned.has(key) && (
+                  <p className="dim" style={{ margin: '4px 0 0', fontSize: '0.82rem' }}>
+                    בפעם הבאה המילה הזו כבר תיחשב.
+                  </p>
                 )}
               </div>
             );

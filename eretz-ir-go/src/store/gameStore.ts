@@ -6,7 +6,7 @@ import { buildLetterIndex, drawLetter } from '../lib/letters';
 import { getKnowledgeBase } from '../lib/knowledge';
 import { processRound } from '../lib/roundEngine';
 import { normalizeHebrew } from '../lib/hebrew';
-import { completionBonus } from '../lib/scoring';
+import { completionBonus, scoreAnswer } from '../lib/scoring';
 import { db } from '../db/db';
 import { earn, roundEarnings } from '../lib/wallet';
 import { MAX_SWAPS } from '../lib/letterSwap';
@@ -77,6 +77,11 @@ interface GameState {
   /** מסמן חידה כמוצגת, כדי שלא תחזור באותו משחק */
   markRiddleUsed: (id: string) => void;
   setDoubleCategory: (categoryId: string) => void;
+  /**
+   * אישור תשובה שנפסלה על שגיאת כתיב, אחרי שהסיבוב נסגר.
+   * מחזיר את הניקוד שנוסף, או 0 אם לא היה מה לאשר.
+   */
+  acceptSpelling: (categoryId: string, corrected: string) => number;
   continueToNextPlayer: () => void;
   nextRound: () => void;
   endMatch: () => Promise<void>;
@@ -391,6 +396,70 @@ export const useGame = create<GameState>((set, get) => ({
       const playerIdx = s.coop ? 0 : s.currentPlayerIdx;
       return { power: { ...s.power, double: { playerIdx, categoryId } } };
     });
+  },
+
+  /**
+   * "כן, לזה התכוונתי" — קבלת ההצעה של המשחק עצמו.
+   *
+   * זו לא הקלה שרירותית: ההצעה מגיעה מהמאגר של המשחק, כלומר הוא
+   * *כבר יודע* מה המילה הנכונה ובכל זאת פסל את הילד על אות אחת.
+   * זה היה הרגע הכי מתסכל במשחק, והפתרון הוא לתת לילד לאשר.
+   *
+   * הניקוד מחושב מחדש **בדיוק כמו ב-`finishPlayer`** — אותה
+   * `scoreAnswer` ואותו `completionBonus` — כדי ששני המסלולים לא
+   * ייפרדו בעדכון הבא. בונוס המהירות נשמר כפי שהיה: הילד באמת
+   * הקליד בזמן, והשגיאה הייתה בכתיב ולא באיטיות.
+   */
+  acceptSpelling: (categoryId, corrected) => {
+    const state = get();
+    const me = state.players[0];
+    if (!me) return 0;
+    const idx = me.submitted.findIndex((a) => a.categoryId === categoryId);
+    if (idx < 0) return 0;
+    const answer = me.submitted[idx];
+    if (answer.validation.status !== 'spelling') return 0;
+
+    const breakdown = scoreAnswer({
+      isValid: true,
+      revealed: answer.revealed,
+      duplicateWithOtherPlayer: answer.duplicateWithOtherPlayer,
+      hintsUsed: answer.hintsUsed,
+      originality: answer.originality,
+      typedAtMs: answer.typedAtMs,
+      roundSeconds: state.settings.roundSeconds,
+      isNewDiscovery: false
+    });
+
+    const fixed: SubmittedAnswer = {
+      ...answer,
+      rawText: corrected,
+      normalizedText: normalizeHebrew(corrected),
+      validation: {
+        ...answer.validation,
+        status: 'valid',
+        reason: 'תוקן כתיב — תשובה נכונה!'
+      },
+      baseScore: breakdown.base,
+      originalityBonus: breakdown.originalityBonus,
+      speedBonus: breakdown.speedBonus,
+      noHintBonus: breakdown.noHintBonus,
+      discoveryBonus: breakdown.discoveryBonus,
+      totalScore: breakdown.total
+    };
+
+    let gained = 0;
+    set((s) => ({
+      players: s.players.map((p, i) => {
+        if (i !== 0) return p;
+        const submitted = [...p.submitted];
+        submitted[idx] = fixed;
+        const answersScore = submitted.reduce((sum, a) => sum + a.totalScore, 0);
+        const roundScore = answersScore + completionBonus(submitted, s.categories.length);
+        gained = roundScore - p.roundScore;
+        return { ...p, submitted, roundScore, totalScore: p.totalScore - p.roundScore + roundScore };
+      })
+    }));
+    return gained;
   },
 
   continueToNextPlayer: () => {

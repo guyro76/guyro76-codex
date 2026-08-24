@@ -1589,3 +1589,20 @@ body::after {
   background: var(--bg-card-strong);
   color: var(--turquoise);
 }
+
+/* ===== למה התשובה נפסלה ===== */
+/* ההסבר הוא הדבר שהילד הכי רוצה לדעת ברגע הזה, ולכן הוא בטקסט מלא
+   ומודגש ולא ב-dim. טקסט פונקציונלי, לפי כלל הברזל. */
+.why-failed {
+  margin: 5px 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+/* הכפתור שמקבל את ההצעה של המשחק עצמו — הפעולה החיובית כאן,
+   ולכן מסומן בירוק ההצלחה ולא כפעולה ניטרלית */
+.accept-spelling {
+  border-color: var(--ok);
+  color: var(--ok);
+  font-weight: 700;
+}
