@@ -42,9 +42,15 @@ test('✍️ תשובה שנפסלה על כתיב מתקבלת בלחיצה, ו
   await page.getByRole('textbox').first().fill(typo);
   await page.getByRole('button', { name: /סיימתי|סיום/ }).first().click();
 
-  // המשחק מזהה את השגיאה ומציע את המילה הנכונה
-  const accept = page.getByRole('button', { name: new RegExp(`כן, התכוונתי.*${real}`) });
+  /**
+   * המשחק מזהה את השגיאה ומציע מילה — לא בהכרח זו שממנה נבנתה
+   * השגיאה. `isCloseMatch` בוחר מבין ההתאמות הקרובות את הפופולרית
+   * ביותר, ולכן "שוודיל" יכול להציע "שוויץ". מה שנבדק כאן הוא
+   * שההצעה קיימת ושהיא נספרת, לא איזו מילה נבחרה.
+   */
+  const accept = page.getByRole('button', { name: /כן, התכוונתי/ });
   await expect(accept).toBeVisible({ timeout: 20_000 });
+  const suggested = (await accept.innerText()).replace(/[^א-ת]/g, '').replace('כןהתכוונתיל', '');
 
   const scoreBefore = Number((await page.locator('.gold').first().innerText()).replace(/\D/g, '') || '0');
 
@@ -54,7 +60,7 @@ test('✍️ תשובה שנפסלה על כתיב מתקבלת בלחיצה, ו
   await expect(accept).toHaveCount(0);
   // ממוקד בשורת התשובה עצמה: המילה מופיעה גם בהכרזה לקורא המסך
   // וגם בעובדה שמתלווה לתשובה נכונה, ושתיהן אינן מה שנבדק כאן
-  await expect(page.locator('.status-text-ok').filter({ hasText: real! })).toBeVisible();
+  await expect(page.locator('.status-text-ok').filter({ hasText: suggested })).toBeVisible();
 
   const scoreAfter = Number((await page.locator('.gold').first().innerText()).replace(/\D/g, '') || '0');
   expect(scoreAfter, 'הניקוד לא עלה אחרי קבלת ההצעה').toBeGreaterThan(scoreBefore);
@@ -77,8 +83,17 @@ test('📗 תשובה לא מוכרת מציעה פעולה שהילד יכול 
   await page.getByRole('button', { name: /מתחילים/ }).click({ timeout: 20_000 });
 
   const letter = (await page.locator('.round-letter').first().innerText({ timeout: 10_000 })).trim().slice(0, 1);
-  // מילה תקינה מבחינת אות וקטגוריה, שהמאגר פשוט לא מכיר
-  await page.getByRole('textbox').first().fill(`${letter}ורנדיה`);
+
+  /**
+   * מילה שהמאגר בוודאות לא מכיר — ובוודאות גם **לא קרובה** לאף
+   * מילה שבו. מילה מומצאת "סתם" נופלת לפעמים בתוך מרחק עריכה 2
+   * ממילה אמיתית, ואז המשחק מציע תיקון במקום לומר שאינו מכיר,
+   * והבדיקה נכשלת באקראי. שלוש אותיות שנוספות למילה אמיתית
+   * מרחיקות אותה מעבר לסף של `isCloseMatch`.
+   */
+  const seed = SEED_ENTRIES.find((x) => x.c.includes('country') && x.n.startsWith(letter))?.n;
+  test.skip(!seed, `אין מילת seed לאות ${letter}`);
+  await page.getByRole('textbox').first().fill(`${seed}סטן`);
   await page.getByRole('button', { name: /סיימתי|סיום/ }).first().click();
 
   const learn = page.getByRole('button', { name: /להוסיף למילון שלי/ });

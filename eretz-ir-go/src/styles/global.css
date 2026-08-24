@@ -1606,3 +1606,32 @@ body::after {
   color: var(--ok);
   font-weight: 700;
 }
+
+/* ===== יומן ראש-בראש ===== */
+.rivals-card { margin: 14px 0 0; }
+.rivals-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rivals-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--border-glass);
+}
+.rivals-list li:first-child { border-top: none; }
+.rival-name { font-weight: 800; color: var(--text); }
+/* התוצאה בספרות גדולות — זה מה שהעין מחפשת בכרטיס הזה */
+.rival-score { font-size: 1.15rem; font-weight: 800; color: var(--text); direction: ltr; }
+.rival-label {
+  grid-column: 1 / -1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}

@@ -4,6 +4,8 @@ import { useChallenge } from '../store/challengeStore';
 import { CATEGORIES } from '../data/categories';
 import { compareToChallenge } from '../lib/challenge';
 import { announce } from '../lib/announce';
+import { recordChallengeResult } from '../lib/rivals';
+import { useApp } from '../store/appStore';
 import { sfx } from '../lib/sound';
 
 /**
@@ -15,6 +17,7 @@ import { sfx } from '../lib/sound';
  */
 export default function ChallengeResult() {
   const active = useChallenge((s) => s.active);
+  const activeProfile = useApp((s) => s.activeProfile);
   const game = useGame();
   const me = game.players[0];
 
@@ -32,7 +35,22 @@ export default function ChallengeResult() {
     );
     if (result.outcome === 'win') sfx.fanfare();
     else sfx.select();
-  }, [result?.outcome, result?.mine, result?.theirs, active?.by]);
+
+    /**
+     * רישום ליומן הראש-בראש. אי-הכפילות נשענת על מזהה האתגר ולא על
+     * דגל ברכיב, כי רכיב נטען מחדש ואפקט יכול לרוץ פעמיים — ואז
+     * ניצחון אחד היה נספר כשניים.
+     */
+    if (activeProfile?.id) {
+      void recordChallengeResult({
+        profileId: activeProfile.id,
+        name: active.by,
+        challengeId: active.id,
+        outcome: result.outcome,
+        myScore: result.mine
+      });
+    }
+  }, [result?.outcome, result?.mine, result?.theirs, active?.by, active?.id, activeProfile?.id]);
 
   if (!active || !me || !result) return null;
 

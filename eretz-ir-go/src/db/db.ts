@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type { Category, DailyResult, MatchRecord, PersonalAnswer, Profile } from '../types';
+import type { RivalRow } from '../lib/rivals';
 
 /**
  * כל המידע נשמר מקומית בלבד ב-IndexedDB.
@@ -74,6 +75,7 @@ class EretzIrDB extends Dexie {
   settings!: EntityTable<SettingsRow, 'key'>;
   contentItems!: EntityTable<ContentItemRow, 'id'>;
   imageCache!: EntityTable<ImageCacheRow, 'key'>;
+  rivals!: EntityTable<RivalRow, 'id'>;
 
   constructor() {
     super('eretz-ir-go');
@@ -93,6 +95,11 @@ class EretzIrDB extends Dexie {
     // שונות היא דבר אחר לגמרי — וזה בדיוק מקור התמונות השגויות.
     this.version(3).stores({
       imageCache: 'key, normalized, categoryId, fetchedAt'
+    });
+    // יומן ראש-בראש מול חברים. המפתח המורכב הוא מה שמאפשר לחפש
+    // יריב אחד של ילד אחד בלי לסרוק את כל הטבלה.
+    this.version(4).stores({
+      rivals: '++id, profileId, name, [profileId+name]'
     });
   }
 }
@@ -226,10 +233,11 @@ export async function importProfile(json: string): Promise<void> {
 
 /** מחיקת כל המידע של פרופיל — פרטיות מלאה */
 export async function deleteProfileData(profileId: number): Promise<void> {
-  await db.transaction('rw', [db.profiles, db.personalAnswers, db.customCategories, db.dailyResults], async () => {
+  await db.transaction('rw', [db.profiles, db.personalAnswers, db.customCategories, db.dailyResults, db.rivals], async () => {
     await db.profiles.delete(profileId);
     await db.personalAnswers.where('profileId').equals(profileId).delete();
     await db.customCategories.where('profileId').equals(profileId).delete();
     await db.dailyResults.where('profileId').equals(profileId).delete();
+    await db.rivals.where('profileId').equals(profileId).delete();
   });
 }

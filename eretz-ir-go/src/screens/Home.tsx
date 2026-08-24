@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Avatar from '../components/Avatar';
 import { useApp } from '../store/appStore';
 import { useCapabilities } from '../store/authStore';
+import RivalsCard from '../components/RivalsCard';
 import { greeting } from '../lib/persona';
 import { tipOfTheDay } from '../data/tips';
 import { todayKey } from '../lib/daily';
@@ -112,6 +113,10 @@ export default function Home() {
           )}
         </div>
       )}
+
+      {/* היריבות מוצגת מעל התפריט: היא הסיבה שילד פותח את המשחק
+          שוב, ולא פריט ניווט בין פריטים */}
+      {caps.multiplayer && <RivalsCard />}
 
       {isAdmin && (
         <button

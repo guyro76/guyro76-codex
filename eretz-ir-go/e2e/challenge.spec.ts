@@ -243,3 +243,57 @@ test('💬 משפט מוכן עובר לחבר, ובקישור נוסע מספר
 
   expect(errors, errors.join('\n')).toHaveLength(0);
 });
+
+test('⚔️ תוצאת אתגר נרשמת ביומן הראש-בראש ושורדת רענון', async ({ page, baseURL }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (err) => errors.push(String(err)));
+
+  await captureShares(page);
+  await page.goto('./');
+  await playOneRound(page, true);
+  await page.getByRole('button', { name: /לשלוח אתגר/ }).click();
+  const invite = (await shared(page)).find((t) => t.includes('#c='))!;
+  const rival = invite.split(' ')[0];
+
+  // החבר פותח את הקישור ומשחק בלי לענות — ולכן מפסיד
+  await page.goto('about:blank');
+  await page.goto(new URL(invite.slice(invite.indexOf('#')), baseURL).toString());
+  await page.getByRole('button', { name: /מתחילים/ }).click();
+  await page.getByRole('button', { name: /סיימתי|סיום/ }).first().click();
+  await page.getByRole('button', { name: /הבא|סיום|לתוצאות/ }).first().click();
+  await expect(page.locator('.challenge-result')).toBeVisible();
+
+  await page.getByRole('button', { name: /למסך הבית/ }).click();
+
+  const card = page.locator('.rivals-card');
+  await expect(card).toBeVisible();
+  await expect(card.locator('.rival-name')).toHaveText(rival);
+  // הפסד אחד: 0 ניצחונות מול 1
+  await expect(card.locator('.rival-score')).toContainText('0');
+  await expect(card.getByText(new RegExp(`${rival} מוביל`))).toBeVisible();
+
+  /**
+   * המבחן האמיתי הוא טעינה חדשה: יומן שיושב רק בזיכרון נראה עובד
+   * בדיוק עד שסוגרים את האפליקציה.
+   *
+   * לא `reload` אלא לשונית חדשה **באותו הקשר**, כי ה-`beforeEach`
+   * כאן מוחק את IndexedDB ב-init script של הדף הזה — רענון היה
+   * מוחק את היומן ואז בודק את המחיקה של הבדיקה עצמה. לשונית חדשה
+   * חולקת את אותו אחסון בלי אותו script.
+   */
+  const fresh = await page.context().newPage();
+  await stubWikipedia(fresh);
+  await fresh.goto('./');
+  await fresh.getByRole('button', { name: /בואו נשחק/ }).click();
+  await expect(fresh.locator('.rivals-card .rival-name')).toHaveText(rival);
+
+  /**
+   * ואותו אתגר לא נספר פעמיים — טעינה חוזרת של מסך התוצאות הייתה
+   * מכפילה את התוצאה ביומן בלי שאף אחד ישים לב.
+   */
+  const games = await fresh.locator('.rivals-card .rival-score').first().innerText();
+  expect(games.replace(/\D/g, ''), 'התוצאה נספרה יותר מפעם אחת').toBe('01');
+  await fresh.close();
+
+  expect(errors, errors.join('\n')).toHaveLength(0);
+});
