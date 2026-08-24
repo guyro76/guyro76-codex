@@ -30,7 +30,8 @@ export type Screen =
   | 'mini-game'
   | 'admin'
   | 'account'
-  | 'pricing';
+  | 'pricing'
+  | 'challenge';
 
 interface AppState {
   screen: Screen;

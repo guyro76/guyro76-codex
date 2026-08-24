@@ -1435,3 +1435,103 @@ body::after {
 .card.mode-locked {
   border-style: dashed;
 }
+
+/* ===== אתגר לחבר ===== */
+.challenge-card {
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.challenge-by { margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text); }
+/* האות היא הדבר הכי חשוב במסך, ולכן היא גם הכי גדולה */
+.challenge-letter {
+  font-size: 4.2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--gold);
+}
+.challenge-beat { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.challenge-cats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.challenge-cats li {
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.challenge-invite,
+.challenge-locked,
+.challenge-result {
+  max-width: 420px;
+  margin: 14px auto;
+  text-align: center;
+}
+
+/* שני הצדדים זה מול זה. direction: ltr כדי שהמיקום לא יתהפך בין
+   ערכות ושפות — הסדר כאן הוא "אני משמאל, החבר מימין" תמיד */
+.challenge-scores {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  direction: ltr;
+  margin: 10px 0 4px;
+}
+.challenge-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 96px;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text);
+}
+/* המנצח מסומן במסגרת ובצבע הכיתוב, ולא ברקע בהיר — רקע בהיר כאן
+   היה מחייב להפוך גם את צבע הטקסט, וזה בדיוק המקום שבו נשכח */
+.challenge-side.winner {
+  border-color: var(--gold);
+  background: var(--bg-card-strong);
+}
+.challenge-side.winner .challenge-total { color: var(--gold); }
+.challenge-name { font-size: 0.9rem; font-weight: 700; color: var(--text-dim); }
+.challenge-total { font-size: 2rem; font-weight: 800; color: var(--text); }
+.challenge-vs { font-size: 1.5rem; }
+
+.challenge-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.92rem;
+}
+.challenge-table th {
+  padding: 6px 4px;
+  font-weight: 800;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border-glass);
+}
+.challenge-table td {
+  padding: 7px 4px;
+  font-weight: 700;
+  color: var(--text);
+  border-bottom: 1px solid var(--border-glass);
+}
+.challenge-table th:not(:first-child),
+.challenge-table td:not(:first-child) { text-align: center; width: 22%; }

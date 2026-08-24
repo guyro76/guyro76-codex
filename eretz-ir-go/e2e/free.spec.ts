@@ -85,11 +85,17 @@ async function signedInAsFree(page: Page): Promise<void> {
   });
 }
 
-/** מהמסך הראשון ועד הרגע שאחרי "מתחילים!" */
-async function upToStart(page: Page): Promise<void> {
+/**
+ * מהמסך הראשון ועד הרגע שאחרי "מתחילים!".
+ *
+ * `rounds` נבחר במפורש כשצריך להגיע עד מסך סוף המשחק: בברירת המחדל
+ * יש כמה סיבובים, והמסך הבא אחרי תוצאות הסיבוב הוא עוד סיבוב.
+ */
+async function upToStart(page: Page, rounds?: string): Promise<void> {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await page.getByRole('button', { name: /משחק חדש/ }).click();
+  if (rounds) await page.locator('select').first().selectOption(rounds);
   await page.getByRole('button', { name: /משחק יחיד/ }).click();
   await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
   await page.getByRole('button', { name: /להגרלת האות/ }).click();
@@ -165,4 +171,31 @@ test('🧩 בתפריט הבית אין פאזלים ואין ארנק', async (
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await expect(page.getByRole('button', { name: /פאזל/ })).toHaveCount(0);
   await expect(page.locator('.wallet-chip')).toHaveCount(0);
+});
+
+test('🎯 בגרסה החינמית אפשר לשחק אתגר שהתקבל, אבל לא לשלוח אחד', async ({ page }) => {
+  await signedInAsFree(page);
+  // סיבוב אחד, כדי שמסך התוצאות יוביל לסוף המשחק ולא לסיבוב הבא
+  await upToStart(page, '1');
+
+  const cont = page.getByRole('button', { name: /אפשר להמשיך|ממשיכים למשחק/ });
+  await expect(cont).toBeEnabled({ timeout: 15_000 });
+  await cont.click();
+  await page.getByRole('button', { name: /סיימתי|סיום/ }).first().click();
+
+  const after = page.getByRole('button', { name: /אפשר להמשיך|ממשיכים למשחק/ });
+  await expect(after).toBeEnabled({ timeout: 15_000 });
+  await after.click();
+
+  // בגרסה החינמית אין משימות ביניים, ולכן המעבר הוא ישר לסוף המשחק
+  await expect(page.getByRole('button', { name: /משימת הביניים/ })).toHaveCount(0);
+  await page.getByRole('button', { name: /לתוצאות המשחק/ }).click();
+
+  /**
+   * שליחה היא פיצ'ר בתשלום, ולכן מוצג כרטיס נעול שמסביר ומוביל
+   * לחבילות — ולא כפתור שנעלם. *קבלה* של אתגר דווקא פתוחה לכולם:
+   * היא סיבוב יחיד רגיל, וחסימתה הייתה שוברת את הקישור שחבר שלח.
+   */
+  await expect(page.locator('.challenge-locked')).toBeVisible();
+  await expect(page.getByRole('button', { name: /לשלוח אתגר/ })).toHaveCount(0);
 });

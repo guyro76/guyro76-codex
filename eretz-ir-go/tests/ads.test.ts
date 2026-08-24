@@ -95,6 +95,15 @@ describe('מה יש בגרסה החינמית', () => {
     expect(home).toContain('caps.puzzles ?');
     expect(home).toContain('caps.rewards ?');
   });
+
+  /**
+   * משימות הביניים נשלטו רק בהגדרה, ולכן מסך התוצאות הציע אותן גם
+   * בגרסה החינמית — והוביל למסך שאין לשחקן גישה אליו.
+   */
+  it('משימות הביניים תלויות בחבילה ולא רק בהגדרה', () => {
+    const src = read('src/screens/RoundResults.tsx');
+    expect(src).toContain('miniGamesSetting && caps.miniGames');
+  });
 });
 
 describe('למי בכלל נאכפות החבילות', () => {

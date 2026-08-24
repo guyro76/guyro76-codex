@@ -34,6 +34,8 @@ import Globe from './components/Globe';
 import Admin from './screens/Admin';
 import Account from './screens/Account';
 import Pricing from './screens/Pricing';
+import ChallengeScreen from './screens/Challenge';
+import { useChallenge } from './store/challengeStore';
 import { authAvailable, useAuth } from './store/authStore';
 import { listenForAuthDeepLink } from './lib/supabase';
 import MultiplayerInfo from './screens/MultiplayerInfo';
@@ -98,6 +100,8 @@ export default function App() {
   const authReady = useAuth((s) => s.ready);
   const session = useAuth((s) => s.session);
   const initAuth = useAuth((s) => s.init);
+  const navigate = useApp((s) => s.navigate);
+  const captureChallenge = useChallenge((s) => s.captureFromUrl);
 
   useEffect(() => {
     void initAuth();
@@ -117,6 +121,28 @@ export default function App() {
     });
     return () => stop?.();
   }, []);
+
+  /**
+   * אתגר שהגיע מקישור של חבר.
+   *
+   * נקרא פעם אחת בטעינה, לפני שהילד רואה משהו — כדי שהקישור ינחת
+   * ישר על מסך האתגר ולא על מסך הפתיחה. בבנייה עם שער כניסה המסך
+   * ימתין מאחורי ההתחברות, וזה בסדר: אחריה הוא עדיין כאן.
+   */
+  useEffect(() => {
+    const take = () => {
+      if (captureChallenge()) navigate('challenge');
+    };
+    take();
+    /**
+     * גם אחרי הטעינה: אפליקציה מותקנת שכבר פתוחה יכולה לקבל קישור
+     * חדש בלי טעינה מחדש (הדבקה בשורת הכתובת, או קישור שנפתח לתוך
+     * חלון קיים). בלי המאזין הזה הילד היה רואה את המסך שבו היה,
+     * והקישור פשוט לא היה עושה כלום.
+     */
+    window.addEventListener('hashchange', take);
+    return () => window.removeEventListener('hashchange', take);
+  }, [captureChallenge, navigate]);
 
   useEffect(() => {
     // התיקון רץ לפני הטעינה, כדי שפרופיל פגום לא יוצג אפילו לרגע
@@ -165,7 +191,8 @@ export default function App() {
     'mini-game': <MiniGame />,
     admin: <Admin />,
     account: <Account />,
-    pricing: <Pricing />
+    pricing: <Pricing />,
+    challenge: <ChallengeScreen />
   };
 
   /**

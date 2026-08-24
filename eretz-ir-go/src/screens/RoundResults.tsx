@@ -48,13 +48,19 @@ export default function RoundResults() {
   const [showNewWords, setShowNewWords] = useState(true);
   const [appealSent, setAppealSent] = useState<Set<string>>(new Set());
   // אפשר לכבות את משימות הביניים בהגדרות — למשפחות שרוצות משחק קצר
-  const [miniGamesOn, setMiniGamesOn] = useState(true);
+  const [miniGamesSetting, setMiniGamesSetting] = useState(true);
+  /**
+   * ההגדרה לבדה לא מספיקה: משימות הביניים הן פיצ'ר של החבילה, ואינן
+   * קיימות בגרסה החינמית. בלי הצירוף הזה מסך התוצאות היה מציע שם
+   * "למשימת הביניים" ומוביל למסך שאין לשחקן הזה גישה אליו.
+   */
+  const miniGamesOn = miniGamesSetting && caps.miniGames;
   const [award, setAward] = useState<Award | null>(null);
   const [owned, setOwned] = useState<number[]>([]);
   const grantedRef = useRef(false);
 
   useEffect(() => {
-    void getSetting('miniGames').then((v) => setMiniGamesOn(v !== '0'));
+    void getSetting('miniGames').then((v) => setMiniGamesSetting(v !== '0'));
   }, []);
 
   /**
