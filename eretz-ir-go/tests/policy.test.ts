@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -307,5 +307,70 @@ describe('כל מקור חיצוני מוכרז ונחסם', () => {
     for (const host of fetchedHosts) {
       expect(helpers, `${host} אינו מיורט ב-e2e/helpers.ts`).toContain(host);
     }
+  });
+});
+
+
+/**
+ * אפס עלות — כלל הברזל השני של הפרויקט.
+ *
+ * המשחק לא מבצע פעולה שגוררת חיוב ולא נשען על שירות בתשלום. משחק
+ * שנשען על שירות כזה מפסיק לעבוד ביום שמפסיקים לשלם, והילד שבאמצע
+ * משחק לא יודע על זה כלום.
+ *
+ * הבדיקה סורקת **כתובות ומפתחות** ולא שמות: `openverse.ts` מזכיר את
+ * Unsplash ואת Pexels בשמם, בהסבר למה דווקא לא נבחרו, וזה בדיוק
+ * התיעוד שרוצים לשמר.
+ */
+describe('אפס עלות', () => {
+  const sources = readdirSync(resolve(root, 'src'), { recursive: true, encoding: 'utf8' })
+    .filter((f) => f.endsWith('.ts') || f.endsWith('.tsx'))
+    .map((f) => ({ file: f, code: readFileSync(resolve(root, 'src', f), 'utf8') }));
+
+  /** שירותים שדורשים תשלום, מפתח בתשלום, או כרטיס אשראי כדי להתחיל */
+  const PAID_HOSTS = [
+    'api.unsplash.com',
+    'api.pexels.com',
+    'pixabay.com/api',
+    'shutterstock.com',
+    'gettyimages.com',
+    'stock.adobe.com',
+    'api.openai.com',
+    'api.anthropic.com',
+    'generativelanguage.googleapis.com',
+    'translation.googleapis.com',
+    'api.mapbox.com'
+  ];
+
+  it('אין פנייה לשירות בתשלום', () => {
+    for (const { file, code } of sources) {
+      for (const host of PAID_HOSTS) {
+        expect(code, `${file} פונה ל-${host}`).not.toContain(host);
+      }
+    }
+  });
+
+  /**
+   * מפתח בחבילת דפדפן אינו סוד — וגם אינו חינמי: הוא המנגנון שדרכו
+   * ספק מחייב לפי שימוש. שני הכללים נפגשים כאן.
+   */
+  it('אין מפתח API של ספק חיצוני בקוד', () => {
+    for (const { file, code } of sources) {
+      if (file.includes('supabase') || file.includes('authStore')) continue; // מפתח פומבי בתוכנית החינמית
+      expect(code, file).not.toMatch(/['"`](sk-|pk_live|AIza)[A-Za-z0-9_-]{10,}/);
+    }
+  });
+
+  it('שני מקורות התמונה אינם דורשים מפתח כלל', () => {
+    for (const f of ['src/lib/openverse.ts', 'src/lib/verifyOnline.ts']) {
+      const code = readFileSync(resolve(root, f), 'utf8');
+      expect(code, f).not.toMatch(/api[_-]?key|client[_-]?id|access[_-]?token|Authorization/i);
+    }
+  });
+
+  it('הכלל כתוב במסמך הכללים המחייב', () => {
+    const rules = readFileSync(resolve(root, 'CLAUDE.md'), 'utf8');
+    expect(rules).toContain('כלל ברזל: אפס עלות');
+    expect(rules).toContain('בלי תמונות בתשלום');
   });
 });
