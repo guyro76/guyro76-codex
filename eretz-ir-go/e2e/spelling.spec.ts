@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 import { SEED_ENTRIES } from '../src/data/seed';
 
 /**
@@ -11,7 +11,7 @@ import { SEED_ENTRIES } from '../src/data/seed';
  */
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 test('✍️ תשובה שנפסלה על כתיב מתקבלת בלחיצה, והניקוד עולה', async ({ page }) => {

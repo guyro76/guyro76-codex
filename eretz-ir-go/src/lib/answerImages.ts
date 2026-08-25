@@ -4,8 +4,9 @@ import { CATEGORIES } from '../data/categories';
 import { normalizeHebrew } from './hebrew';
 import { verifyImageCandidate, type RejectReason } from './imageVerify';
 import { fetchImageCandidates, fetchImageCredit, isOnline } from './verifyOnline';
-import { mayDisplay, type ImageCredit } from './imageCredit';
+import { mayUseInGame, type ImageCredit } from './imageCredit';
 import { PHOTO_FREE_CATEGORIES } from './imagePolicy';
+import { searchOpenverse } from './openverse';
 import type { KnowledgeItem } from '../types';
 
 /**
@@ -68,7 +69,16 @@ export interface ResolvedImage {
   pageUrl?: string;
   /** יוצר, רישיון וקישור לנוסח. תמונה בלי זה אינה מוצגת. */
   credit: ImageCredit;
+  /**
+   * שם האתר שממנו הגיעה התמונה. שדה חובה ולא ברירת מחדל, כי מאז
+   * שנוסף מקור שני אי אפשר להסיק אותו — וייחוס תמונה למקור הלא
+   * נכון הוא בדיוק סוג ההפרה שהקרדיט נועד למנוע.
+   */
+  source: string;
 }
+
+/** שם המקור לתמונות שהובאו דרך `fetchImageCandidates` */
+const WIKI_SOURCE = 'ויקיפדיה העברית';
 
 /** המפתח כולל את הקטגוריה: "כלנית" בצומח ובשם של בת אינם אותו דבר */
 export function imageKey(name: string, categoryId: string): string {
@@ -89,8 +99,9 @@ function fromRow(row: ImageCacheRow | undefined): ResolvedImage | null {
     row.author && row.license
       ? { author: row.author, license: row.license, licenseUrl: row.licenseUrl }
       : null;
-  if (!mayDisplay(credit)) return null;
-  return { url: row.url, pageUrl: row.pageUrl, credit };
+  if (!mayUseInGame(credit)) return null;
+  // שורות שנשמרו לפני שנוסף המקור השני הגיעו כולן מוויקיפדיה
+  return { url: row.url, pageUrl: row.pageUrl, credit, source: row.source ?? WIKI_SOURCE };
 }
 
 /** תמונה שכבר קיימת מקומית — בלי שום בקשת רשת */
@@ -141,7 +152,7 @@ export async function resolveAnswerImage(name: string, categoryId: string): Prom
        * כאילו לא היה. שאילתה נוספת לכל תמונה — זה המחיר.
        */
       const credit = candidate.imageFile ? await fetchImageCredit(candidate.imageFile) : null;
-      if (!mayDisplay(credit)) {
+      if (!mayUseInGame(credit)) {
         lastReason = 'no-credit';
         continue;
       }
@@ -156,6 +167,7 @@ export async function resolveAnswerImage(name: string, categoryId: string): Prom
         author: credit.author,
         license: credit.license,
         licenseUrl: credit.licenseUrl,
+        source: WIKI_SOURCE,
         title: candidate.title,
         fetchedAt: new Date().toISOString()
       };
@@ -163,6 +175,33 @@ export async function resolveAnswerImage(name: string, categoryId: string): Prom
       return fromRow(row);
     }
     if (!verdict.ok) lastReason = verdict.reason;
+  }
+
+  /**
+   * ויקישיתוף לא נתן תמונה עם קרדיט תקין — מנסים מקור חופשי שני.
+   *
+   * Openverse ולא Unsplash/Pexels/Pixabay: השלושה דורשים מפתח API,
+   * ומפתח שנארז לדפדפן אינו סוד. ראו את ההסבר המלא ב-`openverse.ts`.
+   * הקרדיט עובר את אותו שער בדיוק, כולל דחיית NC ו-ND.
+   */
+  const free = await searchOpenverse(name.trim());
+  if (free) {
+    const row: ImageCacheRow = {
+      key,
+      normalized: normalizeHebrew(name),
+      categoryId,
+      found: true,
+      url: free.url,
+      pageUrl: free.pageUrl,
+      author: free.credit.author,
+      license: free.credit.license,
+      licenseUrl: free.credit.licenseUrl,
+      source: free.source,
+      title: name.trim(),
+      fetchedAt: new Date().toISOString()
+    };
+    await db.imageCache.put(row);
+    return fromRow(row);
   }
 
   await db.imageCache.put({
@@ -224,7 +263,7 @@ export function withImage(
     image: {
       url: image.url,
       thumbnailUrl: image.url,
-      source: 'ויקיפדיה העברית',
+      source: image.source,
       author: image.credit.author,
       license: image.credit.license,
       licenseUrl: image.credit.licenseUrl,

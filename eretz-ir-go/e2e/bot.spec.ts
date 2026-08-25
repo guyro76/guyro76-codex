@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * משחק נגד ארצי — מסלול מלא מבחירת המצב ועד טבלת התוצאות.
@@ -10,7 +10,7 @@ import { stubWikipedia } from './helpers';
  */
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 test('🤖 סיבוב מלא נגד ארצי מסתיים בטבלה עם שני שחקנים', async ({ page }) => {

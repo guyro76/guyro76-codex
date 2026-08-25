@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { disableServiceWorker, stubWikipedia } from './helpers';
+import { disableServiceWorker, stubExternalSources } from './helpers';
 
 /**
  * מסלול הקבלה מהאפיון:
@@ -23,7 +23,7 @@ test.beforeEach(async ({ page }) => {
     indexedDB.deleteDatabase('eretz-ir-go');
   });
   await disableServiceWorker(page);
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 test('מסלול מלא: פרופיל, קטגוריות, אות, מילוי, ניקוד ושמירה באוסף', async ({ page }) => {

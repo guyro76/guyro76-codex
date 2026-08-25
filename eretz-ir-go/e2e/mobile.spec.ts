@@ -1,5 +1,5 @@
 import { test, expect, devices, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * QA לנייד — במגע אמיתי, לא בלחיצת עכבר.
@@ -42,7 +42,7 @@ async function hangIndexedDbWrites(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 test('📱 מסלול מלא במגע: כל כפתור בדרך למשחק מגיב', async ({ page }) => {

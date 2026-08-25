@@ -79,7 +79,9 @@ export default function PuzzleBoard({
           author: bundled.author,
           license: bundled.license,
           licenseUrl: licenseDeedUrl(bundled.license)
-        }
+        },
+        // הצילומים הארוזים נבחרו ידנית מוויקישיתוף
+        source: 'ויקישיתוף'
       });
       return;
     }

@@ -134,8 +134,15 @@ describe('החיבור לקוד המשחק', () => {
     expect(src).not.toContain('ראו עמוד המקור בוויקיפדיה');
   });
 
-  it('הצינור עובר דרך השער ולא עוקף אותו', () => {
-    expect(read('src/lib/answerImages.ts')).toContain('mayDisplay');
+  /**
+   * השער הוא `mayUseInGame` ולא `mayDisplay`: הוא כולל גם את דחיית
+   * NC ו-ND, ולא רק את קיום הקרדיט. אם מישהו יחזיר את הצינור
+   * לשער החלש יותר, הבדיקה הזו תיפול.
+   */
+  it('הצינור עובר דרך השער המחמיר ולא עוקף אותו', () => {
+    const src = read('src/lib/answerImages.ts');
+    expect(src).toContain('mayUseInGame');
+    expect(src).not.toMatch(/\bmayDisplay\(/);
   });
 
   /**

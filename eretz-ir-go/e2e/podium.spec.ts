@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 import { SEED_ENTRIES } from '../src/data/seed';
 
 /**
@@ -16,7 +16,7 @@ import { SEED_ENTRIES } from '../src/data/seed';
  * הפודיום. הקשר דפדפן חדש ממילא מתחיל עם מסד ריק.
  */
 test.beforeEach(async ({ page }) => {
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 /**

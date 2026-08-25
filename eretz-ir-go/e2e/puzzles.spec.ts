@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * פאזלים — מסיום הסיבוב ועד הלוח במסך הפאזלים.
@@ -9,7 +9,7 @@ import { stubWikipedia } from './helpers';
  */
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 /**

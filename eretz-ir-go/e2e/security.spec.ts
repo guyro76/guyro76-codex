@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * ה-CSP מוגדר בקונפיג הפריסה, ולכן שרת ה-preview המקומי לא מגיש אותו.
@@ -59,7 +59,7 @@ async function applyCsp(page: Page): Promise<string[]> {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 test('🛡️ המשחק עובד תחת ה-CSP האמיתי — מסלול מלא בלי הפרות', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * הקראה בקול — הפיצ'ר לילדים שעדיין לא קוראים.
@@ -40,7 +40,7 @@ const said = (page: Page) => page.evaluate(() => (window as unknown as { __said:
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
   await spyOnSpeech(page);
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 /** מתחילים משחק יחיד קצר ומגיעים למסך הקטגוריות עם האות שהוגרלה */

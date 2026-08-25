@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * ערכות הצבע.
@@ -9,7 +9,7 @@ import { stubWikipedia } from './helpers';
  * טעינה הייתה מוחקת בדיוק את מה שנבדק.
  */
 test.beforeEach(async ({ page }) => {
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 const readBg = () => getComputedStyle(document.documentElement).getPropertyValue('--bg-mid').trim();

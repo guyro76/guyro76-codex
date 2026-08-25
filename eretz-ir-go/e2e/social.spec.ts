@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * שיתוף התוצאה ורצף ימי המשחק — שתי התוספות שנוגעות בילד אחרי
@@ -48,7 +48,7 @@ async function playShortGame(page: Page): Promise<void> {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 test('📤 שיתוף התוצאה מוסר טקסט נקי מכל פרט מזהה', async ({ page }) => {

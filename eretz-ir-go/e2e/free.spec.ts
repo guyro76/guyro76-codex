@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 import { FREE_BASE_URL } from '../playwright.config';
 
 /**
@@ -56,7 +56,7 @@ async function signedInAsFree(page: Page): Promise<void> {
     ['eretz-ir-go-auth', JSON.stringify(session)]
   );
 
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 
   // כל מה שהאפליקציה מנסה לשלוח לשרת החשבונות נענה כאן. שורת
   // החשבון היא `free` — זו כל ההגדרה של "מי שלא שילם".

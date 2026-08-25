@@ -23,6 +23,20 @@ const terms = readFileSync(resolve(root, 'public/terms.html'), 'utf8');
 const globalHeaders = vercel.headers.find((h) => h.source === '/(.*)')!;
 const header = (key: string) => globalHeaders.headers.find((h) => h.key === key)?.value ?? '';
 
+/**
+ * המקורות החיצוניים שהמשחק באמת פונה אליהם, נגזרים מהקוד עצמו ולא
+ * מרשימה שנכתבת ביד. כל מודול שמדבר עם הרשת מופיע כאן, וכתובת חדשה
+ * שתיכנס אליו תופיע אוטומטית גם בבדיקות שמתחתיו.
+ */
+const NETWORK_MODULES = ['src/lib/verifyOnline.ts', 'src/lib/openverse.ts'];
+const fetchedHosts = [
+  ...new Set(
+    NETWORK_MODULES.flatMap((f) =>
+      [...readFileSync(resolve(root, f), 'utf8').matchAll(/https:\/\/([a-z0-9.-]+)\//g)].map((m) => m[1])
+    )
+  )
+];
+
 describe('כותרות אבטחה', () => {
   it('כל הכותרות החיוניות מוגדרות', () => {
     for (const key of [
@@ -262,5 +276,36 @@ describe('מדיניות הפרטיות הציבורית', () => {
     // שניהם — ולא אחד שנשאר אחרי ש"פישטו" את השני
     const blocks = workflow.match(/deploymentEnabled.*gh-pages.*false/g) ?? [];
     expect(blocks, 'צריך עותק לכל אחת משתי ספריות השורש').toHaveLength(2);
+  });
+});
+
+
+/**
+ * מקור חיצוני חדש נוגע בשלושה מקומות שקל לשכוח שניים מהם: ה-CSP
+ * בשתי פלטפורמות הפריסה, והחסימה בבדיקות ה-E2E. כשנוסף Openverse
+ * כמקור תמונות שני, המסלול המלא נפל על `ERR_TUNNEL_CONNECTION_FAILED`
+ * — בקשה אמיתית שיצאה מהבדיקה החוצה. הבדיקות כאן נגזרות מהקוד, ולכן
+ * הן ייפלו על המקור **הבא** לפני שהוא יגיע לייצור.
+ */
+describe('כל מקור חיצוני מוכרז ונחסם', () => {
+  const helpers = readFileSync(resolve(root, 'e2e/helpers.ts'), 'utf8');
+
+  it('נמצאו המקורות בקוד', () => {
+    expect(fetchedHosts).toContain('he.wikipedia.org');
+    expect(fetchedHosts).toContain('api.openverse.org');
+  });
+
+  it('כל מקור מופיע ב-connect-src בשתי הפלטפורמות', () => {
+    const csp = header('Content-Security-Policy');
+    for (const host of fetchedHosts) {
+      expect(csp, `${host} חסר ב-CSP של Vercel`).toContain(`https://${host}`);
+      expect(netlify, `${host} חסר ב-CSP של Netlify`).toContain(`https://${host}`);
+    }
+  });
+
+  it('כל מקור נחסם בבדיקות ה-E2E ולא יוצא לרשת', () => {
+    for (const host of fetchedHosts) {
+      expect(helpers, `${host} אינו מיורט ב-e2e/helpers.ts`).toContain(host);
+    }
   });
 });

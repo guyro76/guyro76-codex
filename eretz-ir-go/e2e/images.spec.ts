@@ -92,8 +92,77 @@ test.beforeEach(async ({ page }) => {
     );
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ query: { pages } }) });
   });
+  /**
+   * המקור השני. כברירת מחדל הוא "אין תוצאות", כדי שהבדיקות שבודקות
+   * את ויקישיתוף לא ייצאו לרשת האמיתית — בקשה כזו נכשלת בסביבת
+   * הבדיקה ומדווחת כשגיאת קונסול. בדיקה שרוצה תשובה אחרת רושמת
+   * ניתוב משלה, והוא גובר כי הוא נרשם אחריו.
+   */
+  await page.route('**api.openverse.org/**', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ results: [] })
+    })
+  );
   await page.exposeFunction('__searchCount', () => searches);
 });
+
+/** התשובה של Openverse, בפורמט האמיתי של ה-API */
+const openverseRow = (over: Record<string, unknown> = {}) => ({
+  title: 'test',
+  url: PIXEL,
+  thumbnail: PIXEL,
+  creator: 'Test Openverse Photographer',
+  license: 'by',
+  license_version: '4.0',
+  foreign_landing_url: 'https://example.org/photo',
+  source: 'flickr',
+  ...over
+});
+
+/** מסלול קצר: פרופיל → סיבוב אחד → חשיפת תשובה בעזרת ארצי → סיום */
+async function playOneRound(page: import('@playwright/test').Page, reveal = true): Promise<void> {
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await page.getByRole('button', { name: /משחק חדש/ }).click();
+  await page.locator('select').first().selectOption('1');
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
+  await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
+  await page.getByRole('button', { name: /להגרלת האות/ }).click();
+  await page.locator('.letter-wheel').click();
+  await page.getByRole('button', { name: /מתחילים/ }).click({ timeout: 20_000 });
+
+  if (reveal) {
+    const card = page.locator('.cat-card').first();
+    await card.getByRole('button', { name: /רמז/ }).click();
+    await card.getByRole('button', { name: /עוד רמז/ }).click();
+    await card.getByRole('button', { name: /גלו לי/ }).click();
+  }
+
+  await page.getByRole('button', { name: /סיימתי|סיום/ }).first().click();
+  await expect(page.getByRole('heading', { name: /תוצאות הסיבוב/ })).toBeVisible({ timeout: 25_000 });
+  const closeNew = page.getByRole('button', { name: /מעולה|למילה הבאה/ });
+  while (await closeNew.first().isVisible().catch(() => false)) {
+    await closeNew.first().click();
+    await page.waitForTimeout(200);
+  }
+}
+
+/** ויקישיתוף בלי יוצר ורישיון — כדי שהצינור ימשיך למקור השני */
+async function wikimediaWithoutCredit(page: import('@playwright/test').Page): Promise<void> {
+  await page.route('**he.wikipedia.org/w/api.php**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get('prop') === 'imageinfo') {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ query: { pages: { '1': { imageinfo: [{ extmetadata: {} }] } } } })
+      });
+      return;
+    }
+    await route.fallback();
+  });
+}
 
 test('🖼️ תשובה שאושרה מציגה תמונה אמיתית עם קרדיט, ונשמרת למטמון', async ({ page }) => {
   const errors: string[] = [];
@@ -203,5 +272,71 @@ test('⚖️ תמונה בלי שם יוצר ורישיון פשוט לא מוצ
 
   // המשחק ממשיך לעבוד — פשוט בלי תמונה, וזה המצב התקין
   await expect(page.getByRole('heading', { name: /תוצאות הסיבוב/ })).toBeVisible();
+  await expect(page.locator('figure')).toHaveCount(0);
+});
+
+
+test('🌐 כשוויקישיתוף לא נותן קרדיט, המקור החופשי השני כן — והקרדיט שלו מוצג', async ({ page }) => {
+  /**
+   * זה המסלול שנוסף כשהתברר שתמונות רבות נדחות על העדר קרדיט.
+   * מקור שני חופשי (Openverse, בלי מפתח API) נכנס בדיוק כאן, ועובר
+   * את אותו שער בדיוק — כולל שם היוצר, שם הרישיון והקישור לנוסח.
+   */
+  await wikimediaWithoutCredit(page);
+  await page.route('**api.openverse.org/**', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ results: [openverseRow()] })
+    })
+  );
+
+  await playOneRound(page);
+
+  const credit = page.locator('.image-credit').first();
+  await expect(credit).toContainText('Test Openverse Photographer', { timeout: 20_000 });
+  await expect(credit.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute(
+    'href',
+    'https://creativecommons.org/licenses/by/4.0/'
+  );
+  /**
+   * שם המקור הוא האתר המארח ולא "ויקיפדיה העברית". קודם המקור נכתב
+   * קבוע בקוד, וכל תמונה — מכל מקור — הוצגה כאילו הגיעה מוויקיפדיה.
+   * זה ייחוס שגוי, ובדיוק סוג ההפרה שהקרדיט אמור למנוע.
+   */
+  await expect(credit.getByRole('link', { name: 'Flickr' })).toHaveAttribute(
+    'href',
+    'https://example.org/photo'
+  );
+  await expect(credit).toContainText('חתוכה');
+});
+
+test('⛔ רישיון NC או ND נדחה גם כשהוא מגיע עם קרדיט מלא', async ({ page }) => {
+  /**
+   * הבדיקה המשפטית השנייה, ואולי החשובה מבין השתיים.
+   *
+   * - **NC** — המשחק נמכר במנוי, ולכן כל שימוש בו מסחרי.
+   * - **ND** — המשחק מציג ב-object-fit: cover וחותך תמונות לחלקי
+   *   פאזל, וזו יצירת נגזרת.
+   *
+   * שתי התמונות כאן נושאות שם יוצר ורישיון מלאים, כלומר הן עוברות
+   * את שער הקרדיט — ובכל זאת אסור להשתמש בהן. הבקשה שיוצאת לשרת
+   * כבר מסננת אותן, אבל שער שנשען על שרת חיצוני הוא שער שמישהו אחר
+   * מחזיק לו את המפתח, ולכן הסינון חוזר גם אצלנו.
+   */
+  await wikimediaWithoutCredit(page);
+  await page.route('**api.openverse.org/**', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({
+        results: [openverseRow({ license: 'by-nc' }), openverseRow({ license: 'by-nd' })]
+      })
+    })
+  );
+
+  await playOneRound(page);
+
+  // אין תמונה — וזו התוצאה התקינה
   await expect(page.locator('figure')).toHaveCount(0);
 });

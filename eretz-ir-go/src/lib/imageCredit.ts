@@ -131,3 +131,53 @@ export function creditLine(credit: ImageCredit, opts: { source?: string; cropped
   const line = parts.join(' · ');
   return opts.cropped ? `${line} · התמונה מוצגת חתוכה` : line;
 }
+
+
+/**
+ * מה הרישיון מתיר.
+ *
+ * ## למה זה קריטי דווקא כאן
+ *
+ * שני סוגי רישיונות CC **אסורים למשחק הזה**, ולא בגלל הידור אלא
+ * בגלל מה שהמשחק עושה בפועל:
+ *
+ * - **NC (NonCommercial)** — המשחק נמכר במנוי. כל שימוש בו הוא
+ *   שימוש מסחרי, ותמונה בלתי־מסחרית בתוכו היא הפרה ישירה.
+ * - **ND (NoDerivatives)** — המשחק מציג ב-`object-fit: cover`
+ *   וחותך תמונות לחלקי פאזל. שתיהן יצירת נגזרת, וזה בדיוק מה
+ *   ש-ND אוסר.
+ *
+ * עד עכשיו לא נבדק אף אחד מהשניים. ויקישיתוף כמעט אינו מארח NC,
+ * ולכן זה לא התפוצץ — אבל ברגע שנוסף מקור שכן מארח (וזה בדיוק מה
+ * שקורה עם Openverse), זו הפרה שמחכה לקרות.
+ */
+export interface LicensePermissions {
+  /** מותר בשימוש מסחרי */
+  commercial: boolean;
+  /** מותר לשנות, כולל חיתוך */
+  derivatives: boolean;
+}
+
+export function licensePermissions(license: string): LicensePermissions {
+  const s = license.trim().toLowerCase();
+  // נחלת הכלל ו-CC0: הכול מותר
+  if (!s || s.startsWith('cc0') || s.includes('public domain') || s.includes('pdm')) {
+    return { commercial: true, derivatives: true };
+  }
+  return {
+    commercial: !/\bnc\b|noncommercial|non-commercial/.test(s),
+    derivatives: !/\bnd\b|noderiv|no-deriv/.test(s)
+  };
+}
+
+/**
+ * האם מותר להשתמש בתמונה במשחק הזה.
+ *
+ * "מותר" כאן פירושו: יש קרדיט מלא, **וגם** הרישיון מתיר שימוש
+ * מסחרי ושינוי. תמונה שנכשלת באחד מהם פשוט לא מוצגת.
+ */
+export function mayUseInGame(credit: ImageCredit | null | undefined): credit is ImageCredit {
+  if (!mayDisplay(credit)) return false;
+  const p = licensePermissions(credit.license);
+  return p.commercial && p.derivatives;
+}

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * אודיו — הבדיקה הקריטית לאייפון.
@@ -39,7 +39,7 @@ async function instrumentAudio(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 test('🔊 האודיו נפתח כבר בלחיצה הראשונה ומנגן בגלגל האות', async ({ page }) => {

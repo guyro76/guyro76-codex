@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /** מצבי המשחק המהירים והמיוחדים — כל אחד נבדק עד לתחילת משחק אמיתית */
 
@@ -22,7 +22,7 @@ async function gotoModeSelect(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 test('⚡ ראש בראש: תשובה נכונה מוסיפה ניקוד, שגויה לא', async ({ page }) => {

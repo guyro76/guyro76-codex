@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 import { SEED_ENTRIES } from '../src/data/seed';
 import { QUICK_PHRASES } from '../src/lib/quickChat';
 
@@ -22,7 +22,7 @@ test.beforeEach(async ({ page }) => {
       /* origin בלי אחסון — אין מה לנקות */
     }
   });
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 /** מחליף את Web Share בלוכד, כדי לראות בדיוק מה נשלח */
@@ -282,7 +282,7 @@ test('⚔️ תוצאת אתגר נרשמת ביומן הראש-בראש ושו�
    * חולקת את אותו אחסון בלי אותו script.
    */
   const fresh = await page.context().newPage();
-  await stubWikipedia(fresh);
+  await stubExternalSources(fresh);
   await fresh.goto('./');
   await fresh.getByRole('button', { name: /בואו נשחק/ }).click();
   await expect(fresh.locator('.rivals-card .rival-name')).toHaveText(rival);

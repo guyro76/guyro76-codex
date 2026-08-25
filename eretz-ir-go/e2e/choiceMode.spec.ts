@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * מצב בחירה — הדרך של ילד בן ארבע לשחק לבד.
@@ -10,7 +10,7 @@ import { stubWikipedia } from './helpers';
  */
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 async function toRound(page: import('@playwright/test').Page, choice: boolean) {

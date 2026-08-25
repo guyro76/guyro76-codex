@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * סריקה רוחבית: נכנסים לכל מסך שאפשר להגיע אליו מהתפריט, ובודקים
@@ -69,7 +69,7 @@ async function auditButtons(page: Page, screen: string): Promise<string[] > {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 test('🧭 כל מסכי התפריט נפתחים, בלי שגיאות ובלי כפתור בעייתי', async ({ page }) => {

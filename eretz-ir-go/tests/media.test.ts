@@ -44,17 +44,19 @@ describe('חבילת התוכן שנשלחת עם האתר', () => {
 
 /** קרדיט מלא — בלעדיו `withImage` לא אמורה לקבל תמונה בכלל */
 const CREDIT = { author: 'Someone', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/' };
+/** שם המקור מגיע מהצינור ואינו נקבע בתצוגה — יש יותר ממקור אחד */
+const SOURCE = 'ויקיפדיה העברית';
 
 describe('מיזוג תמונה לפריט ידע', () => {
   it('לא דורסת תמונה שכבר קיימת', () => {
     const item = userItem('פריז', 'city', 'seed', undefined, { url: 'https://a/first.jpg', author: 'A', license: 'CC BY 4.0' });
-    const merged = withImage(item, { url: 'https://b/second.jpg', credit: CREDIT });
+    const merged = withImage(item, { url: 'https://b/second.jpg', credit: CREDIT, source: SOURCE });
     expect(merged?.image?.url).toBe('https://a/first.jpg');
   });
 
   it('מוסיפה תמונה לערך מהמאגר המובנה, עם קרדיט וקישור למקור', () => {
     const item = userItem('פריז', 'city', 'seed');
-    const merged = withImage(item, { url: 'https://b/paris.jpg', pageUrl: 'https://he.wikipedia.org/wiki/פריז', credit: CREDIT });
+    const merged = withImage(item, { url: 'https://b/paris.jpg', pageUrl: 'https://he.wikipedia.org/wiki/פריז', credit: CREDIT, source: SOURCE });
     expect(merged?.image?.url).toBe('https://b/paris.jpg');
     expect(merged?.image?.attributionRequired).toBe(true);
     // הקרדיט האמיתי עובר, ולא מחרוזת שמתחזה לקרדיט
@@ -62,6 +64,17 @@ describe('מיזוג תמונה לפריט ידע', () => {
     expect(merged?.image?.license).toBe('CC BY-SA 4.0');
     expect(merged?.image?.licenseUrl).toContain('creativecommons.org');
     expect(merged?.sources).toContain('https://he.wikipedia.org/wiki/פריז');
+    // המקור נלקח מהתמונה עצמה. תמונה מ-Flickr שמוצגת כ"ויקיפדיה" היא ייחוס שגוי.
+    expect(merged?.image?.source).toBe(SOURCE);
+  });
+
+  it('מקור שאינו ויקיפדיה נשמר כמו שהוא', () => {
+    const merged = withImage(userItem('פריז', 'city', 'seed'), {
+      url: 'https://c/paris.jpg',
+      credit: CREDIT,
+      source: 'Flickr'
+    });
+    expect(merged?.image?.source).toBe('Flickr');
   });
 
   it('בלי תמונה — הפריט חוזר כמו שהוא, ולא מוצג כלום', () => {

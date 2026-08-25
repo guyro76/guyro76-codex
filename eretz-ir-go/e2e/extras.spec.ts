@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * התוספות: קרדיט קבוע, משימת ביניים בין סיבובים, קניית תשובה מהקרדיט,
@@ -8,7 +8,7 @@ import { stubWikipedia } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 /** פתיחה → פרופיל → משחק יחיד עם מספר סיבובים נתון */

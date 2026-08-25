@@ -1,11 +1,18 @@
 import type { Page } from '@playwright/test';
 
 /**
- * ויקיפדיה אינה זמינה בסביבת ה-CI, ובכל מקרה בדיקות לא צריכות להיות
- * תלויות בשירות חיצוני. כאן מחזירים "לא נמצא" — כך המשחק עובר את
- * המסלול המלא במצב הלא-מקוון שלו, וכל שגיאת קונסול שתופיע היא באמת שלנו.
+ * חוסמת **כל** מקור חיצוני שהמשחק פונה אליו, ומחזירה "לא נמצא".
+ *
+ * בדיקות לא צריכות להיות תלויות בשירות חיצוני, וממילא הרשת חסומה
+ * בסביבת ה-CI. כך המשחק עובר את המסלול המלא במצב הלא-מקוון שלו,
+ * וכל שגיאת קונסול שתופיע היא באמת שלנו.
+ *
+ * הרשימה כאן חייבת להתעדכן עם כל מקור חדש. כשנוסף Openverse כמקור
+ * תמונות שני, המסלול המלא נפל על `ERR_TUNNEL_CONNECTION_FAILED` —
+ * בקשה אמיתית שיצאה החוצה מפני שאיש לא חסם אותה. זו לא הייתה
+ * תקלה בבדיקה בלבד: היא הוכיחה שהצינור באמת מגיע למקור השני.
  */
-export async function stubWikipedia(page: Page): Promise<void> {
+export async function stubExternalSources(page: Page): Promise<void> {
   await page.route('**he.wikipedia.org/**', (route) =>
     route.fulfill({
       contentType: 'application/json',
@@ -14,6 +21,13 @@ export async function stubWikipedia(page: Page): Promise<void> {
       // כמו באג במשחק אבל היא באג בבדיקה.
       headers: { 'access-control-allow-origin': '*' },
       body: JSON.stringify({ query: { search: [] } })
+    })
+  );
+  await page.route('**api.openverse.org/**', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ results: [] })
     })
   );
 }

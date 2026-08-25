@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { stubWikipedia } from './helpers';
+import { stubExternalSources } from './helpers';
 
 /**
  * המפה האישית — מהתשובה במשחק ועד הנקודה שנדלקת.
@@ -38,7 +38,7 @@ const COUNTRY_BY_LETTER: Record<string, string> = {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
-  await stubWikipedia(page);
+  await stubExternalSources(page);
 });
 
 test('🗺️ מדינה שנענתה נכון נדלקת על המפה באלבום', async ({ page }) => {
