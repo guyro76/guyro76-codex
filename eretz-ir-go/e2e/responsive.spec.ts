@@ -92,3 +92,43 @@ for (const size of SIZES) {
     expect(problems, `בעיות תצוגה ב-${size.name}:\n${problems.join('\n')}`).toEqual([]);
   });
 }
+
+
+/**
+ * טקסט שנשבר אות אחת בשורה.
+ *
+ * זה לא "חיתוך", ולכן הבדיקות שלמעלה לא תפסו את זה: שום דבר לא חרג
+ * מהמסך ולא נוצרה גלילה אופקית. פשוט שם הקטגוריה הופיע במאונך —
+ * א' מעל ר' מעל ץ' — כי שני הכפתורים שלצידו לקחו את כל הרוחב
+ * ו-`overflow-wrap: anywhere` עשה את שלו.
+ *
+ * זה התגלה בצילומי המסך לחנות, שהם הפעם הראשונה שהמשחק צולם ברוחב
+ * טלפון אמיתי במקום חלון דפדפן רחב. הבדיקה כאן מוודאת שזה לא יחזור.
+ */
+test('📏 שמות הקטגוריות נשארים בשורה אחת גם בטלפון צר', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await page.getByRole('button', { name: /משחק חדש/ }).click();
+  await page.locator('select').first().selectOption('1');
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
+  await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
+  await page.getByRole('button', { name: /להגרלת האות/ }).click();
+  await page.locator('.letter-wheel').click();
+  await page.getByRole('button', { name: /מתחילים/ }).click({ timeout: 20_000 });
+  await expect(page.locator('.cat-card').first()).toBeVisible();
+
+  const broken = await page.evaluate(() => {
+    const bad: string[] = [];
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>('.cat-name'))) {
+      const line = parseFloat(getComputedStyle(el).lineHeight) || 20;
+      const lines = el.getBoundingClientRect().height / line;
+      // שתי שורות זה עדיין קריא; שלוש ומעלה זה טקסט שנשבר לאותיות
+      if (lines > 2.2) bad.push(`"${el.textContent?.trim()}" נפרס על ${lines.toFixed(1)} שורות`);
+    }
+    return bad;
+  });
+
+  expect(broken, `שם קטגוריה נשבר לאותיות: ${broken.join(' | ')}`).toEqual([]);
+});

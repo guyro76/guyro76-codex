@@ -128,6 +128,14 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
           {category.name}
           {doublePick?.categoryId === category.id && <span className="gold"> ×2</span>}
         </span>
+        {/*
+          כל כפתורי הפעולה בקבוצה אחת ולא כאחים ישירים של השם.
+          ברוחב טלפון אמיתי (360px) הם דחסו את שם הקטגוריה עד
+          שהוא נשבר אות אחת בשורה, ובלי הקבוצה הזו כל כפתור היה
+          יורד לשורה נפרדת ומותח את הקלף. עכשיו הם יורדים יחד
+          לשורה שנייה, זה לצד זה.
+        */}
+        <div className="cat-actions">
         {aloud && canSpeak() && (
           <button
             className="btn-small btn-ghost"
@@ -180,6 +188,7 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
             </button>
           </>
         )}
+        </div>
       </div>
 
       {choices ? (

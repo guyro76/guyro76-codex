@@ -74,3 +74,60 @@ describe('תמונת הראשה של Play', () => {
     expect(statSync(path).size).toBeGreaterThan(1000);
   });
 });
+
+
+/**
+ * טקסטים לחנות — האורכים נאכפים על ידי Google, לא על ידי הטעם הטוב.
+ *
+ * תיאור קצר שחורג ב-81 תווים פשוט נדחה בהעלאה, ואז מגלים את זה
+ * בשלב הכי מעצבן — מול טופס פתוח בקונסולה. הבדיקה סופרת את הטקסט
+ * מהקובץ שממנו באמת מעתיקים.
+ */
+describe('טקסטים לחנות', () => {
+  const listing = readFileSync(resolve(root, 'store/LISTING.md'), 'utf8');
+
+  /** שולף את גוש הקוד שאחרי כותרת מסוימת — משם מעתיקים בפועל */
+  const block = (heading: string): string => {
+    const m = new RegExp(`## ${heading}[\\s\\S]*?\`\`\`\\n([\\s\\S]*?)\\n\`\`\``).exec(listing);
+    expect(m, `לא נמצא גוש הטקסט של "${heading}"`).not.toBeNull();
+    return m![1];
+  };
+
+  it('שם האפליקציה עד 30 תווים', () => {
+    const name = block('שם האפליקציה \\(עד 30 תווים\\)');
+    expect(name.length).toBeGreaterThan(0);
+    expect(name.length).toBeLessThanOrEqual(30);
+  });
+
+  it('התיאור הקצר עד 80 תווים', () => {
+    const short = block('תיאור קצר \\(עד 80 תווים\\)');
+    expect(short.length).toBeLessThanOrEqual(80);
+  });
+
+  it('התיאור המלא עד 4000 תווים', () => {
+    const full = block('תיאור מלא \\(עד 4000 תווים\\)');
+    expect(full.length).toBeGreaterThan(200);
+    expect(full.length).toBeLessThanOrEqual(4000);
+  });
+
+  /**
+   * ההבטחות בתיאור חייבות להיות נכונות. "בלי פרסומות" בתיאור של
+   * אפליקציה שמציגה פרסומות בגרסה החינמית הוא מצג שווא, וגם עילה
+   * להסרה מהחנות.
+   */
+  it('כל אמירה על היעדר פרסומות מוגבלת לגרסה בתשלום', () => {
+    const full = block('תיאור מלא \\(עד 4000 תווים\\)');
+
+    // "אין פרסומות" הוא משפט נכון — אבל רק על הגרסה בתשלום.
+    // אותו משפט בלי הסייג הוא מצג שווא, ועילה להסרה מהחנות.
+    for (const sentence of full.split(/[.\n]/)) {
+      if (!/אין פרסומות|ללא פרסומות|בלי פרסומות/.test(sentence)) continue;
+      expect(sentence, `"${sentence.trim()}" — הבטחה על היעדר פרסומות בלי לסייג לגרסה בתשלום`).toMatch(
+        /בתשלום/
+      );
+    }
+
+    // ואומר במפורש שבגרסה החינמית כן יש, ושהן אינן מותאמות אישית
+    expect(full).toContain('שאינן מותאמות אישית');
+  });
+});

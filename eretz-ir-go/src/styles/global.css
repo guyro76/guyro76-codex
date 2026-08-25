@@ -329,9 +329,23 @@ input::placeholder { color: var(--text-dim); }
   100% { transform: scale(1); }
 }
 .cat-card.invalid { border-color: var(--bad); animation: gentleShake 0.35s ease; }
-.cat-card .cat-head { display: flex; align-items: center; gap: 10px; }
+/* `flex-wrap` ולא כיווץ: על טלפון בן 360px שני הכפתורים ("רמז",
+   "קנו תשובה") לקחו את כל הרוחב, שם הקטגוריה נדחס כמעט לאפס, ועם
+   `overflow-wrap: anywhere` הוא נשבר **אות אחת בשורה** — "א/ר/ץ"
+   במאונך. עכשיו הכפתורים יורדים לשורה משלהם והשם נשאר שלם. נתפס
+   בצילומי המסך לחנות, שהם הפעם הראשונה שהמשחק צולם ברוחב טלפון
+   אמיתי. */
+.cat-card .cat-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .cat-card .cat-icon { font-size: 1.7rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4)); }
-.cat-card .cat-name { font-weight: 700; flex: 1; }
+.cat-card .cat-name { font-weight: 700; flex: 1 1 auto; }
+/* קבוצת הפעולות נדחפת לקצה, ויורדת **כיחידה** לשורה שנייה כשאין
+   מקום — במקום שכל כפתור ירד לשורה משלו ויאריך את הקלף פי שלושה. */
+.cat-card .cat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-inline-start: auto;
+}
 
 @keyframes gentleShake {
   0%, 100% { transform: translateX(0); }
@@ -785,7 +799,11 @@ h1, h2, h3 { text-wrap: balance; }
 p, li { text-wrap: pretty; }
 
 /* טקסט ארוך של משתמש לא שובר את הפריסה */
-.cat-card .cat-name, .autocomplete .item { min-width: 0; overflow-wrap: anywhere; }
+/* `min-width` ולא 0: שם קטגוריה קצר לא יורד מתחת לרוחב שבו הוא
+   עדיין נקרא. `overflow-wrap` נשאר בשביל שם מותאם אישית ארוך
+   שהילד המציא, שאותו באמת עדיף לשבור מאשר לתת לו לגלוש. */
+.cat-card .cat-name { min-width: 4.5em; overflow-wrap: anywhere; }
+.autocomplete .item { min-width: 0; overflow-wrap: anywhere; }
 
 /* גלילה בתוך חלונית לא ממשיכה לדף שמאחוריה */
 .modal-backdrop, .autocomplete { overscroll-behavior: contain; }
