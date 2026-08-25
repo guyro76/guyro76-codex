@@ -7,6 +7,7 @@
  */
 
 import type { ImageCandidate } from './imageVerify';
+import { creditFromMetadata, type ExtMetadata, type ImageCredit } from './imageCredit';
 
 /** מועמד לתמונה, עם הקישור לעמוד המקור לצורך הקרדיט */
 export type ImageCandidateWithSource = ImageCandidate & { pageUrl?: string };
@@ -86,7 +87,7 @@ export async function verifyOnWikipedia(term: string, signal?: AbortSignal): Pro
         exintro: '1',
         explaintext: '1',
         exsentences: '2',
-        piprop: 'thumbnail',
+        piprop: 'thumbnail|name',
         pithumbsize: '400',
         cllimit: '20',
         inprop: 'url'
@@ -103,6 +104,7 @@ export async function verifyOnWikipedia(term: string, signal?: AbortSignal): Pro
             extract?: string;
             fullurl?: string;
             thumbnail?: { source: string };
+            pageimage?: string;
             categories?: { title: string }[];
             pageprops?: { 'wikibase-shortdesc'?: string };
           }
@@ -117,7 +119,6 @@ export async function verifyOnWikipedia(term: string, signal?: AbortSignal): Pro
       description: page?.extract,
       source: page?.fullurl ?? `https://he.wikipedia.org/wiki/${encodeURIComponent(hit.title)}`,
       imageUrl: page?.thumbnail?.source,
-      imageAttribution: page?.thumbnail ? 'התמונה מוויקיפדיה/ויקישיתוף — ראו רישיון בעמוד הערך' : undefined,
       evidence: [
         qualifier,
         page?.pageprops?.['wikibase-shortdesc'],
@@ -203,7 +204,7 @@ export async function fetchImageCandidates(
         exintro: '1',
         explaintext: '1',
         exsentences: '2',
-        piprop: 'thumbnail',
+        piprop: 'thumbnail|name',
         pithumbsize: '400',
         cllimit: '20',
         inprop: 'url'
@@ -220,6 +221,7 @@ export async function fetchImageCandidates(
             extract?: string;
             fullurl?: string;
             thumbnail?: { source: string };
+            pageimage?: string;
             categories?: { title: string }[];
             pageprops?: { disambiguation?: string; 'wikibase-shortdesc'?: string };
           }
@@ -232,10 +234,57 @@ export async function fetchImageCandidates(
       extract: page.extract,
       wikiCategories: (page.categories ?? []).map((c) => c.title.replace(/^קטגוריה:/, '')),
       imageUrl: page.thumbnail?.source,
+      imageFile: page.pageimage,
       isDisambiguation: page.pageprops?.disambiguation !== undefined,
       pageUrl: page.fullurl
     }));
   } catch {
     return null; // Offline או שגיאת רשת — לא "אין תמונה", אלא "לא ידוע"
   }
+}
+
+
+/**
+ * שליפת הקרדיט של קובץ תמונה מוויקישיתוף.
+ *
+ * זו שאילתה **שנייה ונפרדת** מזו שמביאה את התמונה, וזו לא בחירה
+ * עיצובית: `pageimages` מחזיר כתובת בלבד ואינו יודע לומר מי צילם.
+ * שם היוצר והרישיון יושבים ב-`extmetadata` של דף הקובץ, ובלעדיהם
+ * אסור להציג את התמונה בכלל (ראו `imageCredit.ts`).
+ *
+ * מחזירה `null` בכל כישלון — רשת, קובץ שנעלם, או מטא־דאטה חסרה.
+ * הקורא מתייחס ל-null כאל "אין תמונה", ולא כאל "הצג בלי קרדיט".
+ */
+export async function fetchImageCredit(fileName: string, signal?: AbortSignal): Promise<ImageCredit | null> {
+  const name = fileName.trim();
+  if (!name) return null;
+
+  const title = name.startsWith('File:') || name.startsWith('קובץ:') ? name : `File:${name}`;
+  const res = await wikiFetch(
+    wikiUrl({
+      action: 'query',
+      titles: title,
+      prop: 'imageinfo',
+      iiprop: 'extmetadata',
+      // מבקשים בדיוק את מה שהרישיון דורש, ולא את כל המטא־דאטה
+      iiextmetadatafilter: 'Artist|LicenseShortName|LicenseUrl|License'
+    }),
+    signal
+  );
+  if (!res) return null;
+
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    return null;
+  }
+
+  const pages = (data as { query?: { pages?: Record<string, unknown> } }).query?.pages ?? {};
+  for (const page of Object.values(pages)) {
+    const info = (page as { imageinfo?: { extmetadata?: ExtMetadata }[] }).imageinfo?.[0];
+    const credit = creditFromMetadata(info?.extmetadata);
+    if (credit) return credit;
+  }
+  return null;
 }

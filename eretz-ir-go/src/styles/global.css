@@ -1635,3 +1635,15 @@ body::after {
   font-weight: 600;
   color: var(--text-dim);
 }
+
+/* ===== קרדיט לתמונה ===== */
+/* קרדיט הוא דרישת רישיון ולא הערת שוליים, ולכן הוא קריא ולא מעומעם
+   עד היעלמות. קטן — אבל בצבע טקסט מלא ובמשקל שמאפשר לקרוא אותו. */
+.image-credit {
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--text);
+}
+.image-credit a { color: var(--link); }

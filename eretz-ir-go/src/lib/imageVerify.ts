@@ -13,6 +13,7 @@ import { normalizeHebrew } from './hebrew';
  */
 
 export type RejectReason =
+  | 'no-credit'
   | 'no-image'
   | 'name-category'
   | 'title-mismatch'
@@ -30,6 +31,8 @@ export interface ImageCandidate {
   /** קטגוריות הערך בוויקיפדיה */
   wikiCategories?: string[];
   imageUrl?: string;
+  /** שם קובץ התמונה בוויקישיתוף — המפתח לשליפת היוצר והרישיון */
+  imageFile?: string;
   isDisambiguation?: boolean;
 }
 
@@ -141,6 +144,7 @@ export function verifyImageCandidate(
 
 /** הסבר קצר — מוצג במסך ההורה, לא באמצע המשחק */
 export function rejectReasonText(reason: RejectReason): string {
+  if (reason === 'no-credit') return 'אין ליוצר קרדיט מלא בוויקישיתוף, ולכן התמונה לא מוצגת';
   switch (reason) {
     case 'no-image':
       return 'לא נמצאה תמונה בערך';

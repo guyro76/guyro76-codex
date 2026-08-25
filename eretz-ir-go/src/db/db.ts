@@ -15,7 +15,15 @@ export interface UserKnowledgeRow {
   source: string; // למשל URL של ערך ויקיפדיה או "parent-approved"
   description?: string;
   imageUrl?: string;
+  /**
+   * שדה היסטורי: נשא מחרוזת קבועה ("ראו רישיון בעמוד המקור") ולא שם
+   * יוצר. שורות ישנות שנושאות אותו לא יציגו תמונה, כי אין בהן קרדיט
+   * שעומד ברישיון. נשמר כדי לא לשבור מסד נתונים קיים.
+   */
   imageAttribution?: string;
+  imageAuthor?: string;
+  imageLicense?: string;
+  imageLicenseUrl?: string;
   addedAt: string;
 }
 
@@ -55,7 +63,12 @@ export interface ImageCacheRow {
   found: boolean;
   url?: string;
   pageUrl?: string;
-  attribution?: string;
+  /** שם היוצר, כפי שוויקישיתוף מדווח עליו. בלעדיו התמונה לא מוצגת. */
+  author?: string;
+  /** שם הרישיון, למשל "CC BY-SA 4.0". בלעדיו התמונה לא מוצגת. */
+  license?: string;
+  /** קישור לנוסח הרישיון, כשהצלחנו לגזור אותו */
+  licenseUrl?: string;
   /** כותרת הערך בוויקיפדיה שממנו נלקחה התמונה */
   title?: string;
   /** למה נדחתה — לעיון במסך ההורה */

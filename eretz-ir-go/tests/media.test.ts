@@ -9,7 +9,8 @@ describe('תמונות של תשובות מאומתות', () => {
   it('שומרת תמונה עם מקור וקרדיט כשהאימות החזיר כתובת', () => {
     const item = userItem('ונואטו', 'country', 'https://he.wikipedia.org/wiki/ונואטו', 'מדינה באוקיינוס השקט', {
       url: 'https://upload.wikimedia.org/x/vanuatu.jpg',
-      attribution: 'ויקיפדיה/ויקישיתוף — הרישיון בעמוד המקור'
+      author: 'Photographer Name',
+      license: 'CC BY-SA 4.0'
     });
     expect(item.image?.url).toBe('https://upload.wikimedia.org/x/vanuatu.jpg');
     expect(item.image?.thumbnailUrl).toBe('https://upload.wikimedia.org/x/vanuatu.jpg');
@@ -41,18 +42,25 @@ describe('חבילת התוכן שנשלחת עם האתר', () => {
   });
 });
 
+/** קרדיט מלא — בלעדיו `withImage` לא אמורה לקבל תמונה בכלל */
+const CREDIT = { author: 'Someone', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/' };
+
 describe('מיזוג תמונה לפריט ידע', () => {
   it('לא דורסת תמונה שכבר קיימת', () => {
-    const item = userItem('פריז', 'city', 'seed', undefined, { url: 'https://a/first.jpg' });
-    const merged = withImage(item, { url: 'https://b/second.jpg' });
+    const item = userItem('פריז', 'city', 'seed', undefined, { url: 'https://a/first.jpg', author: 'A', license: 'CC BY 4.0' });
+    const merged = withImage(item, { url: 'https://b/second.jpg', credit: CREDIT });
     expect(merged?.image?.url).toBe('https://a/first.jpg');
   });
 
   it('מוסיפה תמונה לערך מהמאגר המובנה, עם קרדיט וקישור למקור', () => {
     const item = userItem('פריז', 'city', 'seed');
-    const merged = withImage(item, { url: 'https://b/paris.jpg', pageUrl: 'https://he.wikipedia.org/wiki/פריז' });
+    const merged = withImage(item, { url: 'https://b/paris.jpg', pageUrl: 'https://he.wikipedia.org/wiki/פריז', credit: CREDIT });
     expect(merged?.image?.url).toBe('https://b/paris.jpg');
     expect(merged?.image?.attributionRequired).toBe(true);
+    // הקרדיט האמיתי עובר, ולא מחרוזת שמתחזה לקרדיט
+    expect(merged?.image?.author).toBe('Someone');
+    expect(merged?.image?.license).toBe('CC BY-SA 4.0');
+    expect(merged?.image?.licenseUrl).toContain('creativecommons.org');
     expect(merged?.sources).toContain('https://he.wikipedia.org/wiki/פריז');
   });
 

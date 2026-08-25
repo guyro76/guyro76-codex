@@ -52,7 +52,13 @@ test('✍️ תשובה שנפסלה על כתיב מתקבלת בלחיצה, ו
   await expect(accept).toBeVisible({ timeout: 20_000 });
   const suggested = (await accept.innerText()).replace(/[^א-ת]/g, '').replace('כןהתכוונתיל', '');
 
-  const scoreBefore = Number((await page.locator('.gold').first().innerText()).replace(/\D/g, '') || '0');
+  /**
+   * `.round-score` ולא `.gold`: האחרונה היא מחלקת עזר שמופיעה גם
+   * בכרטיס "קיבלתם חלק פאזל", שצץ אחת לכמה סיבובים — ואז הבדיקה
+   * מדדה את הטקסט שלו במקום את הניקוד, ונכשלה באקראי.
+   */
+  const roundScore = page.locator('.round-score').first();
+  const scoreBefore = Number((await roundScore.innerText()).replace(/\D/g, '') || '0');
 
   await accept.click();
 
@@ -62,7 +68,7 @@ test('✍️ תשובה שנפסלה על כתיב מתקבלת בלחיצה, ו
   // וגם בעובדה שמתלווה לתשובה נכונה, ושתיהן אינן מה שנבדק כאן
   await expect(page.locator('.status-text-ok').filter({ hasText: suggested })).toBeVisible();
 
-  const scoreAfter = Number((await page.locator('.gold').first().innerText()).replace(/\D/g, '') || '0');
+  const scoreAfter = Number((await roundScore.innerText()).replace(/\D/g, '') || '0');
   expect(scoreAfter, 'הניקוד לא עלה אחרי קבלת ההצעה').toBeGreaterThan(scoreBefore);
 
   expect(errors, errors.join('\n')).toHaveLength(0);

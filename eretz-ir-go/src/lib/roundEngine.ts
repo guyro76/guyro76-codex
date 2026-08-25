@@ -32,7 +32,9 @@ export async function processRound(params: {
     userRows.map((row) => ({
       ...userItem(row.canonicalName, row.categoryId, row.source, row.description, {
         url: row.imageUrl ?? '',
-        attribution: row.imageAttribution
+        author: row.imageAuthor,
+        license: row.imageLicense,
+        licenseUrl: row.imageLicenseUrl
       }),
       id: `user-db-${row.id}`
     }))
@@ -137,17 +139,18 @@ export async function processRound(params: {
             source: onlineSource,
             description: onlineDescription,
             imageUrl: onlineImage,
-            imageAttribution: onlineImage ? 'ויקיפדיה/ויקישיתוף — הרישיון בעמוד המקור' : undefined,
             addedAt: new Date().toISOString()
           });
         }
         // הזרקה מיידית למנוע הידע כדי שמסך התוצאות יציג את התמונה
         // כבר בסיבוב הזה, בלי להמתין לטעינה הבאה של המשחק.
         kb.addUserItems([
-          userItem(raw.text.trim(), category.id, onlineSource, onlineDescription, {
-            url: onlineImage ?? '',
-            attribution: onlineImage ? 'ויקיפדיה/ויקישיתוף — הרישיון בעמוד המקור' : undefined
-          })
+          /**
+           * בלי קרדיט אין תמונה. המסלול הזה (אימות אונליין תוך כדי
+           * סיבוב) לא שולף את שם היוצר, ולכן הוא לא מעביר תמונה —
+           * `answerImages` יביא אותה בנפרד, עם הקרדיט המלא.
+           */
+          userItem(raw.text.trim(), category.id, onlineSource, onlineDescription)
         ]);
       }
     }

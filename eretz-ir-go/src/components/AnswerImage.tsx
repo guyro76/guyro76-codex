@@ -83,9 +83,36 @@ export default function AnswerImage({
             objectFit: 'cover'
           }}
         />
-        <figcaption className="dim" style={{ fontSize: '0.72rem', lineHeight: 1.4 }}>
-          📷 {image.source}
-          {image.license ? ` · ${image.license}` : ''}
+        {/*
+          הקרדיט המלא שהרישיון דורש, **ליד התמונה** ולא מאחורי לחיצה:
+          שם היוצר, שם הרישיון עם קישור לנוסח, קישור למקור, וציון
+          שהתמונה מוצגת חתוכה (התצוגה היא object-fit: cover).
+          קודם הופיעו כאן מקור ומחרוזת קבועה בלבד — לא שם יוצר, לא
+          שם רישיון ולא קישור.
+        */}
+        <figcaption className="image-credit">
+          📷 {image.author}
+          {image.license ? (
+            <>
+              {' · '}
+              {image.licenseUrl ? (
+                <a href={image.licenseUrl} target="_blank" rel="noopener noreferrer">
+                  {image.license}
+                </a>
+              ) : (
+                image.license
+              )}
+            </>
+          ) : null}
+          {sourceLink && (
+            <>
+              {' · '}
+              <a href={sourceLink} target="_blank" rel="noopener noreferrer">
+                {image.source}
+              </a>
+            </>
+          )}
+          {' · מוצגת חתוכה'}
         </figcaption>
       </figure>
 
@@ -99,10 +126,20 @@ export default function AnswerImage({
               onError={() => setBroken(true)}
               style={{ maxWidth: '100%', maxHeight: '52vh', borderRadius: 14 }}
             />
-            <p className="dim" style={{ fontSize: '0.8rem' }}>
-              📷 מקור: {image.source}
-              {image.author ? ` · ${image.author}` : ''}
-              {image.license ? ` · רישיון: ${image.license}` : ''}
+            <p className="image-credit" style={{ fontSize: '0.8rem' }}>
+              📷 {image.author} · {image.source}
+              {image.license ? (
+                <>
+                  {' · '}
+                  {image.licenseUrl ? (
+                    <a href={image.licenseUrl} target="_blank" rel="noopener noreferrer">
+                      {image.license}
+                    </a>
+                  ) : (
+                    image.license
+                  )}
+                </>
+              ) : null}
             </p>
             {sourceLink && (
               <p style={{ fontSize: '0.8rem' }}>

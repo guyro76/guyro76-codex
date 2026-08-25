@@ -218,7 +218,7 @@ export default function RoundResults() {
               <Avatar avatar={p.profile.avatar} photo={p.profile.photo} name={p.profile.name} size={26} />{' '}
               {game.coop ? `צוות ${game.players.map((x) => x.profile.name).join(' ו')}` : p.profile.name}
             </strong>
-            <span className="gold" style={{ fontSize: '1.3rem', fontWeight: 800 }}>
+            <span className="gold round-score" style={{ fontSize: '1.3rem', fontWeight: 800 }}>
               +{p.roundScore} נק׳
             </span>
           </div>

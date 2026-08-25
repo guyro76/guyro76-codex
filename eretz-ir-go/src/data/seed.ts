@@ -17,6 +17,10 @@ export interface SeedEntry {
   a?: string[];
   s?: string;
   img?: string;
+  /** יוצר התמונה. בלעדיו התמונה לא תוצג — ראו `seedToItem`. */
+  au?: string;
+  /** שם הרישיון, למשל "CC BY-SA 4.0". בלעדיו התמונה לא תוצג. */
+  li?: string;
 }
 
 const e = (n: string, c: string[], p?: number, d?: string, f?: string, a?: string[]): SeedEntry => ({

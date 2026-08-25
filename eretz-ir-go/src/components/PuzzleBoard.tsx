@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { PUZZLE_CATEGORY, lookupTitle, pieceCount, puzzleById } from '../data/puzzles';
 import { cachedAnswerImage, resolveAnswerImage, type ResolvedImage } from '../lib/answerImages';
-import { puzzlePhoto, puzzlePhotoCredit, puzzlePhotoUrl } from '../data/puzzlePhotos';
+import { puzzlePhoto, puzzlePhotoUrl } from '../data/puzzlePhotos';
 import { isComplete } from '../lib/puzzlePieces';
 import { jigsawCut } from '../lib/jigsaw';
 import PuzzleScene from './PuzzleScene';
+import { licenseDeedUrl } from '../lib/imageCredit';
 
 /**
  * לוח פאזל אחד.
@@ -74,7 +75,11 @@ export default function PuzzleBoard({
       setPhoto({
         url: puzzlePhotoUrl(bundled),
         pageUrl: bundled.pageUrl,
-        attribution: puzzlePhotoCredit(bundled)
+        credit: {
+          author: bundled.author,
+          license: bundled.license,
+          licenseUrl: licenseDeedUrl(bundled.license)
+        }
       });
       return;
     }
@@ -185,7 +190,18 @@ export default function PuzzleBoard({
           <p className="puzzle-credit">
             {photo ? (
               <>
-                📷 צילום · {photo.attribution ?? 'ויקיפדיה/ויקישיתוף'}
+                {/* הקרדיט המלא שהרישיון דורש: יוצר, שם הרישיון עם
+                    קישור לנוסח, קישור למקור, וציון שהתמונה נחתכה —
+                    הפאזל חותך אותה לחלקים, וזה שינוי לכל דבר */}
+                📷 {photo.credit.author} ·{' '}
+                {photo.credit.licenseUrl ? (
+                  <a href={photo.credit.licenseUrl} target="_blank" rel="noopener noreferrer">
+                    {photo.credit.license}
+                  </a>
+                ) : (
+                  photo.credit.license
+                )}
+                {' · התמונה מוצגת חתוכה'}
                 {photo.pageUrl && (
                   <>
                     {' · '}

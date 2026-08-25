@@ -42,6 +42,8 @@ export interface ImageAsset {
   source: string;
   author?: string;
   license?: string;
+  /** קישור לנוסח הרישיון — הרישיון דורש קישור, לא רק שם */
+  licenseUrl?: string;
   attributionRequired: boolean;
 }
 

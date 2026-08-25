@@ -3,7 +3,9 @@ import type { ImageCacheRow } from '../db/db';
 import { CATEGORIES } from '../data/categories';
 import { normalizeHebrew } from './hebrew';
 import { verifyImageCandidate, type RejectReason } from './imageVerify';
-import { fetchImageCandidates, isOnline } from './verifyOnline';
+import { fetchImageCandidates, fetchImageCredit, isOnline } from './verifyOnline';
+import { mayDisplay, type ImageCredit } from './imageCredit';
+import { PHOTO_FREE_CATEGORIES } from './imagePolicy';
 import type { KnowledgeItem } from '../types';
 
 /**
@@ -64,7 +66,8 @@ function takeBudget(): boolean {
 export interface ResolvedImage {
   url: string;
   pageUrl?: string;
-  attribution?: string;
+  /** יוצר, רישיון וקישור לנוסח. תמונה בלי זה אינה מוצגת. */
+  credit: ImageCredit;
 }
 
 /** המפתח כולל את הקטגוריה: "כלנית" בצומח ובשם של בת אינם אותו דבר */
@@ -72,9 +75,22 @@ export function imageKey(name: string, categoryId: string): string {
   return `${normalizeHebrew(name)}|${categoryId}`;
 }
 
+/**
+ * שורת מטמון → תמונה להצגה.
+ *
+ * **בלי קרדיט מלא אין תמונה.** שורות שנשמרו לפני התיקון נושאות
+ * מחרוזת שהתחזתה לקרדיט ולא שם יוצר, ולכן הן נדחות כאן ונשלפות
+ * מחדש — עדיף שתמונה תיעלם לסיבוב אחד מאשר שתוצג בלי הקרדיט
+ * שהרישיון דורש.
+ */
 function fromRow(row: ImageCacheRow | undefined): ResolvedImage | null {
   if (!row?.found || !row.url || row.rejectedByUser) return null;
-  return { url: row.url, pageUrl: row.pageUrl, attribution: row.attribution };
+  const credit: ImageCredit | null =
+    row.author && row.license
+      ? { author: row.author, license: row.license, licenseUrl: row.licenseUrl }
+      : null;
+  if (!mayDisplay(credit)) return null;
+  return { url: row.url, pageUrl: row.pageUrl, credit };
 }
 
 /** תמונה שכבר קיימת מקומית — בלי שום בקשת רשת */
@@ -91,6 +107,12 @@ export async function cachedAnswerImage(name: string, categoryId: string): Promi
 export async function resolveAnswerImage(name: string, categoryId: string): Promise<ResolvedImage | null> {
   if (!name.trim()) return null;
   const key = imageKey(name, categoryId);
+
+  /**
+   * קטגוריות שבהן התשובה היא אדם אמיתי אינן נשלפות כלל — רישיון
+   * הצילום אינו מכסה את זכויות האדם שמצולם בו. ראו `imagePolicy.ts`.
+   */
+  if (!PHOTO_FREE_CATEGORIES.includes(categoryId)) return null;
 
   const cached = await db.imageCache.get(key);
   if (cached) {
@@ -113,6 +135,17 @@ export async function resolveAnswerImage(name: string, categoryId: string): Prom
   for (const candidate of candidates) {
     const verdict = verifyImageCandidate(name, categoryId, candidate);
     if (verdict.ok && candidate.imageUrl) {
+      /**
+       * השער האחרון, ולפניו התמונה עוד לא "נמצאה": בלי שם יוצר
+       * ורישיון אי אפשר לתת קרדיט שעומד ברישיון, ולכן המועמד נדחה
+       * כאילו לא היה. שאילתה נוספת לכל תמונה — זה המחיר.
+       */
+      const credit = candidate.imageFile ? await fetchImageCredit(candidate.imageFile) : null;
+      if (!mayDisplay(credit)) {
+        lastReason = 'no-credit';
+        continue;
+      }
+
       const row: ImageCacheRow = {
         key,
         normalized: normalizeHebrew(name),
@@ -120,7 +153,9 @@ export async function resolveAnswerImage(name: string, categoryId: string): Prom
         found: true,
         url: candidate.imageUrl,
         pageUrl: candidate.pageUrl,
-        attribution: 'ויקיפדיה/ויקישיתוף — הרישיון בעמוד המקור',
+        author: credit.author,
+        license: credit.license,
+        licenseUrl: credit.licenseUrl,
         title: candidate.title,
         fetchedAt: new Date().toISOString()
       };
@@ -190,8 +225,9 @@ export function withImage(
       url: image.url,
       thumbnailUrl: image.url,
       source: 'ויקיפדיה העברית',
-      author: image.attribution,
-      license: 'ראו רישיון בעמוד הערך',
+      author: image.credit.author,
+      license: image.credit.license,
+      licenseUrl: image.credit.licenseUrl,
       attributionRequired: true
     },
     sources: image.pageUrl ? [...base.sources, image.pageUrl] : base.sources

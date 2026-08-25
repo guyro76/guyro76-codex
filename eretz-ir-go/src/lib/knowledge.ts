@@ -1,6 +1,7 @@
 import type { KnowledgeItem } from '../types';
 import { normalizeHebrew, spellingVariants } from './hebrew';
 import { SEED_ENTRIES, type SeedEntry } from '../data/seed';
+import { licenseDeedUrl } from './imageCredit';
 
 /**
  * מנוע הידע המקומי — שכבה 1 של LocalHintEngine.
@@ -22,15 +23,25 @@ function seedToItem(entry: SeedEntry, idx: number): KnowledgeItem {
     popularityScore: entry.p ?? 50,
     rarityScore: 100 - (entry.p ?? 50),
     language: 'he',
-    image: entry.img
-      ? {
-          url: entry.img,
-          thumbnailUrl: entry.img,
-          source: 'Wikimedia Commons',
-          license: 'ראו עמוד המקור',
-          attributionRequired: true
-        }
-      : undefined,
+    /**
+     * אותו כלל כמו בכל מקום אחר: **בלי יוצר ורישיון אין תמונה.**
+     * היום אין אף רשומת seed עם תמונה, ולכן הענף הזה לא רץ — אבל
+     * קודם הוא היה מייצר `license: 'ראו עמוד המקור'`, כלומר תמונה
+     * בלי קרדיט תקף ברגע שמישהו יוסיף `img` לרשומה. עכשיו הוא
+     * דורש `au` ו-`li` ופשוט לא ייצר תמונה בלעדיהם.
+     */
+    image:
+      entry.img && entry.au?.trim() && entry.li?.trim()
+        ? {
+            url: entry.img,
+            thumbnailUrl: entry.img,
+            source: 'Wikimedia Commons',
+            author: entry.au,
+            license: entry.li,
+            licenseUrl: licenseDeedUrl(entry.li),
+            attributionRequired: true
+          }
+        : undefined,
     sources: entry.s ? [entry.s] : ['seed-curated'],
     childSafe: true,
     lastVerifiedAt: '2026-07-01'
@@ -108,22 +119,27 @@ export function userItem(
   categoryId: string,
   source: string,
   description?: string,
-  image?: { url: string; attribution?: string }
+  image?: { url: string; author?: string; license?: string; licenseUrl?: string }
 ): KnowledgeItem {
   const normalized = normalizeHebrew(name);
   return {
-    // תמונה נשמרת רק כשהגיעה עם מקור מזוהה (ויקיפדיה/ויקישיתוף).
-    // תמונה שמקורה אינו ידוע לא תוצג — כך נדרש באפיון.
-    image: image?.url
-      ? {
-          url: image.url,
-          thumbnailUrl: image.url,
-          source: source,
-          author: image.attribution,
-          license: 'ראו עמוד המקור בוויקיפדיה',
-          attributionRequired: true
-        }
-      : undefined,
+    /**
+     * תמונה נשמרת **רק עם קרדיט מלא** — שם יוצר ושם רישיון.
+     * קודם נשמר כאן טקסט קבוע ("ראו עמוד המקור") במקום שם רישיון,
+     * וזה לא קרדיט אלא מראית עין שלו. עדיף בלי תמונה.
+     */
+    image:
+      image?.url && image.author?.trim() && image.license?.trim()
+        ? {
+            url: image.url,
+            thumbnailUrl: image.url,
+            source: source,
+            author: image.author,
+            license: image.license,
+            licenseUrl: image.licenseUrl,
+            attributionRequired: true
+          }
+        : undefined,
     id: `user-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
     canonicalName: name.trim(),
     normalizedName: normalized,
@@ -152,7 +168,9 @@ export async function loadUserKnowledge(): Promise<void> {
     rows.map((row) => ({
       ...userItem(row.canonicalName, row.categoryId, row.source, row.description, {
         url: row.imageUrl ?? '',
-        attribution: row.imageAttribution
+        author: row.imageAuthor,
+        license: row.imageLicense,
+        licenseUrl: row.imageLicenseUrl
       }),
       id: `user-db-${row.id}`
     }))
