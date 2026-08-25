@@ -12,10 +12,13 @@ import Artzi from '../components/Artzi';
 import { authAvailable, useAuth } from '../store/authStore';
 import { db } from '../db/db';
 import { computeStreak, streakLabel, type StreakInfo } from '../lib/streak';
+import { useGame } from '../store/gameStore';
+import { hasPlayedBefore, planQuickPlay } from '../lib/quickPlay';
 
 export default function Home() {
-  const { activeProfile, navigate, setEditingProfile } = useApp();
+  const { activeProfile, navigate, setEditingProfile, customCategories } = useApp();
   const caps = useCapabilities();
+  const startMatch = useGame((s) => s.startMatch);
   // פאנל הניהול הוסתר קודם מאחורי כפתור רפאים זעיר בתחתית המסך, ואחריו
   // עוד מסך — מנהל שנכנס פשוט לא מצא אותו. עכשיו הוא כרטיס משלו.
   const isAdmin = useAuth((s) => s.account?.role === 'admin');
@@ -54,6 +57,29 @@ export default function Home() {
    * שמוביל למסך ריק גרוע יותר מתפריט קצר. מה שכן מוצג הוא כפתור אחד
    * שמסביר מה יש בגרסה המלאה.
    */
+  /**
+   * "שוב, כמו קודם" — מדלג על ארבעה מסכים ומתחיל מיד את המשחק
+   * שהילד שיחק בפעם הקודמת. מוצג רק אחרי משחק אחד: לשחקן חדש אין
+   * "כמו קודם", ובשבילו המסלול המלא הוא בדיוק מה שצריך.
+   */
+  const [quickBusy, setQuickBusy] = useState(false);
+  const quickPlay = async () => {
+    if (!activeProfile || quickBusy) return;
+    setQuickBusy(true);
+    try {
+      const plan = await planQuickPlay(activeProfile, customCategories, caps.maxRounds);
+      // אם משום מה אין תוכנית, המסלול הרגיל תמיד עובד
+      if (!plan) {
+        navigate('mode-select');
+        return;
+      }
+      startMatch(plan.settings, plan.categories, [activeProfile]);
+      navigate('letter-draw');
+    } finally {
+      setQuickBusy(false);
+    }
+  };
+
   const items = [
     { icon: '🎮', label: 'משחק חדש', to: 'mode-select' as const, primary: true },
     { icon: '📅', label: 'האתגר היומי', to: 'daily' as const },
@@ -137,6 +163,25 @@ export default function Home() {
       <div style={{ margin: '14px 0' }}>
         <Artzi />
       </div>
+
+      {hasPlayedBefore(activeProfile) && (
+        <button
+          className="btn-primary quick-play"
+          style={{ width: '100%', margin: '0 0 12px', fontSize: '1.15rem' }}
+          onClick={() => void quickPlay()}
+        >
+          {quickBusy ? 'רגע…' : '▶️ שוב, כמו קודם'}
+          {/*
+            לא `.dim` כאן: `--text-dim` מכויל לרקע כהה, והכפתור
+            הראשי הוא מדרג בהיר. שורת המשנה יורשת את צבע הכפתור
+            עצמו ורק מחווירה מעט — כך היא נשארת קריאה בכל שש
+            הערכות, בלי צבע קבוע בקוד.
+          */}
+          <span style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginTop: 2, opacity: 0.85 }}>
+            אותן קטגוריות, אותן הגדרות — ישר לאות
+          </span>
+        </button>
+      )}
 
       <div className="grid grid-2">
         {items.map((item) => (
