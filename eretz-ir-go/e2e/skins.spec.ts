@@ -39,6 +39,9 @@ test('🎨 כל הערכות נבחרות בפועל ואף אחת לא מפיל
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
   await page.getByRole('button', { name: /הגדרות/ }).first().click();
+  // מסך ההגדרות נטען לפי דרישה, ולכן ממתינים שהוא באמת על המסך.
+  // `count()` אינו ממתין, וקודם הוא ספר אפס ערכות בזמן שהחלק ירד.
+  await expect(page.getByRole('heading', { name: /הגדרות/ }).first()).toBeVisible();
 
   const options = page.getByRole('radio');
   const count = await options.count();

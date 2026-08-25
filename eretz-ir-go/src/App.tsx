@@ -1,46 +1,102 @@
-import React, { Component, useEffect, useState, type ReactNode } from 'react';
+import React, { Component, Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import { useApp } from './store/appStore';
 import { getSetting, repairPhotoAvatars } from './db/db';
 import { applySkin, savedSkinId } from './data/skins';
 import { loadContentIntoKnowledge, maybeAutoUpdate } from './lib/contentPack';
 import { loadUserKnowledge } from './lib/knowledge';
 import Splash from './screens/Splash';
-import ProfileEdit from './screens/ProfileEdit';
 import Home from './screens/Home';
 import ModeSelect from './screens/ModeSelect';
 import Categories from './screens/Categories';
-import CategoryCreate from './screens/CategoryCreate';
 import LetterDraw from './screens/LetterDraw';
 import Game from './screens/Game';
-import PassDevice from './screens/PassDevice';
-import BotTurn from './screens/BotTurn';
-import Puzzles from './screens/Puzzles';
 import RoundResults from './screens/RoundResults';
 import MatchResults from './screens/MatchResults';
-import Leaderboard from './screens/Leaderboard';
-import Album from './screens/Album';
-import Achievements from './screens/Achievements';
-import Daily from './screens/Daily';
-import Settings from './screens/Settings';
-import Parent from './screens/Parent';
-import Credits from './screens/Credits';
-import Privacy from './screens/Privacy';
-import MiniGame from './screens/MiniGame';
 import SiteCredit from './components/SiteCredit';
 import AppHeader from './components/AppHeader';
 import LiveRegion from './components/LiveRegion';
 import Login from './screens/Login';
 import Globe from './components/Globe';
-import Admin from './screens/Admin';
-import Account from './screens/Account';
-import Pricing from './screens/Pricing';
-import ChallengeScreen from './screens/Challenge';
 import { useChallenge } from './store/challengeStore';
+
+/**
+ * מסכים שנטענים לפי דרישה.
+ *
+ * כל שלושים המסכים היו בחבילה אחת של 927KB, וילד על טלפון אנדרואיד
+ * זול חיכה לכולם — כולל מסך הניהול, מפת העולם ומשחקי הביניים —
+ * לפני שראה את כפתור "בואו נשחק". מה שנשאר למעלה הוא לולאת המשחק
+ * עצמה: פתיחה, בית, בחירת מצב, קטגוריות, אות, לוח ותוצאות. השאר
+ * נטען ברגע שנכנסים אליו.
+ *
+ * זה לא פוגע בעבודה בלי רשת: ה-Service Worker מכניס את כל החלקים
+ * למטמון מראש, ולכן מהפעם השנייה הם מקומיים בדיוק כמו קודם.
+ */
+const ProfileEdit = lazy(() => import('./screens/ProfileEdit'));
+const CategoryCreate = lazy(() => import('./screens/CategoryCreate'));
+const PassDevice = lazy(() => import('./screens/PassDevice'));
+const BotTurn = lazy(() => import('./screens/BotTurn'));
+const Puzzles = lazy(() => import('./screens/Puzzles'));
+const Leaderboard = lazy(() => import('./screens/Leaderboard'));
+const Album = lazy(() => import('./screens/Album'));
+const Achievements = lazy(() => import('./screens/Achievements'));
+const Daily = lazy(() => import('./screens/Daily'));
+const Settings = lazy(() => import('./screens/Settings'));
+const Parent = lazy(() => import('./screens/Parent'));
+const Credits = lazy(() => import('./screens/Credits'));
+const Privacy = lazy(() => import('./screens/Privacy'));
+const MultiplayerInfo = lazy(() => import('./screens/MultiplayerInfo'));
+const Blitz = lazy(() => import('./screens/Blitz'));
+const Chain = lazy(() => import('./screens/Chain'));
+const MiniGame = lazy(() => import('./screens/MiniGame'));
+const Admin = lazy(() => import('./screens/Admin'));
+const Account = lazy(() => import('./screens/Account'));
+const Pricing = lazy(() => import('./screens/Pricing'));
+const ChallengeScreen = lazy(() => import('./screens/Challenge'));
+
+/**
+ * מה מוצג בזמן שחלק נטען.
+ *
+ * מכוון להיות **בלתי מורגש** ולא "מסך טעינה": ברשת רגילה החלק מגיע
+ * במילישניות, ומהפעם השנייה הוא מהמטמון. מסך גדול שמהבהב לרגע גרוע
+ * יותר מכלום — ולכן זו רק שורה שקטה, ועם `role="status"` כדי שגם
+ * קורא מסך ידע שמשהו קורה.
+ */
+/**
+ * חימום החלקים אחרי שהמשחק כבר מוכן.
+ *
+ * הפיצול חוסך זמן עד שהמסך הראשון מגיב — אבל בלי החימום, הלחיצה
+ * הראשונה על "הגדרות" או על "אוסף המילים" מציגה לרגע "רגע…" בזמן
+ * שהחלק יורד. אחרי שהאפליקציה כבר אינטראקטיבית אין למה לחכות, ולכן
+ * החלקים נמשכים בזמן סרק — לא בטעינה ולא בלחיצה.
+ *
+ * `requestIdleCallback` ולא `setTimeout` קבוע: כך זה קורה כשהדפדפן
+ * פנוי, ולא באמצע אנימציית הכניסה של המסך הראשון.
+ */
+function warmScreens(): void {
+  const load = () => {
+    void import('./screens/Album');
+    void import('./screens/Settings');
+    void import('./screens/Achievements');
+    void import('./screens/Daily');
+    void import('./screens/Leaderboard');
+    void import('./screens/Puzzles');
+    void import('./screens/ProfileEdit');
+  };
+  const idle = (window as { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
+  if (idle) idle(load);
+  else setTimeout(load, 1500);
+}
+
+function ScreenLoading() {
+  return (
+    <div className="screen center" role="status">
+      <p className="dim">רגע…</p>
+    </div>
+  );
+}
+
 import { authAvailable, useAuth } from './store/authStore';
 import { listenForAuthDeepLink } from './lib/supabase';
-import MultiplayerInfo from './screens/MultiplayerInfo';
-import Blitz from './screens/Blitz';
-import Chain from './screens/Chain';
 
 /** מסך שגיאה ידידותי — Error Boundary */
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
@@ -161,6 +217,7 @@ export default function App() {
     // תוכן שהותקן בעבר נטען למנוע הידע; בדיקת עדכון לכל היותר פעם ביממה
     void loadUserKnowledge();
     void loadContentIntoKnowledge().then(() => maybeAutoUpdate());
+    warmScreens();
   }, [loadProfiles, loadCustomCategories]);
 
   const screens: Record<string, React.ReactElement> = {
@@ -228,7 +285,7 @@ export default function App() {
       <OfflineBanner />
       <AppHeader />
       <LiveRegion />
-      {screens[screen] ?? <Splash />}
+      <Suspense fallback={<ScreenLoading />}>{screens[screen] ?? <Splash />}</Suspense>
       <SiteCredit />
     </ErrorBoundary>
   );
