@@ -101,6 +101,30 @@ test('📄 עמוד מדיניות הפרטיות נגיש ומוגש כעמוד
   expect(await page.locator('html').getAttribute('lang')).toBe('he');
 });
 
+/**
+ * Google Play דורשת כתובת פתוחה למחיקת חשבון — כזו שאפשר להגיע
+ * אליה בלי להתקין את האפליקציה ובלי להיכנס לחשבון. עמוד שנשבר
+ * בבנייה או שנשכח מחוץ ל-`public/` הוא כשל בהגשה לחנות, ולכן הוא
+ * נבדק כמו כל מסך אחר.
+ */
+test('🗑️ עמוד מחיקת החשבון פתוח, נגיש בלי כניסה, ומקושר מהפרטיות', async ({ page }) => {
+  const res = await page.goto('./delete-account.html');
+  expect(res?.status()).toBe(200);
+
+  await expect(page.getByRole('heading', { name: /מחיקת חשבון/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /guyro76@gmail.com/ }).first()).toBeVisible();
+  await expect(page.getByText(/מה בדיוק נמחק/)).toBeVisible();
+  await expect(page.getByText(/מה לא נמחק/)).toBeVisible();
+
+  expect(await page.locator('html').getAttribute('dir')).toBe('rtl');
+  expect(await page.locator('html').getAttribute('lang')).toBe('he');
+
+  // הדרך שמשתמש באמת מגיע אליו: מתוך מדיניות הפרטיות
+  await page.goto('./privacy.html');
+  await page.getByRole('link', { name: /מחיקת חשבון ומידע/ }).click();
+  await expect(page.getByRole('heading', { name: /מחיקת חשבון/ })).toBeVisible();
+});
+
 test('♿ הכרזות לקורא מסך: האות שהוגרלה מוקראת', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
