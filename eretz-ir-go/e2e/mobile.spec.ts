@@ -1,5 +1,5 @@
 import { test, expect, devices, type Page } from '@playwright/test';
-import { stubExternalSources } from './helpers';
+import { disableServiceWorker, stubExternalSources } from './helpers';
 
 /**
  * QA לנייד — במגע אמיתי, לא בלחיצת עכבר.
@@ -42,6 +42,13 @@ async function hangIndexedDbWrites(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => indexedDB.deleteDatabase('eretz-ir-go'));
+  /**
+   * בלי זה ה-Service Worker מתחיל למלא את המטמון ברקע, ובקשות
+   * ה-precache נקטעות כשהבדיקה נסגרת — `net::ERR_FAILED` שנספר
+   * כשגיאת קונסול ומפיל את הבדיקה אחת לכמה הרצות. הבדיקות כאן
+   * בודקות מגע וכפתורים, לא מטמון; יש בדיקה נפרדת שרצה עם ה-SW.
+   */
+  await disableServiceWorker(page);
   await stubExternalSources(page);
 });
 

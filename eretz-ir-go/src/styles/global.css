@@ -246,10 +246,31 @@ button:disabled { opacity: 0.42; cursor: not-allowed; transform: none; }
 .btn-ghost { background: transparent; }
 /* 44px הוא הרף של אפל ל-Touch Target. WCAG AA מסתפק ב-24, אבל לילד
    עם שליטה מוטורית פחות מדויקת זה ההבדל בין לפגוע ללא לפגוע. */
-.btn-small { min-height: 44px; padding: 6px 14px; font-size: 0.9rem; }
+.btn-small { min-height: 44px; min-width: 44px; padding: 6px 14px; font-size: 0.9rem; }
+/* min-width ולא רק min-height: כפתור שכל תוכנו תו אחד ("↑") יצא
+   43px רוחב — גבוה מספיק וצר מדי. אזור מגע נמדד בשני צירים, וזה
+   נתפס במדידה אמיתית ב-e2e/a11y.spec.ts ולא בקריאת ה-CSS. */
 
-/* ====== שדות קלט ====== */
-input[type='text'], input[type='number'], input[type='password'], select, textarea {
+/* תווית שעוטפת תיבת סימון היא היעד האמיתי של המגע — לחיצה על
+   הטקסט מסמנת את התיבה. לכן היא זו שצריכה להיות בגובה אצבע, ולא
+   הריבוע בן 22 הפיקסלים שבתוכה.
+   `:has()` ולא מחלקה, כדי שגם תיבת סימון שתיווסף מחר תקבל את זה
+   בלי שאיש יזכור. בדפדפן ישן שאינו תומך הכלל פשוט מתעלם, וההתנהגות
+   חוזרת למה שהיה — כלומר אין רגרסיה, רק אין שיפור. */
+label:has(> input[type='checkbox']), label:has(> input[type='radio']) {
+  min-height: 44px;
+  align-items: center;
+}
+
+/* ====== שדות קלט ======
+   רשימת היתר הפוכה — **כל** שדה שאינו תיבת סימון/בורר/מחוון/קובץ,
+   ולא רשימה של סוגים שמישהו זוכר לעדכן. `input[type='email']` לא
+   היה ברשימה הישנה, ולכן שדה המייל במסך ההרשמה נשאר בגובה ברירת
+   המחדל של הדפדפן — 21px מול 48px של כל שאר השדות. איש לא ראה את
+   זה עד שנמדד בפועל ב-e2e/a11y.spec.ts. */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='submit']):not([type='button']),
+select,
+textarea {
   font-family: inherit;
   font-size: 1.05rem;
   width: 100%;
@@ -792,7 +813,9 @@ h1, h2, h3 { scroll-margin-top: 80px; }
   inset-inline-end: 6px;
   top: 50%;
   transform: translateY(-50%);
-  min-height: 40px;
+  /* אזור מגע מלא בשני הצירים, כמו כל כפתור אחר */
+  min-height: 44px;
+  min-width: 44px;
   padding: 0 10px;
   font-size: 1.2rem;
   border: none;

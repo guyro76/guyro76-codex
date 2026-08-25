@@ -84,7 +84,18 @@ export default function Album() {
             {label}
           </button>
         ))}
-        <select value={catFilter} onChange={(ev) => setCatFilter(ev.target.value)} style={{ maxWidth: 180 }}>
+        {/*
+          התווית היא aria-label ולא <label> נראה, כי הבורר יושב בשורת
+          הסינון לצד צ'יפים ואין לו מקום לכיתוב. בלעדיה קורא מסך מכריז
+          "תיבה נפתחת" בלי לומר מה היא מסננת — וזו הפרה של WCAG 4.1.2
+          שנתפסה ב-e2e/a11y.spec.ts.
+        */}
+        <select
+          value={catFilter}
+          onChange={(ev) => setCatFilter(ev.target.value)}
+          aria-label="סינון לפי קטגוריה"
+          style={{ maxWidth: 180 }}
+        >
           <option value="">כל הקטגוריות</option>
           {allCats.map((c) => (
             <option key={c.id} value={c.id}>
