@@ -192,3 +192,75 @@ test('🧩 אפשר לקנות חלק חסר בקרדיט, והקנייה נשמ
   // והארנק חויב
   await expect(page.getByText(/אספתם 2 חלקים/)).toBeVisible();
 });
+
+
+/**
+ * הפאזל חייב להראות תמונה, והתמונה חייבת קרדיט קריא.
+ *
+ * שני דברים נשברו כאן יחד, ושניהם רק ברוחב טלפון:
+ *
+ * 1. **הלוח היה 116px.** מסך הפאזלים סידר שתי עמודות גם ב-360px,
+ *    וחלק אחד שנחשף מתוך שישה לא נראה כמו תמונה אלא כמו ריבוע
+ *    שחור. פאזל בלי תמונה שמתגלה אינו פרס — אין סיבה לאסוף חלקים.
+ * 2. **הקרדיט נחתך באמצע.** הוא ישב כרצועה על גבי התמונה עם
+ *    `nowrap` ו-`ellipsis`, והפיק "📷 ... BY-SA 4.0". קרדיט קטוע
+ *    אינו קרדיט — אותו כלל בדיוק שאוסר להציג תמונה בלי ייחוס.
+ */
+test('🖼️ בטלפון הפאזל גדול מספיק לראות בו תמונה, והקרדיט מלא', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await playRound(page);
+  await page.getByRole('heading', { name: /תוצאות הסיבוב/ }).waitFor({ timeout: 25_000 });
+
+  /**
+   * הקרדיט מופיע גם בלוח המוקטן שבתוצאות הסיבוב. קודם הוא הופיע
+   * רק במסך הפאזלים, והכרטיס "קיבלתם חלק פאזל" הציג צילום
+   * ברישיון CC BY-SA בלי שום ייחוס.
+   */
+  const award = page.locator('.puzzle-award .puzzle-credit');
+  if (await award.count()) {
+    await expect(award.first()).toContainText('CC');
+    await expect(award.first().getByRole('link', { name: /^CC/ })).toBeVisible();
+  }
+
+  // ולמסך הפאזלים המלא
+  const closeNew = page.getByRole('button', { name: /מעולה|למילה הבאה/ });
+  while (await closeNew.first().isVisible().catch(() => false)) {
+    await closeNew.first().click();
+    await page.waitForTimeout(200);
+  }
+  await page.getByRole('button', { name: /לתוצאות המשחק/ }).click();
+  await page.getByRole('button', { name: 'למסך הבית' }).click();
+  await page.getByRole('button', { name: /הפאזלים שלי/ }).click();
+  await expect(page.getByRole('heading', { name: /הפאזלים שלי/ })).toBeVisible();
+
+  // --- הלוח גדול מספיק שרואים בו משהו ---
+  const board = page.locator('.puzzle-grid').first();
+  const box = await board.boundingBox();
+  expect(box!.width, `הלוח ברוחב ${box!.width.toFixed(0)}px — קטן מדי מכדי לראות תמונה`).toBeGreaterThan(240);
+
+  // --- והתמונה עצמה באמת נטענה, ולא איור גיבוי ---
+  const img = board.locator('img').first();
+  await expect(img).toBeVisible();
+  expect(
+    await img.evaluate((el: HTMLImageElement) => el.naturalWidth),
+    'הצילום לא נטען'
+  ).toBeGreaterThan(100);
+
+  // --- הקרדיט מלא ולא קטוע ---
+  const credit = page.locator('.puzzle-credit').first();
+  await expect(credit).toBeVisible();
+  const text = (await credit.innerText()).trim();
+  expect(text).toContain('CC');
+  expect(text, 'הקרדיט נחתך').not.toContain('…');
+
+  /**
+   * הבדיקה האמיתית לחיתוך: רוחב הטקסט אינו גדול מהתיבה שמכילה
+   * אותו. `ellipsis` על שורה אחת מייצר בדיוק את הפער הזה.
+   */
+  const clipped = await credit.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+  expect(clipped, 'שורת הקרדיט רחבה מהתיבה שלה — כלומר נחתכת').toBe(false);
+
+  // ושם הצלם והרישיון שניהם שם, לא רק אחד מהם
+  await expect(credit.getByRole('link', { name: /^CC/ })).toBeVisible();
+  await expect(credit.getByRole('link', { name: /מקור/ })).toBeVisible();
+});

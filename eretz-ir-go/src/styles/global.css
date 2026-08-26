@@ -1170,8 +1170,13 @@ body::after {
   pointer-events: none;
 }
 .puzzle-piece.missing {
-  /* מכסה כהה ואטום מעל התמונה — ניגודיות מלאה מול הצילום שמתחת */
+  /* מכסה כהה — אבל **לא אטום לגמרי**.
+     קודם הוא היה אטום, ולוח עם חלק אחד מתוך שישה נראה כמו ריבוע
+     שחור: הילד לא ידע שמסתתרת שם תמונה בכלל, ואז אין סיבה לאסוף
+     חלקים. שקיפות קלה מסגירה צבע וצורה בלי לחשוף מה בתמונה —
+     מרגישים שיש שם משהו, ורוצים לראות אותו. */
   fill: #1a1030;
+  fill-opacity: 0.9;
   stroke: rgba(255, 255, 255, 0.16);
   stroke-width: 1.5;
 }
@@ -1220,30 +1225,39 @@ body::after {
   border-radius: var(--radius-sm);
   display: block;
 }
-/* הקרדיט יושב על התמונה עצמה, בתחתיתה: רצועה כהה וכתב בהיר ומודגש,
-   כדי שייקרא מעל שמיים בהירים ומעל סלע כהה כאחד. כלל הברזל. */
+/* הקרדיט מתחת ללוח, בשורה משלו.
+   קודם הוא ישב על גבי התמונה עם `nowrap` ו-`ellipsis`, וברוחב
+   טלפון נחתך באמצע שם הצלם. קרדיט קטוע אינו קרדיט. כאן הוא נשבר
+   לשתי שורות במקום להיחתך, ויושב על רקע הכרטיס — כלומר גם אין
+   הימור על ניגודיות מול שמיים בהירים בתמונה. */
 .puzzle-credit {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 2;
-  margin: 0;
-  padding: 3px 8px;
-  font-size: 0.68rem;
+  margin: 6px 0 0;
+  font-size: 0.74rem;
   font-weight: 700;
-  line-height: 1.4;
-  color: #ffffff;
-  background: rgba(10, 6, 24, 0.72);
-  backdrop-filter: blur(2px);
+  line-height: 1.45;
+  color: var(--text-dim);
   text-align: start;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
-.puzzle-credit a { color: #9fe8ff; font-weight: 700; }
+.puzzle-credit a { color: var(--link); font-weight: 700; }
+/* רשימת הפאזלים: עמודה אחת בטלפון.
+   שתי עמודות ברוחב 360px נתנו לוח של 116px — ובגודל הזה חלק אחד
+   שנחשף אינו נראה כמו כלום, ובוודאי לא כמו תמונה. הפאזל הוא פרס
+   שרואים; אם לא רואים אותו, אין בו טעם. */
+.puzzle-list { grid-template-columns: 1fr; }
+@media (min-width: 560px) {
+  .puzzle-list { grid-template-columns: repeat(2, 1fr); }
+}
+
 .puzzle-award { border-color: var(--gold); }
-/* בתוצאות הסיבוב הפאזל מלווה את הניקוד ולא דוחף אותו מתחת לקצה המסך */
-.puzzle.compact { width: 132px; flex: 0 0 auto; }
+/* בתוצאות הסיבוב הפאזל מלווה את הניקוד ולא דוחף אותו מתחת לקצה המסך.
+   הורחב מ-132px כדי שיהיה מקום לשורת הקרדיט מתחתיו — צילום ברישיון
+   CC BY-SA חייב ייחוס בכל מקום שהוא מוצג בו, גם בלוח מוקטן. */
+.puzzle.compact { width: 168px; flex: 0 0 auto; }
+.puzzle-credit.compact {
+  font-size: 0.62rem;
+  line-height: 1.35;
+  margin-top: 4px;
+}
 .puzzle.compact .puzzle-piece { stroke-width: 2; }
 
 /* ===== פודיום הזוכים ===== */

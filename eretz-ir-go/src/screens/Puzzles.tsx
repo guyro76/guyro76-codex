@@ -93,7 +93,7 @@ export default function Puzzles() {
       {loading ? (
         <p className="dim center">טוען…</p>
       ) : (
-        <div className="grid grid-2">
+        <div className="grid puzzle-list">
           {ordered.map((puzzle) => (
             <div key={puzzle.id} className="card">
               <PuzzleBoard

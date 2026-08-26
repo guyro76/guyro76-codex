@@ -31,13 +31,35 @@ test('✍️ תשובה שנפסלה על כתיב מתקבלת בלחיצה, ו
   const letter = (await page.locator('.round-letter').first().innerText({ timeout: 10_000 })).trim().slice(0, 1);
 
   /**
-   * מילה אמיתית מהמאגר של המשחק, עם אות אחת שהוחלפה. באורך 5 ומעלה
-   * `isCloseMatch` מרשה מרחק 1, ולכן זו בדיוק שגיאת הכתיב שהמשחק
-   * אמור לזהות — ולא ניחוש שעלול להתפרש אחרת.
+   * מילה אמיתית מהמאגר, עם אות אחת שהוחלפה **באמצע**.
+   *
+   * הגרסה הקודמת החליפה את האות האחרונה, וזו הייתה בדיוק סיבת
+   * ההבהוב: החלפת אות אחרונה יוצרת לפעמים מילה אמיתית אחרת
+   * ("ברזיל" ← "ברזים"), והמשחק מקבל אותה כתשובה תקינה במקום
+   * להציע תיקון. אז הבדיקה נכשלה על אף שהמשחק התנהג נכון.
+   *
+   * החלפה באמצע כמעט אף פעם אינה יוצרת מילה קיימת, ומרחק העריכה
+   * נשאר 1 — כלומר `isCloseMatch` עדיין מזהה. הבחירה גם מוודאת
+   * מפורשות שהתוצאה אינה מילה שקיימת במאגר.
    */
-  const real = SEED_ENTRIES.find((x) => x.c.includes('country') && x.n.startsWith(letter) && x.n.length >= 5)?.n;
-  test.skip(!real, `אין מילת seed באורך מספיק לאות ${letter}`);
-  const typo = real!.slice(0, -1) + (real!.endsWith('ל') ? 'ם' : 'ל');
+  const known = new Set(SEED_ENTRIES.map((x) => x.n));
+  const candidates = SEED_ENTRIES.filter(
+    (x) => x.c.includes('country') && x.n.startsWith(letter) && x.n.length >= 5
+  )
+    // הפופולרית ביותר קודם: `isCloseMatch` בוחר מבין ההתאמות את
+    // הפופולרית, ולכן ממנה הסיכוי הגבוה ביותר לקבל הצעה
+    .sort((a, b) => (b.p ?? 0) - (a.p ?? 0));
+
+  const pick = candidates
+    .map((x) => {
+      const i = Math.floor(x.n.length / 2);
+      const swap = x.n[i] === 'ר' ? 'ל' : 'ר';
+      return { typo: x.n.slice(0, i) + swap + x.n.slice(i + 1) };
+    })
+    .find((x) => !known.has(x.typo));
+
+  test.skip(!pick, `אין מילת seed מתאימה לאות ${letter}`);
+  const { typo } = pick!;
 
   await page.getByRole('textbox').first().fill(typo);
   await page.getByRole('button', { name: /סיימתי|סיום/ }).first().click();
