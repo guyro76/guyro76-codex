@@ -112,3 +112,55 @@ export function roundIntro(p: Pick<Profile, 'name' | 'gender' | 'age'>, letter: 
   const lead = `${p.name}, האות שלך היא ${letter}! ${say('ready', p.gender)}`;
   return withJoke ? `${lead}\n${randomJoke(p.age)}` : lead;
 }
+
+
+/**
+ * סיכום למשחק יחיד.
+ *
+ * ## הבאג שזה מתקן
+ *
+ * משחק יחיד הציג "ניצחת! ניצחון! כל הכבוד! 🏆" — **גם כשהניקוד
+ * היה אפס**. שתי בעיות באותו מסך: לא היה מול מי לנצח, ואפס
+ * נקודות אינו הישג. שבח על כלום אינו עידוד; ילד מזהה אותו, והוא
+ * גם מלמד שהמשחק לא באמת מסתכל על מה שעשית.
+ *
+ * הסיכום כאן מסתכל על התוצאה בפועל. הניסוח נייטרלי מבחינת מגדר
+ * — כאן זה לא ויתור אלא הבחירה הנכונה, כי הוא מדבר על מה שקרה
+ * במשחק ולא על השחקן.
+ */
+export interface SoloSummary {
+  icon: string;
+  title: string;
+  note: string;
+  /** האם זה רגע של חגיגה — קונפטי, פאנפרה וגביע */
+  celebrate: boolean;
+}
+
+export function soloSummary(
+  p: Pick<Profile, 'name'>,
+  score: number,
+  isRecord: boolean
+): SoloSummary {
+  if (score <= 0) {
+    return {
+      icon: '🌱',
+      title: `${p.name}, כל התחלה קשה`,
+      note: 'הפעם לא נספרה אף תשובה — אבל עכשיו כבר יודעים איך זה עובד. עוד סיבוב?',
+      celebrate: false
+    };
+  }
+  if (isRecord) {
+    return {
+      icon: '🏆',
+      title: `${p.name}, שיא אישי חדש!`,
+      note: `${score} נקודות — הכי הרבה שהשגתם עד היום.`,
+      celebrate: true
+    };
+  }
+  return {
+    icon: '⭐',
+    title: `${p.name}, סיבוב יפה!`,
+    note: `${score} נקודות. עוד קצת ותשברו את השיא שלכם.`,
+    celebrate: true
+  };
+}

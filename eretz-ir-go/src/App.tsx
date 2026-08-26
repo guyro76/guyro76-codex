@@ -220,6 +220,21 @@ export default function App() {
     warmScreens();
   }, [loadProfiles, loadCustomCategories]);
 
+  /**
+   * מסך חדש מתחיל מלמעלה.
+   *
+   * המשחק מחליף מסכים בתוך אותו דף, והדפדפן שומר את מיקום הגלילה.
+   * ילד שגלל למטה כדי למלא את הקטגוריה האחרונה ולחץ "סיימתי" נחת
+   * במסך התוצאות **באמצע** — 388 פיקסלים למטה, מעל הניקוד שלו ומעל
+   * הכותרת. זה נמדד, לא שוער.
+   *
+   * גלילה מיידית ולא חלקה: היא קורית בין מסכים ולא בתוך מסך, ואין
+   * מה להנפיש כשהתוכן ממילא התחלף.
+   */
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [screen]);
+
   const screens: Record<string, React.ReactElement> = {
     splash: <Splash />,
     'profile-edit': <ProfileEdit />,

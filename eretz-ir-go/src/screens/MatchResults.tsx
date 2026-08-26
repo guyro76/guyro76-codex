@@ -3,7 +3,7 @@ import Avatar from '../components/Avatar';
 import Podium from '../components/Podium';
 import { useGame } from '../store/gameStore';
 import { useEffect, useState } from 'react';
-import { celebrate } from '../lib/persona';
+import { celebrate, soloSummary } from '../lib/persona';
 import { sfx } from '../lib/sound';
 import { buildShareText, shareText, type ShareOutcome } from '../lib/share';
 import ChallengeInvite from '../components/ChallengeInvite';
@@ -22,13 +22,26 @@ export default function MatchResults() {
   // שיא אישי חדש = פאנפרה ארוכה; משחק רגיל = צליל ניצחון קצר
   const isRecord = !!winner && winner.totalScore > (winner.profile.bestRoundScore ?? 0) * game.settings.rounds;
 
+  /**
+   * משחק יחיד אינו "ניצחון": אין מול מי. הסיכום כאן מסתכל על
+   * הניקוד בפועל, ולכן הוא גם לא מברך על אפס נקודות.
+   */
+  const solo = !game.coop && !activeChallenge && sorted.length === 1 && winner
+    ? soloSummary(winner.profile, winner.totalScore, isRecord)
+    : null;
+  /** רגע חגיגה — קונפטי, פאנפרה וגביע. אפס נקודות אינו כזה. */
+  const cheering = solo ? solo.celebrate : true;
+
   useEffect(() => {
     // באתגר הצליל נקבע לפי התוצאה מול החבר, ומושמע ב-ChallengeResult.
     // בלי התנאי הזה מי שהפסיד באתגר היה שומע פאנפרת ניצחון.
     if (activeChallenge) return;
+    // סיבוב בלי אף תשובה לא מקבל פאנפרה. צליל חגיגה על כלום הוא
+    // בדיוק מה שגורם לילד להפסיק להאמין למשחק.
+    if (!cheering) return;
     if (isRecord) sfx.fanfare();
     else sfx.win();
-  }, [isRecord, activeChallenge]);
+  }, [isRecord, activeChallenge, cheering]);
 
   const [shareState, setShareState] = useState<ShareOutcome | null>(null);
 
@@ -69,7 +82,7 @@ export default function MatchResults() {
     <div className="screen center">
       {/* קונפטי הוא הצהרת ניצחון. באתגר הוא מוצג רק כשבאמת ניצחנו,
           ולכן הוא נקבע שם ולא כאן */}
-      {!activeChallenge && (
+      {!activeChallenge && cheering && (
         <div className="confetti" aria-hidden>
           🎉🏆🎉
         </div>
@@ -87,6 +100,17 @@ export default function MatchResults() {
         <div className="card" style={{ maxWidth: 420, margin: '0 auto' }}>
           <h2>ציון הצוות: <span className="gold">{game.players[0].totalScore}</span></h2>
           <p>כל הכבוד! עבדתם יחד כמו צוות אמיתי 🤝</p>
+        </div>
+      ) : solo ? (
+        <div
+          className="card"
+          style={{ maxWidth: 420, margin: '0 auto', borderColor: solo.celebrate ? 'var(--gold)' : undefined }}
+        >
+          <div style={{ fontSize: '3.4rem' }} aria-hidden>
+            {solo.icon}
+          </div>
+          <h2>{solo.title}</h2>
+          <p>{solo.note}</p>
         </div>
       ) : isTie ? (
         <div className="card" style={{ maxWidth: 420, margin: '0 auto' }}>

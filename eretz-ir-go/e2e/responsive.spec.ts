@@ -132,3 +132,65 @@ test('📏 שמות הקטגוריות נשארים בשורה אחת גם בט�
 
   expect(broken, `שם קטגוריה נשבר לאותיות: ${broken.join(' | ')}`).toEqual([]);
 });
+
+
+/**
+ * מסך חדש מתחיל מלמעלה.
+ *
+ * המשחק מחליף מסכים בתוך אותו דף, והדפדפן שומר את מיקום הגלילה.
+ * ילד שגלל למטה כדי למלא את הקטגוריה האחרונה ולחץ "סיימתי" נחת
+ * במסך התוצאות באמצע — מעל הניקוד שלו ומעל הכותרת. זה נמדד בפועל
+ * (388 פיקסלים) ולא שוער.
+ *
+ * הבדיקה גוללת בכוונה לתחתית לפני כל מעבר, כי בלי גלילה אין מה
+ * לאפס ובדיקה כזו עוברת מעצמה.
+ */
+test('🔝 כל מעבר מסך מתחיל מלמעלה, גם אחרי גלילה', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  const scrollY = () => page.evaluate(() => window.scrollY);
+  const toBottom = () => page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await page.getByRole('button', { name: /משחק חדש/ }).click();
+  await page.locator('select').first().selectOption('1');
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
+
+  // מסך הקטגוריות ארוך — גוללים לתחתית ומתקדמים משם
+  await toBottom();
+  await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
+  await page.getByRole('button', { name: /להגרלת האות/ }).click();
+  await expect(page.locator('.letter-wheel')).toBeVisible();
+  /**
+   * `expect.poll` ולא בדיקה מיידית: האיפוס קורה ב-effect של React,
+   * כלומר אחרי ה-commit. מדידה ברגע הלחיצה תופסת עדיין את המסך
+   * הקודם — וזה בדיוק מה שהפיל את הבדיקה הזו בכתיבתה.
+   */
+  await expect.poll(scrollY, { message: 'מסך הגרלת האות נפתח גלול' }).toBe(0);
+
+  await page.locator('.letter-wheel').click();
+  await page.getByRole('button', { name: /מתחילים/ }).click({ timeout: 20_000 });
+  await expect(page.locator('.cat-card').first()).toBeVisible();
+
+  // ממלאים תשובה אחת, גוללים לתחתית כמו ילד שסיים את האחרונה
+  const card = page.locator('.cat-card').first();
+  await card.getByRole('button', { name: /רמז/ }).click();
+  await card.getByRole('button', { name: /עוד רמז/ }).click();
+  await card.getByRole('button', { name: /גלו לי/ }).click();
+  await toBottom();
+  expect(await scrollY(), 'הבדיקה לא הצליחה לגלול — אין מה לאפס').toBeGreaterThan(0);
+
+  await page.getByRole('button', { name: /סיימתי|סיום/ }).first().click();
+  await expect(page.getByRole('heading', { name: /תוצאות הסיבוב/ })).toBeVisible({ timeout: 25_000 });
+  const closeNew = page.getByRole('button', { name: /מעולה|למילה הבאה/ });
+  while (await closeNew.first().isVisible().catch(() => false)) {
+    await closeNew.first().click();
+    await page.waitForTimeout(200);
+  }
+  await expect.poll(scrollY, { message: 'מסך תוצאות הסיבוב נפתח גלול, מעל הניקוד' }).toBe(0);
+
+  await toBottom();
+  await page.getByRole('button', { name: /לתוצאות המשחק/ }).click();
+  await expect(page.getByRole('heading', { name: 'סוף המשחק!' })).toBeVisible();
+  await expect.poll(scrollY, { message: 'מסך סוף המשחק נפתח גלול' }).toBe(0);
+});

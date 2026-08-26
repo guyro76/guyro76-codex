@@ -150,3 +150,42 @@ test('תשובה שגויה נצבעת אדום ולא מקבלת ניקוד, נ
 
   expect(errors, `שגיאות קונסול: ${errors.join(' | ')}`).toEqual([]);
 });
+
+
+/**
+ * משחק יחיד אינו "ניצחון".
+ *
+ * המסך הכריז "ניצחת! ניצחון! כל הכבוד! 🏆" בסוף כל משחק יחיד —
+ * גם כשלא נענתה אף שאלה. אין מול מי לנצח, ואפס נקודות אינו הישג.
+ * הבדיקה מסיימת סיבוב **בלי למלא כלום**, וזה בדיוק המצב שבו השבח
+ * היה הכי צורם.
+ */
+test('🌱 סיבוב יחיד בלי תשובות מקבל עידוד, לא הכרזת ניצחון', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await page.getByRole('button', { name: /משחק חדש/ }).click();
+  await page.locator('select').first().selectOption('1');
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
+  await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
+  await page.getByRole('button', { name: /להגרלת האות/ }).click();
+  await page.locator('.letter-wheel').click();
+  await page.getByRole('button', { name: /מתחילים/ }).click({ timeout: 20_000 });
+
+  // מסיימים בלי למלא דבר
+  await page.getByRole('button', { name: /סיימתי|סיום/ }).first().click();
+  await expect(page.getByRole('heading', { name: /תוצאות הסיבוב/ })).toBeVisible({ timeout: 25_000 });
+  const closeNew = page.getByRole('button', { name: /מעולה|למילה הבאה/ });
+  while (await closeNew.first().isVisible().catch(() => false)) {
+    await closeNew.first().click();
+    await page.waitForTimeout(200);
+  }
+  await page.getByRole('button', { name: /לתוצאות המשחק/ }).click();
+  await expect(page.getByRole('heading', { name: 'סוף המשחק!' })).toBeVisible();
+
+  // אין הכרזת ניצחון ואין קונפטי
+  await expect(page.getByText(/ניצחת|ניצחון/)).toHaveCount(0);
+  await expect(page.locator('.confetti')).toHaveCount(0);
+
+  // כן יש עידוד להמשיך
+  await expect(page.getByText(/כל התחלה קשה/)).toBeVisible();
+});

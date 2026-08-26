@@ -30,6 +30,15 @@ export default defineConfig({
     launchOptions: { executablePath, args: ['--no-sandbox', '--disable-dev-shm-usage'] },
     ...devices['Desktop Chrome']
   },
+  /**
+   * שני שרתי תצוגה מקדימה, ושניהם מגישים **את מה שכבר בנוי בדיסק**.
+   *
+   * שימו לב: `reuseExistingServer` חוסך זמן, אבל הוא גם אומר
+   * ש-`npx playwright test` לבדו אינו בונה כלום — ואם הבנייה
+   * ישנה, הבדיקות ירוצו מול גרסה קודמת ויעברו בשקט. זה קרה בפועל.
+   * לכן `npm run test:e2e` בונה את שתי הבניות לפני ההרצה, וזו
+   * הפקודה שצריך להריץ.
+   */
   webServer: externalBase
     ? undefined
     : [

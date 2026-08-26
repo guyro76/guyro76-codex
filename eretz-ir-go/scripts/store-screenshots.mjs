@@ -153,15 +153,27 @@ async function main() {
     await page.locator('.cat-card').first().waitFor();
 
     /**
-     * ממלאים תשובה אחת בעזרת ארצי, כדי שהצילום יראה משחק שמשחקים
-     * בו ולא לוח ריק. הנתיב דטרמיניסטי: שני רמזים ואז "גלו לי",
-     * שממלא תשובה מאומתת מהמאגר המקומי.
+     * ממלאים בעזרת ארצי, כדי שהצילום יראה משחק שמשחקים בו ולא לוח
+     * ריק. הנתיב דטרמיניסטי: שני רמזים ואז "גלו לי", שממלא תשובה
+     * מאומתת מהמאגר המקומי.
+     *
+     * **כל הקטגוריות ולא רק הראשונה.** בגרסה הראשונה מולאה אחת,
+     * ומסך התוצאות בצילום הראה "+0 נק׳" וארבע שורות "ריק" — צילום
+     * שמראה את המשחק נכשל. צילום לחנות צריך להראות משחק שהצליח.
      */
-    const card = page.locator('.cat-card').first();
-    await card.getByRole('button', { name: /רמז/ }).click();
-    await card.getByRole('button', { name: /עוד רמז/ }).click();
-    await capture(page, 'artzi-hint');
-    await card.getByRole('button', { name: /גלו לי/ }).click();
+    const cards = page.locator('.cat-card');
+    const total = await cards.count();
+    for (let i = 0; i < total; i++) {
+      const card = cards.nth(i);
+      const hint = card.getByRole('button', { name: /רמז/ }).first();
+      if (!(await hint.isEnabled().catch(() => false))) continue;
+      await hint.click();
+      const more = card.getByRole('button', { name: /עוד רמז/ });
+      if (await more.isVisible().catch(() => false)) await more.click();
+      if (i === 0) await capture(page, 'artzi-hint');
+      const reveal = card.getByRole('button', { name: /גלו לי/ });
+      if (await reveal.isVisible().catch(() => false)) await reveal.click();
+    }
     await capture(page, 'board');
 
     await page.getByRole('button', { name: /סיימתי|סיום/ }).first().click();
