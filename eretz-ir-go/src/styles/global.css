@@ -458,13 +458,25 @@ input::placeholder { color: var(--text-dim); }
 .dim { color: var(--text-dim); }
 .gold { color: var(--gold); }
 
+/* שורת הכותרת של מסך פנימי.
+   ברוחב טלפון הכותרת ("אוסף המילים שלי") נשברה לשתי שורות
+   והתנגשה בכפתור החזרה — נראה כמו עיצוב שבור, וזה המסך הראשון
+   שאחרי הבית. `min-width: 0` מאפשר לכותרת להצטמצם במקום לדחוף,
+   וה-`clamp` מקטין אותה בהדרגה לפי רוחב המסך במקום לשבור. */
 .topbar {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 8px 0 14px;
 }
-.topbar h2 { flex: 1; margin: 0; }
+.topbar > button { flex: 0 0 auto; }
+.topbar h2 {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: clamp(1.05rem, 4.4vw, 1.45rem);
+  line-height: 1.25;
+}
 
 .timer {
   font-variant-numeric: tabular-nums;
@@ -1702,3 +1714,52 @@ body::after {
   color: var(--text);
 }
 .image-credit a { color: var(--link); }
+
+
+/* ===== הישגים =====
+   הכרטיס הנעול נשאר **קריא במלואו**. מה שמבדיל אותו מהושג הוא
+   האייקון האפור, המסגרת ומד ההתקדמות — ולא הורדת ניגודיות של
+   הטקסט. `opacity` על מכל מוריד את הניגודיות של כל מה שבתוכו,
+   ובדיקת הניגודיות לא יכולה לראות את זה כי היא מחשבת טוקנים. */
+.achievement { gap: 2px; }
+.achievement.earned { border-color: var(--gold); }
+.ach-icon { font-size: 2.4rem; }
+.ach-desc { font-size: 0.85rem; margin: 4px 0 0; }
+.ach-done { color: var(--ok); font-weight: 700; margin: 4px 0 0; }
+
+/* מד ההתקדמות: רקע כהה קבוע ומילוי בצבע המותג, כך שהיחס נקרא
+   בכל אחת משש הערכות בלי להסתמך על צבע הרקע של הכרטיס */
+.ach-bar {
+  width: 100%;
+  height: 8px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.ach-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--turquoise, #33d6c3), var(--gold));
+  transition: width 400ms ease;
+}
+.reduced-motion .ach-bar span { transition: none; }
+.ach-count {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* נקודות ההתקדמות בהסבר "איך משחקים" */
+.howto-dots { display: flex; gap: 7px; justify-content: center; margin-top: 6px; }
+.howto-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--glass-border);
+}
+.howto-dots span.on { background: var(--gold); }

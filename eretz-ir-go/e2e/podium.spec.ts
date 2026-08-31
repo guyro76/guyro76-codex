@@ -165,7 +165,8 @@ test('🏆 סוף דו-קרב מציג פודיום עם השמות של שני 
   await expect(podium.locator('.podium-slot')).toHaveCount(2);
 
   // בחדר רואים את השמות — זו כל הנקודה
-  await expect(podium.getByText('אורי')).toBeVisible();
+  // שם ברירת המחדל הוא תווית ולא שם של אדם — ראו DEFAULT_PROFILE_NAME
+  await expect(podium.getByText('שחקן חדש')).toBeVisible();
   await expect(podium.getByText('מאיה')).toBeVisible();
 
   // מקום ראשון גבוה מהשני, אחרת זו רשימה ולא פודיום

@@ -45,7 +45,8 @@ test('🤖 סיבוב מלא נגד ארצי מסתיים בטבלה עם שני
 
   // בטבלת הסיבוב מופיעים שני השחקנים
   await expect(page.getByText('ארצי').first()).toBeVisible({ timeout: 25_000 });
-  await expect(page.getByText('אורי').first()).toBeVisible();
+  // שם ברירת המחדל הוא תווית ולא שם של אדם — ראו DEFAULT_PROFILE_NAME
+  await expect(page.getByText('שחקן חדש').first()).toBeVisible();
 
   expect(errors, `שגיאות: ${errors.join(' | ')}`).toEqual([]);
 });

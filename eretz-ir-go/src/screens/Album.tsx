@@ -12,7 +12,7 @@ import { PLACE_COUNTS } from '../data/places';
 type Filter = 'all' | 'fav' | 'hint' | 'rare';
 
 export default function Album() {
-  const { activeProfile, customCategories } = useApp();
+  const { activeProfile, customCategories, navigate } = useApp();
   const [words, setWords] = useState<PersonalAnswer[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [catFilter, setCatFilter] = useState<string>('');
@@ -71,6 +71,12 @@ export default function Album() {
         </div>
       )}
 
+      {/*
+        פקדי הסינון מוצגים רק כשיש מה לסנן.
+        אלבום ריק הציג ארבעה צ'יפים ובורר קטגוריות שמסננים כלום —
+        זה נראה כמו מסך תקול ולא כמו התחלה.
+      */}
+      {words.length > 0 && (
       <div className="row" style={{ marginBottom: 10 }}>
         {(
           [
@@ -104,6 +110,7 @@ export default function Album() {
           ))}
         </select>
       </div>
+      )}
 
       <div className="grid grid-2">
         {filtered.map((w) => {
@@ -135,7 +142,42 @@ export default function Album() {
           );
         })}
       </div>
-      {filtered.length === 0 && <p className="center dim">עדיין אין כאן מילים — כל תשובה נכונה במשחק מצטרפת לאוסף! 🎮</p>}
+      {/*
+        שני מצבים ריקים שונים, ולכל אחד דרך קדימה משלו.
+        קודם היה כאן משפט אחד לשניהם, ובלי שום כפתור — מסך סתום.
+      */}
+      {words.length === 0 && (
+        <div className="card center" style={{ maxWidth: 380, margin: '10px auto' }}>
+          <div style={{ fontSize: '2.6rem' }} aria-hidden>
+            🃏
+          </div>
+          <strong>האוסף עוד ריק</strong>
+          <p className="dim" style={{ margin: '6px 0 12px' }}>
+            כל תשובה נכונה במשחק מצטרפת לכאן — עם תמונה ועובדה קטנה.
+          </p>
+          <button className="btn-primary" onClick={() => navigate('mode-select')}>
+            🎮 בואו נשחק
+          </button>
+        </div>
+      )}
+
+      {words.length > 0 && filtered.length === 0 && (
+        <div className="card center" style={{ maxWidth: 380, margin: '10px auto' }}>
+          <strong>אין מילים שמתאימות לסינון</strong>
+          <p className="dim" style={{ margin: '6px 0 12px' }}>
+            יש באוסף {words.length} מילים — הן פשוט לא בסינון הזה.
+          </p>
+          <button
+            className="btn-primary"
+            onClick={() => {
+              setFilter('all');
+              setCatFilter('');
+            }}
+          >
+            להצגת הכול
+          </button>
+        </div>
+      )}
     </div>
   );
 }

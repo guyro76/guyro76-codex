@@ -77,7 +77,7 @@ test('📤 שיתוף התוצאה מוסר טקסט נקי מכל פרט מזה
 
   // מה שכן צריך להיות שם
   expect(text).toContain('ארץ-עיר GO!');
-  expect(text).toContain('אורי');
+  expect(text).toContain('שחקן חדש');
   expect(text).toContain('https://eretz-ir-go.vercel.app');
 
   // ומה שאסור שיהיה שם — זו עיקר הבדיקה

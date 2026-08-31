@@ -145,11 +145,21 @@ export const db = new EretzIrDB();
  *
  * מכשיר שכבר יש בו פרופילים לא נוגעים בו: התנאי הוא "אין אף אחד".
  */
+/**
+ * שם ברירת המחדל של הפרופיל הראשון.
+ *
+ * קודם היה כאן **"אורי"**, ולכן הדבר הראשון שילד חדש ראה היה
+ * "בוקר טוב, אורי!" — שמו של מישהו אחר. "שחקן חדש" נקרא כתווית
+ * ולא כשם של אדם, וזה בדיוק ההבדל: אף אחד לא חושב שקוראים לו כך.
+ * המשחק מזהה את הערך הזה ומזמין לבחור שם אמיתי.
+ */
+export const DEFAULT_PROFILE_NAME = 'שחקן חדש';
+
 export async function ensureDefaultProfiles(): Promise<void> {
   const count = await db.profiles.count();
   if (count > 0) return;
   await db.profiles.add({
-    name: 'אורי',
+    name: DEFAULT_PROFILE_NAME,
     avatar: '🦄',
     color: '#33d6c3',
     gender: 'other',

@@ -10,13 +10,14 @@ import WalletChip from '../components/WalletChip';
 import InstallPrompt from '../components/InstallPrompt';
 import Artzi from '../components/Artzi';
 import { authAvailable, useAuth } from '../store/authStore';
-import { db } from '../db/db';
+import { db, DEFAULT_PROFILE_NAME, getSetting, setSetting } from '../db/db';
+import HowToPlay from '../components/HowToPlay';
 import { computeStreak, streakLabel, type StreakInfo } from '../lib/streak';
 import { useGame } from '../store/gameStore';
 import { hasPlayedBefore, planQuickPlay } from '../lib/quickPlay';
 
 export default function Home() {
-  const { activeProfile, navigate, setEditingProfile, customCategories } = useApp();
+  const { activeProfile, navigate, setEditingProfile, customCategories, refreshActive } = useApp();
   const caps = useCapabilities();
   const startMatch = useGame((s) => s.startMatch);
   // פאנל הניהול הוסתר קודם מאחורי כפתור רפאים זעיר בתחתית המסך, ואחריו
@@ -62,6 +63,53 @@ export default function Home() {
    * שהילד שיחק בפעם הקודמת. מוצג רק אחרי משחק אחד: לשחקן חדש אין
    * "כמו קודם", ובשבילו המסלול המלא הוא בדיוק מה שצריך.
    */
+  /**
+   * בקשת שם, בלי לחסום.
+   *
+   * הדבר הראשון שילד חדש ראה היה שם של מישהו אחר. מסך שם חוסם
+   * בפתיחה היה פותר את זה — אבל גם היה עומד בין ילד לבין המשחק
+   * בשנייה הראשונה. כרטיס במסך הבית שואל, ומי שרוצה פשוט מתחיל
+   * לשחק ומתעלם.
+   */
+  /**
+   * ההסבר **אינו נפתח מעצמו**.
+   *
+   * הניסיון הראשון היה חלון שנפתח אוטומטית בכניסה הראשונה, וזה
+   * יצא לא נכון משתי סיבות: הוא עומד בין ילד לבין המשחק בשנייה
+   * הראשונה, ובאותו מסך כבר יושבת בקשת השם — כלומר שתי הפרעות
+   * לפני שמשחקים בכלל. ילד שרוצה לשחק סוגר את שתיהן בלי לקרוא,
+   * ואז ההסבר גם הפריע וגם לא הושג.
+   *
+   * במקום זה: הזמנה בולטת בפעם הראשונה, וכפתור קבוע תמיד. מי
+   * שרוצה הסבר מקבל אותו, ומי שרוצה לשחק פשוט משחק.
+   */
+  const [howTo, setHowTo] = useState(false);
+  const [howToSeen, setHowToSeen] = useState(true);
+  useEffect(() => {
+    void getSetting('howToSeen').then((v) => setHowToSeen(Boolean(v)));
+  }, []);
+  const openHowTo = () => {
+    setHowTo(true);
+    setHowToSeen(true);
+    void setSetting('howToSeen', '1');
+  };
+
+  const [nameDraft, setNameDraft] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const needsName = activeProfile?.name === DEFAULT_PROFILE_NAME;
+
+  const saveName = async () => {
+    const clean = nameDraft.trim().slice(0, 12);
+    if (!clean || !activeProfile?.id || savingName) return;
+    setSavingName(true);
+    try {
+      await db.profiles.update(activeProfile.id, { name: clean });
+      await refreshActive();
+    } finally {
+      setSavingName(false);
+    }
+  };
+
   const [quickBusy, setQuickBusy] = useState(false);
   const quickPlay = async () => {
     if (!activeProfile || quickBusy) return;
@@ -164,6 +212,49 @@ export default function Home() {
         <Artzi />
       </div>
 
+      {howTo && <HowToPlay onClose={() => setHowTo(false)} />}
+
+      {/* ההזמנה מופיעה פעם אחת, עד שנכנסים להסבר */}
+      {!howToSeen && (
+        <button
+          className="card clickable center"
+          style={{ width: '100%', margin: '0 0 12px' }}
+          onClick={openHowTo}
+        >
+          <strong>❓ פעם ראשונה כאן?</strong>
+          <span className="dim" style={{ display: 'block', fontSize: '0.88rem', marginTop: 2 }}>
+            הסבר קצר בארבעה עמודים — מה יש במשחק ואיך זוכים
+          </span>
+        </button>
+      )}
+
+      {needsName && (
+        <div className="card" style={{ margin: '0 0 12px' }}>
+          <strong>👋 איך קוראים לך?</strong>
+          <p className="dim" style={{ margin: '4px 0 8px', fontSize: '0.88rem' }}>
+            כדי שהמשחק יפנה אליך בשם. אפשר גם פשוט להתחיל לשחק.
+          </p>
+          <div className="row" style={{ gap: 8 }}>
+            <input
+              type="text"
+              value={nameDraft}
+              aria-label="השם שלי"
+              placeholder="השם שלי"
+              maxLength={12}
+              onChange={(ev) => setNameDraft(ev.target.value)}
+              onKeyDown={(ev) => ev.key === 'Enter' && void saveName()}
+            />
+            <button
+              className="btn-primary btn-small"
+              disabled={!nameDraft.trim() || savingName}
+              onClick={() => void saveName()}
+            >
+              זהו!
+            </button>
+          </div>
+        </div>
+      )}
+
       {hasPlayedBefore(activeProfile) && (
         <button
           className="btn-primary quick-play"
@@ -202,6 +293,12 @@ export default function Home() {
       <p className="dim center" style={{ marginTop: 18, fontSize: '0.9rem' }}>
         💡 {tipOfTheDay(todayKey())}
       </p>
+      {/* ההסבר נשאר זמין תמיד, לא רק בפעם הראשונה */}
+      <div className="row center" style={{ justifyContent: 'center' }}>
+        <button className="btn-small btn-ghost" onClick={openHowTo}>
+          ❓ איך משחקים
+        </button>
+      </div>
       <div className="row center" style={{ justifyContent: 'center' }}>
         <button className="btn-small btn-ghost" onClick={() => navigate('credits')}>
           מקורות וקרדיטים

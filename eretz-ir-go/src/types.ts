@@ -197,6 +197,14 @@ export interface Achievement {
   icon: string;
   description: string;
   check: (p: Profile, extra: AchievementContext) => boolean;
+  /**
+   * כמה כבר יש וכמה צריך — להצגת מד התקדמות.
+   *
+   * הישג נעול בלי מספר הוא יעד מעורפל; "3 מתוך 5" הוא יעד שמרגישים
+   * שמתקרבים אליו. זה גם ההבדל בין מסך שמסתכלים בו פעם אחת לבין
+   * מסך שחוזרים אליו.
+   */
+  progress?: (p: Profile, extra: AchievementContext) => { have: number; need: number };
 }
 
 /** נתונים שאינם על הפרופיל עצמו ונדרשים לבדיקת הישגים */

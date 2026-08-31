@@ -1,4 +1,5 @@
 import type { Gender, Profile } from '../types';
+import { DEFAULT_PROFILE_NAME } from '../db/db';
 
 /**
  * מנוע הפנייה האישית: המשחק מדבר עם המשתתפים בלשון המגדר שבחרו,
@@ -39,11 +40,17 @@ export function say(key: keyof typeof FORMS | string, gender: Gender): string {
   return form[2];
 }
 
-/** ברכת פתיחה לפי שעה, מגדר וגיל */
+/**
+ * ברכת פתיחה לפי שעה, מגדר וגיל.
+ *
+ * כל עוד לא נבחר שם, הברכה **לא ממציאה אחד**: "בוקר טוב! מתחילים?"
+ * עדיף על פנייה בשם של מישהו אחר.
+ */
 export function greeting(p: Pick<Profile, 'name' | 'gender' | 'age'>): string {
   const hour = new Date().getHours();
   const time = hour < 12 ? 'בוקר טוב' : hour < 18 ? 'צהריים טובים' : 'ערב טוב';
-  return `${time}, ${p.name}! ${say('ready', p.gender)}`;
+  const named = p.name && p.name !== DEFAULT_PROFILE_NAME ? `, ${p.name}` : '';
+  return `${time}${named}! ${say('ready', p.gender)}`;
 }
 
 /** בדיחות והערות שנונות לפי גיל — מוצגות בפתיחה, בין סיבובים ובתוצאות */
