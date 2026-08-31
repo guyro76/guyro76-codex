@@ -34,6 +34,8 @@ __FONTS__</style>
 
 *{box-sizing:border-box}
 
+html,body{height:100%}
+
 body{
   margin:0;
   background:var(--stage);
@@ -999,14 +1001,29 @@ sndBtn.addEventListener("click", function(e){ e.stopPropagation(); setSound(!sou
 
 /* ================= playback ================= */
 var t = 0, playing = false, last = 0;
-var stagewrap = $("stagewrap");
+var stagewrap = $("stagewrap"), player = $("player");
 
 function fitStage(){
-  var box = $("stagewrap");
-  var s = Math.min(box.clientWidth / 1600, box.clientHeight / 900);
+  var box = stagewrap;
+  var w = box.clientWidth || window.innerWidth || 1600;
+  var h = box.clientHeight;
+  /* Some embedders size the frame to its content, which collapses a 100dvh
+     layout to a ~150px sliver. No real window is that short, so treat it as
+     "no height given" and fall back to the film's own 16:9. */
+  if (!h || h < 260){
+    h = Math.round(w * 9 / 16);
+    player.style.height = "auto";
+    box.style.height = h + "px";
+  } else if (box.style.height){
+    box.style.height = "";
+    player.style.height = "";
+  }
+  var s = Math.min(w / 1600, h / 900);
+  if (!isFinite(s) || s <= 0) s = w / 1600;
   fit.style.transform = "scale(" + s + ")";
 }
 window.addEventListener("resize", fitStage);
+if (window.ResizeObserver) new ResizeObserver(fitStage).observe(stagewrap);
 fitStage();
 
 /* How far the verdict page has to travel to bring its last panel into frame.
