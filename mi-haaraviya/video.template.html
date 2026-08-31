@@ -296,7 +296,7 @@ body{
 .caret{display:inline-block;width:3px;height:.86em;background:var(--ink);vertical-align:-.06em;margin-right:4px}
 
 /* ---------- the verdict: a newspaper ---------- */
-.newsstage{position:absolute;inset:0;overflow:hidden;opacity:0;background:#0A0D1E}
+.newsstage{position:absolute;inset:0;overflow:hidden;opacity:0;background:#0A0D1E;pointer-events:none}
 .news{
   position:absolute;
   top:0;left:50%;
@@ -455,6 +455,21 @@ body{
 .track:hover .track-knob,.track:focus-visible .track-knob{opacity:1}
 .track:focus-visible{outline:2px solid var(--mira);outline-offset:4px}
 .tick{position:absolute;width:2px;height:11px;background:rgba(5,9,28,.65)}
+.snd{
+  flex:none;display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--ui);font-weight:800;font-size:14px;letter-spacing:.08em;
+  border:0;cursor:pointer;padding:9px 13px;
+  background:transparent;color:var(--ink);border-radius:4px;
+  white-space:nowrap;
+}
+.snd svg{width:19px;height:19px;fill:currentColor;flex:none}
+.snd:hover{background:rgba(244,240,228,.14)}
+.snd:focus-visible{outline:2px solid var(--mira);outline-offset:2px}
+.snd.off{background:var(--mira);color:var(--ink)}
+.snd.off:hover{background:#ff5c98}
+.snd .lbl{display:none}
+.snd.off .lbl{display:inline}
+
 .time{
   flex:none;font-family:var(--ui);font-weight:700;font-size:14px;letter-spacing:.06em;
   color:var(--ink-dim);font-variant-numeric:tabular-nums;
@@ -639,8 +654,10 @@ body{
       <button class="poster" id="poster" type="button" aria-label="נגן את הסרטון">
         <span class="poster-ring"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
         <span class="poster-t">מי הערביה?</span>
-        <span class="poster-s">סאטירה · 1:00</span>
+        <span class="poster-s">סאטירה · 1:00 · עם קול</span>
       </button>
+
+      <audio id="snd" preload="auto" src="__AUDIO__"></audio>
 
       <div class="chrome" id="chrome">
         <button class="ctrl" id="playBtn" type="button" aria-label="נגן"><svg id="playIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
@@ -649,6 +666,10 @@ body{
           <div class="track-fill" id="trackFill"></div>
           <div class="track-knob" id="trackKnob"></div>
         </div>
+        <button class="snd off" id="sndBtn" type="button" aria-label="הפעל קול" aria-pressed="false">
+          <svg id="sndIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4zm11.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>
+          <span class="lbl">קול</span>
+        </button>
         <div class="time" id="time">0:00 / 1:00</div>
         <div class="chapter" id="chapter"></div>
       </div>
@@ -758,6 +779,7 @@ var frame=$("frame"), fit=$("fit"), cam=$("cam"), spot=$("spot"), beam=$("beam")
     newsstage=$("newsstage"), news=$("news"), stamp=document.querySelector(".stamp"),
     flash=$("flash"), blackout=$("blackout"), endcard=$("endcard"),
     grain=$("grain"), poster=$("poster"), chrome=$("chrome"),
+    snd=$("snd"), sndBtn=$("sndBtn"), sndIcon=$("sndIcon"),
     playBtn=$("playBtn"), playIcon=$("playIcon"), track=$("track"),
     trackFill=$("trackFill"), trackKnob=$("trackKnob"), timeEl=$("time"),
     chapter=$("chapter"), replay=$("replay");
@@ -947,6 +969,34 @@ function render(t){
   endcard.classList.toggle("on", eO > 0.97);
 }
 
+/* ================= sound ================= */
+/* Browsers only grant silent autoplay, so the score starts muted and the
+   transport carries an obvious way to turn it on. Any deliberate press —
+   the poster, replay, the chip — counts as the gesture that unmutes it. */
+var sndReady = false, soundOn = false;
+var ICON_ON  = "M4 9v6h4l5 5V4L8 9H4zm11.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a6.5 6.5 0 0 1 0 13.4v2.1a8.5 8.5 0 0 0 0-17.6z";
+var ICON_OFF = "M4 9v6h4l5 5V4L8 9H4zm17.5 3L24 9.5 22.6 8.1 20.1 10.6 17.6 8.1 16.2 9.5l2.5 2.5-2.5 2.5 1.4 1.4 2.5-2.5 2.5 2.5 1.4-1.4z";
+
+snd.muted = true;
+snd.addEventListener("canplay", function(){ sndReady = true; });
+snd.addEventListener("error", function(){ sndReady = false; });
+
+function audioDriving(){ return !CAPTURE && sndReady && !snd.paused && !snd.seeking; }
+function syncAudio(){
+  if (CAPTURE || !sndReady) return;
+  var want = Math.min(t, DUR - 0.02);
+  if (Math.abs(snd.currentTime - want) > 0.12) { try { snd.currentTime = want; } catch (_){} }
+}
+function setSound(on){
+  soundOn = on;
+  snd.muted = !on;
+  sndBtn.classList.toggle("off", !on);
+  sndBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  sndBtn.setAttribute("aria-label", on ? "השתק" : "הפעל קול");
+  sndIcon.setAttribute("d", on ? ICON_ON : ICON_OFF);
+}
+sndBtn.addEventListener("click", function(e){ e.stopPropagation(); setSound(!soundOn); scheduleHide(); });
+
 /* ================= playback ================= */
 var t = 0, playing = false, last = 0;
 var stagewrap = $("stagewrap");
@@ -987,10 +1037,13 @@ function syncChrome(){
 
 function tick(now){
   if (!playing) return;
-  var dt = Math.max(0, Math.min((now - last) / 1000, 0.1));
+  if (audioDriving()){
+    t = Math.min(snd.currentTime, DUR);            /* the score keeps the time */
+  } else {
+    t += Math.max(0, Math.min((now - last) / 1000, 0.1));
+  }
   last = now;
-  t += dt;
-  if (t >= DUR){ t = DUR; playing = false; showChrome(true); }
+  if (t >= DUR){ t = DUR; playing = false; if (!CAPTURE) snd.pause(); showChrome(true); }
   render(t);
   syncChrome();
   if (playing) requestAnimationFrame(tick);
@@ -1000,6 +1053,7 @@ function play(){
   if (t >= DUR - 0.01) t = 0;
   playing = true;
   poster.hidden = true;
+  if (!CAPTURE){ syncAudio(); snd.play().catch(function(){}); }
   last = performance.now();
   syncChrome();
   requestAnimationFrame(tick);
@@ -1007,12 +1061,14 @@ function play(){
 }
 function pause(){
   playing = false;
+  if (!CAPTURE) snd.pause();
   syncChrome();
   showChrome(true);
 }
 function toggle(){ playing ? pause() : play(); }
 function seekTo(x){
   t = Math.max(0, Math.min(DUR, x));
+  syncAudio();
   render(t);
   syncChrome();
 }
@@ -1027,7 +1083,7 @@ function showChrome(stick){
 function scheduleHide(){
   clearTimeout(hideTimer);
   hideTimer = setTimeout(function(){
-    if (playing) chrome.classList.add("hide");
+    if (playing && soundOn) chrome.classList.add("hide");
   }, 2200);
 }
 stagewrap.addEventListener("mousemove", function(){ showChrome(false); });
@@ -1035,8 +1091,8 @@ stagewrap.addEventListener("mouseleave", function(){ if (playing) chrome.classLi
 
 /* ---- controls ---- */
 playBtn.addEventListener("click", toggle);
-poster.addEventListener("click", play);
-replay.addEventListener("click", function(){ t = 0; play(); });
+poster.addEventListener("click", function(){ setSound(true); play(); });
+replay.addEventListener("click", function(){ setSound(true); t = 0; play(); });
 frame.addEventListener("click", function(e){
   if (e.target.closest(".chrome") || e.target.closest(".poster") || e.target.closest(".endcard")) return;
   toggle();
@@ -1092,13 +1148,14 @@ document.addEventListener("keydown", function(e){
 
 /* ================= boot ================= */
 render(0);
+setSound(false);
 syncChrome();
 measureNews();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureNews);
 window.addEventListener("resize", measureNews);
 
-/* frame-exact hook for the encoder */
-window.__seek = function(x){ pause(); t = x; render(t); syncChrome(); };
+/* frame-exact hook for the encoder — same path as a scrub, so the score follows */
+window.__seek = function(x){ pause(); seekTo(x); };
 window.__duration = DUR;
 
 if (CAPTURE){

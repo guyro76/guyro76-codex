@@ -22,12 +22,15 @@ const fontCss = faces.map(block =>
                 (_, file) => `url(${dataURI("fonts/" + file, "font/woff2")})`)
 ).join("\n");
 
+const AUDIO = process.env.AUDIO || "audio.mp3";
+
 let html = readFileSync(SRC, "utf8")
   .replace("__FONTS__", fontCss)
+  .replace("__AUDIO__", dataURI(AUDIO, "audio/mpeg"))
   .replaceAll("__PHOTO__", dataURI(PHOTO, "image/jpeg"));
 
-for (const token of ["__FONTS__", "__PHOTO__"]) {
+for (const token of ["__FONTS__", "__PHOTO__", "__AUDIO__"]) {
   if (html.includes(token)) throw new Error(`placeholder ${token} still present`);
 }
 writeFileSync(OUT, html);
-console.log(`${OUT}  ${(html.length / 1024).toFixed(0)} KB  (${faces.length} @font-face blocks inlined)`);
+console.log(`${OUT}  ${(html.length / 1048576).toFixed(2)} MB  (${faces.length} @font-face blocks + score inlined)`);
