@@ -1,0 +1,1106 @@
+<title>מי הערביה</title>
+<style>
+__FONTS__</style>
+
+<style>
+/* ============================================================
+   מי הערביה — a broadcast-graphics satire short.
+   Single deliberate visual world (a dark arena broadcast), so no
+   theme swap: every colour is painted explicitly from a token
+   and the page holds on any host ground.
+   ============================================================ */
+:root{
+  --stage:#05091C;
+  --haze:#16265C;
+  --ink:#F4F0E4;
+  --ink-dim:#A8B0C6;
+  --noa:#F5B93D;
+  --mira:#FF3E86;
+  --paper:#E4DFCF;
+  --paper-2:#DAD4C1;
+  --news-ink:#171310;
+  --news-ink-dim:#5A5348;
+  --stamp:#C0342B;
+  --live:#FF2E2E;
+  --rule:rgba(244,240,228,.22);
+
+  --display:"Karantina","Arial Narrow",system-ui,sans-serif;
+  --serif:"Frank Ruhl Libre",Georgia,"Times New Roman",serif;
+  --ui:"Assistant","Segoe UI",system-ui,sans-serif;
+
+  direction:rtl;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--stage);
+  color:var(--ink);
+  font-family:var(--ui);
+  min-height:100dvh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+/* ---------- viewport + fixed 1600x900 coordinate stage ---------- */
+.player{
+  position:relative;
+  width:100vw;
+  height:100dvh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--stage);
+  overflow:hidden;
+}
+.fit{
+  position:relative;
+  width:1600px;
+  height:900px;
+  transform-origin:center center;
+  flex:none;
+}
+.frame{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  background:#000;
+  box-shadow:0 40px 120px rgba(0,0,0,.7);
+}
+
+/* ---------- the stage photo + grade ---------- */
+.cam{position:absolute;inset:0;will-change:transform}
+.photo{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:50% 4%;
+}
+.grade{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(120% 90% at 50% 12%, rgba(22,38,92,0) 0%, rgba(5,9,28,.28) 58%, rgba(5,9,28,.86) 100%),
+    linear-gradient(to bottom, rgba(5,9,28,.34) 0%, rgba(5,9,28,0) 26%, rgba(5,9,28,.10) 52%, rgba(5,9,28,.88) 100%);
+  mix-blend-mode:multiply;
+}
+.tint{
+  position:absolute;inset:0;
+  background:linear-gradient(200deg, rgba(22,38,92,.30), rgba(5,9,28,.05) 45%, rgba(22,38,92,.34));
+  mix-blend-mode:screen;
+  opacity:.7;
+}
+/* spotlight follows whoever is speaking */
+.spot{
+  position:absolute;inset:0;
+  background:radial-gradient(38% 52% at var(--sx,50%) 34%, rgba(255,246,220,.20), rgba(255,246,220,0) 70%);
+  mix-blend-mode:screen;
+  opacity:0;
+}
+.beam{
+  position:absolute;top:-14%;left:0;width:100%;height:70%;
+  background:linear-gradient(96deg, rgba(160,196,255,0) 42%, rgba(178,208,255,.10) 50%, rgba(160,196,255,0) 58%);
+  mix-blend-mode:screen;
+  pointer-events:none;
+}
+.grain{position:absolute;inset:0;opacity:.16;mix-blend-mode:overlay;pointer-events:none}
+.flash{position:absolute;inset:0;background:var(--ink);opacity:0;pointer-events:none}
+.blackout{position:absolute;inset:0;background:#000;opacity:1;pointer-events:none}
+
+/* ---------- broadcast furniture ---------- */
+.bug{
+  position:absolute;top:38px;right:44px;
+  display:flex;align-items:center;gap:12px;
+  opacity:0;
+}
+.bug-mark{
+  font-family:var(--display);font-weight:700;font-size:34px;line-height:.86;
+  letter-spacing:.01em;
+  padding:9px 14px 6px;
+  background:linear-gradient(180deg,var(--mira),#C4225F);
+  color:var(--ink);
+  clip-path:polygon(0 0,100% 0,100% 100%,10px 100%);
+}
+.bug-live{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--ui);font-weight:800;font-size:15px;letter-spacing:.16em;
+  padding:8px 12px 7px;
+  background:rgba(5,9,28,.62);
+  border:1px solid var(--rule);
+  backdrop-filter:blur(6px);
+}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--live)}
+.bug-sat{
+  font-family:var(--ui);font-weight:700;font-size:13px;letter-spacing:.22em;
+  padding:9px 12px 8px;
+  color:var(--stage);
+  background:var(--ink);
+}
+
+.round{
+  position:absolute;top:38px;left:44px;
+  opacity:0;
+  text-align:left;
+}
+.round-n{
+  font-family:var(--display);font-weight:700;font-size:26px;line-height:1;
+  letter-spacing:.04em;color:var(--stage);
+  background:var(--ink);padding:8px 13px 5px;display:inline-block;
+}
+.round-t{
+  display:block;margin-top:7px;
+  font-family:var(--ui);font-weight:800;font-size:17px;letter-spacing:.22em;
+  color:var(--ink);text-shadow:0 1px 3px rgba(5,9,28,1),0 2px 16px rgba(5,9,28,.95);
+}
+
+/* Eurovision-style points cards */
+.score{position:absolute;top:132px;left:44px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.pts{
+  display:grid;grid-template-columns:auto 62px;align-items:center;
+  min-width:218px;
+  font-family:var(--ui);
+  background:rgba(5,9,28,.74);
+  border:1px solid var(--rule);
+  backdrop-filter:blur(6px);
+  opacity:0;
+}
+.pts-c{padding:9px 14px 8px;font-weight:700;font-size:19px;letter-spacing:.02em;text-align:right}
+.pts-v{
+  padding:9px 6px 8px;text-align:center;
+  font-family:var(--display);font-weight:700;font-size:30px;line-height:1;
+  font-variant-numeric:tabular-nums;
+  color:var(--stage);
+}
+.pts.noa .pts-v{background:var(--noa)}
+.pts.mira .pts-v{background:var(--mira);color:var(--ink)}
+
+/* ---------- title card ---------- */
+.title{position:absolute;inset:0;display:grid;place-content:center;text-align:center;opacity:0}
+.title::before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(72% 48% at 50% 50%, rgba(5,9,28,.88), rgba(5,9,28,.52) 56%, rgba(5,9,28,0) 80%),
+    linear-gradient(to bottom, rgba(5,9,28,.38), rgba(5,9,28,.06) 42%, rgba(5,9,28,.52));
+}
+.title > *{position:relative}
+.title-eyebrow{
+  font-family:var(--ui);font-weight:700;font-size:19px;letter-spacing:.34em;
+  color:var(--ink-dim);margin-bottom:22px;
+}
+.title-main{
+  font-family:var(--display);font-weight:700;
+  font-size:210px;line-height:.82;letter-spacing:.005em;
+  color:var(--ink);
+  text-shadow:0 10px 60px rgba(0,0,0,.85);
+  margin:0;
+}
+.title-rule{height:3px;background:var(--mira);margin:30px auto 0;width:0}
+.title-kicker{
+  font-family:var(--ui);font-weight:600;font-size:25px;letter-spacing:.1em;
+  color:var(--ink);margin-top:24px;
+}
+
+/* ---------- name plates ---------- */
+.plate{position:absolute;bottom:196px;width:560px;opacity:0}
+.plate.noa{left:78px}
+.plate.mira{right:78px}
+.plate-bar{height:5px;width:100%}
+.plate.noa .plate-bar{background:var(--noa)}
+.plate.mira .plate-bar{background:var(--mira)}
+.plate-body{background:rgba(5,9,28,.80);backdrop-filter:blur(8px);padding:16px 22px 18px}
+.plate-name{font-family:var(--display);font-weight:700;font-size:60px;line-height:.9;color:var(--ink)}
+.plate-sub{font-family:var(--ui);font-weight:600;font-size:20px;line-height:1.35;color:var(--ink-dim);margin-top:8px}
+
+/* ---------- speech bubbles ---------- */
+.bubble{
+  position:absolute;
+  width:max-content;
+  min-width:300px;
+  max-width:620px;
+  opacity:0;
+  will-change:transform,opacity;
+}
+.bubble.noa{left:74px;bottom:150px}
+.bubble.mira{right:74px;bottom:150px}
+.bub-box{
+  position:relative;
+  background:var(--ink);
+  color:var(--stage);
+  padding:26px 30px 28px;
+  font-family:var(--ui);font-weight:800;
+  font-size:42px;line-height:1.16;
+  letter-spacing:-.005em;
+  text-wrap:balance;
+  box-shadow:0 26px 60px rgba(0,0,0,.6);
+}
+.bubble.noa .bub-box{border-bottom:7px solid var(--noa)}
+.bubble.mira .bub-box{border-bottom:7px solid var(--mira)}
+.bub-box::after{
+  content:"";position:absolute;top:-26px;
+  border:14px solid transparent;border-bottom-color:var(--ink);
+}
+.bubble.noa .bub-box::after{left:min(342px, calc(100% - 130px))}
+.bubble.mira .bub-box::after{right:min(346px, calc(100% - 130px))}
+.bub-who{
+  position:absolute;top:-15px;
+  font-family:var(--ui);font-weight:800;font-size:15px;letter-spacing:.2em;
+  padding:5px 11px 4px;color:var(--stage);
+}
+.bubble.noa .bub-who{right:0;background:var(--noa)}
+.bubble.mira .bub-who{left:0;background:var(--mira)}
+.bubble.shout .bub-box{font-size:56px;line-height:1.06}
+
+/* ---------- centred aside caption ---------- */
+.aside{
+  position:absolute;left:0;right:0;bottom:92px;text-align:center;opacity:0;
+}
+.aside span{
+  font-family:var(--ui);font-weight:600;font-size:27px;letter-spacing:.03em;
+  color:var(--ink);
+  background:rgba(5,9,28,.7);
+  padding:11px 22px 12px;
+  backdrop-filter:blur(6px);
+  display:inline-block;
+}
+
+/* ---------- court transcript strip ---------- */
+.court{
+  position:absolute;left:96px;right:96px;bottom:118px;
+  opacity:0;
+}
+.court-head{
+  display:inline-block;
+  font-family:var(--ui);font-weight:800;font-size:15px;letter-spacing:.24em;
+  background:var(--ink);color:var(--stage);padding:7px 14px 6px;
+}
+.court-body{
+  background:rgba(5,9,28,.86);
+  border:1px solid var(--rule);
+  border-top:4px solid var(--ink);
+  backdrop-filter:blur(8px);
+  padding:22px 26px 26px;
+  font-family:var(--serif);font-weight:500;
+  font-size:44px;line-height:1.24;
+  color:var(--ink);
+  min-height:96px;
+}
+.caret{display:inline-block;width:3px;height:.86em;background:var(--ink);vertical-align:-.06em;margin-right:4px}
+
+/* ---------- the verdict: a newspaper ---------- */
+.newsstage{position:absolute;inset:0;overflow:hidden;opacity:0;background:#0A0D1E}
+.news{
+  position:absolute;
+  top:0;left:50%;
+  width:1360px;
+  margin-left:-680px;
+  background:
+    linear-gradient(103deg, rgba(0,0,0,.05) 0%, rgba(0,0,0,0) 30%),
+    var(--paper);
+  color:var(--news-ink);
+  padding:44px 54px 176px;
+  box-shadow:0 50px 130px rgba(0,0,0,.75);
+  transform-origin:50% 450px;
+  will-change:transform;
+}
+.news::before{
+  /* newsprint tooth */
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg, rgba(23,19,16,.035) 0 1px, transparent 1px 3px);
+  mix-blend-mode:multiply;
+}
+.masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;border-bottom:3px solid var(--news-ink);padding-bottom:12px}
+.mast-name{font-family:var(--display);font-weight:700;font-size:96px;line-height:.8;letter-spacing:.005em}
+.mast-meta{font-family:var(--ui);font-weight:600;font-size:17px;line-height:1.5;color:var(--news-ink-dim);text-align:left;padding-bottom:6px}
+.mast-strip{
+  display:flex;justify-content:space-between;
+  border-bottom:1px solid var(--news-ink);
+  padding:7px 0 8px;margin-bottom:26px;
+  font-family:var(--ui);font-weight:700;font-size:15px;letter-spacing:.14em;color:var(--news-ink-dim);
+}
+.kicker{
+  display:inline-block;
+  font-family:var(--ui);font-weight:800;font-size:17px;letter-spacing:.2em;
+  background:var(--news-ink);color:var(--paper);
+  padding:6px 12px 5px;margin-bottom:18px;
+}
+.headline{
+  font-family:var(--display);font-weight:700;
+  font-size:158px;line-height:.82;letter-spacing:.002em;
+  margin:0;text-wrap:balance;
+}
+.deck{
+  font-family:var(--serif);font-weight:400;
+  font-size:34px;line-height:1.34;
+  margin:22px 0 0;
+  color:#2C251E;
+  max-width:1120px;
+  text-wrap:pretty;
+}
+.byline{
+  font-family:var(--ui);font-weight:700;font-size:17px;letter-spacing:.1em;
+  color:var(--news-ink-dim);
+  border-top:1px solid rgba(23,19,16,.35);
+  border-bottom:1px solid rgba(23,19,16,.35);
+  padding:10px 0;margin:24px 0 26px;
+}
+.news-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 30px}
+.news-col{
+  font-family:var(--serif);font-weight:400;
+  font-size:21.5px;line-height:1.52;
+  text-align:justify;
+  border-left:1px solid rgba(23,19,16,.28);
+  padding-left:30px;
+}
+.news-col:last-child{border-left:0;padding-left:0}
+.news-col p{margin:0 0 14px}
+.news-col p:first-child::first-letter{
+  font-family:var(--display);font-weight:700;
+  font-size:70px;line-height:.7;float:right;margin:6px 0 0 8px;
+}
+.pullquote{
+  font-family:var(--display);font-weight:700;
+  font-size:52px;line-height:.95;
+  border-top:3px solid var(--news-ink);border-bottom:3px solid var(--news-ink);
+  padding:18px 0;margin:6px 0 16px;
+  text-align:right;
+  text-wrap:balance;
+}
+.photobox{margin:0 0 16px}
+.photobox img{
+  width:100%;display:block;
+  aspect-ratio:16/9;object-fit:cover;object-position:50% 0%;
+  filter:grayscale(1) contrast(1.32) brightness(1.06);
+  mix-blend-mode:multiply;
+}
+.photobox figcaption{
+  font-family:var(--ui);font-weight:600;font-size:16px;line-height:1.42;
+  color:var(--news-ink-dim);padding-top:8px;
+  border-bottom:1px solid rgba(23,19,16,.28);padding-bottom:12px;
+}
+.sidebar{border:3px double var(--news-ink);padding:16px 18px;margin-top:4px}
+.sidebar h4{
+  font-family:var(--display);font-weight:700;font-size:34px;line-height:.9;
+  margin:0 0 12px;
+}
+.sidebar ul{margin:0;padding:0;list-style:none;font-family:var(--serif);font-size:20px;line-height:1.4}
+.sidebar li{padding:8px 0;border-top:1px solid rgba(23,19,16,.28)}
+.sidebar li:first-child{border-top:0;padding-top:0}
+.correction{
+  margin-top:22px;border:1px solid var(--news-ink);
+  background:var(--paper-2);
+  padding:16px 20px 18px;
+}
+.correction b{font-family:var(--ui);font-weight:800;font-size:16px;letter-spacing:.18em;display:block;margin-bottom:8px}
+.correction span{font-family:var(--serif);font-size:22px;line-height:1.45}
+.stamp{
+  position:absolute;left:54px;bottom:26px;
+  font-family:var(--display);font-weight:700;font-size:88px;line-height:.9;
+  letter-spacing:.06em;
+  color:var(--stamp);
+  border:7px solid var(--stamp);
+  padding:12px 26px 6px;
+  transform:rotate(-13deg);
+  opacity:.86;
+  mix-blend-mode:multiply;
+}
+.stamp small{display:block;font-family:var(--ui);font-weight:800;font-size:17px;letter-spacing:.28em;margin-top:2px}
+
+/* ---------- end card ---------- */
+.endcard{position:absolute;inset:0;display:grid;place-content:center;text-align:center;opacity:0;background:rgba(4,7,22,.965);backdrop-filter:blur(6px);pointer-events:none}
+.endcard.on{pointer-events:auto}
+.end-t{font-family:var(--display);font-weight:700;font-size:104px;line-height:.85;margin:0}
+.end-s{font-family:var(--ui);font-weight:600;font-size:22px;color:var(--ink-dim);margin-top:18px;letter-spacing:.06em}
+.replay{
+  margin-top:34px;justify-self:center;
+  display:inline-flex;align-items:center;gap:11px;
+  font-family:var(--ui);font-weight:800;font-size:19px;letter-spacing:.1em;
+  background:var(--ink);color:var(--stage);
+  border:0;padding:15px 28px;cursor:pointer;white-space:nowrap;
+}
+.replay:hover{background:var(--noa)}
+.replay:focus-visible{outline:3px solid var(--mira);outline-offset:4px}
+
+/* ---------- player chrome ---------- */
+.chrome{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:56px 26px 18px;
+  background:linear-gradient(to top, rgba(2,4,12,.92), rgba(2,4,12,0));
+  display:flex;align-items:center;gap:16px;
+  transition:opacity .28s ease;
+  z-index:5;
+}
+.chrome.hide{opacity:0;pointer-events:none}
+.ctrl{
+  flex:none;width:44px;height:44px;display:grid;place-items:center;
+  background:transparent;border:0;color:var(--ink);cursor:pointer;border-radius:4px;
+}
+.ctrl:hover{background:rgba(244,240,228,.14)}
+.ctrl:focus-visible{outline:2px solid var(--mira);outline-offset:2px}
+.ctrl svg{width:22px;height:22px;fill:currentColor}
+.track{
+  position:relative;flex:1;height:26px;display:flex;align-items:center;cursor:pointer;
+}
+.track-bg{position:absolute;left:0;right:0;height:5px;background:rgba(244,240,228,.24)}
+.track-fill{position:absolute;left:auto;right:0;height:5px;background:var(--mira)}
+.track-knob{position:absolute;width:14px;height:14px;border-radius:50%;background:var(--ink);margin-right:-7px;opacity:0;transition:opacity .2s}
+.track:hover .track-knob,.track:focus-visible .track-knob{opacity:1}
+.track:focus-visible{outline:2px solid var(--mira);outline-offset:4px}
+.tick{position:absolute;width:2px;height:11px;background:rgba(5,9,28,.65)}
+.time{
+  flex:none;font-family:var(--ui);font-weight:700;font-size:14px;letter-spacing:.06em;
+  color:var(--ink-dim);font-variant-numeric:tabular-nums;
+  direction:ltr;min-width:88px;text-align:center;
+}
+.chapter{
+  position:absolute;bottom:78px;
+  transform:translateX(50%);
+  background:var(--ink);color:var(--stage);
+  font-family:var(--ui);font-weight:800;font-size:13px;letter-spacing:.08em;
+  padding:6px 10px 5px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .15s;
+}
+
+/* poster / start overlay */
+.poster{
+  position:absolute;inset:0;z-index:6;
+  display:grid;place-content:center;justify-items:center;
+  background:rgba(5,9,28,.72);
+  backdrop-filter:blur(3px);
+  border:0;width:100%;cursor:pointer;
+  font-family:inherit;color:var(--ink);
+}
+.poster[hidden]{display:none}
+.poster-ring{
+  width:118px;height:118px;border-radius:50%;
+  border:3px solid var(--ink);
+  display:grid;place-items:center;
+  transition:transform .2s ease, background .2s ease;
+}
+.poster:hover .poster-ring{transform:scale(1.06);background:rgba(244,240,228,.12)}
+.poster:focus-visible{outline:3px solid var(--mira);outline-offset:-6px}
+.poster-ring svg{width:40px;height:40px;fill:var(--ink);margin-right:6px}
+.poster-t{font-family:var(--display);font-weight:700;font-size:74px;line-height:.86;margin:26px 0 0}
+.poster-s{font-family:var(--ui);font-weight:600;font-size:18px;color:var(--ink-dim);margin-top:12px;letter-spacing:.12em}
+
+/* footer note under the player */
+.note{
+  position:fixed;left:0;right:0;bottom:0;z-index:1;
+  text-align:center;padding:8px 16px;
+  font-family:var(--ui);font-weight:600;font-size:12.5px;letter-spacing:.04em;
+  color:rgba(168,176,198,.6);
+  pointer-events:none;
+}
+
+.capture .chrome,.capture .note,.capture .poster{display:none!important}
+
+@media (prefers-reduced-motion:reduce){
+  .beam{display:none}
+}
+</style>
+
+<div class="player" id="player">
+  <div class="fit" id="fit">
+    <div class="frame" id="frame">
+
+      <!-- ===== stage ===== -->
+      <div class="cam" id="cam">
+        <img class="photo" id="photo" src="__PHOTO__" alt="אחינועם ניני ומירה עוואד שרות זו מול זו על במה, כל אחת אוחזת מיקרופון">
+        <div class="tint"></div>
+        <div class="grade"></div>
+        <div class="spot" id="spot"></div>
+        <div class="beam" id="beam"></div>
+      </div>
+      <canvas class="grain" id="grain" width="400" height="225"></canvas>
+
+      <!-- ===== broadcast furniture ===== -->
+      <div class="bug" id="bug">
+        <div class="bug-mark">ערוץ&nbsp;הפשרה</div>
+        <div class="bug-live"><span class="dot"></span>שידור חוזר</div>
+        <div class="bug-sat">סאטירה</div>
+      </div>
+
+      <div class="round" id="roundBug">
+        <span class="round-n" id="roundN">סיבוב 1</span>
+        <span class="round-t" id="roundT">ההאשמה</span>
+      </div>
+
+      <div class="score" id="score">
+        <div class="pts noa" id="ptsNoa"><span class="pts-c">תימן</span><span class="pts-v">12</span></div>
+        <div class="pts mira" id="ptsMira"><span class="pts-c">בולגריה</span><span class="pts-v">12</span></div>
+      </div>
+
+      <!-- ===== title card ===== -->
+      <div class="title" id="title">
+        <div class="title-eyebrow" id="titleEyebrow">ערוץ הפשרה · מהדורת לילה</div>
+        <h1 class="title-main" id="titleMain">מי הערביה?</h1>
+        <div class="title-rule" id="titleRule"></div>
+        <div class="title-kicker" id="titleKicker">הוויכוח שאף אחד לא ביקש, והכרעה שאף אחת לא רצתה</div>
+      </div>
+
+      <!-- ===== name plates ===== -->
+      <div class="plate noa" id="plateNoa">
+        <div class="plate-bar"></div>
+        <div class="plate-body">
+          <div class="plate-name">אחינועם ניני</div>
+          <div class="plate-sub">יהודייה. תימנייה. תל־אביבית.<br>טוענת: לא אני.</div>
+        </div>
+      </div>
+      <div class="plate mira" id="plateMira">
+        <div class="plate-bar"></div>
+        <div class="plate-body">
+          <div class="plate-name">מירה עוואד</div>
+          <div class="plate-sub">ערבייה. מראמה. אמא בולגרייה.<br>טוענת: גם לא אני.</div>
+        </div>
+      </div>
+
+      <!-- ===== dialogue ===== -->
+      <div id="bubbles"></div>
+
+      <div class="aside" id="aside"><span id="asideText"></span></div>
+
+      <div class="court" id="court">
+        <div class="court-head" id="courtHead">השופט</div>
+        <div class="court-body"><span id="courtText"></span><span class="caret" id="caret"></span></div>
+      </div>
+
+      <!-- ===== the verdict ===== -->
+      <div class="newsstage" id="newsstage">
+        <div class="news" id="news">
+          <div class="masthead">
+            <div class="mast-name">המזרח&nbsp;התיכון</div>
+            <div class="mast-meta">יומון · מהדורת ערב<br>שנה ס״א · גיליון 12<br>המחיר: נקודה אחת</div>
+          </div>
+          <div class="mast-strip"><span>משפט · תרבות · זהות</span><span>עמוד ראשון</span></div>
+
+          <span class="kicker">בלעדי · תום הדיון</span>
+          <h2 class="headline">הסדר פשרה: שתיהן ערביות</h2>
+          <p class="deck">אחרי שלושה סיבובים, שתי סבתות ואם בולגרייה אחת — בית המשפט קבע שאין מנצחת בתיק, יש הרכב.</p>
+          <div class="byline">מאת כתבנו לענייני זהות &nbsp;·&nbsp; צילום: ארכיון הבמה &nbsp;·&nbsp; הדיון נמשך 51 דקות, מתוכן 40 בתור לקפה</div>
+
+          <div class="news-grid">
+            <div class="news-col">
+              <p>בית משפט השלום בתל אביב אישר אמש הסדר פשרה בתביעה ההדדית שהגישו הזמרות אחינועם ניני ומירה עוואד, שבמרכזה עמדה שאלה אחת: מי מהשתיים הערבייה. לפי ההסדר — שתיהן.</p>
+              <p>התביעה נפתחה בטענת ניני כי עוואד היא הערבייה, ובתביעה שכנגד של עוואד כי דווקא ניני היא הערבייה. שני הצדדים הופיעו ללא ייצוג, אך עם מיקרופונים.</p>
+            </div>
+            <div class="news-col">
+              <p>בנימוקיו כתב השופט כי ״האחת מתימן, השנייה מראמה, ושתיהן מהמזרח התיכון. הניסיון להפריד ביניהן צלח עד היום בדיוק אפס פעמים, ולא בגלל שלא ניסו.״</p>
+              <div class="pullquote">״ניצחנו״, אמרו שתיהן. ״הפסדתי״, אמר השופט.</div>
+              <p>עוד נקבע כי כל אחת רשאית להמשיך לטעון שהיא לא — ובלבד שתעשה זאת בשירה, ובהרמוניה.</p>
+            </div>
+            <div class="news-col">
+              <figure class="photobox">
+                <img src="__PHOTO__" alt="השתיים באולם, שרות זו מול זו">
+                <figcaption>השתיים באולם: ״לא הסכמנו על שום דבר, חוץ מהצליל.״</figcaption>
+              </figure>
+              <div class="sidebar">
+                <h4>עוד בגיליון</h4>
+                <ul>
+                  <li>מזג האוויר: חמסין. כרגיל.</li>
+                  <li>הצדדים יישאו בהוצאות בחלקים שווים ובשני קולות.</li>
+                  <li>מחר בעיתון: מי הפולנייה? התיק שיפצל את המדינה.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="correction">
+            <b>תיקון והבהרה</b>
+            <span>במהדורה הקודמת נכתב בטעות שאחת מהן איננה ערבייה. הטעות מצערת, המערכת מתנצלת, והשתיים כבר חזרו לחזרות.</span>
+          </div>
+
+          <div class="stamp">סאטירה<small>לא היה ולא נברא</small></div>
+        </div>
+      </div>
+
+      <div class="flash" id="flash"></div>
+      <div class="blackout" id="blackout"></div>
+
+      <!-- ===== end card ===== -->
+      <div class="endcard" id="endcard">
+        <h2 class="end-t">יש דרך אחרת.</h2>
+        <p class="end-s">היא פשוט לוקחת שלושה סיבובים ופסק דין.</p>
+        <button class="replay" id="replay" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg>
+          עוד פעם
+        </button>
+      </div>
+
+      <!-- ===== chrome ===== -->
+      <button class="poster" id="poster" type="button" aria-label="נגן את הסרטון">
+        <span class="poster-ring"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+        <span class="poster-t">מי הערביה?</span>
+        <span class="poster-s">סאטירה · 1:00</span>
+      </button>
+
+      <div class="chrome" id="chrome">
+        <button class="ctrl" id="playBtn" type="button" aria-label="נגן"><svg id="playIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+        <div class="track" id="track" tabindex="0" role="slider" aria-label="מיקום בסרטון" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="track-bg"></div>
+          <div class="track-fill" id="trackFill"></div>
+          <div class="track-knob" id="trackKnob"></div>
+        </div>
+        <div class="time" id="time">0:00 / 1:00</div>
+        <div class="chapter" id="chapter"></div>
+      </div>
+
+    </div>
+  </div>
+  <p class="note">סאטירה. הדמויות אמיתיות, הריב לא — אף אחד מהמשפטים כאן לא נאמר במציאות, ובית המשפט הזה לא קיים.</p>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= timing helpers ================= */
+var DUR = 60.0;
+var clamp01 = function(x){ return x < 0 ? 0 : x > 1 ? 1 : x; };
+var lerp    = function(a,b,t){ return a + (b-a)*t; };
+var seg     = function(t,a,b){ return clamp01((t-a)/(b-a)); };
+var outCubic= function(t){ return 1 - Math.pow(1-t,3); };
+var outQuint= function(t){ return 1 - Math.pow(1-t,5); };
+var inOut   = function(t){ return t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; };
+var outBack = function(t){ var c=1.9; return 1 + (c+1)*Math.pow(t-1,3) + c*Math.pow(t-1,2); };
+/* 0 -> 1 -> 0 envelope, held flat in the middle */
+var env = function(t,a,b,rise,fall){
+  if (t < a || t > b) return 0;
+  return Math.min(seg(t,a,a+rise), 1 - seg(t,b-fall,b));
+};
+/* deterministic wobble, so every frame is reproducible */
+var wob = function(t,f,p){ return Math.sin(t*f*6.2831853 + p)*0.62 + Math.sin(t*f*2.73*6.2831853 + p*1.7)*0.38; };
+
+var RM = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var CAPTURE = /[?&]capture=1/.test(location.search);
+
+/* ================= the script ================= */
+var ROUNDS = [
+  { t: 7.40, out:12.90, n:"סיבוב 1", s:"ההאשמה" },
+  { t:13.20, out:24.10, n:"סיבוב 2", s:"הראיות" },
+  { t:24.40, out:39.20, n:"סיבוב 3", s:"הנגד" }
+];
+
+/* who: "noa" (right side of the photo is Mira; Noa stands on the left) */
+var LINES = [
+  { a: 7.80, b:11.00, who:"noa",  shout:true, text:"את הערביה, לא אני!" },
+  { a: 7.80, b:11.00, who:"mira", shout:true, text:"את הערביה, לא אני!" },
+
+  { a:13.60, b:15.90, who:"mira", text:"סבתא שלך דיברה ערבית בבית." },
+  { a:15.90, b:18.50, who:"noa",  text:"זו הייתה ערבית תימנית. ניב אחר לגמרי." },
+  { a:18.50, b:20.10, who:"mira", text:"זאת ערבית." },
+  { a:20.10, b:21.90, who:"noa",  text:"זאת ערבית תימנית!" },
+  { a:21.90, b:24.10, who:"mira", text:"...זאת ערבית." },
+
+  { a:24.80, b:27.10, who:"noa",  text:"רגע! אמא שלך בולגרייה." },
+  { a:27.10, b:28.90, who:"mira", text:"ומה זה אומר?" },
+  { a:28.90, b:32.00, who:"noa",  text:"שאת חצי בולגרייה. לי אין אפילו רבע של משהו אחר." },
+  { a:32.00, b:34.20, who:"mira", text:"אני שרה בערבית." },
+  { a:34.20, b:37.40, who:"noa",  text:"אני שרה בתימנית. שזאת, אם נהיה כנות... ערבית." },
+
+  { a:37.60, b:39.20, who:"noa",  shout:true, text:"אז את הערביה!" },
+  { a:37.60, b:39.20, who:"mira", shout:true, text:"אז את הערביה!" },
+
+  { a:42.80, b:44.40, who:"noa",  shout:true, y:330, text:"היא!" },
+  { a:42.80, b:44.40, who:"mira", shout:true, y:330, text:"היא!" }
+];
+
+var ASIDES = [
+  { a:11.10, b:13.10, text:"(במקביל. מילה במילה. מביך.)" },
+  { a:23.30, b:24.10, text:"תימן עולה ל־12 נקודות" },
+  { a:30.60, b:31.90, text:"בולגריה משווה. 12:12." }
+];
+
+var COURT = [
+  { a:39.80, b:42.70, who:"השופט",  text:"גברותיי. מי מכן הערבייה?" },
+  { a:44.60, b:47.40, who:"השופט",  text:"...אני יוצא להפסקה." },
+  { a:47.60, b:50.30, who:"השופט",  text:"מצאתי פשרה." }
+];
+
+var CHAPTERS = [
+  { t: 0.0,  label:"פתיח" },
+  { t: 7.4,  label:"סיבוב 1 · ההאשמה" },
+  { t:13.2,  label:"סיבוב 2 · הראיות" },
+  { t:24.4,  label:"סיבוב 3 · הנגד" },
+  { t:39.4,  label:"בית המשפט" },
+  { t:50.4,  label:"פסק הדין" }
+];
+
+/* score cards */
+var SCORE_NOA  = 23.30;
+var SCORE_MIRA = 30.60;
+var SCORE_OUT  = 39.30;
+
+/* scene boundaries */
+var T_COURT = 39.40;   /* broadcast -> courtroom grade */
+var T_NEWS  = 50.40;   /* flash -> newspaper           */
+var T_END   = 58.60;   /* end card                     */
+
+/* ================= dom ================= */
+var $ = function(id){ return document.getElementById(id); };
+var frame=$("frame"), fit=$("fit"), cam=$("cam"), spot=$("spot"), beam=$("beam"),
+    bug=$("bug"), roundBug=$("roundBug"), roundN=$("roundN"), roundT=$("roundT"),
+    ptsNoa=$("ptsNoa"), ptsMira=$("ptsMira"),
+    title=$("title"), titleEyebrow=$("titleEyebrow"), titleMain=$("titleMain"),
+    titleRule=$("titleRule"), titleKicker=$("titleKicker"),
+    plateNoa=$("plateNoa"), plateMira=$("plateMira"),
+    aside=$("aside"), asideText=$("asideText"),
+    court=$("court"), courtHead=$("courtHead"), courtText=$("courtText"), caret=$("caret"),
+    newsstage=$("newsstage"), news=$("news"), stamp=document.querySelector(".stamp"),
+    flash=$("flash"), blackout=$("blackout"), endcard=$("endcard"),
+    grain=$("grain"), poster=$("poster"), chrome=$("chrome"),
+    playBtn=$("playBtn"), playIcon=$("playIcon"), track=$("track"),
+    trackFill=$("trackFill"), trackKnob=$("trackKnob"), timeEl=$("time"),
+    chapter=$("chapter"), replay=$("replay");
+
+/* build the bubbles once */
+var bubbleHost = $("bubbles");
+var bubbleEls = LINES.map(function(l){
+  var el = document.createElement("div");
+  el.className = "bubble " + l.who + (l.shout ? " shout" : "");
+  el.style.bottom = (l.y || 150) + "px";
+  el.innerHTML =
+    '<div class="bub-box"><span class="bub-who">' +
+    (l.who === "noa" ? "ניני" : "עוואד") +
+    '</span></div>';
+  el.querySelector(".bub-box").appendChild(document.createTextNode(l.text));
+  bubbleHost.appendChild(el);
+  return el;
+});
+
+/* ================= grain ================= */
+var gctx = grain.getContext("2d");
+var grainFrames = [];
+(function buildGrain(){
+  var w = grain.width, h = grain.height, seed = 1337;
+  var rnd = function(){ seed = (seed*1664525 + 1013904223) & 0x7fffffff; return seed/0x7fffffff; };
+  for (var f=0; f<3; f++){
+    var img = gctx.createImageData(w,h), d = img.data;
+    for (var i=0; i<d.length; i+=4){
+      var v = 118 + (rnd()*74 - 37);
+      d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;
+    }
+    grainFrames.push(img);
+  }
+})();
+var lastGrain = -1;
+function drawGrain(idx){
+  if (idx === lastGrain) return;
+  lastGrain = idx;
+  gctx.putImageData(grainFrames[idx], 0, 0);
+}
+
+/* ================= render(t) — pure function of time ================= */
+function render(t){
+
+  /* ---- fade up from black ---- */
+  blackout.style.opacity = (1 - seg(t, 0.15, 1.40)).toFixed(3);
+
+  /* ---- camera ---- */
+  var zoom = lerp(1.105, 1.015, outCubic(seg(t, 0, 7.5)));
+  zoom += Math.sin(seg(t, 7.5, DUR)*Math.PI*1.3) * 0.014;
+  var punch = env(t, 7.78, 8.70, 0.06, 0.55) + env(t, 37.58, 38.40, 0.06, 0.45);
+  zoom += punch * 0.042;
+  var damp = RM ? 0.22 : 1;
+  var sh  = (env(t, 7.78, 8.50, 0.04, 0.45) + env(t, 37.58, 38.25, 0.04, 0.4)) * damp;
+  var gav = env(t, 39.42, 39.95, 0.03, 0.45) * damp;
+  var px  = wob(t, 9.1, 0.4)*10*sh;
+  var py  = wob(t, 7.7, 2.1)*8*sh + wob(t, 13.0, 0.2)*9*gav;
+  var rot = wob(t, 6.3, 1.1)*0.55*sh;
+  cam.style.transform = "translate("+px.toFixed(2)+"px,"+py.toFixed(2)+"px) scale("+zoom.toFixed(4)+") rotate("+rot.toFixed(3)+"deg)";
+
+  /* courtroom grade: the lights come down */
+  var courtGrade = seg(t, T_COURT, T_COURT + 0.55);
+  cam.style.filter = "saturate("+lerp(1,.34,courtGrade).toFixed(3)+") brightness("+lerp(1,.68,courtGrade).toFixed(3)+") contrast("+lerp(1,1.1,courtGrade).toFixed(3)+")";
+
+  /* ---- who is talking: spotlight + bubbles ---- */
+  var onNoa = false, onMira = false;
+  for (var i=0; i<LINES.length; i++){
+    if (t >= LINES[i].a && t <= LINES[i].b){
+      if (LINES[i].who === "noa") onNoa = true; else onMira = true;
+    }
+  }
+  /* no easing state here on purpose — render(t) must stay seekable */
+  var target = (onNoa && onMira) ? 50 : onNoa ? 28 : onMira ? 72 : 50;
+  spot.style.setProperty("--sx", target + "%");
+  spot.style.opacity = ((onNoa || onMira) ? (onNoa && onMira ? 0.95 : 0.8) : 0.25).toFixed(2);
+
+  beam.style.transform = "translateX("+((((t*0.10) % 1) * 240) - 120).toFixed(2)+"%)";
+  drawGrain(Math.floor(t*11) % 3);
+  grain.style.opacity = t >= T_NEWS ? "0.07" : "0.16";
+
+  /* ---- bugs ---- */
+  bug.style.opacity = env(t, 0.85, T_NEWS, 0.7, 0.25).toFixed(3);
+
+  var ar = null;
+  for (var r=0; r<ROUNDS.length; r++) if (t >= ROUNDS[r].t && t <= ROUNDS[r].out) ar = ROUNDS[r];
+  if (ar){
+    var ro = env(t, ar.t, ar.out, 0.34, 0.3);
+    roundBug.style.opacity = ro.toFixed(3);
+    roundBug.style.transform = "translateX("+lerp(-46, 0, outCubic(seg(t, ar.t, ar.t+0.4))).toFixed(1)+"px)";
+    if (roundN.textContent !== ar.n){ roundN.textContent = ar.n; roundT.textContent = ar.s; }
+  } else {
+    roundBug.style.opacity = "0";
+  }
+
+  function card(el, at){
+    var o = env(t, at, SCORE_OUT, 0.3, 0.3);
+    el.style.opacity = o.toFixed(3);
+    var e = outBack(seg(t, at, at+0.44));
+    el.style.transform = "translateX("+lerp(-40,0,e).toFixed(1)+"px) scale("+lerp(1.22,1,e).toFixed(3)+")";
+  }
+  card(ptsNoa,  SCORE_NOA);
+  card(ptsMira, SCORE_MIRA);
+
+  /* ---- title card ---- */
+  var tO = env(t, 1.55, 4.95, 0.45, 0.55);
+  title.style.opacity = tO.toFixed(3);
+  if (tO > 0){
+    var e1 = outCubic(seg(t, 1.55, 2.15));
+    titleEyebrow.style.transform = "translateY("+lerp(16,0,e1).toFixed(1)+"px)";
+    titleEyebrow.style.opacity = e1.toFixed(3);
+    var e2 = outCubic(seg(t, 1.95, 2.75));
+    titleMain.style.transform = "translateY("+lerp(34,0,e2).toFixed(1)+"px) scale("+lerp(1.05,1,e2).toFixed(4)+")";
+    titleMain.style.opacity = e2.toFixed(3);
+    titleRule.style.width = (420 * outQuint(seg(t, 2.55, 3.35))).toFixed(0) + "px";
+    var e4 = seg(t, 2.95, 3.55);
+    titleKicker.style.opacity = e4.toFixed(3);
+    titleKicker.style.transform = "translateY("+lerp(12,0,outCubic(e4)).toFixed(1)+"px)";
+  }
+
+  /* ---- name plates ---- */
+  var pO = env(t, 4.60, 7.30, 0.40, 0.40);
+  var pe = outCubic(seg(t, 4.60, 5.20));
+  plateNoa.style.opacity  = pO.toFixed(3);
+  plateMira.style.opacity = pO.toFixed(3);
+  plateNoa.style.transform  = "translateX("+lerp(-70,0,pe).toFixed(1)+"px)";
+  plateMira.style.transform = "translateX("+lerp( 70,0,pe).toFixed(1)+"px)";
+
+  /* ---- speech bubbles ---- */
+  for (var b=0; b<bubbleEls.length; b++){
+    var l = LINES[b], el = bubbleEls[b];
+    if (t < l.a || t > l.b){ el.style.opacity = "0"; el.style.visibility = "hidden"; continue; }
+    var iT = seg(t, l.a, l.a + 0.20);
+    var oT = seg(t, l.b - 0.16, l.b);
+    el.style.visibility = "visible";
+    el.style.opacity = Math.min(iT, 1 - oT).toFixed(3);
+    var sc = lerp(0.88, 1, outBack(iT));
+    var yy = lerp(30, 0, outCubic(iT)) + oT*oT*20 + Math.sin((t - l.a)*3.0)*1.5;
+    var rr = lerp(l.who === "noa" ? -2.4 : 2.4, 0, outBack(iT));
+    el.style.transform = "translateY("+yy.toFixed(2)+"px) scale("+sc.toFixed(4)+") rotate("+rr.toFixed(2)+"deg)";
+  }
+
+  /* ---- asides ---- */
+  var ac = null;
+  for (var s=0; s<ASIDES.length; s++) if (t >= ASIDES[s].a && t <= ASIDES[s].b) ac = ASIDES[s];
+  if (ac){
+    var ao = env(t, ac.a, ac.b, 0.26, 0.26);
+    aside.style.opacity = ao.toFixed(3);
+    aside.style.transform = "translateY("+lerp(14,0,outCubic(seg(t, ac.a, ac.a+0.35))).toFixed(1)+"px)";
+    if (asideText.textContent !== ac.text) asideText.textContent = ac.text;
+  } else aside.style.opacity = "0";
+
+  /* ---- court transcript, typed ---- */
+  var cc = null;
+  for (var c=0; c<COURT.length; c++) if (t >= COURT[c].a && t <= COURT[c].b) cc = COURT[c];
+  if (cc){
+    court.style.opacity = env(t, cc.a, cc.b, 0.26, 0.28).toFixed(3);
+    court.style.transform = "translateY("+lerp(16,0,outCubic(seg(t, cc.a, cc.a+0.34))).toFixed(1)+"px)";
+    var typeDur = cc.text.length / 21;
+    var p = clamp01((t - cc.a - 0.18) / typeDur);
+    var shown = cc.text.slice(0, Math.round(cc.text.length * p));
+    if (courtText.textContent !== shown) courtText.textContent = shown;
+    if (courtHead.textContent !== cc.who) courtHead.textContent = cc.who;
+    caret.style.opacity = (p < 1 || Math.floor(t*2) % 2 === 0) ? "1" : "0";
+  } else court.style.opacity = "0";
+
+  /* ---- the verdict ---- */
+  flash.style.opacity = (env(t, T_NEWS - 0.05, T_NEWS + 0.45, 0.08, 0.4) * 0.95).toFixed(3);
+
+  if (t >= T_NEWS){
+    newsstage.style.opacity = "1";
+    var e = outQuint(seg(t, T_NEWS + 0.20, T_NEWS + 1.80));
+    var scN = lerp(0.02, 1, e);
+    var roN = lerp(RM ? -90 : -1080, 0, e);
+    var settle = Math.sin(clamp01(seg(t, 52.20, 52.80)) * Math.PI) * 0.007 * (1 - seg(t, 52.20, 52.80));
+    var pan = -newsPan * inOut(seg(t, 54.20, 58.80));
+    news.style.transform = "translateY("+pan.toFixed(1)+"px) scale("+(scN + settle).toFixed(4)+") rotate("+roN.toFixed(2)+"deg)";
+    var sO = seg(t, 53.40, 53.60);
+    stamp.style.opacity = (0.88 * sO).toFixed(3);
+    stamp.style.transform = "rotate(-13deg) scale("+lerp(2.6, 1, outQuint(sO)).toFixed(3)+")";
+  } else {
+    newsstage.style.opacity = "0";
+  }
+
+  /* ---- end card ---- */
+  var eO = seg(t, T_END, T_END + 1.0);
+  endcard.style.opacity = eO.toFixed(3);
+  endcard.classList.toggle("on", eO > 0.97);
+}
+
+/* ================= playback ================= */
+var t = 0, playing = false, last = 0;
+var player = $("player");
+
+function fitStage(){
+  var s = Math.min(player.clientWidth / 1600, player.clientHeight / 900);
+  fit.style.transform = "scale(" + s + ")";
+}
+window.addEventListener("resize", fitStage);
+fitStage();
+
+/* How far the verdict page has to travel to bring its last panel into frame.
+   Measured, not guessed — the sheet grows with whatever the fonts do to it. */
+var newsPan = 0;
+function measureNews(){
+  var was = news.style.transform;
+  news.style.transform = "none";
+  newsPan = Math.max(0, news.offsetHeight - 900);
+  news.style.transform = was;
+  render(t);
+}
+
+function fmt(x){
+  var m = Math.floor(x/60), s = Math.floor(x%60);
+  return m + ":" + (s < 10 ? "0" : "") + s;
+}
+function syncChrome(){
+  var p = t / DUR;
+  trackFill.style.width = (p*100).toFixed(3) + "%";
+  trackKnob.style.right = (p*100).toFixed(3) + "%";
+  track.setAttribute("aria-valuenow", Math.round(p*100));
+  track.setAttribute("aria-valuetext", fmt(t));
+  timeEl.textContent = fmt(t) + " / " + fmt(DUR);
+  playIcon.setAttribute("d", playing ? "M6 5h4v14H6zm8 0h4v14h-4z" : "M8 5v14l11-7z");
+  playBtn.setAttribute("aria-label", playing ? "השהה" : "נגן");
+}
+
+function tick(now){
+  if (!playing) return;
+  var dt = Math.min((now - last)/1000, 0.1);
+  last = now;
+  t += dt;
+  if (t >= DUR){ t = DUR; playing = false; showChrome(true); }
+  render(t);
+  syncChrome();
+  if (playing) requestAnimationFrame(tick);
+}
+function play(){
+  if (playing) return;
+  if (t >= DUR - 0.01) t = 0;
+  playing = true;
+  poster.hidden = true;
+  last = performance.now();
+  syncChrome();
+  requestAnimationFrame(tick);
+  scheduleHide();
+}
+function pause(){
+  playing = false;
+  syncChrome();
+  showChrome(true);
+}
+function toggle(){ playing ? pause() : play(); }
+function seekTo(x){
+  t = Math.max(0, Math.min(DUR, x));
+  render(t);
+  syncChrome();
+}
+
+/* ---- chrome visibility ---- */
+var hideTimer = null;
+function showChrome(stick){
+  chrome.classList.remove("hide");
+  clearTimeout(hideTimer);
+  if (!stick) scheduleHide();
+}
+function scheduleHide(){
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(function(){
+    if (playing) chrome.classList.add("hide");
+  }, 2200);
+}
+player.addEventListener("mousemove", function(){ showChrome(false); });
+player.addEventListener("mouseleave", function(){ if (playing) chrome.classList.add("hide"); });
+
+/* ---- controls ---- */
+playBtn.addEventListener("click", toggle);
+poster.addEventListener("click", play);
+replay.addEventListener("click", function(){ t = 0; play(); });
+frame.addEventListener("click", function(e){
+  if (e.target.closest(".chrome") || e.target.closest(".poster") || e.target.closest(".endcard")) return;
+  toggle();
+});
+
+/* RTL track: the right edge is 0:00 */
+function trackFrac(clientX){
+  var r = track.getBoundingClientRect();
+  return clamp01((r.right - clientX) / r.width);
+}
+var scrubbing = false;
+track.addEventListener("pointerdown", function(e){
+  scrubbing = true;
+  track.setPointerCapture(e.pointerId);
+  seekTo(trackFrac(e.clientX) * DUR);
+});
+track.addEventListener("pointermove", function(e){
+  var frac = trackFrac(e.clientX);
+  if (scrubbing) seekTo(frac * DUR);
+  var ct = frac * DUR, lab = CHAPTERS[0];
+  for (var i=0; i<CHAPTERS.length; i++) if (ct >= CHAPTERS[i].t) lab = CHAPTERS[i];
+  chapter.textContent = lab.label;
+  chapter.style.right = (frac*100) + "%";
+  chapter.style.opacity = "1";
+});
+track.addEventListener("pointerleave", function(){ chapter.style.opacity = "0"; });
+track.addEventListener("pointerup", function(e){
+  scrubbing = false;
+  try { track.releasePointerCapture(e.pointerId); } catch(_){}
+});
+track.addEventListener("keydown", function(e){
+  if (e.key === "ArrowLeft"){ seekTo(t + 5); e.preventDefault(); }
+  if (e.key === "ArrowRight"){ seekTo(t - 5); e.preventDefault(); }
+  if (e.key === "Home"){ seekTo(0); e.preventDefault(); }
+  if (e.key === "End"){ seekTo(DUR); e.preventDefault(); }
+});
+
+/* chapter ticks on the rail */
+CHAPTERS.forEach(function(c){
+  if (c.t <= 0) return;
+  var tick = document.createElement("div");
+  tick.className = "tick";
+  tick.style.right = (c.t/DUR*100) + "%";
+  track.appendChild(tick);
+});
+
+document.addEventListener("keydown", function(e){
+  if (e.target.closest("input,textarea")) return;
+  if (e.code === "Space" || e.key === "k"){ toggle(); e.preventDefault(); }
+  else if (e.key === "ArrowLeft"){ seekTo(t + 5); e.preventDefault(); }
+  else if (e.key === "ArrowRight"){ seekTo(t - 5); e.preventDefault(); }
+});
+
+/* ================= boot ================= */
+render(0);
+syncChrome();
+measureNews();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureNews);
+window.addEventListener("resize", measureNews);
+
+/* frame-exact hook for the encoder */
+window.__seek = function(x){ pause(); t = x; render(t); syncChrome(); };
+window.__duration = DUR;
+
+if (CAPTURE){
+  document.body.classList.add("capture");
+  poster.hidden = true;
+  render(0);
+} else if (RM){
+  poster.hidden = false;         /* let the viewer start it themselves */
+} else {
+  var start = function(){ setTimeout(play, 220); };
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(start); else start();
+}
+})();
+</script>
