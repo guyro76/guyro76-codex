@@ -869,8 +869,10 @@ function drawGrain(idx){
 /* ================= render(t) — pure function of time ================= */
 function render(t){
 
-  /* ---- fade up from black ---- */
-  blackout.style.opacity = (1 - seg(t, 0.15, 1.40)).toFixed(3);
+  /* ---- open ---- */
+  /* Frame 0 is what every player shows as the thumbnail, so it has to be the
+     photograph, not the fade-in. A short breath of shadow, not a blackout. */
+  blackout.style.opacity = (0.30 * (1 - seg(t, 0, 0.55))).toFixed(3);
 
   /* ---- camera ---- */
   var zoom = lerp(1.105, 1.015, outCubic(seg(t, 0, 7.5)));
