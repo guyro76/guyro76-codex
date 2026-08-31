@@ -88,3 +88,67 @@ test('❓ אפשר לדלג על ההסבר', async ({ page }) => {
   await page.getByRole('button', { name: 'דילוג' }).click();
   await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
 });
+
+
+/**
+ * "מה חדש" אחרי עדכון.
+ *
+ * הכלל שמחזיק את זה: **התקנה חדשה לא מקבלת "מה חדש"** — אין "חדש"
+ * ביחס לכלום, ולשחקן חדש יש ממילא את "איך משחקים". רק מי שכבר
+ * ראה גרסה קודמת מקבל את הרשימה.
+ */
+test('✨ התקנה חדשה לא מקבלת "מה חדש"', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await expect(page.getByRole('heading', { name: /מה חדש במשחק/ })).toHaveCount(0);
+});
+
+test('✨ מי שראה גרסה קודמת כן מקבל את הרשימה, פעם אחת', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await expect(page.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
+
+  /**
+   * מדמים משתמש ותיק: גרסה ישנה שנשמרה, ומשחק אחד ששוחק. שני
+   * התנאים נדרשים — רשימת שינויים למי שעוד לא שיחק היא רעש.
+   */
+  await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((res, rej) => {
+      const r = indexedDB.open('eretz-ir-go');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    await new Promise<void>((res) => {
+      const tx = db.transaction(['settings', 'profiles'], 'readwrite');
+      tx.objectStore('settings').put({ key: 'whatsNewSeen', value: '0000.00' });
+      const store = tx.objectStore('profiles');
+      const all = store.getAll();
+      all.onsuccess = () => {
+        const p = all.result[0];
+        if (p) store.put({ ...p, gamesPlayed: 3 });
+      };
+      tx.oncomplete = () => res();
+    });
+  });
+
+  /**
+   * לשונית חדשה ולא `reload()`.
+   *
+   * ה-`addInitScript` של הבדיקה מוחק את מסד הנתונים **בכל טעינת
+   * דף**, כולל רענון — כלומר רענון היה מוחק בדיוק את המצב שהבדיקה
+   * הרגע הכינה. לשונית חדשה באותו הקשר חולקת את אותו IndexedDB
+   * ואינה נושאת את הסקריפט.
+   */
+  const second = await page.context().newPage();
+  await second.goto(page.url());
+  await second.getByRole('button', { name: /בואו נשחק/ }).click();
+  await expect(second.getByRole('heading', { name: /מה חדש במשחק/ })).toBeVisible();
+  await second.getByRole('button', { name: /מגניב/ }).click();
+
+  // ולא שוב באותה גרסה
+  const third = await page.context().newPage();
+  await third.goto(page.url());
+  await third.getByRole('button', { name: /בואו נשחק/ }).click();
+  await expect(third.getByRole('button', { name: /משחק חדש/ })).toBeVisible();
+  await expect(third.getByRole('heading', { name: /מה חדש במשחק/ })).toHaveCount(0);
+});

@@ -12,6 +12,8 @@ import Artzi from '../components/Artzi';
 import { authAvailable, useAuth } from '../store/authStore';
 import { db, DEFAULT_PROFILE_NAME, getSetting, setSetting } from '../db/db';
 import HowToPlay from '../components/HowToPlay';
+import WhatsNewModal from '../components/WhatsNew';
+import { WHATS_NEW } from '../data/whatsNew';
 import { computeStreak, streakLabel, type StreakInfo } from '../lib/streak';
 import { useGame } from '../store/gameStore';
 import { hasPlayedBefore, planQuickPlay } from '../lib/quickPlay';
@@ -92,6 +94,32 @@ export default function Home() {
     setHowTo(true);
     setHowToSeen(true);
     void setSetting('howToSeen', '1');
+  };
+
+  /**
+   * "מה חדש" — פעם אחת אחרי עדכון, **ורק למי שכבר שיחק**.
+   * לשחקן חדש זו רשימת שינויים מגרסה שהוא לא הכיר; בשבילו יש
+   * "איך משחקים".
+   */
+  const [whatsNew, setWhatsNew] = useState(false);
+  useEffect(() => {
+    if (!hasPlayedBefore(activeProfile)) return;
+    void getSetting('whatsNewSeen').then((seen) => {
+      /**
+       * התקנה חדשה **לא** מקבלת "מה חדש": אין "חדש" ביחס לכלום.
+       * במקרה כזה נרשמת הגרסה הנוכחית בשקט, וה'מה חדש' הבא — זה
+       * שיהיה באמת חדש עבור המשתמש הזה — כן יוצג.
+       */
+      if (!seen) {
+        void setSetting('whatsNewSeen', WHATS_NEW.version);
+        return;
+      }
+      if (seen !== WHATS_NEW.version) setWhatsNew(true);
+    });
+  }, [activeProfile]);
+  const closeWhatsNew = () => {
+    setWhatsNew(false);
+    void setSetting('whatsNewSeen', WHATS_NEW.version);
   };
 
   const [nameDraft, setNameDraft] = useState('');
@@ -213,6 +241,7 @@ export default function Home() {
       </div>
 
       {howTo && <HowToPlay onClose={() => setHowTo(false)} />}
+      {whatsNew && !howTo && <WhatsNewModal onClose={closeWhatsNew} />}
 
       {/* ההזמנה מופיעה פעם אחת, עד שנכנסים להסבר */}
       {!howToSeen && (

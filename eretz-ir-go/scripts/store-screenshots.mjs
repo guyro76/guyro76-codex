@@ -87,13 +87,64 @@ async function settle(page) {
   await page.waitForTimeout(400);
 }
 
+/**
+ * כיתובים לצילומי החנות.
+ *
+ * צילום "נקי" מראה מסך; צילום עם כיתוב מוכר יתרון. בחנות רואים את
+ * הצילומים לפני שקוראים את התיאור, ולרוב במקום התיאור — ולכן
+ * המשפט שעל הצילום הוא מה שנקרא בפועל.
+ *
+ * מי שאין לו כיתוב פשוט נשאר נקי.
+ */
+const CAPTIONS = {
+  '02-home': 'הכול מתחיל בלחיצה אחת',
+  '05-letter-wheel': 'מגרילים אות — וכולם מתחילים ממנה',
+  '07-board': 'ארצי נותן רמזים, לא תשובות',
+  '08-round-results': 'הניקוד מיד, בלי לריב מי צודק',
+  '10-album': 'כל מילה שגיליתם נשארת אצלכם'
+};
+
 let shot = 0;
 async function capture(page, name) {
   await settle(page);
   shot++;
-  const file = resolve(OUT, `${String(shot).padStart(2, '0')}-${name}.png`);
+  const id = `${String(shot).padStart(2, '0')}-${name}`;
+  const file = resolve(OUT, `${id}.png`);
   await page.screenshot({ path: file });
-  console.log(`  ✓ ${name}`);
+  console.log(`  ✓ ${id}`);
+  const caption = CAPTIONS[id];
+  if (caption) await withCaption(page.context(), file, caption, resolve(OUT, `${id}-caption.png`));
+}
+
+/**
+ * מוסיף רצועת כיתוב מעל הצילום.
+ *
+ * נעשה בדפדפן ולא בספריית תמונות: כך הטיפוגרפיה העברית וכיוון
+ * ימין-לשמאל יוצאים נכון בלי תלות נוספת, ובלי לצייר טקסט ביד.
+ */
+async function withCaption(context, sourceFile, text, outFile) {
+  const { readFile } = await import('node:fs/promises');
+  const b64 = (await readFile(sourceFile)).toString('base64');
+  const page = await context.newPage();
+  await page.setViewportSize({ width: VIEWPORT.width, height: VIEWPORT.height });
+  await page.setContent(
+    `<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+      html,body{margin:0;height:100%;background:#1b1035;}
+      .wrap{height:100%;display:flex;flex-direction:column;
+        font-family:'Heebo','Segoe UI','Arial Hebrew',system-ui,sans-serif;}
+      /* גדול. בחנות רואים את הצילום בגודל אצבע, וכיתוב קטן
+         פשוט לא נקרא — כלומר לא קיים. */
+      .cap{flex:0 0 auto;padding:48px 40px 40px;text-align:center;color:#f4f2ff;
+        font-size:58px;font-weight:800;line-height:1.25;
+        background:linear-gradient(160deg,#2b1b5a,#1b1035);}
+      .shot{flex:1 1 auto;min-height:0;overflow:hidden;}
+      .shot img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
+    </style><div class="wrap"><div class="cap">${text}</div>
+    <div class="shot"><img src="data:image/png;base64,${b64}"></div></div>`,
+    { waitUntil: 'load' }
+  );
+  await page.screenshot({ path: outFile });
+  await page.close();
 }
 
 async function main() {
@@ -134,6 +185,18 @@ async function main() {
 
     await page.getByRole('button', { name: /בואו נשחק/ }).click();
     await page.getByRole('button', { name: /משחק חדש/ }).waitFor();
+
+    /**
+     * בוחרים שם, כמו שחקן אמיתי עושה בכניסה הראשונה.
+     * בלי זה הצילומים מראים את תווית ברירת המחדל ("שחקן חדש")
+     * בכל פנייה — וזה נראה כמו מסך לא גמור.
+     */
+    const nameField = page.getByRole('textbox', { name: 'השם שלי' });
+    if (await nameField.isVisible().catch(() => false)) {
+      await nameField.fill('דנה');
+      await page.getByRole('button', { name: 'זהו!' }).click();
+      await page.waitForTimeout(400);
+    }
     await capture(page, 'home');
 
     await page.getByRole('button', { name: /משחק חדש/ }).click();

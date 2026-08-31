@@ -1780,3 +1780,19 @@ body::after {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+
+/* רשימת "מה חדש": שורה לכל שינוי, האייקון בעמודה קבועה כדי
+   שהטקסט יתחיל באותו מקום בכל השורות */
+.whats-new { list-style: none; margin: 0; padding: 0; text-align: start; }
+.whats-new li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 7px 0;
+  font-weight: 600;
+  line-height: 1.45;
+  border-bottom: 1px solid var(--glass-border);
+}
+.whats-new li:last-child { border-bottom: none; }
+.whats-new li > span:first-child { font-size: 1.3rem; flex: 0 0 auto; }
