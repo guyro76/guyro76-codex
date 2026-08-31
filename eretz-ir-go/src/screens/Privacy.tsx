@@ -51,6 +51,11 @@ export default function Privacy() {
           <a href="/terms.html" target="_blank" rel="noopener noreferrer">
             <button>תנאי שימוש ↗</button>
           </a>
+          {/* שתי החנויות מבקשות כתובת תמיכה נגישה, ועמוד עדיף על
+              כתובת מייל חשופה */}
+          <a href="/support.html" target="_blank" rel="noopener noreferrer">
+            <button>תמיכה ושאלות ↗</button>
+          </a>
         </div>
       </div>
 

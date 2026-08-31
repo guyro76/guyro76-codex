@@ -1763,3 +1763,20 @@ body::after {
   background: var(--glass-border);
 }
 .howto-dots span.on { background: var(--gold); }
+
+
+/* טקסט השגיאה באזור ההורים: כתב אחיד, ניגודיות מלאה, וגלילה
+   אופקית במקום לשבור את הפריסה כשההודעה ארוכה */
+.error-detail {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

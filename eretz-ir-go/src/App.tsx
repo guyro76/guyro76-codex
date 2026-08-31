@@ -1,5 +1,6 @@
 import React, { Component, Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import { useApp } from './store/appStore';
+import { installErrorTrap, recordError } from './lib/errorLog';
 import { getSetting, repairPhotoAvatars } from './db/db';
 import { applySkin, savedSkinId } from './data/skins';
 import { loadContentIntoKnowledge, maybeAutoUpdate } from './lib/contentPack';
@@ -103,6 +104,17 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   state = { hasError: false };
   static getDerivedStateFromError() {
     return { hasError: true };
+  }
+  /**
+   * שומר את השגיאה **במכשיר**.
+   *
+   * בלי זה תקלה שקרתה אצל ילד אחד פשוט נעלמת: Play Console מדווח
+   * קריסות נייטיביות, ושגיאת JavaScript ב-WebView אינה כזו. היומן
+   * מוצג באזור ההורים, וההורה מחליט אם לשלוח — שום דבר לא יוצא
+   * מהמכשיר לבד.
+   */
+  componentDidCatch(error: Error) {
+    void recordError(error, 'render');
   }
   render() {
     if (this.state.hasError) {
@@ -248,6 +260,12 @@ export default function App() {
    * לתת לאנדרואיד לסגור את האפליקציה כרגיל, וזו בדיוק ההתנהגות
    * המצופה במסך הבית.
    */
+  /**
+   * שגיאות שלא עוברות דרך `ErrorBoundary` — בתוך `setTimeout`,
+   * ב-`fetch` או ב-Promise שנדחה. הן בדיוק אלה שקשה לשחזר.
+   */
+  useEffect(() => installErrorTrap(() => useApp.getState().screen), []);
+
   useEffect(() => {
     const onPop = (e: PopStateEvent) => {
       const to = (e.state as { screen?: string } | null)?.screen;

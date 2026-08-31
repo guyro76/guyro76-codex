@@ -4,6 +4,7 @@ import Avatar from '../components/Avatar';
 import { db, getSetting, setSetting } from '../db/db';
 import { useApp } from '../store/appStore';
 import { otherProfiles } from '../lib/activePlayer';
+import { clearError, lastError, type StoredError } from '../lib/errorLog';
 import { normalizeHebrew } from '../lib/hebrew';
 import { CATEGORIES } from '../data/categories';
 
@@ -28,7 +29,11 @@ export default function Parent() {
     void getSetting('parentPin').then((v) => setPinSet(v ?? null));
   }, []);
 
+  const [err, setErr] = useState<StoredError | null>(null);
+  const [copied, setCopied] = useState(false);
+
   const loadData = async () => {
+    setErr(await lastError());
     const all = await db.settings.toArray();
     setAppeals(
       all
@@ -175,6 +180,60 @@ export default function Parent() {
           ))}
         </div>
       )}
+
+      {/*
+        דיווח תקלה — מקומי בלבד.
+
+        שגיאת JavaScript ב-WebView אינה קריסה נייטיבית, ולכן היא
+        לעולם לא תופיע בדוחות של החנות. כאן היא כן. ההורה מחליט אם
+        לשלוח, בהעתקה ידנית; שום דבר לא יוצא מהמכשיר לבד.
+      */}
+      <div className="card" style={{ marginTop: 14 }}>
+        <strong>🐞 דיווח תקלה</strong>
+        {err ? (
+          <>
+            <p className="dim" style={{ margin: '6px 0', fontSize: '0.86rem' }}>
+              השגיאה האחרונה שנשמרה במכשיר ({new Date(err.at).toLocaleString('he-IL')}
+              {err.screen ? `, במסך ${err.screen}` : ''}):
+            </p>
+            <p className="error-detail" dir="ltr">
+              {err.message}
+            </p>
+            <div className="row" style={{ gap: 8, marginTop: 8 }}>
+              <button
+                className="btn-small"
+                onClick={() => {
+                  void navigator.clipboard
+                    ?.writeText(`${err.at} · ${err.screen ?? ''} · ${err.message}`)
+                    .then(() => setCopied(true))
+                    .catch(() => setCopied(false));
+                }}
+              >
+                {copied ? 'הועתק ✔' : 'העתקה'}
+              </button>
+              <button
+                className="btn-small btn-ghost"
+                onClick={() => {
+                  void clearError().then(() => {
+                    setErr(null);
+                    setCopied(false);
+                  });
+                }}
+              >
+                מחיקה
+              </button>
+            </div>
+            <p className="dim" style={{ margin: '8px 0 0', fontSize: '0.82rem' }}>
+              אפשר לשלוח לנו את הטקסט הזה ל-guyro76@gmail.com. הוא אינו כולל תשובות של
+              הילד ולא פרטים אישיים.
+            </p>
+          </>
+        ) : (
+          <p className="dim" style={{ margin: '6px 0 0', fontSize: '0.86rem' }}>
+            לא נשמרה שום תקלה. 🎉
+          </p>
+        )}
+      </div>
 
       <div className="card" style={{ marginTop: 14 }}>
         <strong>🔑 החלפת קוד PIN</strong>

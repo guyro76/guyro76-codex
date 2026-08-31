@@ -466,3 +466,56 @@ describe('מסך ההרשמה', () => {
     expect(visible).toContain('בגרסה בתשלום אין מודעות');
   });
 });
+
+
+/**
+ * עמוד תמיכה.
+ *
+ * שתי החנויות מבקשות כתובת תמיכה נגישה. עמוד עדיף על כתובת מייל
+ * חשופה: הוא עונה על רוב השאלות בלי פנייה, ובעיקר הוא המקום שבו
+ * הורה מוצא איך מדווחים על תמונה ואיך מוחקים מידע — בלי לחפש.
+ */
+describe('עמוד תמיכה', () => {
+  const support = readFileSync(resolve(root, 'public/support.html'), 'utf8');
+
+  it('קיים, בעברית ובכיוון הנכון', () => {
+    expect(support).toContain('lang="he"');
+    expect(support).toContain('dir="rtl"');
+  });
+
+  /**
+   * התלונה הנפוצה ביותר במשחקי ארץ-עיר היא "התשובה שלי נכונה
+   * והמשחק לא מקבל". אם העמוד לא עונה עליה, הוא לא עונה על כלום.
+   */
+  it('עונה על "התשובה שלי לא התקבלה"', () => {
+    expect(support).toContain('להוסיף למילון שלי');
+    expect(support).toContain('אולי התכוונת');
+  });
+
+  it('מסביר איך מדווחים על תמונה ואיך מוחקים מידע', () => {
+    expect(support).toContain('התמונה לא מתאימה');
+    expect(support).toContain('/delete-account.html');
+  });
+
+  /** ההבטחה המרכזית של המשחק חייבת להופיע גם כאן */
+  it('אומר שאפשר לשחק בלי אינטרנט', () => {
+    expect(support).toContain('בלי אינטרנט');
+  });
+
+  it('מקושר ממדיניות הפרטיות ומתוך המשחק', () => {
+    expect(policy).toContain('/support.html');
+    const screen = readFileSync(resolve(root, 'src/screens/Privacy.tsx'), 'utf8');
+    expect(screen).toContain('/support.html');
+  });
+
+  /**
+   * אותה בדיקה כמו בתיאור החנות: אמירה על היעדר פרסומות מותרת רק
+   * כשהיא מסויגת לגרסה בתשלום.
+   */
+  it('לא מבטיח שאין פרסומות', () => {
+    for (const sentence of support.split(/[.\n]/)) {
+      if (!/אין פרסומות|ללא פרסומות|בלי פרסומות/.test(sentence)) continue;
+      expect(sentence, sentence.trim()).toMatch(/בתשלום/);
+    }
+  });
+});

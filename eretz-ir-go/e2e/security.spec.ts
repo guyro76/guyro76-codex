@@ -125,6 +125,24 @@ test('🗑️ עמוד מחיקת החשבון פתוח, נגיש בלי כני�
   await expect(page.getByRole('heading', { name: /מחיקת חשבון/ })).toBeVisible();
 });
 
+/**
+ * שתי החנויות מבקשות כתובת תמיכה נגישה. עמוד שנשבר בבנייה או
+ * נשכח מחוץ ל-`public/` הוא כשל בהגשה, ולכן הוא נבדק כמו כל מסך.
+ */
+test('🛟 עמוד התמיכה פתוח ומקושר מהפרטיות', async ({ page }) => {
+  const res = await page.goto('./support.html');
+  expect(res?.status()).toBe(200);
+
+  await expect(page.getByRole('heading', { name: /תמיכה ושאלות נפוצות/ })).toBeVisible();
+  // התלונה הנפוצה ביותר במשחקי ארץ-עיר
+  await expect(page.getByText(/להוסיף למילון שלי/)).toBeVisible();
+  expect(await page.locator('html').getAttribute('dir')).toBe('rtl');
+
+  await page.goto('./privacy.html');
+  await page.getByRole('link', { name: /התמיכה/ }).click();
+  await expect(page.getByRole('heading', { name: /תמיכה ושאלות נפוצות/ })).toBeVisible();
+});
+
 test('♿ הכרזות לקורא מסך: האות שהוגרלה מוקראת', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: /בואו נשחק/ }).click();
