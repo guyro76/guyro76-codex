@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import TopBar from '../components/TopBar';
+import ParentGate from '../components/ParentGate';
+import { useApp } from '../store/appStore';
 import {
   FREE_FEATURES,
   FREE_LIMITS,
@@ -54,6 +57,20 @@ function PlanCard({ plan }: { plan: Plan }) {
 }
 
 export default function Pricing() {
+  /**
+   * שער הורים לפני המחירון — דרישת Google Play Families: קריאה
+   * לפעולה מסחרית אינה נגישה לילד ישירות. לחיצה על מצב משחק נעול
+   * שלחה עד עכשיו את הילד ישר לכאן.
+   *
+   * נשמר במצב של הרכיב ולא באחסון: שער שנזכר שנפתח אינו שער.
+   */
+  const [allowed, setAllowed] = useState(false);
+  const navigate = useApp((s) => s.navigate);
+
+  if (!allowed) {
+    return <ParentGate onPass={() => setAllowed(true)} onCancel={() => navigate('home')} />;
+  }
+
   return (
     <div className="screen">
       <TopBar title="💎 החבילות" back="settings" />

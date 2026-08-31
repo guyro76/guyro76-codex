@@ -157,6 +157,7 @@ export default function App() {
   const session = useAuth((s) => s.session);
   const initAuth = useAuth((s) => s.init);
   const navigate = useApp((s) => s.navigate);
+  const goBackTo = useApp((s) => s.goBackTo);
   const captureChallenge = useChallenge((s) => s.captureFromUrl);
 
   useEffect(() => {
@@ -234,6 +235,27 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [screen]);
+
+  /**
+   * כפתור החזרה של אנדרואיד, מחוות החזרה ב-PWA וכפתור החזרה בדפדפן
+   * — כולם מגיעים לכאן.
+   *
+   * לפני התיקון לא הצטברה שום היסטוריה, ולכן לחיצה על "חזרה"
+   * באנדרואיד **סגרה את האפליקציה** מכל מסך, גם באמצע משחק.
+   * עכשיו `navigate` דוחפת רשומה, וכאן חוזרים אליה.
+   *
+   * כשאין `state` הגענו אל מעבר לרשומה הראשונה שלנו — שם נכון
+   * לתת לאנדרואיד לסגור את האפליקציה כרגיל, וזו בדיוק ההתנהגות
+   * המצופה במסך הבית.
+   */
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      const to = (e.state as { screen?: string } | null)?.screen;
+      if (to) goBackTo(to as never);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [goBackTo]);
 
   const screens: Record<string, React.ReactElement> = {
     splash: <Splash />,

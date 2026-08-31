@@ -41,6 +41,8 @@ interface AppState {
   secondProfile: Profile | null; // לשחקן שני בדו-קרב/שיתוף פעולה
   customCategories: Category[];
   navigate: (screen: Screen) => void;
+  /** מציבה מסך בלי לדחוף היסטוריה — לשימוש המאזין ל-popstate בלבד */
+  goBackTo: (screen: Screen) => void;
   setEditingProfile: (id: number | null) => void;
   loadProfiles: () => Promise<void>;
   selectProfile: (p: Profile) => void;
@@ -57,7 +59,41 @@ export const useApp = create<AppState>((set, get) => ({
   secondProfile: null,
   customCategories: [],
 
-  navigate: (screen) => set({ screen }),
+  /**
+   * מעבר מסך — **ועם רישום בהיסטוריה**.
+   *
+   * ## למה זה קריטי דווקא באנדרואיד
+   *
+   * עד עכשיו זה היה `set({ screen })` בלבד: מצב, בלי היסטוריה. לכן
+   * ב-WebView לא הצטברה שום היסטוריה, וכשילד לחץ על כפתור
+   * ה"חזרה" של אנדרואיד — Capacitor לא מצא לאן לחזור **וסגר את
+   * האפליקציה**. באמצע משחק. בלי אזהרה.
+   *
+   * זה גם אחד הדברים שבודק בחנות מקיש עליו ראשון, ו"כפתור החזרה
+   * אינו מתנהג כמצופה" הוא ליקוי מוכר בבדיקת איכות.
+   *
+   * `pushState` פותר את שניהם בבת אחת ובלי קוד נייטיבי: החזרה של
+   * אנדרואיד קוראת ל-`goBack()` של ה-WebView, זה מפעיל `popstate`,
+   * והמאזין ב-`App.tsx` מחזיר מסך אחד אחורה. אותו מנגנון בדיוק
+   * נותן גם למחוות החזרה ב-PWA ולכפתור החזרה בדפדפן לעבוד.
+   */
+  navigate: (screen) => {
+    if (get().screen === screen) return;
+    try {
+      window.history.pushState({ screen }, '');
+    } catch {
+      /* דפדפן שחוסם היסטוריה — המשחק ממשיך, פשוט בלי חזרה */
+    }
+    set({ screen });
+  },
+
+  /**
+   * חזרה מסך אחד, כתגובה ל-`popstate`.
+   *
+   * לא דוחפת היסטוריה בעצמה — אחרת כל חזרה הייתה יוצרת רשומה חדשה
+   * והלולאה לא הייתה נגמרת.
+   */
+  goBackTo: (screen) => set({ screen }),
   setEditingProfile: (id) => set({ editingProfileId: id }),
 
   loadProfiles: async () => {

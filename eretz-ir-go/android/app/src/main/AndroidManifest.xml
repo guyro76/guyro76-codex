@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!--
+        גיבוי אוטומטי כבוי — בכוונה.
+
+        `allowBackup="true"` הוא ברירת המחדל של אנדרואיד, והוא מעתיק
+        את כל ה-IndexedDB של המשחק — הפרופילים, המילים שהילד אסף
+        והתוצאות — אל חשבון הגוגל של בעל המכשיר. מדיניות הפרטיות
+        של המשחק אומרת שתוכן המשחק **נשאר במכשיר**, וטופס Data
+        Safety בחנות נשאל על כך במפורש. הצהרה אחת ומכשיר שמתנהג
+        אחרת הם בדיוק מה שמפיל בדיקה בחנות.
+
+        המחיר: התקנה מחדש מתחילה מדף חדש. מדיניות הפרטיות כבר
+        אומרת את זה ("הסרת האפליקציה משיגה את אותה תוצאה").
+    -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -20,6 +33,28 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!--
+                כתובת החזרה מהתחברות עם גוגל או אפל.
+
+                בלי המסנן הזה ההתחברות באפליקציה **לא יכולה להסתיים**:
+                הדפדפן מסיים את האימות ומפנה אל
+                `com.eretzir.go://auth?code=...`, ולאנדרואיד אין מי
+                שיטפל בכתובת — המשתמש נשאר בדפדפן על שגיאה, והמשחק
+                מאחוריו עדיין מחכה בכניסה.
+
+                Capacitor **אינו** מוסיף את זה לבד. המחרוזת
+                `custom_url_scheme` קיימת בתבנית שלו, אבל היא רק
+                מחרוזת: הרישום בפועל הוא המסנן הזה, ידנית.
+                (נבדק: לא ל-@capacitor/android ולא ל-@capacitor/app
+                יש intent-filter כלשהו במניפסט שלהם.)
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@string/custom_url_scheme" />
             </intent-filter>
 
         </activity>

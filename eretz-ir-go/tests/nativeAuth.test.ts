@@ -29,8 +29,8 @@ describe('כתובת החזרה מהתחברות', () => {
   });
 
   /**
-   * הסכמה נרשמת על ידי Capacitor לפי מזהה האפליקציה. אם המזהה
-   * ישתנה בלי לעדכן כאן, ההתחברות תחזיר לסכמה שאף אחד לא מאזין לה.
+   * הסכמה חייבת להתאים למזהה האפליקציה. אם המזהה ישתנה בלי לעדכן
+   * כאן, ההתחברות תחזיר לסכמה שאף אחד לא מאזין לה.
    */
   it('הסכמה תואמת למזהה האפליקציה שרשום בפרויקט', () => {
     const appId = (JSON.parse(readFileSync(resolve(root, 'capacitor.config.json'), 'utf8')) as {
@@ -40,6 +40,48 @@ describe('כתובת החזרה מהתחברות', () => {
 
     const strings = readFileSync(resolve(root, 'android/app/src/main/res/values/strings.xml'), 'utf8');
     expect(strings).toContain(`<string name="custom_url_scheme">${appId}</string>`);
+  });
+
+  /**
+   * ## הבדיקה שלא הייתה, והבאג שהיא הייתה תופסת
+   *
+   * הבדיקה שמעליה משווה מחרוזות — והן היו תואמות מצוין בזמן
+   * שההתחברות באפליקציה **לא יכלה להסתיים בכלל**. הערה בקוד טענה
+   * ש"Capacitor רושם את הסכמה אוטומטית לפי מזהה האפליקציה", וזה
+   * פשוט לא נכון: `custom_url_scheme` הוא מחרוזת בלבד. נבדק בפועל
+   * — לא ל-`@capacitor/android` ולא ל-`@capacitor/app` יש
+   * intent-filter כלשהו במניפסט שלהם.
+   *
+   * בלי המסנן, הדפדפן מסיים את האימות ומפנה אל
+   * `com.eretzir.go://auth?code=...`, ולאנדרואיד אין מי שיטפל בו.
+   * המשתמש נשאר בדפדפן על שגיאה, והמשחק מאחוריו עדיין בכניסה.
+   *
+   * לכן נבדק כאן **הרישום עצמו** ולא ההתאמה בין שתי מחרוזות.
+   */
+  it('המניפסט באמת רושם מי מטפל בכתובת החזרה', () => {
+    const manifest = readFileSync(
+      resolve(root, 'android/app/src/main/AndroidManifest.xml'),
+      'utf8'
+    );
+    expect(manifest, 'אין intent-filter לכתובת החזרה').toContain(
+      'android:scheme="@string/custom_url_scheme"'
+    );
+    // בלי BROWSABLE הדפדפן אינו רשאי לפתוח את האפליקציה בכלל
+    expect(manifest).toContain('android.intent.category.BROWSABLE');
+    expect(manifest).toContain('android.intent.action.VIEW');
+  });
+
+  /**
+   * גיבוי אוטומטי מעתיק את כל תוכן המשחק — הפרופילים, המילים
+   * והתוצאות — לחשבון הגוגל של בעל המכשיר. מדיניות הפרטיות אומרת
+   * שהתוכן נשאר במכשיר, וטופס Data Safety נשאל על כך במפורש.
+   */
+  it('גיבוי אוטומטי כבוי, כפי שמדיניות הפרטיות מבטיחה', () => {
+    const manifest = readFileSync(
+      resolve(root, 'android/app/src/main/AndroidManifest.xml'),
+      'utf8'
+    );
+    expect(manifest).toContain('android:allowBackup="false"');
   });
 });
 

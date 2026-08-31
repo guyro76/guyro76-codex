@@ -109,9 +109,11 @@ export async function availableProviders(): Promise<{ google: boolean; apple: bo
 /**
  * כתובת החזרה באפליקציה עטופה.
  *
- * הסכמה הזו נרשמת אוטומטית על ידי Capacitor לפי מזהה האפליקציה
- * (`custom_url_scheme` ב-strings.xml), ולכן היא חייבת להישאר זהה
- * למזהה — יש בדיקה שנועלת את זה.
+ * הסכמה חייבת להישאר זהה למזהה האפליקציה, **ו**חייב להיות לה
+ * `intent-filter` במניפסט של אנדרואיד. Capacitor אינו מוסיף אותו
+ * לבד — `custom_url_scheme` ב-strings.xml הוא מחרוזת בלבד, ובלי
+ * המסנן הדפדפן מסיים את האימות ומפנה לכתובת שאיש אינו מאזין לה.
+ * שני התנאים נעולים ב-`tests/nativeAuth.test.ts`.
  */
 export const NATIVE_REDIRECT = 'com.eretzir.go://auth';
 
