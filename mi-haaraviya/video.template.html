@@ -48,14 +48,20 @@ body{
 
 /* ---------- viewport + fixed 1600x900 coordinate stage ---------- */
 .player{
-  position:relative;
   width:100vw;
   height:100dvh;
   display:flex;
-  align-items:center;
-  justify-content:center;
+  flex-direction:column;
   background:var(--stage);
   overflow:hidden;
+}
+.stagewrap{
+  position:relative;
+  flex:1;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .fit{
   position:relative;
@@ -487,10 +493,10 @@ body{
 
 /* footer note under the player */
 .note{
-  position:fixed;left:0;right:0;bottom:0;z-index:1;
-  text-align:center;padding:8px 16px;
-  font-family:var(--ui);font-weight:600;font-size:12.5px;letter-spacing:.04em;
-  color:rgba(168,176,198,.6);
+  flex:none;margin:0;
+  text-align:center;padding:7px 16px 9px;
+  font-family:var(--ui);font-weight:600;font-size:13px;letter-spacing:.04em;
+  color:rgba(196,203,222,.86);
   pointer-events:none;
 }
 
@@ -502,7 +508,8 @@ body{
 </style>
 
 <div class="player" id="player">
-  <div class="fit" id="fit">
+  <div class="stagewrap" id="stagewrap">
+    <div class="fit" id="fit">
     <div class="frame" id="frame">
 
       <!-- ===== stage ===== -->
@@ -646,6 +653,7 @@ body{
         <div class="chapter" id="chapter"></div>
       </div>
 
+      </div>
     </div>
   </div>
   <p class="note">סאטירה. הדמויות אמיתיות, הריב לא — אף אחד מהמשפטים כאן לא נאמר במציאות, ובית המשפט הזה לא קיים.</p>
@@ -827,7 +835,7 @@ function render(t){
   spot.style.opacity = ((onNoa || onMira) ? (onNoa && onMira ? 0.95 : 0.8) : 0.25).toFixed(2);
 
   beam.style.transform = "translateX("+((((t*0.10) % 1) * 240) - 120).toFixed(2)+"%)";
-  drawGrain(Math.floor(t*11) % 3);
+  drawGrain(((Math.floor(t * 11) % 3) + 3) % 3);
   grain.style.opacity = t >= T_NEWS ? "0.07" : "0.16";
 
   /* ---- bugs ---- */
@@ -941,10 +949,11 @@ function render(t){
 
 /* ================= playback ================= */
 var t = 0, playing = false, last = 0;
-var player = $("player");
+var stagewrap = $("stagewrap");
 
 function fitStage(){
-  var s = Math.min(player.clientWidth / 1600, player.clientHeight / 900);
+  var box = $("stagewrap");
+  var s = Math.min(box.clientWidth / 1600, box.clientHeight / 900);
   fit.style.transform = "scale(" + s + ")";
 }
 window.addEventListener("resize", fitStage);
@@ -978,7 +987,7 @@ function syncChrome(){
 
 function tick(now){
   if (!playing) return;
-  var dt = Math.min((now - last)/1000, 0.1);
+  var dt = Math.max(0, Math.min((now - last) / 1000, 0.1));
   last = now;
   t += dt;
   if (t >= DUR){ t = DUR; playing = false; showChrome(true); }
@@ -1021,8 +1030,8 @@ function scheduleHide(){
     if (playing) chrome.classList.add("hide");
   }, 2200);
 }
-player.addEventListener("mousemove", function(){ showChrome(false); });
-player.addEventListener("mouseleave", function(){ if (playing) chrome.classList.add("hide"); });
+stagewrap.addEventListener("mousemove", function(){ showChrome(false); });
+stagewrap.addEventListener("mouseleave", function(){ if (playing) chrome.classList.add("hide"); });
 
 /* ---- controls ---- */
 playBtn.addEventListener("click", toggle);
