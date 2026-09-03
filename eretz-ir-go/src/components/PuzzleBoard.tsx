@@ -122,8 +122,12 @@ export default function PuzzleBoard({
           <span aria-hidden>{puzzle.icon}</span> {puzzle.name}
           {!compact && <span className="puzzle-region"> · {puzzle.region}</span>}
         </strong>
+        {/* בלי רווחים סביב הלוכסן: בהקשר ימין-לשמאל רווח הופך את
+            הלוכסן למפריד ניטרלי, ואז שני המספרים מתחלפים על המסך —
+            ילד עם 3 חלקים מתוך 9 היה רואה "9 / 3". "3/9" נדבק
+            למספר אחד ונשאר בסדר הנכון, ונשאר קצר מספיק לתג. */}
         <span className={`puzzle-count${done ? ' done' : ''}`}>
-          {done ? '✔ הושלם' : `${have} / ${total}`}
+          {done ? '✔ הושלם' : `${have}/${total}`}
         </span>
       </div>
 

@@ -98,8 +98,10 @@ export default function Categories() {
         </button>
       </div>
 
+      {/* מקף עברי (–) בין שני מספרים הוא תו ניטרלי, ולכן הטווח
+          הוצג הפוך — "12–5". מקף רגיל נבלע לתוך המספר ונשאר "5-12". */}
       <p className={valid ? 'dim' : 'status-text-bad'}>
-        נבחרו {selected.length} מתוך 5–12 {selected.length >= 12 ? '(הגעתם למקסימום)' : ''}
+        נבחרו {selected.length} מתוך 5-12 {selected.length >= 12 ? '(הגעתם למקסימום)' : ''}
       </p>
 
       {selected.length > 0 && (

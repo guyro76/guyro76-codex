@@ -76,8 +76,14 @@ export default function DevicePreview() {
               style={{ transform: `scale(${scale})` }}
             />
           </div>
+          {/* סימן הכפל הוא תו ניטרלי גם בלי רווחים סביבו, ולכן שני
+              הממדים התחלפו על המסך: 390×780 הוצג כ-780×390. dir="ltr"
+              מבודד את הצמד ומחזיר לו את סדר הקריאה שלו. */}
           <p className="dim" style={{ fontSize: '0.8rem', marginBottom: 0 }}>
-            {device.width}×{device.height} · מוצג ב-{Math.round(scale * 100)}% מהגודל
+            <span dir="ltr">
+              {device.width}×{device.height}
+            </span>{' '}
+            · מוצג ב-{Math.round(scale * 100)}% מהגודל
           </p>
         </>
       )}

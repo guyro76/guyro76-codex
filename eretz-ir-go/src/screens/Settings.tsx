@@ -35,7 +35,10 @@ export default function Settings() {
     void db.contentItems.count().then(setPackCount);
     if (navigator.storage?.estimate) {
       void navigator.storage.estimate().then((est) => {
-        setStorageUse(`${((est.usage ?? 0) / 1024 / 1024).toFixed(1)} MB`);
+        // "מ״ב" ולא "MB": יחידה לועזית אחרי מספר יוצרת שני איי-LTR
+        // נפרדים שהרווח הימין-לשמאלי שביניהם מחליף להם את הסדר, והמסך
+        // היה מציג "MB 12.3". יחידה בעברית נצמדת למספר בסדר הנכון.
+        setStorageUse(`${((est.usage ?? 0) / 1024 / 1024).toFixed(1)} מ״ב`);
       });
     } else {
       setStorageUse('לא זמין');
