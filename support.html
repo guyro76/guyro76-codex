@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>תמיכה ושאלות נפוצות — ארץ-עיר GO!</title>
+    <meta
+      name="description"
+      content="תמיכה למשחק ארץ-עיר GO! — שאלות נפוצות, איך מוחקים מידע, איך מדווחים על תמונה או תשובה, ואיך יוצרים קשר."
+    />
+    <link rel="icon" href="/icons/logo.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        --bg: #1b1035;
+        --bg-mid: #2b1b5a;
+        --card: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.18);
+        --text: #f4f2ff;
+        --dim: rgba(244, 242, 255, 0.72);
+        --turquoise: #33d6c3;
+        --gold: #ffd75c;
+        --eggplant: #c07bd8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 24px 16px 60px;
+        font-family: 'Heebo', 'Segoe UI', 'Arial Hebrew', system-ui, sans-serif;
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--text);
+        background: linear-gradient(160deg, var(--bg), var(--bg-mid) 60%, #101d3d);
+        background-attachment: fixed;
+        min-height: 100vh;
+      }
+      main { max-width: 760px; margin: 0 auto; }
+      h1 { font-size: 1.9rem; margin: 0 0 4px; }
+      h2 { font-size: 1.25rem; margin: 28px 0 8px; color: var(--turquoise); }
+      a { color: var(--turquoise); }
+      a:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+      .updated { color: var(--dim); font-size: 0.92rem; margin: 0 0 22px; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 16px 20px;
+        margin: 16px 0;
+      }
+      .card.good { border-color: rgba(61, 220, 132, 0.5); }
+      .card.note { border-color: rgba(255, 215, 92, 0.5); }
+      ul { padding-inline-start: 22px; }
+      li { margin: 6px 0; }
+      table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+      th, td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--gold); font-size: 0.95rem; }
+      code { background: rgba(255,255,255,0.12); padding: 1px 6px; border-radius: 6px; font-size: 0.92em; }
+      footer {
+        margin-top: 36px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        color: var(--eggplant);
+        font-weight: 700;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+      .back { display: inline-block; margin-bottom: 18px; }
+      @media (max-width: 520px) {
+        body { font-size: 16px; }
+        h1 { font-size: 1.55rem; }
+      }
+    </style>
+  <body>
+    <main>
+      <a class="back" href="/">← חזרה למשחק</a>
+
+      <h1>תמיכה ושאלות נפוצות</h1>
+      <p class="updated">ארץ-עיר GO! · עודכן באוגוסט 2026</p>
+
+      <div class="card">
+        <p>
+          <strong>לא מצאתם תשובה כאן?</strong> כתבו לנו:
+          <a href="mailto:guyro76@gmail.com">guyro76@gmail.com</a>. אנחנו עונים לכל פנייה.
+        </p>
+      </div>
+
+      <h2>המשחק</h2>
+
+      <h3>המשחק לא מקבל תשובה שאני בטוח שנכונה</h3>
+      <p>
+        זה קורה, ויש לזה שתי דרכים לתקן — שתיהן מתוך המשחק:
+      </p>
+      <ul>
+        <li>
+          אם המשחק הציע תיקון כתיב ("אולי התכוונת ל…"), לחיצה על ההצעה מקבלת אותה
+          <strong>והניקוד מתעדכן מיד</strong>.
+        </li>
+        <li>
+          אם המילה פשוט לא מוכרת למשחק, יש כפתור <strong>"להוסיף למילון שלי"</strong>.
+          מרגע זה המילה תיחשב תמיד במכשיר הזה.
+        </li>
+      </ul>
+
+      <h3>איך משחקים?</h3>
+      <p>
+        במסך הבית יש כפתור <strong>"❓ איך משחקים"</strong> — הסבר קצר בארבעה עמודים.
+        אפשר לפתוח אותו בכל רגע, לא רק בהתחלה.
+      </p>
+
+      <h3>אפשר לשחק בלי אינטרנט?</h3>
+      <p>
+        כן, וזה הלב של המשחק. סיבוב שלם עובד לגמרי מהמכשיר. חיבור לאינטרנט משמש רק כדי
+        לאמת מילים שהמאגר המקומי לא מכיר, ולהביא תמונה למילה שגיליתם.
+      </p>
+
+      <h3>המשחק נתקע או נראה מוזר</h3>
+      <p>
+        סגירה ופתיחה מחדש פותרת כמעט הכול. אם זה חוזר — במסך ההורים יש
+        <strong>"דיווח תקלה"</strong> שמראה את השגיאה האחרונה שנשמרה במכשיר; אפשר להעתיק
+        אותה ולשלוח לנו.
+      </p>
+
+      <h2>בטיחות ופרטיות</h2>
+
+      <h3>ילדים יכולים לדבר ביניהם במשחק?</h3>
+      <p>
+        <strong>לא.</strong> אין במשחק שום תיבת הקלדה שטקסט שלה מגיע לילד אחר. מה שעובר
+        בקישור אתגר בין מכשירים הוא מספר סידורי מתוך רשימה סגורה של משפטים מוכנים — ולכן
+        אי אפשר לכתוב דרכו הודעה חופשית.
+      </p>
+
+      <h3>איזה מידע נשמר?</h3>
+      <p>
+        תוכן המשחק — הפרופילים, המילים, הניקוד וההגדרות — נשמר <strong>במכשיר בלבד</strong>.
+        מי שפותח חשבון, נשמרים גם המייל ושם התצוגה שלו. הפירוט המלא ב<a href="/privacy.html">מדיניות
+        הפרטיות</a>.
+      </p>
+
+      <h3>הופיעה תמונה שלא מתאימה</h3>
+      <p>
+        לחיצה על התמונה פותחת אותה, ושם יש <strong>"🚩 התמונה לא מתאימה"</strong>. התמונה
+        נחסמת מיד ולצמיתות במכשיר ולא תוצג שוב. אפשר גם לכתוב לנו ונסיר אותה לכולם.
+      </p>
+
+      <h3>איך מוחקים הכול?</h3>
+      <p>
+        במשחק, במסך <strong>"🔐 פרטיות ומחיקת מידע"</strong>, יש כפתור שמוחק לצמיתות את כל
+        התוכן במכשיר. למחיקת חשבון — ראו <a href="/delete-account.html">מחיקת חשבון ומידע</a>.
+      </p>
+
+      <h2>חשבונות ותשלום</h2>
+
+      <h3>חייבים חשבון כדי לשחק?</h3>
+      <p><strong>לא.</strong> המשחק עובד במלואו בלי הרשמה. חשבון נדרש רק למי שרוצה מנוי.</p>
+
+      <h3>מה ההבדל בין הגרסה החינמית לגרסה בתשלום?</h3>
+      <p>
+        בחינמית משחקים — עם פרסומות בין השלבים, שאינן מותאמות אישית. בגרסה בתשלום אין
+        פרסומות, ונפתחים פאזלים, פרסים, משחק עם המשפחה ואתגרים לחברים. <strong>המנוי עדיין
+        אינו פתוח לרכישה</strong>, ובינתיים המשחק פתוח.
+      </p>
+
+      <h2>יצירת קשר</h2>
+      <p>
+        <a href="mailto:guyro76@gmail.com">guyro76@gmail.com</a> — לשאלות, לתקלות, לדיווח על
+        תוכן, ולכל בקשה בנושא פרטיות.
+      </p>
+
+      <footer>תוכנן ונבנה על ידי גיא רוזנברג 2026 - כל הזכויות שמורות</footer>
+    </main>
+  </body>
+</html>
