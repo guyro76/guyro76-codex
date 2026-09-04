@@ -132,3 +132,58 @@ test('⭐ מילות הפתיחה נשמרות באוסף, והקטגוריה ש
   await fresh.getByRole('button', { name: /משחק יחיד/ }).click();
   await expect(fresh.getByRole('button', { name: /גיבורי על/ })).toBeVisible();
 });
+
+/**
+ * מה קורה כשלארצי אין מילה.
+ *
+ * קטגוריה שהילד המציא היא המקרה הקיצוני: המזהה שלה הוא
+ * `custom-<timestamp>`, ולכן אין לה אף רשומה במנוע הידע — בשום אות.
+ * (במאגר יש עוד 511 צירופי אות־קטגוריה כאלה, בקטגוריות המורחבות.)
+ *
+ * קודם זה היה שקט לחלוטין: "רמז" לא הציג כלום, כי הבועה מותנית
+ * ב-`lastHint` שנשאר ריק, ו"קנו תשובה" גבה מהארנק והחזיר `null` —
+ * הילד שילם וקיבל כלום. ילד לא מבין "אין נתונים"; הוא מבין שהמשחק
+ * שבור, או שרימו אותו.
+ */
+test('⭐ כשאין לארצי תשובה הוא אומר את זה, ולא גובה קרדיט', async ({ page }) => {
+  const errors = trackConsoleErrors(page);
+  await gotoCategories(page);
+
+  await page.getByRole('button', { name: /קטגוריה אישית/ }).click();
+  await page.getByLabel('שם הקטגוריה').fill('גיבורי על');
+  await page.getByRole('button', { name: /יצירת הקטגוריה/ }).click();
+  await expect(page.getByRole('heading', { name: 'בחירת קטגוריות' })).toBeVisible();
+
+  await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
+  await page.getByRole('button', { name: /גיבורי על/ }).click();
+  await page.getByRole('button', { name: /להגרלת האות/ }).click();
+  await page.locator('.letter-wheel').click();
+  await expect(page.getByRole('button', { name: /מתחילים/ })).toBeVisible({ timeout: 20_000 });
+  await page.getByRole('button', { name: /מתחילים/ }).click();
+
+  const custom = page.locator('.cat-card').last();
+  await expect(custom).toContainText('גיבורי על');
+
+  // --- רמז: ארצי מודה שאין לו, במקום לא להגיב בכלל ---
+  await custom.getByRole('button', { name: /רמז מארצי/ }).click();
+  await expect(custom.locator('.artzi-bubble')).toBeVisible();
+  await expect(custom.locator('.artzi-bubble')).toContainText(/אין לי רעיון טוב לאות הזו/);
+  // ולא נספר רמז שלא ניתן — הכפתור עדיין אומר "רמז", לא "רמז 1/3"
+  await expect(custom.getByRole('button', { name: /רמז מארצי/ })).toHaveText(/💡 רמז$/);
+  await custom.getByRole('button', { name: 'סגירה' }).click();
+
+  // --- קנייה: חלון הסבר, בלי מחירים ובלי חיוב ---
+  await custom.getByRole('button', { name: /קניית תשובה/ }).click();
+  const modal = page.locator('.modal, [role="dialog"]').last();
+  await expect(modal).toContainText('אין לי תשובה');
+  await expect(modal).toContainText('לא הורדנו לכם שום קרדיט');
+  // אין כאן מה לשלם — לא מוצגים מחירים
+  await expect(modal).not.toContainText('שטרות');
+  await expect(modal).not.toContainText('יהלומים');
+  await modal.getByRole('button', { name: 'הבנתי' }).click();
+
+  // התשובה נשארה ריקה — לא "נקנתה" תשובה מדומה
+  await expect(custom.locator('input[type="text"]')).toHaveValue('');
+
+  expect(errors, `שגיאות קונסול: ${errors.join(' | ')}`).toEqual([]);
+});

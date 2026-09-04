@@ -7,7 +7,7 @@ import { artziSays } from '../lib/artzi';
 import { buildChoices } from '../lib/choices';
 import { getKnowledgeBase } from '../lib/knowledge';
 import Modal from './Modal';
-import { ANSWER_PRICE, canAfford, getWallet, spendOnAnswer, type PayMethod, type Wallet } from '../lib/wallet';
+import { ANSWER_PRICE, canAfford, earn, getWallet, spendOnAnswer, type PayMethod, type Wallet } from '../lib/wallet';
 import { notifyWalletChanged } from './WalletChip';
 import { sfx } from '../lib/sound';
 import { canSpeak, letterSpeech, onReadAloudChange, readAloudOn, speak } from '../lib/speak';
@@ -28,6 +28,7 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
   const askHint = useGame((s) => s.askHint);
   const revealAnswer = useGame((s) => s.revealAnswer);
   const buyAnswer = useGame((s) => s.buyAnswer);
+  const hintAvailable = useGame((s) => s.hintAvailable);
   const hintsLeft = useGame((s) => s.hintsLeft);
   const players = useGame((s) => s.players);
   const coop = useGame((s) => s.coop);
@@ -51,6 +52,14 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
   const text = draft?.text ?? '';
   const lastHint = draft?.lastHint;
   const hintsUsed = draft?.hintsUsed ?? 0;
+  /**
+   * האם לארצי יש מה להציע כאן. תלוי גם בתשובות של הילד בקטגוריות
+   * אחרות, ולכן מחושב מחדש כשהן משתנות — אבל לא על כל תקתוק שעון.
+   */
+  const canReveal = useMemo(
+    () => hintAvailable(category.id),
+    [hintAvailable, category.id, letter, players, currentPlayerIdx, coop]
+  );
 
   // תשובות שכבר בשימוש בקטגוריות אחרות בסיבוב — מסומנות ברשימה
   const usedElsewhere = useMemo(() => {
@@ -178,6 +187,12 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
               disabled={!profileId || draft?.revealed}
               onClick={() => {
                 if (!profileId) return;
+                // אין תשובה למכור — פותחים את החלון כדי להסביר, בלי מחירים
+                if (!canReveal) {
+                  setWallet(null);
+                  setShowBuy(true);
+                  return;
+                }
                 void getWallet(profileId).then((w) => {
                   setWallet(w);
                   setShowBuy(true);
@@ -282,6 +297,26 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
       </div>
       )}
 
+      {/*
+        כשאין לארצי מילה לצירוף הזה, `askHint` מחזיר null ו-`lastHint`
+        נשאר ריק. קודם זה אמר שהבועה לא מוצגת בכלל: הילד לחץ על "רמז",
+        לא קרה כלום, והוא לחץ שוב ושוב. עדיף שארצי יודה בזה.
+      */}
+      {showHint && !lastHint && (
+        <div className="artzi-bubble">
+          <span className="face" aria-hidden>🤖</span>
+          <div style={{ flex: 1 }}>
+            <strong>ארצי: </strong>
+            {artziSays('noHint', gender)}
+            <div className="row" style={{ marginTop: 8 }}>
+              <button className="btn-small btn-ghost" onClick={() => setShowHint(false)}>
+                סגירה
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showHint && lastHint && (
         <div className="artzi-bubble">
           <span className="face" aria-hidden>🤖</span>
@@ -322,6 +357,25 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
         </div>
       )}
 
+      {showBuy && !wallet && (
+        <Modal onClose={() => setShowBuy(false)}>
+          <div className="center">
+            <h2 style={{ marginTop: 0 }}>🤖 אין לי תשובה</h2>
+            <p className="dim">
+              {category.icon} {category.name} · האות {letter}
+            </p>
+            <p>{artziSays('noHint', gender)}</p>
+            <p className="dim" style={{ fontSize: '0.85rem' }}>
+              לא הורדנו לכם שום קרדיט. נסו אות אחרת, או תשובה משלכם — ואם תמצאו
+              מילה טובה, היא תיכנס לאוסף שלכם 💪
+            </p>
+            <button className="btn-primary" onClick={() => setShowBuy(false)}>
+              הבנתי
+            </button>
+          </div>
+        </Modal>
+      )}
+
       {showBuy && wallet && (
         <Modal onClose={() => setShowBuy(false)}>
           <div className="center">
@@ -352,9 +406,26 @@ export default function CategoryCard({ category, draft, profileId, gender, lette
                     void spendOnAnswer(profileId, method).then((next) => {
                       if (!next) return; // אין מספיק — לא קורה כלום
                       const bought = buyAnswer(category.id);
+                      if (!bought) {
+                        /*
+                          רשת ביטחון. הכפתור הזה כבר לא אמור להיפתח כשאין
+                          תשובה, אבל אם בכל זאת נגבה תשלום ולא הגיעה תשובה —
+                          הקרדיט חוזר מיד. לא גובים מילד על כלום.
+                        */
+                        void earn(
+                          profileId,
+                          method === 'bills' ? ANSWER_PRICE.bills : 0,
+                          method === 'gems' ? ANSWER_PRICE.gems : 0
+                        ).then((restored) => {
+                          setWallet(restored);
+                          notifyWalletChanged();
+                        });
+                        setShowBuy(false);
+                        return;
+                      }
                       notifyWalletChanged();
                       setShowBuy(false);
-                      if (bought) sfx.success();
+                      sfx.success();
                     });
                   }}
                 >

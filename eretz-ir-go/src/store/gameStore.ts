@@ -65,6 +65,11 @@ interface GameState {
   setAnswer: (categoryId: string, text: string) => void;
   askHint: (categoryId: string) => Hint | null;
   revealAnswer: (categoryId: string) => string | null;
+  /**
+   * האם לארצי יש בכלל מה להציע לצירוף האות והקטגוריה הנוכחי.
+   * נשאל **לפני** שמציעים לילד לשלם, ולא אחרי.
+   */
+  hintAvailable: (categoryId: string) => boolean;
   /** קניית תשובה מהארנק — ממלאת את התשובה, בלי ניקוד על התשובה עצמה */
   buyAnswer: (categoryId: string) => string | null;
   /** מעבר בין משחק על זמן לבין משחק בלי הגבלת זמן — זמין בכל שלב */
@@ -97,6 +102,28 @@ const emptySettings: GameSettings = {
   hintsPerRound: 3,
   powerCards: false
 };
+
+/**
+ * הפריט שארצי יציע — אותה בחירה בדיוק לרמז, לחשיפה ולקנייה.
+ *
+ * קודם כל אחד מהם חיפש בעצמו, ולכן אי אפשר היה לדעת מראש שאין מה
+ * להציע. הילד גילה את זה רק בדיעבד: על "רמז" פשוט לא קרה כלום, ועל
+ * "קנו תשובה" ירד קרדיט ולא הגיעה תשובה. יש 511 צירופים כאלה במאגר,
+ * וכל קטגוריה שהילד המציא בעצמו היא כזו בכל האותיות.
+ */
+function findHintTarget(state: GameState, categoryId: string): KnowledgeItem | null {
+  const idx = state.coop ? 0 : state.currentPlayerIdx;
+  const player = state.players[idx];
+  if (!player) return null;
+  const draft = player.answers[categoryId];
+  if (draft?.hintTarget) return draft.hintTarget;
+  const exclude = new Set(
+    Object.values(player.answers)
+      .map((a) => normalizeHebrew(a.text))
+      .filter(Boolean)
+  );
+  return pickHintTarget(getKnowledgeBase(), categoryId, normalizeHebrew(state.letter).charAt(0), exclude);
+}
 
 export const useGame = create<GameState>((set, get) => ({
   settings: emptySettings,
@@ -195,15 +222,7 @@ export const useGame = create<GameState>((set, get) => ({
     const category = state.categories.find((c) => c.id === categoryId);
     if (!category) return null;
 
-    let target = draft.hintTarget;
-    if (!target) {
-      const exclude = new Set(
-        Object.values(player.answers)
-          .map((a) => normalizeHebrew(a.text))
-          .filter(Boolean)
-      );
-      target = pickHintTarget(kb, categoryId, normalizeHebrew(state.letter).charAt(0), exclude) ?? undefined;
-    }
+    const target = findHintTarget(state, categoryId);
     if (!target) return null;
 
     const level = Math.min(3, draft.hintsUsed + 1) as 1 | 2 | 3;
@@ -242,6 +261,8 @@ export const useGame = create<GameState>((set, get) => ({
     return target.canonicalName;
   },
 
+  hintAvailable: (categoryId) => findHintTarget(get(), categoryId) !== null,
+
   /**
    * קניית תשובה: מבחינה מכנית זהה ל"גלו לי" — התשובה ממולאת ומסומנת
    * `revealed`, ולכן אינה מזכה בניקוד. ההבדל הוא שכאן משלמים מהארנק
@@ -253,19 +274,10 @@ export const useGame = create<GameState>((set, get) => ({
     const idx = state.coop ? 0 : state.currentPlayerIdx;
     const player = state.players[idx];
     const draft = player.answers[categoryId] ?? { text: '', hintsUsed: 0, revealed: false, typedAtMs: 0 };
-    const kb = getKnowledgeBase();
 
-    let target = draft.hintTarget;
-    if (!target) {
-      const exclude = new Set(
-        Object.values(player.answers)
-          .map((a) => normalizeHebrew(a.text))
-          .filter(Boolean)
-      );
-      target = pickHintTarget(kb, categoryId, normalizeHebrew(state.letter).charAt(0), exclude) ?? undefined;
-    }
-    if (!target) return null;
-    const chosen = target;
+    const chosen = findHintTarget(state, categoryId);
+    // אין מה למכור. המסך מחזיר את הקרדיט אם בכל זאת הספיק לגבות.
+    if (!chosen) return null;
 
     set((s) => {
       const players = [...s.players];
