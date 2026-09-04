@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { pickHintTarget } from '../src/lib/artzi';
 import { getKnowledgeBase } from '../src/lib/knowledge';
+import { GAME_LETTERS } from '../src/lib/hebrew';
 
 const root = resolve(__dirname, '..');
 const read = (p: string) => readFileSync(resolve(root, p), 'utf8');
@@ -31,8 +32,25 @@ describe('צירוף של אות וקטגוריה שאין לו מילה', () =>
   });
 
   it('גם בקטגוריה רגילה יש אותיות בלי מילה', () => {
-    // "ציפור" באות ג' — אחד מ-511 החורים שנמדדו במאגר
-    expect(pickHintTarget(kb, 'bird', 'ג', none)).toBeNull();
+    // "חיית ים" באות ג' — חור אמיתי שלא נמצאה לו מילה עברית ברורה
+    expect(pickHintTarget(kb, 'seaanimal', 'ג', none)).toBeNull();
+  });
+
+  /**
+   * החבילה "מורחב (12)" היא הראשונה שבה הילד פוגש קטגוריות
+   * לא־קלאסיות, ולכן היא הגבול שבו כדאי להחזיק תוכן. היו בה 25
+   * חורים; נשארו תשעה, שכולם אותיות שאין להן מילה עברית טובה.
+   */
+  it('בחבילה מורחב נשארו רק החורים שאין להם מילה אמיתית', () => {
+    const expected: Record<string, string[]> = {
+      israelplace: ['ו'],
+      seaanimal: ['ג', 'ו', 'ז', 'י', 'ע', 'ר'],
+      bird: ['ה', 'ו']
+    };
+    for (const [categoryId, holes] of Object.entries(expected)) {
+      const actual = GAME_LETTERS.filter((l) => pickHintTarget(kb, categoryId, l, none) === null);
+      expect(actual, categoryId).toEqual(holes);
+    }
   });
 
   it('בקטגוריות הקלאסיות אין חורים, ולכן שם תמיד יש רמז', () => {
