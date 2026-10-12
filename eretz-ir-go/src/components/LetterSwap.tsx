@@ -40,14 +40,20 @@ export default function LetterSwap({ onSwap }: { onSwap: () => void }) {
     );
   }
 
-  const doSwap = () => {
-    if (!consumeLetterSwap()) return;
+  /** מה שקורה אחרי שההחלפה כבר נרשמה — ללא צריכה חוזרת */
+  const finishSwap = () => {
     sfx.power();
     announce('האות מוחלפת, מגרילים מחדש');
     setOpen(false);
     setRiddleMode(false);
     setGuess('');
     onSwap();
+  };
+
+  const doSwap = () => {
+    if (!consumeLetterSwap()) return false;
+    finishSwap();
+    return true;
   };
 
   /** ההחלפה החינמית — לחיצה אחת, בלי חלונית ובלי תנאים */
@@ -67,15 +73,25 @@ export default function LetterSwap({ onSwap }: { onSwap: () => void }) {
     if (!activeProfile?.id || !wallet) return;
     const next = payForSwap(wallet, method);
     if (!next) return;
+    /*
+      ההחלפה נרשמת **לפני** החיוב, ולא אחריו.
+      `swapOption` ו-`consumeLetterSwap` נשענים שניהם על
+      `letterSwapsUsed`, ולכן הכפתור לא נפתח כשאין החלפה לנצל וזה
+      לא קורה בפועל — אבל הסדר ההפוך הוא בדיוק הצורה שבה הקרדיט
+      יורד ובתמורה לא קורה כלום. לא גובים מילד לפני שבטוח שיש מה
+      לתת.
+    */
+    if (!consumeLetterSwap()) return;
     await saveWallet(activeProfile.id, next);
-    doSwap();
+    finishSwap();
   };
 
   const trySolve = () => {
     if (isRiddleAnswerCorrect(riddle, guess)) {
+      // החידה נשרפת רק אם ההחלפה באמת נרשמה
+      if (!doSwap()) return;
       markRiddleUsed(riddle.id);
       sfx.success();
-      doSwap();
     } else {
       setWrong(true);
       sfx.error();

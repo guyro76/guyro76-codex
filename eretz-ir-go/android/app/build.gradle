@@ -1,5 +1,28 @@
 apply plugin: 'com.android.application'
 
+/*
+ * חתימת ה-release.
+ *
+ * Google Play לא מקבל AAB לא חתום, ולכן בלי הבלוק הזה אין העלאה
+ * בכלל. הפרטים נקראים מ-`android/keystore.properties` (מוחרג
+ * מ-git) או ממשתני סביבה, ו**לעולם לא נכנסים למאגר** — keystore
+ * שנדחף פעם אחת נחשב דלוף, ואין דרך להחליף אותו אחרי שהאפליקציה
+ * פורסמה: Play מזהה גרסאות לפי החתימה.
+ *
+ * כל עוד אין keystore, בנייה של release פשוט יוצאת לא חתומה
+ * ועובדת מקומית — ולא נכשלת בשקט בלי להסביר למה.
+ */
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+def ksStore = keystoreProps['storeFile'] ?: System.getenv('ANDROID_KEYSTORE_FILE')
+def ksStorePass = keystoreProps['storePassword'] ?: System.getenv('ANDROID_KEYSTORE_PASSWORD')
+def ksAlias = keystoreProps['keyAlias'] ?: System.getenv('ANDROID_KEY_ALIAS')
+def ksKeyPass = keystoreProps['keyPassword'] ?: System.getenv('ANDROID_KEY_PASSWORD')
+def hasSigning = ksStore != null && ksStorePass != null && ksAlias != null && ksKeyPass != null
+
 android {
     namespace = "com.eretzir.go"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -8,7 +31,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +39,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (hasSigning) {
+                storeFile file(ksStore)
+                storePassword ksStorePass
+                keyAlias ksAlias
+                keyPassword ksKeyPass
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hasSigning) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.lifecycle("ארץ-עיר GO!: אין keystore.properties — בניית release תצא לא חתומה ולא תתקבל ב-Google Play. ראו GOOGLE_PLAY.md")
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

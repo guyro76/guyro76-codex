@@ -59,8 +59,27 @@ export function drawLetter(
   const pool = lettersForDifficulty(difficulty).filter((l) => !exclude.includes(l));
   const minCoverage = Math.ceil(categoryIds.length * 0.6);
   const viable = pool.filter((l) => letterCoverage(l, categoryIds, index) >= minCoverage);
-  const candidates = viable.length > 0 ? viable : pool.length > 0 ? pool : [...GAME_LETTERS];
-  return candidates[Math.floor(rng() * candidates.length)];
+  if (viable.length > 0) return viable[Math.floor(rng() * viable.length)];
+
+  /**
+   * אין אף אות שעוברת את רף 60%.
+   *
+   * זה קורה כשהילד בוחר בעצמו צירוף של קטגוריות דלות — למשל שיר,
+   * להקה, ספר, משחק מחשב וקבוצת ספורט, שכולן קטגוריות של שמות
+   * פרטיים שאי אפשר לאמת בלי מקור חיצוני. בדרגה "קשה" הצירוף הזה
+   * מגיע לאפס אותיות כשירות.
+   *
+   * קודם הגיבוי היה הגרלה אחידה מכל המאגר, כלומר הילד היה יכול
+   * לקבל דווקא את האות הגרועה ביותר — זו שאין לה אף תשובה בשום
+   * קטגוריה שבחר. אם בכל מקרה מתפשרים, מתפשרים על **הטובה
+   * שאפשר**: נבחרת אות מבין אלה שמכסות את מספר הקטגוריות הגדול
+   * ביותר.
+   */
+  const fallback = pool.length > 0 ? pool : [...GAME_LETTERS];
+  let best = -1;
+  for (const letter of fallback) best = Math.max(best, letterCoverage(letter, categoryIds, index));
+  const bestLetters = fallback.filter((l) => letterCoverage(l, categoryIds, index) === best);
+  return bestLetters[Math.floor(rng() * bestLetters.length)];
 }
 
 /** מחולל מספרים דטרמיניסטי (mulberry32) — לאתגר היומי */

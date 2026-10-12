@@ -123,6 +123,38 @@
 
 **שום דבר מזה לא נעשה, ולא ייעשה, בלי שתגיד במפורש.**
 
+### 4.1א חתימת ה-AAB — הקוד מוכן, ה-keystore בידיים שלך
+
+Google Play לא מקבל AAB לא חתום. `android/app/build.gradle` כבר
+מכיל `signingConfig` שקורא את הפרטים מ-`android/keystore.properties`
+(מוחרג מ-git) או ממשתני סביבה. **אין keystore במאגר, וגם לא יהיה.**
+
+יצירת ה-keystore — פעולה חינמית לחלוטין, מקומית, פעם אחת:
+
+```bash
+keytool -genkeypair -v -keystore eretz-ir-go.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias eretz-ir-go
+```
+
+ואז `android/keystore.properties`:
+
+```properties
+storeFile=/absolute/path/to/eretz-ir-go.jks
+storePassword=...
+keyAlias=eretz-ir-go
+keyPassword=...
+```
+
+**גבו את הקובץ ואת הסיסמאות במקום שלא ייעלם.** אחרי שהאפליקציה
+פורסמה, Play מזהה גרסאות של אותה אפליקציה **לפי החתימה**. keystore
+שאבד = אין יותר עדכונים לאפליקציה הזו, לנצח. keystore שדלף = אי
+אפשר להחליף אותו. זו הסיבה ש-`*.jks`, `*.keystore` ו-
+`keystore.properties` מוחרגים מ-git, ושיש בדיקה
+(`tests/nativeBuild.test.ts`) שנופלת אם אחד מהם בכל זאת נכנס.
+
+אם רוצים, Play App Signing של גוגל שומר את מפתח החתימה אצלו ואז
+צריך לגבות רק את מפתח ההעלאה — גם זה חינם.
+
 ### 4.2 הסכמת הורה מתחת לגיל 13 — טופל חלקית
 
 **מה נעשה (25 באוגוסט):** מסך ההרשמה אומר עכשיו במפורש שהוא מיועד
