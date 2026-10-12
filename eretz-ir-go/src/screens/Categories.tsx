@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ARTZI_PROFILE } from '../data/botProfile';
 import { useApp } from '../store/appStore';
 import { useGame } from '../store/gameStore';
@@ -6,6 +6,8 @@ import TopBar from '../components/TopBar';
 import { CATEGORIES, CLASSIC_CATEGORY_IDS } from '../data/categories';
 import { getSetting, setSetting } from '../db/db';
 import { loadModeDraft } from './ModeSelect';
+import { getKnowledgeBase } from '../lib/knowledge';
+import { buildLetterIndex, categoriesToFixThin, isThinSelection } from '../lib/letters';
 
 const PRESETS = [
   { name: 'מהיר', count: 5 },
@@ -83,6 +85,29 @@ export default function Categories() {
 
   const valid = selected.length >= 5 && selected.length <= 12;
 
+  /**
+   * אזהרה **לפני** ההגרלה, ולא אחריה.
+   *
+   * ילד שבוחר בעצמו רק קטגוריות כמו שיר, להקה, ספר ומשחק מחשב —
+   * כולן שמות פרטיים שהמאגר דל בהם — מקבל צירוף שבו כמעט אין אות
+   * כשירה. ההגרלה תבחר בכל זאת את הטובה שאפשר, אבל הילד לא יודע
+   * למה כל הקלפים ריקים. עדיף לומר את זה כאן, כשעוד אפשר לשנות.
+   *
+   * החישוב משתמש ב-`isThinSelection`, כלומר **באותו כלל בדיוק**
+   * כמו ההגרלה עצמה.
+   */
+  const letterIndex = useMemo(() => buildLetterIndex(getKnowledgeBase().items), []);
+  const difficulty = activeProfile?.difficulty ?? 'medium';
+  const thin = useMemo(
+    () => valid && isThinSelection(selected, difficulty, letterIndex),
+    [valid, selected, difficulty, letterIndex]
+  );
+  // בדיוק כמה קלאסיות צריך כדי שהאזהרה תיעלם — או null אם אין כמות שנכנסת
+  const fix = useMemo(
+    () => (thin ? categoriesToFixThin(selected, CLASSIC_CATEGORY_IDS, difficulty, letterIndex) : null),
+    [thin, selected, difficulty, letterIndex]
+  );
+
   return (
     <div className="screen">
       <TopBar title="בחירת קטגוריות" back="mode-select" />
@@ -150,6 +175,22 @@ export default function Categories() {
           </button>
         ))}
       </div>
+
+      {thin && (
+        <div className="card thin-warning" role="status" style={{ marginBottom: 12 }}>
+          <strong>🤔 שימו לב: בצירוף הזה יש מעט מילים</strong>
+          <p style={{ margin: '6px 0 10px' }}>
+            ארצי מכיר מילים רק בחלק מהאותיות של הקטגוריות שבחרתם, ולכן ייתכן
+            שתקבלו אות שקשה מאוד למצוא בה תשובות.
+            {fix ? '' : ' כדאי להחליף כמה מהן בקטגוריות קלאסיות כמו ארץ, עיר וחי.'}
+          </p>
+          {fix && (
+            <button className="btn-small" onClick={() => setSelected([...selected, ...fix])}>
+              ➕ להוסיף {fix.length} קטגוריות קלאסיות
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="action-bar">
       <button className="btn-primary" style={{ width: '100%' }} disabled={!valid} onClick={() => void start()}>

@@ -3,7 +3,15 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { SEED_ENTRIES } from '../src/data/seed';
 import { CATEGORIES, CLASSIC_CATEGORY_IDS } from '../src/data/categories';
-import { buildLetterIndex, drawLetter, letterCoverage, lettersForDifficulty } from '../src/lib/letters';
+import {
+  buildLetterIndex,
+  categoriesToFixThin,
+  drawLetter,
+  isThinSelection,
+  letterCoverage,
+  lettersForDifficulty,
+  viableLetters
+} from '../src/lib/letters';
 import { getKnowledgeBase } from '../src/lib/knowledge';
 import { GAME_LETTERS, normalizeHebrew } from '../src/lib/hebrew';
 import { validateAnswer } from '../src/lib/validation';
@@ -236,5 +244,66 @@ describe('הגרלת אות גם כשהמאגר דל', () => {
     for (let i = 0; i < 40; i++) {
       expect(pool).toContain(drawLetter(thin, 'hard', index, [], () => i / 40));
     }
+  });
+});
+
+/**
+ * אזהרת "צירוף דל" במסך בחירת הקטגוריות.
+ *
+ * הבדיקה החשובה כאן היא האחרונה: **שהכפתור באמת מתקן.** הנוסח
+ * הראשון הוסיף תמיד שתי קלאסיות, וחישוב הראה שזה לא מספיק — רף
+ * ההגרלה הוא 60% מהקטגוריות, אז כל קטגוריה שנוספת מעלה גם את הרף.
+ * כפתור "תיקון" שמשאיר את האזהרה על המסך הוא בדיוק הבאג שכל הסבב
+ * הזה צד: הילד עושה פעולה, ושום דבר לא משתנה.
+ */
+describe('אזהרה על צירוף דל, לפני ההגרלה', () => {
+  const index = buildLetterIndex(getKnowledgeBase().items);
+  const thin = ['song', 'band', 'book', 'videogame', 'sportteam'];
+  const order = [...CLASSIC_CATEGORY_IDS, ...CATEGORIES.filter((c) => !c.classic).map((c) => c.id)];
+
+  it('ארבעת ה-presets לעולם לא מקבלים אזהרה, בשום דרגה', () => {
+    for (const count of [5, 7, 9, 12]) {
+      for (const d of ['easy', 'medium', 'hard'] as const) {
+        expect(isThinSelection(order.slice(0, count), d, index), `${count} / ${d}`).toBe(false);
+      }
+    }
+  });
+
+  it('חמש קטגוריות של שמות פרטיים בלבד — מקבלות אזהרה', () => {
+    for (const d of ['easy', 'medium', 'hard'] as const) {
+      expect(isThinSelection(thin, d, index), d).toBe(true);
+    }
+  });
+
+  it('האזהרה משתמשת באותו כלל כמו ההגרלה עצמה', () => {
+    // צירוף לא דל = יש אותיות כשירות, וההגרלה בוחרת מתוכן בלבד
+    const ids = order.slice(0, 9);
+    const viable = viableLetters(ids, 'medium', index);
+    for (let i = 0; i < 30; i++) {
+      expect(viable).toContain(drawLetter(ids, 'medium', index, [], () => i / 30));
+    }
+  });
+
+  it('הכפתור מוסיף בדיוק מה שצריך — ואחרי הלחיצה האזהרה נעלמת', () => {
+    for (const d of ['easy', 'medium', 'hard'] as const) {
+      const add = categoriesToFixThin(thin, CLASSIC_CATEGORY_IDS, d, index);
+      expect(add, d).not.toBeNull();
+      expect(isThinSelection([...thin, ...add!], d, index), `${d} אחרי הלחיצה`).toBe(false);
+      // וזה המינימום: אחת פחות — האזהרה עוד שם
+      if (add!.length > 1) {
+        expect(isThinSelection([...thin, ...add!.slice(0, -1)], d, index), `${d} פחות אחת`).toBe(true);
+      }
+    }
+  });
+
+  it('לא מבטיח תיקון שלא נכנס בתקרה של 12', () => {
+    // 11 קטגוריות דלות: יש מקום לאחת בלבד, והיא לא מספיקה
+    const many = CATEGORIES.filter((c) => c.allowProperNames && !c.classic && c.id !== 'israelplace')
+      .map((c) => c.id)
+      .slice(0, 11);
+    // תנאי מקדים מפורש, אחרת הבדיקה הייתה יכולה לעבור בלי לבדוק כלום
+    expect(many).toHaveLength(11);
+    expect(isThinSelection(many, 'medium', index)).toBe(true);
+    expect(categoriesToFixThin(many, CLASSIC_CATEGORY_IDS, 'medium', index)).toBeNull();
   });
 });

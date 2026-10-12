@@ -45,6 +45,69 @@ export function buildLetterIndex(items: KnowledgeItem[]): Map<string, Set<string
   return index;
 }
 
+/** רף ההגרלה: אות כשירה רק אם לפחות 60% מהקטגוריות מכוסות בה */
+const MIN_COVERAGE_SHARE = 0.6;
+
+/**
+ * האותיות שההגרלה באמת יכולה לבחור לצירוף הזה.
+ *
+ * מיוצא כדי שמסך בחירת הקטגוריות ישתמש **באותו כלל בדיוק** כמו
+ * ההגרלה. אזהרה שמחושבת בכלל אחר הייתה מבטיחה דבר אחד ומקיימת
+ * דבר אחר.
+ */
+export function viableLetters(
+  categoryIds: string[],
+  difficulty: Difficulty,
+  index: Map<string, Set<string>>,
+  exclude: string[] = []
+): GameLetter[] {
+  const pool = lettersForDifficulty(difficulty).filter((l) => !exclude.includes(l));
+  const minCoverage = Math.ceil(categoryIds.length * MIN_COVERAGE_SHARE);
+  return pool.filter((l) => letterCoverage(l, categoryIds, index) >= minCoverage);
+}
+
+/**
+ * האם הצירוף דל מכדי לשחק בו טוב: פחות משליש מאותיות הדרגה כשירות.
+ * בארבעת ה-presets זה לא קורה אף פעם (17/17). זה קורה כשילד בוחר
+ * בעצמו רק קטגוריות של שמות פרטיים, שאי אפשר לאמת בלי מקור חיצוני.
+ */
+export function isThinSelection(
+  categoryIds: string[],
+  difficulty: Difficulty,
+  index: Map<string, Set<string>>
+): boolean {
+  if (categoryIds.length === 0) return false;
+  const pool = lettersForDifficulty(difficulty);
+  return viableLetters(categoryIds, difficulty, index).length < Math.ceil(pool.length / 3);
+}
+
+/**
+ * אילו קטגוריות להוסיף כדי שהצירוף יפסיק להיות דל — **המספר המינימלי**
+ * שבאמת מספיק, ולא מספר קבוע.
+ *
+ * הנוסח הראשון של הכפתור הוסיף תמיד שתיים, וזה לא עבד: רף ההגרלה
+ * הוא 60% מהקטגוריות, ולכן כל קטגוריה שנוספת מעלה גם את הרף. חמש
+ * קטגוריות דלות צריכות **חמש** קלאסיות כדי להשתחרר; עם שתיים האזהרה
+ * נשארת על המסך, והילד לחץ על "תיקון" שלא תיקן כלום.
+ *
+ * מחזיר null כשאין כמות שנכנסת בתקרה — ואז אסור להציע כפתור בכלל.
+ */
+export function categoriesToFixThin(
+  selected: string[],
+  candidates: string[],
+  difficulty: Difficulty,
+  index: Map<string, Set<string>>,
+  max = 12
+): string[] | null {
+  const pool = candidates.filter((id) => !selected.includes(id));
+  const room = Math.min(max - selected.length, pool.length);
+  for (let k = 1; k <= room; k++) {
+    const add = pool.slice(0, k);
+    if (!isThinSelection([...selected, ...add], difficulty, index)) return add;
+  }
+  return null;
+}
+
 /**
  * הגרלת אות הוגנת: רק אותיות שבהן לפחות 60% מהקטגוריות הפעילות
  * מכוסות במאגר, כדי לא ליפול על שילוב בלתי אפשרי.
@@ -57,8 +120,7 @@ export function drawLetter(
   rng: () => number = Math.random
 ): GameLetter {
   const pool = lettersForDifficulty(difficulty).filter((l) => !exclude.includes(l));
-  const minCoverage = Math.ceil(categoryIds.length * 0.6);
-  const viable = pool.filter((l) => letterCoverage(l, categoryIds, index) >= minCoverage);
+  const viable = viableLetters(categoryIds, difficulty, index, exclude);
   if (viable.length > 0) return viable[Math.floor(rng() * viable.length)];
 
   /**

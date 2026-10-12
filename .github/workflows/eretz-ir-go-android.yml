@@ -1,0 +1,85 @@
+name: ארץ-עיר GO! — בניית אנדרואיד
+
+# למה הקובץ הזה קיים
+#
+# הפרויקט הנייטיבי מעולם לא קומפל. לא בסביבת הפיתוח (dl.google.com
+# חסום שם, ומשם מגיעים גם ה-SDK וגם תוסף ה-Gradle של אנדרואיד), ולא
+# בשום מקום אחר — לא הייתה אף תיקיית build. כלומר כל מה שנאמר על
+# "המשחק מוכן לחנות" נשען על קוד שאף אחד לא ראה עובר קומפילציה.
+#
+# השרתים של GitHub כוללים את ה-SDK, והמאגר ציבורי — ולכן הבנייה כאן
+# **חינמית לגמרי ובלי מכסה**, בהתאם לכלל אפס העלות.
+#
+# מה יוצא מכאן:
+#  - APK לבדיקה (debug) — אפשר להתקין ישירות על טלפון ולשחק.
+#  - AAB ל-release, **לא חתום**. אין כאן keystore ולא יהיה: הוא סוד,
+#    והוא נוצר אצל בעל הפרויקט בלבד (ראו GOOGLE_PLAY.md §4.1א).
+#    AAB לא חתום לא מתקבל ב-Play — הוא כאן כדי להוכיח שהבנייה עוברת.
+
+on:
+  push:
+    branches: ['claude/eretz-ir-go-game-3kvtm3', main]
+    paths: ['eretz-ir-go/**', '.github/workflows/eretz-ir-go-android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eretz-ir-go-android
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: eretz-ir-go/package-lock.json
+
+      - name: התקנת תלויות
+        working-directory: eretz-ir-go
+        run: npm ci
+
+      # בלי משתני Supabase — בנייה מקומית. מספיק כדי לוודא שהקוד
+      # הנייטיבי מתקמפל; ההחלטה איך גרסת החנות מתנהגת עדיין פתוחה.
+      - name: בניית האפליקציה
+        working-directory: eretz-ir-go
+        run: npm run build
+
+      - name: סנכרון Capacitor לאנדרואיד
+        working-directory: eretz-ir-go
+        run: npx cap sync android
+
+      # Capacitor 8 דורש JDK 21
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: קומפילציה — APK לבדיקה ו-AAB ל-release
+        working-directory: eretz-ir-go/android
+        run: ./gradlew assembleDebug bundleRelease --no-daemon --stacktrace
+
+      # וידוא שהתוצרים קיימים באמת, ולא רק שהפקודה החזירה 0
+      - name: וידוא התוצרים
+        working-directory: eretz-ir-go/android/app/build/outputs
+        run: |
+          ls -la apk/debug/app-debug.apk bundle/release/app-release.aab
+          echo "APK: $(du -h apk/debug/app-debug.apk | cut -f1)"
+          echo "AAB: $(du -h bundle/release/app-release.aab | cut -f1)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eretz-ir-go-android
+          path: |
+            eretz-ir-go/android/app/build/outputs/apk/debug/app-debug.apk
+            eretz-ir-go/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
+          if-no-files-found: error
