@@ -22,22 +22,26 @@ test.beforeEach(async ({ page }) => {
 /**
  * מוסיף שחקן שני למכשיר — דו-קרב דורש שניים.
  *
- * ## למה זה מסובך יותר ממה שזה נראה
+ * ## למה הסדר כאן קריטי
  *
- * הגרסה הקודמת המתינה שטבלת הפרופילים תיווצר, בלולאת
- * `indexedDB.open('eretz-ir-go')` **בלי מספר גרסה**. שתי בעיות,
- * ושתיהן מתפוצצות רק כשהמכונה עמוסה:
+ * `resolveActivePlayer` לא בוחר "את השחקן של החשבון" — הוא קורא
+ * `pickProfile`, שמחזיר את **הפרופיל הראשון במסד** כשאין זהות.
+ * כלומר מי שנכתב ראשון הופך לשחקן הפעיל.
  *
- * 1. `open` בלי גרסה על מסד שעוד לא קיים **יוצר** אותו ריק. מאותו
- *    רגע Dexie צריך לשדרג מגרסה 1 לגרסה 4 במקום לפתוח נקי.
- * 2. חיבור פתוח **חוסם** שדרוג גרסה. הלולאה פתחה וסגרה חיבור שוב
- *    ושוב בדיוק בזמן שהאפליקציה מנסה לשדרג — ולפעמים הזריעה נכתבה
- *    למסד שנמחק מתחתיה בשדרוג, או שהפתיחה של האפליקציה נכשלה.
+ * ולכן, אם הזריעה מקדימה את האפליקציה, מאיה היא הפרופיל הראשון,
+ * היא נבחרת כשחקנית **הפעילה**, ו-`ModeSelect` מסנן אותה מרשימת
+ * היריבים (`profiles.filter(p => p.id !== activeProfile?.id)`).
+ * המסך מציג "אין עוד שחקנים במכשיר" — ולא כי משהו נשבר, אלא כי
+ * היריבה שזרענו הפכה להיות השחקנית.
  *
- * התוצאה הייתה בדיקה שעוברת לבד ונופלת בריצה מלאה על "אין יריב" —
- * כלומר רעש, לא ממצא. עכשיו: בודקים קיום בלי ליצור
- * (`indexedDB.databases`), זורעים, **קוראים בחזרה כדי לוודא**,
- * וחוזרים על הכול אם הכתיבה לא שרדה.
+ * זו הייתה הנפילה האמיתית: לבד האפליקציה מקדימה ליצור פרופיל משלה
+ * והבדיקה עוברת; בריצה מלאה, על מכונה עמוסה, הזריעה מקדימה אותה.
+ * ניסיון ראשון לתקן טיפל ב-IndexedDB בלבד — והפך את הזריעה למהירה
+ * יותר, כלומר החמיר את התחרות.
+ *
+ * לכן: **ממתינים שלאפליקציה יהיה פרופיל משלה, ורק אז זורעים.**
+ * ההמתנה אינה אופציונלית ואינה "ליתר ביטחון" — היא מה שמבדיל בין
+ * יריבה לשחקנית.
  */
 async function addSecondPlayer(page: Page, name = 'מאיה') {
   const profile = {
@@ -64,13 +68,16 @@ async function addSecondPlayer(page: Page, name = 'מאיה') {
   };
 
   /**
-   * זריעה אחת: נכנסת רק אם המסד **כבר קיים** עם טבלת הפרופילים,
-   * ומחזירה את השמות שנקראו בחזרה מאותו חיבור. אין פתיחה בלי
-   * גרסה, ולכן אין יצירת מסד ריק ואין חסימת שדרוג.
+   * קריאה/כתיבה בחיבור אחד. `row === null` = קריאה בלבד.
+   *
+   * אין כאן `indexedDB.open` בלי גרסה על מסד שאינו קיים: פתיחה כזו
+   * **יוצרת** מסד ריק, ואז Dexie צריך לשדרג מגרסה 1 ל-4 במקום
+   * לפתוח נקי — וחיבור פתוח גם חוסם שדרוג. לכן קודם בודקים קיום
+   * עם `databases()`, ומבטלים מיד אם נתפסנו בתוך שדרוג.
    */
-  const seedOnce = () =>
+  const withProfiles = (row: typeof profile | null) =>
     page.evaluate(
-      (row) =>
+      (toPut) =>
         new Promise<string[] | null>((resolve) => {
           void (async () => {
             const known = (await indexedDB.databases?.()) ?? [];
@@ -78,7 +85,6 @@ async function addSecondPlayer(page: Page, name = 'מאיה') {
 
             const open = indexedDB.open('eretz-ir-go');
             open.onerror = () => resolve(null);
-            // המסד נעלם בין הבדיקה לפתיחה, או ששדרוג תפס אותנו
             open.onupgradeneeded = () => {
               open.transaction?.abort();
               resolve(null);
@@ -89,12 +95,13 @@ async function addSecondPlayer(page: Page, name = 'מאיה') {
                 database.close();
                 return resolve(null);
               }
-              const tx = database.transaction('profiles', 'readwrite');
+              const tx = database.transaction('profiles', toPut ? 'readwrite' : 'readonly');
               const store = tx.objectStore('profiles');
-              store.put(row);
+              if (toPut) store.put(toPut);
               const all = store.getAll();
               tx.oncomplete = () => {
                 database.close();
+                // סדר המפתחות = סדר הכתיבה, וזה בדיוק מה שקובע מי פעיל
                 resolve(((all.result ?? []) as { name: string }[]).map((p) => p.name));
               };
               tx.onerror = () => {
@@ -104,13 +111,25 @@ async function addSecondPlayer(page: Page, name = 'מאיה') {
             };
           })();
         }),
-      profile
+      row
     );
 
-  // הזריעה חוזרת עד שהשם באמת נקרא בחזרה מהמסד
+  // 1. האפליקציה יצרה פרופיל משלה, והוא הראשון במסד
   await expect
-    .poll(async () => (await seedOnce())?.includes(name) ?? false, { timeout: 20_000 })
+    .poll(async () => (await withProfiles(null))?.filter((n) => n !== name).length ?? 0, {
+      timeout: 30_000,
+      message: 'האפליקציה לא יצרה פרופיל משלה בזמן — זריעה עכשיו תהפוך את מאיה לשחקנית הפעילה'
+    })
+    .toBeGreaterThan(0);
+
+  // 2. עכשיו מאיה נכתבת שנייה, ולכן היא יריבה ולא שחקנית
+  await expect
+    .poll(async () => (await withProfiles(profile))?.includes(name) ?? false, { timeout: 20_000 })
     .toBe(true);
+
+  // 3. והחוזה שהבדיקה באמת נשענת עליו: הראשון אינו מאיה
+  const names = await withProfiles(null);
+  expect(names?.[0], `סדר הפרופילים: ${names?.join(', ')}`).not.toBe(name);
 }
 
 test('🏆 סוף דו-קרב מציג פודיום עם השמות של שני השחקנים', async ({ page }) => {
