@@ -22,67 +22,95 @@ test.beforeEach(async ({ page }) => {
 /**
  * מוסיף שחקן שני למכשיר — דו-קרב דורש שניים.
  *
- * ממתין קודם שהאפליקציה תיצור את המסד בפועל. בלי ההמתנה הזריעה
- * מתחרה בהפעלה: לפעמים היא רצה על מסד שעדיין אין בו את טבלת
- * הפרופילים, השחקן לא נשמר, והמסך מציג "אין עוד שחקנים" — כשל
- * שנראה כמו באג במשחק אבל הוא באג בבדיקה.
+ * ## למה זה מסובך יותר ממה שזה נראה
+ *
+ * הגרסה הקודמת המתינה שטבלת הפרופילים תיווצר, בלולאת
+ * `indexedDB.open('eretz-ir-go')` **בלי מספר גרסה**. שתי בעיות,
+ * ושתיהן מתפוצצות רק כשהמכונה עמוסה:
+ *
+ * 1. `open` בלי גרסה על מסד שעוד לא קיים **יוצר** אותו ריק. מאותו
+ *    רגע Dexie צריך לשדרג מגרסה 1 לגרסה 4 במקום לפתוח נקי.
+ * 2. חיבור פתוח **חוסם** שדרוג גרסה. הלולאה פתחה וסגרה חיבור שוב
+ *    ושוב בדיוק בזמן שהאפליקציה מנסה לשדרג — ולפעמים הזריעה נכתבה
+ *    למסד שנמחק מתחתיה בשדרוג, או שהפתיחה של האפליקציה נכשלה.
+ *
+ * התוצאה הייתה בדיקה שעוברת לבד ונופלת בריצה מלאה על "אין יריב" —
+ * כלומר רעש, לא ממצא. עכשיו: בודקים קיום בלי ליצור
+ * (`indexedDB.databases`), זורעים, **קוראים בחזרה כדי לוודא**,
+ * וחוזרים על הכול אם הכתיבה לא שרדה.
  */
 async function addSecondPlayer(page: Page, name = 'מאיה') {
-  await page.waitForFunction(
-    () =>
-      new Promise<boolean>((resolve) => {
-        const open = indexedDB.open('eretz-ir-go');
-        open.onerror = () => resolve(false);
-        open.onsuccess = () => {
-          const database = open.result;
-          const ready = database.objectStoreNames.contains('profiles');
-          database.close();
-          resolve(ready);
-        };
-      }),
-    undefined,
-    { timeout: 15_000 }
-  );
+  const profile = {
+    name,
+    avatar: '🐬',
+    color: '#ff5c9d',
+    gender: 'other',
+    age: 10,
+    difficulty: 'medium',
+    soundOn: true,
+    reducedMotion: false,
+    favoriteCategories: [],
+    totalScore: 0,
+    wins: 0,
+    gamesPlayed: 0,
+    correctAnswers: 0,
+    totalAnswers: 0,
+    originalitySum: 0,
+    bestRoundScore: 0,
+    dailyStreak: 0,
+    lastDailyDate: '',
+    achievements: [],
+    createdAt: new Date().toISOString()
+  };
 
-  await page.evaluate(
-    (playerName) =>
-      new Promise<void>((resolve, reject) => {
-        const open = indexedDB.open('eretz-ir-go');
-        open.onerror = () => reject(open.error);
-        open.onsuccess = () => {
-          const database = open.result;
-          const tx = database.transaction('profiles', 'readwrite');
-          tx.objectStore('profiles').put({
-            name: playerName,
-            avatar: '🐬',
-            color: '#ff5c9d',
-            gender: 'other',
-            age: 10,
-            difficulty: 'medium',
-            soundOn: true,
-            reducedMotion: false,
-            favoriteCategories: [],
-            totalScore: 0,
-            wins: 0,
-            gamesPlayed: 0,
-            correctAnswers: 0,
-            totalAnswers: 0,
-            originalitySum: 0,
-            bestRoundScore: 0,
-            dailyStreak: 0,
-            lastDailyDate: '',
-            achievements: [],
-            createdAt: new Date().toISOString()
-          });
-          tx.oncomplete = () => {
-            database.close();
-            resolve();
-          };
-          tx.onerror = () => reject(tx.error);
-        };
-      }),
-    name
-  );
+  /**
+   * זריעה אחת: נכנסת רק אם המסד **כבר קיים** עם טבלת הפרופילים,
+   * ומחזירה את השמות שנקראו בחזרה מאותו חיבור. אין פתיחה בלי
+   * גרסה, ולכן אין יצירת מסד ריק ואין חסימת שדרוג.
+   */
+  const seedOnce = () =>
+    page.evaluate(
+      (row) =>
+        new Promise<string[] | null>((resolve) => {
+          void (async () => {
+            const known = (await indexedDB.databases?.()) ?? [];
+            if (!known.some((d) => d.name === 'eretz-ir-go')) return resolve(null);
+
+            const open = indexedDB.open('eretz-ir-go');
+            open.onerror = () => resolve(null);
+            // המסד נעלם בין הבדיקה לפתיחה, או ששדרוג תפס אותנו
+            open.onupgradeneeded = () => {
+              open.transaction?.abort();
+              resolve(null);
+            };
+            open.onsuccess = () => {
+              const database = open.result;
+              if (!database.objectStoreNames.contains('profiles')) {
+                database.close();
+                return resolve(null);
+              }
+              const tx = database.transaction('profiles', 'readwrite');
+              const store = tx.objectStore('profiles');
+              store.put(row);
+              const all = store.getAll();
+              tx.oncomplete = () => {
+                database.close();
+                resolve(((all.result ?? []) as { name: string }[]).map((p) => p.name));
+              };
+              tx.onerror = () => {
+                database.close();
+                resolve(null);
+              };
+            };
+          })();
+        }),
+      profile
+    );
+
+  // הזריעה חוזרת עד שהשם באמת נקרא בחזרה מהמסד
+  await expect
+    .poll(async () => (await seedOnce())?.includes(name) ?? false, { timeout: 20_000 })
+    .toBe(true);
 }
 
 test('🏆 סוף דו-קרב מציג פודיום עם השמות של שני השחקנים', async ({ page }) => {
