@@ -4,14 +4,25 @@ import { disableServiceWorker, stubExternalSources } from './helpers';
 /**
  * אזהרה על צירוף קטגוריות דל — לפני ההגרלה ולא אחריה.
  *
- * הבדיקה הולכת בדיוק במסלול של ילד: מוריד את הקלאסיות, בוחר רק
- * קטגוריות של שמות פרטיים, רואה אזהרה, לוחץ על הכפתור — והאזהרה
- * **נעלמת**. השלב האחרון הוא העיקר: הנוסח הראשון של הכפתור הוסיף
- * שתי קלאסיות קבועות, ואלה לא הספיקו כדי לעבור את הרף.
+ * ## למה דווקא קטגוריות אישיות
+ *
+ * בגרסה הראשונה הבדיקה הזו בחרה חמש קטגוריות של שמות פרטיים (שיר,
+ * להקה, ספר, משחק מחשב, קבוצת ספורט). אחר כך נוסף להן תוכן, והצירוף
+ * הפסיק להיות דל: 2 אותיות כשירות מתוך 17 → 14. נבדק שאין כבר אף
+ * צירוף של חמש מתוך עשר הקטגוריות הדלות ביותר שמקבל אזהרה.
+ *
+ * מה שעדיין יכול להיות דל הוא **קטגוריה שהילד המציא**: למזהה
+ * `custom-<timestamp>` אין אף ערך במאגר, בשום אות. זה גם המקום שבו
+ * התחיל כל הסבב — "רמז" שלא הגיב בקטגוריה אישית — ולכן זה המקרה
+ * שהכי חשוב לבדוק.
+ *
+ * הבדיקה הולכת במסלול של ילד עד הסוף: האזהרה מופיעה, הכפתור אומר
+ * כמה יתווספו, ואחרי הלחיצה האזהרה **נעלמת**. השלב האחרון הוא
+ * העיקר — הנוסח הראשון של הכפתור לא תיקן כלום.
  */
 
-const CLASSICS = ['🌍 ארץ', '🏙️ עיר', '🦁 חי', '🌿 צומח', '🪨 דומם', '👦 שם של בן', '👧 שם של בת', '🧑‍🚒 מקצוע', '⭐ אישיות מפורסמת'];
-const THIN = ['🎵 שיר', '🎸 להקה', '📚 ספר', '🎮 משחק מחשב', '🏆 קבוצת ספורט'];
+const DESELECT = ['🦁 חי', '🌿 צומח', '🪨 דומם', '👦 שם של בן', '👧 שם של בת', '🧑‍🚒 מקצוע', '⭐ אישיות מפורסמת'];
+const MINE = ['אוסף ראשון', 'אוסף שני', 'אוסף שלישי'];
 
 async function gotoCategories(page: Page): Promise<void> {
   await page.goto('./');
@@ -22,7 +33,13 @@ async function gotoCategories(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: 'בחירת קטגוריות' })).toBeVisible();
 }
 
-const chip = (page: Page, label: string) => page.getByRole('button', { name: label, exact: true });
+async function createCategory(page: Page, name: string): Promise<void> {
+  await page.getByRole('button', { name: /קטגוריה אישית/ }).click();
+  await page.getByLabel('שם הקטגוריה').fill(name);
+  await page.getByRole('button', { name: /יצירת הקטגוריה/ }).click();
+  await expect(page.getByRole('heading', { name: 'בחירת קטגוריות' })).toBeVisible();
+}
+
 const warning = (page: Page) => page.getByRole('status').filter({ hasText: 'בצירוף הזה יש מעט מילים' });
 
 test.beforeEach(async ({ page }) => {
@@ -31,31 +48,31 @@ test.beforeEach(async ({ page }) => {
   await stubExternalSources(page);
 });
 
-test('🤔 צירוף דל מקבל אזהרה, והכפתור באמת מתקן אותו', async ({ page }) => {
+test('🤔 צירוף של קטגוריות אישיות מקבל אזהרה, והכפתור באמת מתקן', async ({ page }) => {
   await gotoCategories(page);
+  for (const name of MINE) await createCategory(page, name);
 
-  // ברירת המחדל היא תשע הקלאסיות — ואין שום אזהרה
+  // ברירת המחדל היא תשע הקלאסיות — ואין אזהרה
   await expect(page.getByText(/נבחרו 9 מתוך/)).toBeVisible();
   await expect(warning(page)).toHaveCount(0);
 
-  // ילד שאוהב מוזיקה ומשחקים: מוריד את כל הקלאסיות ובוחר רק שמות פרטיים
-  for (const label of CLASSICS) await chip(page, label).click();
-  for (const label of THIN) await chip(page, label).click();
+  // ילד שרוצה לשחק בקטגוריות שהמציא: משאיר רק ארץ ועיר ומוסיף את שלו
+  for (const label of DESELECT) await page.getByRole('button', { name: label, exact: true }).click();
+  for (const name of MINE) await page.getByRole('button', { name: new RegExp(name) }).click();
   await expect(page.getByText(/נבחרו 5 מתוך/)).toBeVisible();
 
   await expect(warning(page)).toBeVisible();
   const fix = page.getByRole('button', { name: /להוסיף \d+ קטגוריות קלאסיות/ });
-  await expect(fix).toBeVisible();
+  await expect(fix).toHaveText(/להוסיף 3 קטגוריות קלאסיות/);
 
-  // הכפתור אומר כמה יתווספו — ומוסיף בדיוק את זה
-  const label = (await fix.textContent()) ?? '';
-  const count = Number(label.match(/\d+/)?.[0]);
-  expect(count).toBeGreaterThan(0);
   await fix.click();
-  await expect(page.getByText(new RegExp(`נבחרו ${5 + count} מתוך`))).toBeVisible();
-
+  await expect(page.getByText(/נבחרו 8 מתוך/)).toBeVisible();
   // והעיקר: האזהרה נעלמה. כפתור "תיקון" שלא מתקן הוא באג.
   await expect(warning(page)).toHaveCount(0);
+  // והקטגוריות של הילד נשארו — התיקון מוסיף, לא מחליף
+  for (const name of MINE) {
+    await expect(page.getByRole('button', { name: new RegExp(name) })).toHaveAttribute('aria-pressed', 'true');
+  }
 });
 
 test('🤔 בכל ארבעת ה-presets אין אזהרה', async ({ page }) => {
@@ -64,4 +81,20 @@ test('🤔 בכל ארבעת ה-presets אין אזהרה', async ({ page }) => 
     await page.getByRole('button', { name: preset }).click();
     await expect(warning(page)).toHaveCount(0);
   }
+});
+
+/**
+ * הצירוף שהיה הגרוע ביותר — חמש קטגוריות של שמות פרטיים — נסגר
+ * בתוכן. אם האזהרה חוזרת אליו, משהו נמחק מהמאגר.
+ */
+test('🤔 חמש קטגוריות של שמות פרטיים כבר לא מקבלות אזהרה', async ({ page }) => {
+  await gotoCategories(page);
+  for (const label of ['🌍 ארץ', '🏙️ עיר', '🦁 חי', '🌿 צומח', '🪨 דומם', '👦 שם של בן', '👧 שם של בת', '🧑‍🚒 מקצוע', '⭐ אישיות מפורסמת']) {
+    await page.getByRole('button', { name: label, exact: true }).click();
+  }
+  for (const label of ['🎵 שיר', '🎸 להקה', '📚 ספר', '🎮 משחק מחשב', '🏆 קבוצת ספורט']) {
+    await page.getByRole('button', { name: label, exact: true }).click();
+  }
+  await expect(page.getByText(/נבחרו 5 מתוך/)).toBeVisible();
+  await expect(warning(page)).toHaveCount(0);
 });

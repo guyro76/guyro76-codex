@@ -111,3 +111,36 @@ describe('חתימת release לאנדרואיד', () => {
     expect(gradle).toContain(`versionName "${pkg.version}"`);
   });
 });
+
+/**
+ * קבצי ה-Gradle ש-Capacitor מייצר חייבים להכיר כל תוסף שמותקן.
+ *
+ * נמצא ב-12 באוקטובר: `capacitor.settings.gradle` ו-
+ * `capacitor.build.gradle` שבמאגר לא כללו את `@capacitor/app` — התוסף
+ * שמטפל **בכפתור החזרה** של אנדרואיד ו**בקישור החזרה מההתחברות עם
+ * Google**. שניהם תוקנו בסבבי QA קודמים, ושניהם היו נשברים בשקט
+ * בבנייה ישירות מהמאגר (למשל מ-Android Studio). ה-CI הריץ `cap sync`
+ * ולכן לא ראה את זה: הקבצים נוצרו מחדש בכל בנייה, נכונים, ונזרקו.
+ *
+ * הבדיקה משווה את התוספים שב-package.json לקבצים שבמאגר.
+ */
+describe('קבצי Gradle של Capacitor מעודכנים', () => {
+  const pkg = JSON.parse(read('package.json')) as { dependencies: Record<string, string> };
+  const plugins = Object.keys(pkg.dependencies).filter(
+    (name) => name.startsWith('@capacitor/') && !['@capacitor/core', '@capacitor/android', '@capacitor/ios'].includes(name)
+  );
+
+  it('יש לפחות תוסף אחד לבדוק', () => {
+    expect(plugins).toContain('@capacitor/app');
+  });
+
+  it('כל תוסף רשום ב-capacitor.settings.gradle וב-capacitor.build.gradle', () => {
+    const settings = read('android/capacitor.settings.gradle');
+    const build = read('android/app/capacitor.build.gradle');
+    for (const name of plugins) {
+      const project = name.replace('@capacitor/', 'capacitor-');
+      expect(settings, `${name} חסר ב-settings — הריצו npx cap sync`).toContain(`include ':${project}'`);
+      expect(build, `${name} חסר ב-build — הריצו npx cap sync`).toContain(`project(':${project}')`);
+    }
+  });
+});

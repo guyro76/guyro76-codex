@@ -8,7 +8,6 @@ import {
   categoriesToFixThin,
   drawLetter,
   isThinSelection,
-  letterCoverage,
   lettersForDifficulty,
   viableLetters
 } from '../src/lib/letters';
@@ -202,63 +201,127 @@ describe('התוכן החדש עובר את המאמת האמיתי', () => {
 });
 
 /**
- * הגרלת האות כשאין אות טובה.
+ * מנגנון הגרלת האות והאזהרה על צירוף דל.
  *
- * `drawLetter` דורש שלפחות 60% מהקטגוריות הנבחרות יהיו מכוסות.
- * בארבעת ה-presets זה תמיד מתקיים — 17 מתוך 17 אותיות כשירות —
- * אבל ילד שבוחר קטגוריות בעצמו יכול להרכיב צירוף של קטגוריות דלות
- * (שיר, להקה, ספר, משחק מחשב, קבוצת ספורט — כולן שמות פרטיים שאין
- * דרך לאמת בלי מקור חיצוני), ובדרגה "קשה" מגיעים לאפס אותיות
- * כשירות.
+ * ## למה על אינדקס סינתטי ולא על המאגר
  *
- * קודם הגיבוי היה הגרלה אחידה, ולכן הילד היה יכול לקבל בדיוק את
- * האות שאין לה אף תשובה באף קטגוריה שבחר. עכשיו הוא מקבל את הטובה
- * שאפשר.
+ * בגרסה הראשונה הבדיקות האלה רצו על המאגר האמיתי, עם "חמש
+ * הקטגוריות של שמות פרטיים" כדוגמה לצירוף דל. ואז נוסף תוכן לקטגוריות
+ * האלה — והצירוף הפסיק להיות דל (2 אותיות כשירות מתוך 17 → 14). שלוש
+ * בדיקות נפלו, לא כי המנגנון נשבר אלא כי **המשחק השתפר**. בדיקה
+ * שנופלת כשהמוצר משתפר בודקת את הנתונים, לא את הקוד.
+ *
+ * לכן: המנגנון נבדק כאן על אינדקס שאנחנו בונים, שבו ידוע בדיוק
+ * כמה אותיות מכוסות. העובדות על המאגר האמיתי נבדקות בנפרד, למטה.
  */
-describe('הגרלת אות גם כשהמאגר דל', () => {
-  const index = buildLetterIndex(CATEGORIES.flatMap((c) => kb.inCategory(c.id)));
-  const thin = ['song', 'band', 'book', 'videogame', 'sportteam'];
+const MEDIUM = lettersForDifficulty('medium');
+const HARD = lettersForDifficulty('hard');
 
-  it('בכל ארבעת ה-presets כל האותיות כשירות', () => {
-    const order = [...CLASSIC_CATEGORY_IDS, ...CATEGORIES.filter((c) => !c.classic).map((c) => c.id)];
-    for (const count of [5, 7, 9, 12]) {
-      const ids = order.slice(0, count);
-      const min = Math.ceil(ids.length * 0.6);
-      const pool = lettersForDifficulty('medium');
-      const viable = pool.filter((l) => letterCoverage(l, ids, index) >= min);
-      expect(viable.length, `${count} קטגוריות`).toBe(pool.length);
+/** אינדקס קטגוריה+אות -> מילים, בנוי ידנית */
+function synth(cover: Record<string, readonly string[]>): Map<string, Set<string>> {
+  const index = new Map<string, Set<string>>();
+  for (const [cat, letters] of Object.entries(cover)) {
+    for (const letter of letters) index.set(`${cat}|${letter}`, new Set(['מילה']));
+  }
+  return index;
+}
+
+/** חמש קטגוריות שכל אחת מכסה אות אחת בלבד — ואף אות לא מגיעה ל-60% */
+const THIN = ['t1', 't2', 't3', 't4', 't5'];
+/** קטגוריות "קלאסיות" סינתטיות שמכסות את כל האותיות */
+const FULL = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9'];
+const thinIndex = synth({
+  ...Object.fromEntries(THIN.map((t, i) => [t, [MEDIUM[i]]])),
+  ...Object.fromEntries(FULL.map((k) => [k, [...MEDIUM, ...HARD, ...lettersForDifficulty('easy')]]))
+});
+
+describe('הגרלת אות כשאין אות טובה', () => {
+  it('כשאף אות לא עוברת את הרף — נבחרת זו שמכסה הכי הרבה, לא אות מתה', () => {
+    // p מכסה שתי אותיות, q אחת מהן, השאר כלום: הטובה היא MEDIUM[0] עם 2
+    const index = synth({ p: [MEDIUM[0], MEDIUM[1]], q: [MEDIUM[0]] });
+    const ids = ['p', 'q', 'r', 's', 't']; // רף: 3 מתוך 5 — אף אות לא מגיעה
+    expect(viableLetters(ids, 'medium', index)).toEqual([]);
+    for (let i = 0; i < 40; i++) {
+      expect(drawLetter(ids, 'medium', index, [], () => i / 40)).toBe(MEDIUM[0]);
     }
   });
 
-  it('בצירוף דל, האות שמוגרלת היא הטובה שאפשר ולא אות מתה', () => {
-    // עוברים על כל ההגרלות האפשריות ומוודאים שאף אחת אינה הגרועה
-    const best = Math.max(...lettersForDifficulty('hard').map((l) => letterCoverage(l, thin, index)));
+  it('כשיש אותיות כשירות — ההגרלה רק מתוכן', () => {
+    const viable = viableLetters(FULL.slice(0, 5), 'medium', thinIndex);
+    expect(viable).toEqual(MEDIUM);
     for (let i = 0; i < 40; i++) {
-      const letter = drawLetter(thin, 'hard', index, [], () => i / 40);
-      expect(letterCoverage(letter, thin, index), `אות ${letter}`).toBe(best);
+      expect(viable).toContain(drawLetter(FULL.slice(0, 5), 'medium', thinIndex, [], () => i / 40));
     }
   });
 
-  it('האות שמוגרלת תמיד מתוך מאגר האותיות של דרגת הקושי', () => {
-    const pool = lettersForDifficulty('hard');
+  it('האות שמוגרלת תמיד מתוך מאגר האותיות של הדרגה', () => {
     for (let i = 0; i < 40; i++) {
-      expect(pool).toContain(drawLetter(thin, 'hard', index, [], () => i / 40));
+      expect(HARD).toContain(drawLetter(THIN, 'hard', thinIndex, [], () => i / 40));
     }
   });
 });
 
+describe('אזהרה על צירוף דל — המנגנון', () => {
+  it('צירוף שבו אף אות לא כשירה — מקבל אזהרה', () => {
+    expect(isThinSelection(THIN, 'medium', thinIndex)).toBe(true);
+  });
+
+  it('צירוף שבו כל האותיות כשירות — לא מקבל', () => {
+    expect(isThinSelection(FULL.slice(0, 5), 'medium', thinIndex)).toBe(false);
+  });
+
+  it('צירוף ריק — לא מקבל אזהרה (אין עוד מה להזהיר עליו)', () => {
+    expect(isThinSelection([], 'medium', thinIndex)).toBe(false);
+  });
+
+  /**
+   * הבדיקה החשובה: **שהכפתור באמת מתקן.** הנוסח הראשון הוסיף תמיד שתי
+   * קטגוריות, וזה לא הספיק — הרף הוא 60% מהקטגוריות, וכל קטגוריה
+   * שנוספת מעלה גם אותו. כפתור "תיקון" שמשאיר את האזהרה הוא באג.
+   */
+  it('הכפתור מוסיף את המינימום שמספיק — ואחריו האזהרה נעלמת', () => {
+    // בדיוק המבנה של המקרה האמיתי: שלוש קטגוריות כמעט ריקות ושתיים מלאות.
+    // הרף: 60% מ-5 = 3. אות מכוסה ב-2 בלבד, חוץ משלוש שמגיעות ל-3 —
+    // כלומר 3 אותיות כשירות מתוך 17, פחות משליש: דל.
+    // מוסיפים k מלאות: צריך 2+k ≥ ⌈0.6·(5+k)⌉, והמינימום הוא k = 3.
+    const selected = ['t1', 't2', 't3', 'k1', 'k2'];
+    expect(isThinSelection(selected, 'medium', thinIndex)).toBe(true);
+
+    const add = categoriesToFixThin(selected, FULL, 'medium', thinIndex);
+    expect(add).toEqual(['k3', 'k4', 'k5']);
+    expect(isThinSelection([...selected, ...add!], 'medium', thinIndex)).toBe(false);
+    // ואחת פחות — האזהרה עוד שם. זה מה ש"מינימום" אומר.
+    expect(isThinSelection([...selected, ...add!.slice(0, -1)], 'medium', thinIndex)).toBe(true);
+  });
+
+  it('כשהתיקון לא נכנס בתקרה — null, ולא הבטחה חלקית', () => {
+    // חמש קטגוריות של אות אחת צריכות 8 מלאות: 13 — מעל 12
+    expect(categoriesToFixThin(THIN, FULL, 'medium', thinIndex)).toBeNull();
+  });
+
+  it('לא מבטיח תיקון שלא נכנס בתקרה של 12', () => {
+    const many = Array.from({ length: 11 }, (_, i) => `t${i + 1}`);
+    const index = synth({
+      ...Object.fromEntries(many.map((t, i) => [t, [MEDIUM[i % MEDIUM.length]]])),
+      ...Object.fromEntries(FULL.map((k) => [k, MEDIUM]))
+    });
+    expect(isThinSelection(many, 'medium', index)).toBe(true);
+    // נשאר מקום לאחת בלבד, והיא לא מספיקה
+    expect(categoriesToFixThin(many, FULL, 'medium', index)).toBeNull();
+  });
+
+  it('לא מציע קטגוריה שכבר נבחרה', () => {
+    const add = categoriesToFixThin([...THIN, 'k1'], FULL, 'medium', thinIndex);
+    expect(add ?? []).not.toContain('k1');
+  });
+});
+
 /**
- * אזהרת "צירוף דל" במסך בחירת הקטגוריות.
- *
- * הבדיקה החשובה כאן היא האחרונה: **שהכפתור באמת מתקן.** הנוסח
- * הראשון הוסיף תמיד שתי קלאסיות, וחישוב הראה שזה לא מספיק — רף
- * ההגרלה הוא 60% מהקטגוריות, אז כל קטגוריה שנוספת מעלה גם את הרף.
- * כפתור "תיקון" שמשאיר את האזהרה על המסך הוא בדיוק הבאג שכל הסבב
- * הזה צד: הילד עושה פעולה, ושום דבר לא משתנה.
+ * עובדות על המאגר האמיתי. אלה **אמורות** להיכשל אם התוכן נפגע —
+ * בכיוון ההפוך מהבדיקות שלמעלה, שאסור להן להיכשל כשהתוכן משתפר.
  */
-describe('אזהרה על צירוף דל, לפני ההגרלה', () => {
+describe('המאגר האמיתי והאזהרה', () => {
   const index = buildLetterIndex(getKnowledgeBase().items);
-  const thin = ['song', 'band', 'book', 'videogame', 'sportteam'];
   const order = [...CLASSIC_CATEGORY_IDS, ...CATEGORIES.filter((c) => !c.classic).map((c) => c.id)];
 
   it('ארבעת ה-presets לעולם לא מקבלים אזהרה, בשום דרגה', () => {
@@ -269,41 +332,26 @@ describe('אזהרה על צירוף דל, לפני ההגרלה', () => {
     }
   });
 
-  it('חמש קטגוריות של שמות פרטיים בלבד — מקבלות אזהרה', () => {
-    for (const d of ['easy', 'medium', 'hard'] as const) {
-      expect(isThinSelection(thin, d, index), d).toBe(true);
-    }
+  /**
+   * המקרה הגרוע הישן — חמש קטגוריות של שמות פרטיים — נסגר בתוכן:
+   * 2 אותיות כשירות מתוך 17 לפני, 14 אחרי. אם זה חוזר, משהו נמחק.
+   */
+  it('הצירוף הגרוע הישן כבר לא דל', () => {
+    const worst = ['song', 'band', 'book', 'videogame', 'sportteam'];
+    expect(viableLetters(worst, 'medium', index).length).toBeGreaterThanOrEqual(12);
+    expect(isThinSelection(worst, 'medium', index)).toBe(false);
   });
 
-  it('האזהרה משתמשת באותו כלל כמו ההגרלה עצמה', () => {
-    // צירוף לא דל = יש אותיות כשירות, וההגרלה בוחרת מתוכן בלבד
-    const ids = order.slice(0, 9);
-    const viable = viableLetters(ids, 'medium', index);
-    for (let i = 0; i < 30; i++) {
-      expect(viable).toContain(drawLetter(ids, 'medium', index, [], () => i / 30));
-    }
-  });
-
-  it('הכפתור מוסיף בדיוק מה שצריך — ואחרי הלחיצה האזהרה נעלמת', () => {
-    for (const d of ['easy', 'medium', 'hard'] as const) {
-      const add = categoriesToFixThin(thin, CLASSIC_CATEGORY_IDS, d, index);
-      expect(add, d).not.toBeNull();
-      expect(isThinSelection([...thin, ...add!], d, index), `${d} אחרי הלחיצה`).toBe(false);
-      // וזה המינימום: אחת פחות — האזהרה עוד שם
-      if (add!.length > 1) {
-        expect(isThinSelection([...thin, ...add!.slice(0, -1)], d, index), `${d} פחות אחת`).toBe(true);
-      }
-    }
-  });
-
-  it('לא מבטיח תיקון שלא נכנס בתקרה של 12', () => {
-    // 11 קטגוריות דלות: יש מקום לאחת בלבד, והיא לא מספיקה
-    const many = CATEGORIES.filter((c) => c.allowProperNames && !c.classic && c.id !== 'israelplace')
-      .map((c) => c.id)
-      .slice(0, 11);
-    // תנאי מקדים מפורש, אחרת הבדיקה הייתה יכולה לעבור בלי לבדוק כלום
-    expect(many).toHaveLength(11);
-    expect(isThinSelection(many, 'medium', index)).toBe(true);
-    expect(categoriesToFixThin(many, CLASSIC_CATEGORY_IDS, 'medium', index)).toBeNull();
+  /**
+   * מה שעדיין יכול להיות דל: קטגוריות שהילד המציא. למזהה
+   * `custom-<timestamp>` אין אף ערך במאגר, ולכן צירוף שרובו כאלה
+   * הוא בדיוק המקום שבו האזהרה נחוצה.
+   */
+  it('צירוף שרובו קטגוריות אישיות — מקבל אזהרה, ותיקון שעובד', () => {
+    const mine = ['custom-1', 'custom-2', 'custom-3', 'country', 'city'];
+    expect(isThinSelection(mine, 'medium', index)).toBe(true);
+    const add = categoriesToFixThin(mine, CLASSIC_CATEGORY_IDS, 'medium', index);
+    expect(add).not.toBeNull();
+    expect(isThinSelection([...mine, ...add!], 'medium', index)).toBe(false);
   });
 });
