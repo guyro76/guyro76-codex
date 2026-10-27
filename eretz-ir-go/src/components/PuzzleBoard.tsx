@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import GatedLink from './GatedLink';
 import { PUZZLE_CATEGORY, lookupTitle, pieceCount, puzzleById } from '../data/puzzles';
 import { cachedAnswerImage, resolveAnswerImage, type ResolvedImage } from '../lib/answerImages';
 import { puzzlePhoto, puzzlePhotoUrl } from '../data/puzzlePhotos';
@@ -215,9 +216,9 @@ export default function PuzzleBoard({
                     הפאזל חותך אותה לחלקים, וזה שינוי לכל דבר */}
                 📷 {photo.credit.author} ·{' '}
                 {photo.credit.licenseUrl ? (
-                  <a href={photo.credit.licenseUrl} target="_blank" rel="noopener noreferrer">
+                  <GatedLink href={photo.credit.licenseUrl}>
                     {photo.credit.license}
-                  </a>
+                  </GatedLink>
                 ) : (
                   photo.credit.license
                 )}
@@ -225,9 +226,9 @@ export default function PuzzleBoard({
                 {photo.pageUrl && (
                   <>
                     {' · '}
-                    <a href={photo.pageUrl} target="_blank" rel="noopener noreferrer">
+                    <GatedLink href={photo.pageUrl}>
                       מקור
-                    </a>
+                    </GatedLink>
                   </>
                 )}
               </>

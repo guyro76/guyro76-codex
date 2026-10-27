@@ -40,6 +40,7 @@ const fetchedHosts = [
 describe('כותרות אבטחה', () => {
   it('כל הכותרות החיוניות מוגדרות', () => {
     for (const key of [
+      'Strict-Transport-Security',
       'Content-Security-Policy',
       'X-Content-Type-Options',
       'X-Frame-Options',
@@ -109,6 +110,17 @@ describe('תנאי השימוש', () => {
 
   it('מציינים דרך יצירת קשר', () => {
     expect(terms).toMatch(/mailto:[^"]+@[^"]+/);
+  });
+
+  /**
+   * התנאים אמרו "אפשר לשחק בלי חשבון כלל", והמדיניות אמרה "כדי להיכנס
+   * למשחק נדרש חשבון" — שני המסמכים המחייבים סתרו זה את זה, ושניהם
+   * סתרו את הקוד. עכשיו הם נבדקים זה מול זה.
+   */
+  it('לא מבטיחים משחק בלי חשבון, ולא סותרים את מדיניות הפרטיות', () => {
+    expect(terms).not.toMatch(/אפשר לשחק בלי חשבון/);
+    expect(terms).toMatch(/נדרש חשבון/);
+    expect(policy).toMatch(/נדרש חשבון/);
   });
 
   it('נגישים מתוך האפליקציה ולא רק מדף החנות', () => {
@@ -433,17 +445,33 @@ describe('עמוד מחיקת חשבון', () => {
  */
 describe('מסך ההרשמה', () => {
   const login = readFileSync(resolve(root, 'src/screens/Login.tsx'), 'utf8');
-  const visible = login
-    .split('\n')
-    .filter((l) => !l.trimStart().startsWith('*') && !l.trimStart().startsWith('//'))
-    .join('\n');
+  // הערות מוסרות לפי תחביר (גם `{/* ... */}` שמשתרע על כמה שורות), לא לפי
+  // תו בתחילת שורה: הסינון הקודם החמיץ הערות JSX שלא מתחילות ב-*, והבדיקות
+  // נכשלו על הסבר שנכתב בדיוק כדי לתעד למה הטענה נמחקה.
+  const visible = login.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
   it('אומר שהחשבון של ההורה', () => {
     expect(visible).toContain('להורה');
   });
 
-  it('מבהיר שאפשר לשחק בלי חשבון בכלל', () => {
-    expect(visible).toContain('בלי הרשמה');
+  /**
+   * הנוסח הקודם אמר "הילד לא צריך חשבון כדי לשחק — המשחק עובד גם בלי
+   * הרשמה בכלל". המסך הזה מוצג **רק** כשהחשבונות מופעלים, ובמצב הזה
+   * `App` לא מציג שום דבר אחר עד שיש סשן — אין מסלול אורח. ההבטחה
+   * הייתה שקרית בדיוק במקום היחיד שבו נאמרה, ובדיוק מול הורה שמחליט
+   * אם לפתוח חשבון. הבדיקה הזו נעלה אותה, ולכן היא עכשיו בכיוון ההפוך.
+   */
+  it('לא מבטיח משחק בלי חשבון, כי אין מסלול כזה', () => {
+    expect(visible).not.toContain('בלי הרשמה');
+    expect(visible).not.toContain('לא צריך חשבון');
+    expect(visible).toContain('חשבון שהורה פתח');
+  });
+
+  it('וזה אכן נכון: כשהחשבונות מופעלים, בלי סשן מוצג רק מסך ההתחברות', () => {
+    const app = readFileSync(resolve(root, 'src/App.tsx'), 'utf8');
+    expect(app).toMatch(/gated && !session/);
+    // ואין במסך ההתחברות כפתור "המשך כאורח"
+    expect(visible).not.toMatch(/guest|אורח|continueWithout/i);
   });
 
   it('מקשר גם לפרטיות וגם לתנאי השימוש', () => {

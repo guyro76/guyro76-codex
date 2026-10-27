@@ -1,4 +1,4 @@
-import React, { Component, Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
+import React, { Component, Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useApp } from './store/appStore';
 import { installErrorTrap, recordError } from './lib/errorLog';
 import { getSetting, repairPhotoAvatars } from './db/db';
@@ -161,6 +161,30 @@ function OfflineBanner() {
   );
 }
 
+
+/**
+ * דילוג ישיר לתוכן. ה-CSS (`.skip-link`) היה קיים מזמן, אבל אף רכיב לא
+ * השתמש בו — משתמש מקלדת או קורא מסך עבר על כל כפתורי הכותרת בכל מסך.
+ *
+ * ה-`href` נשאר לצורך סמנטיקה, אבל הלחיצה נעצרת: `App` מאזין לשינויי
+ * hash (קישורי אתגר, ניווט אחורה), ו-`#main-content` אמיתי היה מוסיף
+ * רשומת היסטוריה ומפעיל אותם.
+ */
+function SkipLink() {
+  return (
+    <a
+      className="skip-link"
+      href="#main-content"
+      onClick={(ev) => {
+        ev.preventDefault();
+        document.getElementById('main-content')?.focus();
+      }}
+    >
+      דלגו לתוכן הראשי
+    </a>
+  );
+}
+
 export default function App() {
   const screen = useApp((s) => s.screen);
   const loadProfiles = useApp((s) => s.loadProfiles);
@@ -249,6 +273,35 @@ export default function App() {
   }, [screen]);
 
   /**
+   * פוקוס לתוכן אחרי מעבר מסך.
+   *
+   * הכפתור שלחצו עליו ("בואו נשחק", "משחק חדש") נעלם מה-DOM עם המסך
+   * הקודם, והפוקוס נופל ל-body. Chrome ממשיך את ניווט המקלדת ממקום
+   * הכפתור שנעלם — כלומר Tab הבא לא מגיע לדילוג-לתוכן ולא לראש הדף,
+   * ומשתמש קורא מסך מקבל שקט במקום הכרזה על המסך החדש. זה נמדד:
+   * בדיקת הדילוג נכשלה בדיוק כך.
+   *
+   * שלושה תנאים כדי לא להזיק:
+   *  - לא בטעינה הראשונה — שם הפוקוס צריך להישאר בראש הדף, אחרת
+   *    הדילוג לא יהיה הראשון ב-Tab;
+   *  - רק כשהפוקוס אבד (body). אם מסך חדש כבר שם פוקוס על שדה
+   *    (`autoFocus` בכניסה או בתשובה), או שהמשתמש נמצא על כפתור
+   *    בכותרת — לא נוגעים;
+   *  - בלי גלילה, כדי לא להתחרות בגלילה לראש שלמעלה.
+   */
+  const firstScreen = useRef(true);
+  useEffect(() => {
+    if (firstScreen.current) {
+      firstScreen.current = false;
+      return;
+    }
+    const active = document.activeElement;
+    if (!active || active === document.body) {
+      document.getElementById('main-content')?.focus({ preventScroll: true });
+    }
+  }, [screen]);
+
+  /**
    * כפתור החזרה של אנדרואיד, מחוות החזרה ב-PWA וכפתור החזרה בדפדפן
    * — כולם מגיעים לכאן.
    *
@@ -317,10 +370,12 @@ export default function App() {
   if (gated && !authReady) {
     return (
       <ErrorBoundary>
-        <div className="screen center">
-          <Globe />
-          <p className="dim" style={{ marginTop: 18 }}>רגע, בודקים אם אתם כבר מחוברים…</p>
-        </div>
+        <main id="main-content" tabIndex={-1}>
+          <div className="screen center">
+            <Globe />
+            <p className="dim" style={{ marginTop: 18 }}>רגע, בודקים אם אתם כבר מחוברים…</p>
+          </div>
+        </main>
         <SiteCredit />
       </ErrorBoundary>
     );
@@ -328,8 +383,11 @@ export default function App() {
   if (gated && !session) {
     return (
       <ErrorBoundary>
+        <SkipLink />
         <LiveRegion />
-        <Login />
+        <main id="main-content" tabIndex={-1}>
+          <Login />
+        </main>
         <SiteCredit />
       </ErrorBoundary>
     );
@@ -337,10 +395,13 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <SkipLink />
       <OfflineBanner />
       <AppHeader />
       <LiveRegion />
-      <Suspense fallback={<ScreenLoading />}>{screens[screen] ?? <Splash />}</Suspense>
+      <main id="main-content" tabIndex={-1}>
+        <Suspense fallback={<ScreenLoading />}>{screens[screen] ?? <Splash />}</Suspense>
+      </main>
       <SiteCredit />
     </ErrorBoundary>
   );

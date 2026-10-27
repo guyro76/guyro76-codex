@@ -22,14 +22,24 @@ import { useMemo, useState } from 'react';
  *
  * השער נפתח **לפעם הזו בלבד** ולא נשמר. שער שנפתח פעם אחת ונשאר
  * פתוח הוא שער שנפתח פעם אחת.
+ *
+ * ## שני שימושים
+ *
+ * `commerce` (ברירת מחדל) — מסך מלא לפני המחירון.
+ * `external` — חלון קטן לפני יציאה מהאפליקציה לאתר חיצוני, דרך
+ * `GatedLink`. אותה מדיניות Families דורשת גם את זה: קישור החוצה
+ * אינו נגיש לילד ישירות.
  */
 export default function ParentGate({
   onPass,
-  onCancel
+  onCancel,
+  purpose = 'commerce'
 }: {
   onPass: () => void;
   onCancel: () => void;
+  purpose?: 'commerce' | 'external';
 }) {
+  const external = purpose === 'external';
   // נבחר פעם אחת לכל הצגה של השער, כדי שהתשובה לא תשתנה תוך כדי הקלדה
   const quiz = useMemo(() => {
     const a = 3 + Math.floor(Math.random() * 7); // 3..9
@@ -49,15 +59,17 @@ export default function ParentGate({
     setEntered('');
   };
 
-  return (
-    <div className="screen center">
+  const card = (
       <div className="card" style={{ maxWidth: 380, margin: '0 auto' }}>
         <div style={{ fontSize: '2.6rem' }} aria-hidden>
           🔒
         </div>
         <h2 style={{ marginTop: 6 }}>רגע, שאלה להורים</h2>
         <p className="dim">
-          באזור הזה יש מחירים ומנויים, והוא מיועד למבוגר. כדי להמשיך — כמה זה{' '}
+          {external
+            ? 'הקישור הזה יוצא מהמשחק אל אתר אחר, והוא מיועד למבוגר.'
+            : 'באזור הזה יש מחירים ומנויים, והוא מיועד למבוגר.'}{' '}
+          כדי להמשיך — כמה זה{' '}
           <strong dir="ltr">
             {quiz.a} × {quiz.b}
           </strong>
@@ -69,6 +81,7 @@ export default function ParentGate({
           inputMode="numeric"
           dir="ltr"
           aria-label={`כמה זה ${quiz.a} כפול ${quiz.b}`}
+          data-autofocus
           value={entered}
           onChange={(ev) => {
             setEntered(ev.target.value.replace(/\D/g, '').slice(0, 4));
@@ -88,10 +101,12 @@ export default function ParentGate({
             ממשיכים
           </button>
           <button className="btn-ghost btn-small" onClick={onCancel}>
-            ← חזרה למשחק
+            {external ? 'ביטול' : '← חזרה למשחק'}
           </button>
         </div>
       </div>
-    </div>
   );
+
+  // בחלון (`external`) אין צורך במסך מלא — החלון עצמו כבר מרכז
+  return external ? card : <div className="screen center">{card}</div>;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import GatedLink from '../components/GatedLink';
 import TopBar from '../components/TopBar';
 import { db } from '../db/db';
 
@@ -58,9 +59,9 @@ export default function Credits() {
             <div key={r.key} style={{ padding: '6px 0', borderTop: '1px solid var(--border-glass)' }}>
               <strong>{r.name}</strong>{' '}
               {r.pageUrl && (
-                <a href={r.pageUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--turquoise)' }}>
+                <GatedLink href={r.pageUrl} style={{ color: 'var(--turquoise)' }}>
                   עמוד המקור והרישיון ↗
-                </a>
+                </GatedLink>
               )}
             </div>
           ))}

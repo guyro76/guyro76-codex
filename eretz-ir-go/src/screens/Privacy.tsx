@@ -27,12 +27,16 @@ export default function Privacy() {
             והתוצאות שלהם לא עולים לשרת אף פעם.
           </li>
           <li>✅ אין מספר טלפון, אין מיקום, אין מצלמה.</li>
-          <li>✅ אין פרסומות ואין מעקב.</li>
+          <li>
+            ✅ אין מעקב ואין פרופיל פרסומי. בגרסה החינמית מוצגות פרסומות בין השלבים — לא מותאמות אישית. בגרסה בתשלום אין
+            פרסומות.
+          </li>
           <li>✅ הרמזים של ארצי מחושבים במכשיר — שום תשובה לא נשלחת לשירות AI.</li>
           <li>
-            🌐 הדבר היחיד שיוצא מהמכשיר: כשכותבים תשובה שאינה במאגר, המשחק מחפש אותה בוויקיפדיה העברית (כמו חיפוש רגיל
-            בדפדפן) כדי לוודא שהיא אמיתית. נשלחת <strong>המילה שהוקלדה בלבד</strong> — ולוויקימדיה מגיעה גם כתובת ה-IP,
-            כמו בכל בקשת רשת. השם, הגיל, התוצאות והאוסף לא נשלחים לשום מקום.
+            🌐 מה שיוצא מהמכשיר: כשכותבים תשובה שאינה במאגר, המשחק מחפש אותה בוויקיפדיה העברית (כמו חיפוש רגיל
+            בדפדפן) כדי לוודא שהיא אמיתית. וכדי להציג תמונה למילה שנחשפה הוא מבקש אותה מוויקימדיה ומ-Openverse.
+            נשלחת <strong>המילה שהוקלדה בלבד</strong> — ולשירותים האלה מגיעה גם כתובת ה-IP, כמו בכל בקשת רשת. השם,
+            הגיל, התוצאות והאוסף לא נשלחים לשום מקום.
           </li>
         </ul>
       </div>
@@ -43,18 +47,24 @@ export default function Privacy() {
           הנוסח המלא, כולל פרטיות ילדים (COPPA/GDPR-K) ודרך יצירת קשר, נמצא בעמוד קבוע וציבורי.
         </p>
         <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-          <a href="/privacy.html" target="_blank" rel="noopener noreferrer">
-            <button>פתיחת מדיניות הפרטיות ↗</button>
+          <a className="link-button" href="/privacy.html" target="_blank" rel="noopener noreferrer">
+            פתיחת מדיניות הפרטיות ↗
           </a>
           {/* החנויות דורשות שתנאי השימוש יהיו נגישים מתוך האפליקציה,
               ולא רק מדף החנות */}
-          <a href="/terms.html" target="_blank" rel="noopener noreferrer">
-            <button>תנאי שימוש ↗</button>
+          <a className="link-button" href="/terms.html" target="_blank" rel="noopener noreferrer">
+            תנאי שימוש ↗
           </a>
           {/* שתי החנויות מבקשות כתובת תמיכה נגישה, ועמוד עדיף על
               כתובת מייל חשופה */}
-          <a href="/support.html" target="_blank" rel="noopener noreferrer">
-            <button>תמיכה ושאלות ↗</button>
+          <a className="link-button" href="/support.html" target="_blank" rel="noopener noreferrer">
+            תמיכה ושאלות ↗
+          </a>
+          {/* הצהרת נגישות: מה נבדק, מה חסר ואיך פונים. מופיעה באתר
+              ובאפליקציה גם כשאין חובה לכל גוף — כי היא עונה על שאלה
+              שהורה של ילד עם צרכים מיוחדים שואל לפני שמורידים */}
+          <a className="link-button" href="/accessibility.html" target="_blank" rel="noopener noreferrer">
+            הצהרת נגישות ↗
           </a>
         </div>
       </div>

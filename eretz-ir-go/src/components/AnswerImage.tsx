@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
+import GatedLink from './GatedLink';
 import { cachedAnswerImage, reportWrongImage, resolveAnswerImage, withImage } from '../lib/answerImages';
 import type { KnowledgeItem } from '../types';
 
@@ -96,9 +97,9 @@ export default function AnswerImage({
             <>
               {' · '}
               {image.licenseUrl ? (
-                <a href={image.licenseUrl} target="_blank" rel="noopener noreferrer">
+                <GatedLink href={image.licenseUrl}>
                   {image.license}
-                </a>
+                </GatedLink>
               ) : (
                 image.license
               )}
@@ -107,9 +108,9 @@ export default function AnswerImage({
           {sourceLink && (
             <>
               {' · '}
-              <a href={sourceLink} target="_blank" rel="noopener noreferrer">
+              <GatedLink href={sourceLink}>
                 {image.source}
-              </a>
+              </GatedLink>
             </>
           )}
           {' · מוצגת חתוכה'}
@@ -132,9 +133,9 @@ export default function AnswerImage({
                 <>
                   {' · '}
                   {image.licenseUrl ? (
-                    <a href={image.licenseUrl} target="_blank" rel="noopener noreferrer">
+                    <GatedLink href={image.licenseUrl}>
                       {image.license}
-                    </a>
+                    </GatedLink>
                   ) : (
                     image.license
                   )}
@@ -143,9 +144,9 @@ export default function AnswerImage({
             </p>
             {sourceLink && (
               <p style={{ fontSize: '0.8rem' }}>
-                <a href={sourceLink} target="_blank" rel="noopener noreferrer">
+                <GatedLink href={sourceLink}>
                   לעמוד המקור ↗
-                </a>
+                </GatedLink>
               </p>
             )}
             <div className="row" style={{ justifyContent: 'center' }}>

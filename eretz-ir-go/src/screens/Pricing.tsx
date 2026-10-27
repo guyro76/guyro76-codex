@@ -122,8 +122,8 @@ export default function Pricing() {
           <li>“לכל החיים” היא תשלום אחד ואינה מתחדשת.</li>
           <li>הרכישה מוגנת מאחורי אזור ההורים, כדי שילד לא יקנה בטעות.</li>
         </ul>
-        <a href="/terms.html" target="_blank" rel="noopener noreferrer">
-          <button className="btn-ghost">תנאי השימוש ↗</button>
+        <a className="link-button btn-ghost" href="/terms.html" target="_blank" rel="noopener noreferrer">
+          תנאי השימוש ↗
         </a>
       </div>
     </div>

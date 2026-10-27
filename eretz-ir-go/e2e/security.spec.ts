@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -141,6 +142,64 @@ test('🛟 עמוד התמיכה פתוח ומקושר מהפרטיות', async 
   await page.goto('./privacy.html');
   await page.getByRole('link', { name: /התמיכה/ }).click();
   await expect(page.getByRole('heading', { name: /תמיכה ושאלות נפוצות/ })).toBeVisible();
+});
+
+/**
+ * הצהרת הנגישות והעמודים הציבוריים: מוגשים כעמודים אמיתיים תחת ה-CSP,
+ * עם כותרות אבטחה ובלי שגיאות קונסול, ועוברים את axe בעצמם — עמוד
+ * שמצהיר על נגישות ואינו נגיש הוא הדבר הראשון שבודק מחפש.
+ */
+test('♿ הצהרת הנגישות מוגשת, נגישה בעצמה, ומקושרת מהפרטיות והמשחק', async ({ page }) => {
+  const errors: string[] = [];
+  const cspViolations = await applyCsp(page);
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  const res = await page.goto('./accessibility.html');
+  expect(res?.status()).toBe(200);
+  expect(await page.locator('html').getAttribute('dir')).toBe('rtl');
+  await expect(page.getByRole('heading', { level: 1, name: /הצהרת נגישות/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /מגבלות ידועות/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'guyro76@gmail.com' })).toBeVisible();
+
+  // העמוד עצמו עובר axe — כולל ניגודיות, כי כאן אין שכבות זכוכית שמטעות את axe
+  const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+  expect(
+    axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`),
+    'הפרות axe בהצהרת הנגישות'
+  ).toEqual([]);
+
+  await page.goto('./privacy.html');
+  await page.getByRole('link', { name: 'הצהרת הנגישות' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: /הצהרת נגישות/ })).toBeVisible();
+  expect(errors, `שגיאות קונסול: ${errors.join(' | ')}`).toEqual([]);
+  expect(cspViolations, `הפרות CSP: ${cspViolations.join(' | ')}`).toEqual([]);
+});
+
+/**
+ * חמשת העמודים הסטטיים לא נבדקו אף פעם תחת ה-CSP: הבדיקה הקיימת עוברת
+ * רק את המשחק. עמוד עם סגנון או משאב שנחסמים נראה שבור בפרודקשן ותקין כאן.
+ */
+test('🛡️ העמודים הציבוריים עובדים תחת ה-CSP האמיתי', async ({ page }) => {
+  const violations = await applyCsp(page);
+  for (const name of ['privacy', 'terms', 'support', 'delete-account', 'accessibility']) {
+    const res = await page.goto(`./${name}.html`);
+    expect(res?.status(), name).toBe(200);
+    await expect(page.locator('h1')).toBeVisible();
+    const fromPage = await page.evaluate(() => (window as unknown as { __csp?: string[] }).__csp ?? []);
+    expect(fromPage, `${name}: הפרות CSP`).toEqual([]);
+  }
+  expect(violations).toEqual([]);
+});
+
+test('🔙 לכל עמוד ציבורי יש דרך חזרה למשחק', async ({ page }) => {
+  for (const name of ['privacy', 'terms', 'support', 'delete-account', 'accessibility']) {
+    await page.goto(`./${name}.html`);
+    const back = page.getByRole('link', { name: /חזרה למשחק/ });
+    await expect(back, `${name}.html: אין קישור חזרה`).toBeVisible();
+    await back.click();
+    await expect(page.getByRole('button', { name: /בואו נשחק/ })).toBeVisible({ timeout: 15_000 });
+  }
 });
 
 test('♿ הכרזות לקורא מסך: האות שהוגרלה מוקראת', async ({ page }) => {

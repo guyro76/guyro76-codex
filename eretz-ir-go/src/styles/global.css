@@ -227,6 +227,34 @@ button:active {
 button:focus-visible { outline: 3px solid var(--turquoise); outline-offset: 3px; }
 button:disabled { opacity: 0.42; cursor: not-allowed; transform: none; }
 
+/*
+  קישור שנראה ככפתור. קודם היה `<a><button>…</button></a>` — HTML לא
+  תקין (תוכן אינטראקטיבי בתוך קישור), שנותן שתי עצירות Tab לכל פעולה,
+  וב-Firefox הלחיצה על הכפתור לא מפעילה את הקישור שעוטף אותו.
+  רקע שנקבע ידנית מחייב צבע טקסט מפורש, ולכן שניהם כאן, מאותם טוקנים
+  של `button`.
+*/
+a.link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  min-height: 48px;
+  padding: 10px 20px;
+  color: var(--text);
+  background: var(--glass-fill-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), 0 6px 18px -10px rgba(6, 2, 24, 0.7);
+  touch-action: manipulation;
+}
+a.link-button:hover { border-color: rgba(255, 255, 255, 0.32); }
+a.link-button:focus-visible { outline: 3px solid var(--turquoise); outline-offset: 3px; }
+a.link-button.btn-ghost { background: transparent; }
+
 .btn-primary {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 46%),
@@ -737,14 +765,37 @@ img { max-width: 100%; border-radius: 12px; }
 /* דילוג ישיר לתוכן — הכפתור מתגלה רק כשמגיעים אליו במקלדת */
 .skip-link {
   position: absolute;
-  inset-inline-start: -9999px;
-  top: 8px;
+  inset-inline-start: 8px;
+  /*
+    מעל המסך ולא מחוצה לו לרוחב, ובגודל אמיתי. שתי טכניקות אחרות נכשלו
+    כאן בבדיקות:
+     - `inset-inline-start: -9999px` בעמוד RTL הוא `right: -9999px`, כלומר
+       10,000 פיקסלים מימין למסך. `responsive.spec.ts` סימן אותו בכל מסך.
+     - הסתרה חזותית ל-1×1 פיקסל נתפסה ב-`a11y.spec.ts` כיעד מגע זעיר.
+    כך האלמנט לא תלוי בכיוון הדף, וגודלו תקין גם כשאינו מוצג.
+  */
+  top: -80px;
   z-index: 999;
+  white-space: nowrap;
   background: var(--bg-mid);
+  /* רקע שנקבע ידנית מחייב צבע טקסט מפורש (כלל הקריאות של הפרויקט) */
+  color: var(--text);
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 10px;
   border: 2px solid var(--turquoise);
 }
 .skip-link:focus {
-  inset-inline-start: 8px;
+  top: 8px;
+}
+/* היעד של הדילוג מקבל פוקוס בתוכנה בלבד; אין סיבה לצייר סביבו מסגרת */
+main:focus {
+  outline: none;
+}
+/* ובדומה לכך החלון הפתוח: הפוקוס עליו מכריז את שמו, והלחיצה הבאה על Tab
+   מגיעה לבקרה הראשונה, שאותה מסגרת הפוקוס כן מסמנת */
+.modal:focus {
+  outline: none;
 }
 
 /* ===== כדור הארץ ===== */
