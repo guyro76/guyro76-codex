@@ -6,6 +6,10 @@ on:
       - 'trivia-squares/**'
       - '.github/workflows/trivia-squares-ci.yml'
 
+concurrency:
+  group: trivia-squares-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -31,6 +35,8 @@ jobs:
         run: node --test tests/*.test.mjs
       - name: Next.js production build
         run: npm run build
+      - name: Check Supabase Auth provider availability
+        run: node scripts/check-auth-status.mjs
       - name: Install Chromium browser for E2E
         run: npx playwright install --with-deps chromium
       - name: Browser tests - drawing, local persistence, mobile and legal routes
