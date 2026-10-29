@@ -4,17 +4,18 @@ import {localeCatalog,activeLocales,plannedLocales,isActiveLocale,localeDirectio
 import {offlineQuestions} from '../src/lib/offlineQuestions.ts';
 import {englishQuestions} from '../src/lib/englishQuestions.ts';
 
-test('QA specialist 4: English and Hebrew released, other language gates disabled',()=>{
- assert.deepEqual([...activeLocales],['he','en']);
- assert.deepEqual([...plannedLocales],['ru','fr','ar']);
- assert.equal(isActiveLocale('en'),true);
- assert.equal(isActiveLocale('ru'),false);
- assert.equal(isActiveLocale('fr'),false);
- assert.equal(isActiveLocale('ar'),false);
- for(const locale of plannedLocales)assert.equal(localeCatalog[locale].enabled,false);
+test('QA specialist 4: five live languages and correct reading directions',()=>{
+ assert.deepEqual([...activeLocales],['he','en','ru','fr','ar']);
+ assert.deepEqual([...plannedLocales],[]);
+ for(const locale of activeLocales){
+   assert.equal(isActiveLocale(locale),true);
+   assert.equal(localeCatalog[locale].enabled,true);
+   assert.equal(translatedWorlds[locale].length,4);
+ }
+ assert.equal(isActiveLocale('xx'),false);
  assert.equal(localeDirection('he'),'rtl');
- assert.equal(localeDirection('en'),'ltr');
- assert.equal(localeCatalog.ar.direction,'rtl');
+ assert.equal(localeDirection('ar'),'rtl');
+ for(const locale of ['en','ru','fr'])assert.equal(localeDirection(locale),'ltr');
 });
 test('QA specialist 4: English UI has authored primary strings',()=>{
  for(const input of ['טריוויה ריבועים','התחל משחק','גודל לוח','התחבר באמצעות Google','שכחתי סיסמה','הודעת הפרטיות','תנאי השימוש','כינוי שחקן','פרטיות','נגישות','התחל משחק']){
