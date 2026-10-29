@@ -1146,4 +1146,26 @@ export const offlineQuestions: OfflineQuestion[] = [
   ],
   "correct": 2
  }
-];
+].concat(createMathQuestionReserve());
+
+/**
+ * Deterministic, validated reserve of unique arithmetic questions.
+ * A long 6x6 round can consume far more than 104 questions after wrong answers.
+ * These additional 312 items avoid repeating questions or silently resetting history.
+ */
+function createMathQuestionReserve(): OfflineQuestion[] {
+  const items: OfflineQuestion[] = [];
+  let id = 20000;
+  function add(question: string, result: number, slot: number, distractors: [number,number,number]) {
+    const answers = Array.from({length:4}, (_,i) =>
+      String(i === slot ? result : distractors[(i - slot + 3) % 4])
+    );
+    if (new Set(answers).size !== 4) throw Error('Duplicate math choice');
+    items.push({ id: id++, text: question, answers, correct: slot });
+  }
+  for (let a=12;a<=35;a++) for(let b=5;b<=12;b++)
+    add(`כמה הם ${a} ועוד ${b}?`, a+b, (a+b)%4, [a+b-2,a+b+3,a+b+7]);
+  for (let a=3;a<=14;a++) for(let b=4;b<=13;b++)
+    add(`כמה הם ${a} כפול ${b}?`, a*b, (a+b)%4, [a*b-2,a*b+3,a*b+5]);
+  return items;
+}
