@@ -7,6 +7,8 @@ test('clock, both dates, weather, version and author credit are visible on deskt
   })
  }));
  await page.goto('/');
+ const tutorial=page.getByRole('dialog',{name:'הסבר משחק'});
+ if(await tutorial.isVisible())await tutorial.getByRole('button',{name:'דלג או סיים'}).click();
  const bar=page.getByRole('region',{name:'נתוני המשחק: שעה, תאריך, מזג אוויר וגרסה'});
  await expect(bar).toBeVisible();
  await expect(bar.getByLabel('השעה בישראל')).toContainText(/^\d{2}:\d{2}:\d{2}$/);
@@ -26,6 +28,8 @@ test('city preference persists and weather display remains accessible in mobile 
   })
  }));
  await page.goto('/');
+ const tutorial=page.getByRole('dialog',{name:'הסבר משחק'});
+ if(await tutorial.isVisible())await tutorial.getByRole('button',{name:'דלג או סיים'}).click();
  const select=page.getByLabel('מזג האוויר');
  await select.selectOption('jerusalem');
  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('trivia-weather-city'))).toBe('jerusalem');
