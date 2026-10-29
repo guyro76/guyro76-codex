@@ -6,6 +6,7 @@ import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicCon
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawing';
 import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
+import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
 import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
@@ -35,7 +36,7 @@ function canonicalQuestion(text:string):string {
 }
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local' | 'solo';
-type Question = { text: string; answers: string[]; edge?: string; id?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus'; deadline_at?: string | null; extensions?: number };
+type Question = { text: string; answers: string[]; edge?: string; id?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus' | 'premium_bonus'; premium?: boolean; premiumOwner?: Side; deadline_at?: string | null; extensions?: number };
 type WrongAnswerFeedback = { text:string; answers:string[]; selectedIndex:number; correctIndex:number | null };
 type GameState = {
   rows: number;
@@ -165,6 +166,7 @@ export default function TriviaGame() {
   const lastTickRef=useRef<number | null>(null);
   const [localCredits,setLocalCredits]=useState<Record<'host'|'guest',number>>({host:0,guest:0});
   const [localCharms,setLocalCharms]=useState<Record<'host'|'guest',number>>({host:0,guest:0});
+  const [localWallet,setLocalWallet]=useState({stars:0,fruits:0,diamonds:0});
   const [localFreeze,setLocalFreeze]=useState<Record<'host'|'guest',boolean>>({host:false,guest:false});
   const [name, setName] = useState('');
   const [nameSavedOnDevice,setNameSavedOnDevice]=useState(false);
@@ -382,7 +384,7 @@ export default function TriviaGame() {
                 const rewards=JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}');
                 localStorage.setItem('trivia-local-rewards',JSON.stringify({
                   credits:{host:Number(rewards.credits?.host||0)+Number(rewards.credits?.guest||0),guest:0},
-                  charms:{host:Number(rewards.charms?.host||0)+Number(rewards.charms?.guest||0),guest:0}
+                  charms:{host:Number(rewards.charms?.host||0)+Number(rewards.charms?.guest||0),guest:0},wallet:rewards.wallet
                 }));
               }catch{}
             }
@@ -394,6 +396,7 @@ export default function TriviaGame() {
       const rewards=JSON.parse(localStorage.getItem('trivia-local-rewards')||'null');
       if(rewards?.credits) setLocalCredits(rewards.credits);
       if(rewards?.charms) setLocalCharms(rewards.charms);
+      if(rewards?.wallet){const w=rewards.wallet;setLocalWallet({stars:Math.max(0,Number(w.stars)||0),fruits:Math.max(0,Number(w.fruits)||0),diamonds:Math.max(0,Number(w.diamonds)||0)});}
     }catch{}
     try{
       const pending=JSON.parse(localStorage.getItem('trivia-local-question')||'null') as Question|null;
@@ -450,8 +453,8 @@ export default function TriviaGame() {
   },[local,localReady]);
   useEffect(()=>{
     if(!localReady) return;
-    try{localStorage.setItem('trivia-local-rewards',JSON.stringify({credits:localCredits,charms:localCharms}))}catch{}
-  },[localCredits,localCharms,localReady]);
+    try{localStorage.setItem('trivia-local-rewards',JSON.stringify({credits:localCredits,charms:localCharms,wallet:localWallet}))}catch{}
+  },[localCredits,localCharms,localWallet,localReady]);
   useEffect(()=>{
     if(!localReady || remote) return;
     try{
@@ -691,7 +694,7 @@ export default function TriviaGame() {
       usedLocalQuestionIds.current.add(q.id);
       rememberShownQuestion(q.text);
       try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
-      setQuestion({id:q.id,text:q.text,answers:q.answers,locale,edge:key,deadline_at:new Date(Date.now()+60_000).toISOString(),extensions:0});
+      setQuestion({id:q.id,text:q.text,answers:q.answers,locale,edge:key,premium:q.id%11===0,deadline_at:new Date(Date.now()+60_000).toISOString(),extensions:0});
     }
   }
   async function answer(i: number) {
@@ -732,6 +735,29 @@ export default function TriviaGame() {
       const q=[...englishQuestions,...offlineQuestions,...freshLocalQuestionReserve,...internationalQuestions].find(v=>v.id===question.id);
       if(!q){setMessage('לא נמצאה השאלה המקורית.');setBusy(false);return;}
       const correct = i === q.correct;
+      if(question.kind==='premium_bonus'){
+        const side:Side=question.premiumOwner || (local.mode==='solo'?'host':local.turn);
+        if(correct){
+          const captured=awardPremiumSquares(local,edge,side,2);
+          const doubled={...captured.board,scores:{...captured.board.scores,[side]:captured.board.scores[side]+captured.captured.length}};
+          setLocal(doubled);
+          const amount=Math.max(10,captured.captured.length*20);
+          setLocalCredits(prev=>({...prev,[side==='guest'?'guest':'host']:prev[side==='guest'?'guest':'host']+amount}));
+          setLocalWallet(prev=>({...prev,stars:prev.stars+4,fruits:prev.fruits+captured.captured.length*2,diamonds:prev.diamonds+(captured.captured.length?1:0)}));
+          play('bonus');
+          playGameSound('coin',{muted,volume:volume/100},.28);
+          playGameSound('star',{muted,volume:volume/100},.58);
+          if(captured.captured.length)playGameSound('diamond',{muted,volume:volume/100},.85);
+          setMessage(locale==='he'
+            ? 'פרימיום! כבשת '+captured.captured.length+' ריבועים, ניקוד ופרסים כפולים.'
+            : 'Premium bonus! '+captured.captured.length+' extra captures, double points and prizes.');
+        }else{
+          setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,correctIndex:q.correct});
+          play('wrong');
+          setMessage(locale==='he'?'שאלת הפרימיום לא נענתה נכון. אפשר ללמוד את התשובה ולהמשיך.':'Premium bonus missed. Review the answer and continue.');
+        }
+        setQuestion(null);setEdge(null);setBusy(false);return;
+      }
       if(!correct){
         setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,correctIndex:q.correct});
       }
@@ -746,11 +772,33 @@ export default function TriviaGame() {
       setMessage(locale==='en'?
  (correct?(gained?'You captured '+gained+' squares!':'Correct answer!'):'Wrong answer!'):
  (correct?(gained?'סגרת '+gained+' ריבועים!':'תשובה נכונה!'):'תשובה שגויה!'));
+      if(correct){
+        setLocalWallet(prev=>({...prev,stars:prev.stars+1,fruits:prev.fruits+gained}));
+        playGameSound('star',{muted,volume:volume/100},.25);
+        if(gained)playGameSound('fruit',{muted,volume:volume/100},.48);
+      }
       if(gained>0){
         setLocalCredits(prev=>({...prev,[local.mode==='solo'?'host':local.turn==='guest'?'guest':'host']:prev[local.mode==='solo'?'host':local.turn==='guest'?'guest':'host']+10*gained}));
         if(Object.keys(next.owners).length===next.rows*next.cols && ownerMode!=='manual'){
           const winner=next.scores.host>next.scores.guest?'host':next.scores.guest>next.scores.host?'guest':null;
           if(winner)setLocalCharms(prev=>({...prev,[winner]:prev[winner]+1}));
+        }
+      }
+      if(correct && question.premium){
+        const unused=questionBank.filter(item=>item.id!==q.id &&
+          selectedTopics.includes(topicForQuestion(item.category,item.text)) &&
+          !usedLocalQuestionIds.current.has(item.id) &&
+          !seenQuestionTexts.current.has(canonicalQuestion(item.text)));
+        const followUp=unused.length?unused[Math.floor(Math.random()*unused.length)]:null;
+        if(followUp){
+          usedLocalQuestionIds.current.add(followUp.id);rememberShownQuestion(followUp.text);
+          try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
+          setQuestion({id:followUp.id,text:followUp.text,answers:[...followUp.answers],locale,edge,
+            kind:'premium_bonus',premiumOwner:local.mode==='solo'?'host':local.turn,
+            deadline_at:new Date(Date.now()+60_000).toISOString(),extensions:0});
+          setMessage(locale==='he'?'תשובת פרימיום נכונה! שאלת בונוס פותחת עד שני ריבועים סמוכים וניקוד כפול.':
+            'Premium answer correct! Bonus question unlocks up to two neighbouring squares and double rewards.');
+          play('bonus');setBusy(false);return;
         }
       }
       setQuestion(null); setEdge(null);
@@ -1628,7 +1676,7 @@ export default function TriviaGame() {
     </div>}
     {question && <div className='quiz-overlay' role='presentation'>
       <section className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('שאלת טריוויה')}>
-        <span className='quiz-badge'>{tr(question.kind==='bonus'?'✨ שאלת זהב: הזדמנות לשני כיבושים ✨':'⭐ רק תשובה נכונה תסגור את הקו ⭐')}</span>
+        <span className='quiz-badge'>{question.kind==='premium_bonus'?'💎 '+tr('שאלת פרימיום · ניקוד ופרסים כפולים'):question.premium?'✨ '+tr('שאלת פרימיום · תשובה נכונה תפתח בונוס'):tr(question.kind==='bonus'?'✨ שאלת זהב: הזדמנות לשני כיבושים ✨':'⭐ רק תשובה נכונה תסגור את הקו ⭐')}</span>
         <div className={'question-timer '+((secondsLeft??60)<=10?'urgent':'')} role='timer' aria-live='off'>
           <span className='hourglass-spin' aria-hidden='true'>⌛</span>
           {question.deadline_at===null || timeFreezeActive
@@ -1645,7 +1693,7 @@ export default function TriviaGame() {
         <div className='answer-grid'>
           {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{(locale==='en'?['A','B','C','D']:['א','ב','ג','ד'])[i]}</span>{a}</button>)}
         </div>
-        <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>{tr(question.kind==='bonus'?'תשובה נכונה מעניקה שני אסימוני כיבוש זהב':'תשובה שגויה משאירה את הקו פתוח ומעבירה את התור')}</p>
+        <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>{tr(question.kind==='premium_bonus'?'תשובה נכונה מעניקה עד שני כיבושים סמוכים, ניקוד ופרסים כפולים. אם נשאר ריבוע אחד ייכבש רק הוא.':question.kind==='bonus'?'תשובה נכונה מעניקה שני אסימוני כיבוש זהב':'תשובה שגויה משאירה את הקו פתוח ומעבירה את התור')}</p>
       </section>
     </div>}
 
