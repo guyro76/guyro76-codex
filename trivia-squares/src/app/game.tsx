@@ -1058,7 +1058,7 @@ export default function TriviaGame() {
           const isSelected=stage.id===stageId;
           const enabled=unlocked&&(isSelected||!stageBusy)&&(!stageStarted||finished||isSelected);
           return <button key={stage.id} type='button' className={'campaign-stage-card theme-card-'+stage.theme}
-             aria-current={isSelected?'step':undefined} aria-label={(locale==='en'?'Stage ':'שלב ')+stage.id+': '+(locale==='en'?stage.nameEn:stage.nameHe)+(unlocked?'':locale==='en'?', locked':', נעול')}
+             aria-current={isSelected?'step':undefined}
              aria-disabled={!enabled} disabled={!enabled} data-stage={stage.id} data-locked={!unlocked}
              onClick={()=>chooseStage(stage.id)}>
             <span className='campaign-stage-number'>{isSelected?'✦ ':unlocked?'': '🔒 '}{String(stage.id).padStart(2,'0')}</span>
