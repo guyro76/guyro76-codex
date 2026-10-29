@@ -1121,8 +1121,8 @@ export default function TriviaGame() {
           </div>
           <div className='versus'>{tr((state.mode === 'local' ? state.turn === 'host' : state.turn === player) ? 'התור שלך' : 'תור היריב')}<div style={{ fontSize: 17 }}>⚔️</div></div>
           <div className='player-tile left-side other'>
-            <div className='portrait'>{state.mode === 'bot' ? '🤖' : remote?.players?.guest?.avatar || '🐲'}</div>
-            <div><div className='score-name'>{state.mode === 'bot' ? tr('המחשב') : remote?.players?.guest?.name || tr('שחקן 2')}</div><div className='score-num'>{state.scores.guest + state.scores.bot}</div></div>
+            <div className='portrait'>{state.mode === 'bot' ? '🤖' : state.mode==='local' ? guestAvatar : remote?.players?.guest?.avatar || '🐲'}</div>
+            <div><div className='score-name'>{state.mode === 'bot' ? tr('המחשב') : state.mode==='local' ? guestName : remote?.players?.guest?.name || tr('שחקן 2')}</div><div className='score-num'>{state.scores.guest + state.scores.bot}</div></div>
           </div>
         </div>
         <div className={'arena ' + world.slug}>
@@ -1151,17 +1151,22 @@ export default function TriviaGame() {
                 const h = 288 / state.rows;
                 const x = 20 + c * w + 5;
                 const y = 20 + r * h + 5;
-                return <g key={'cell-' + r + '-' + c} pointerEvents={bonusSelect ? undefined : 'none'}>
-                  <rect x={x} y={y} width={w - 10} height={h - 10} rx='10' fill={owner ? colors[owner] : 'url(#cellTint)'} fillOpacity={owner ? '.82' : '1'} className={owner ? 'claimed-tile' : ''} />
+                const ownerName=owner==='host'?(remote?.players?.host?.name||name||'Player 1'):owner==='guest'?(state.mode==='local'?guestName:remote?.players?.guest?.name||'Player 2'):'Computer';
+                const ownerIcon=owner==='host'?(remote?.players?.host?.avatar||avatar):owner==='guest'?(state.mode==='local'?guestAvatar:remote?.players?.guest?.avatar||'👑'):'🤖';
+                const editable=Boolean(owner && !remote && ownerMode!=='auto' && !bonusSelect && !question);
+                return <g key={'cell-' + r + '-' + c} pointerEvents={bonusSelect || editable ? undefined : 'none'}>
+                  {owner
+                    ? <CaptureTile row={r} col={c} x={x} y={y} width={w-10} height={h-10}
+                        color={colors[owner]} name={ownerName} icon={ownerIcon} style={captureStyle}
+                        locale={locale} selectable={editable} onSelect={()=>setCapturePending({keys:[r+'-'+c],from:'edit'})}/>
+                    : <rect x={x} y={y} width={w-10} height={h-10} rx='10' fill='url(#cellTint)'/>}
                   {bonusSelect && !owner && <rect x={x} y={y} width={w-10} height={h-10} rx='10'
                     role='button' tabIndex={0} aria-label={locale==='en'?'Capture square at row '+(r+1)+', column '+(c+1):'כבוש ריבוע בשורה '+(r+1)+' עמודה '+(c+1)}
                     onClick={()=>void claimBonusSquare(r,c)}
                     onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();void claimBonusSquare(r,c)}}}
                     fill='#FFE18C' fillOpacity='.22' stroke='#FFE18C' strokeWidth='3' strokeDasharray='6 4' style={{cursor:'pointer'}} />}
-                  {owner ? <>
-                    <rect x={x + 3} y={y + 3} width={w - 16} height={h - 16} rx='8' fill='none' stroke='#FFFFFF' strokeOpacity='.4' strokeWidth='1.5' />
-                    <text x={x + (w - 10) / 2} y={y + h * .63} textAnchor='middle' fontSize={Math.min(37, w * .42)} aria-hidden='true'>{owner === player ? avatar : owner === 'bot' ? '🤖' : opponentIcon}</text>
-                  </> : <text x={x + (w - 10) / 2} y={y + h * .62} textAnchor='middle' fontSize={Math.min(24, w * .3)} opacity='.26' aria-hidden='true'>{decorative}</text>}
+                  {!owner && <text x={x+(w-10)/2} y={y+h*.62} textAnchor='middle'
+                    fontSize={Math.min(24,w*.3)} opacity='.22' aria-hidden='true'>{decorative}</text>}
                 </g>;
               }))}
               {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols }, (_, c) => drawLine('h-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + (c + 1) * step, 20 + r * step)))}
@@ -1184,6 +1189,12 @@ export default function TriviaGame() {
             </svg>
           </div>
         </div>
+        {!validName && <div className='board-start-hint' role='status'>
+          <label htmlFor='board-start-name'>{locale==='en'?'Enter your name to unlock marker drawing':'כדי לצייר קו ראשון, הכנס שם שחקן'}</label>
+          <input id='board-start-name' type='text' minLength={2} maxLength={32} value={name}
+            placeholder={locale==='en'?'Player name':'שם השחקן'} onChange={e=>setName(e.target.value)} />
+        </div>}
+        {!remote && ownerMode!=='auto' && <p className='capture-tip'>{locale==='en'?'Tap any captured square to correct its owner.':'ניתן ללחוץ על ריבוע שנכבש כדי לשנות למי הוא שייך.'}</p>}
         <div className='gesture-hint'><span className='draw-icon'>✍️</span>{tr(bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח')}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>{tr("שטחים שנכבשו")}</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
