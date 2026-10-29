@@ -444,3 +444,71 @@ main.trivia-app .local-history-backup p{
  font-size:12px;line-height:1.65;max-width:640px;color:#D8EBFF;
 }
 main.trivia-app .local-history-backup .control-row{justify-content:center}
+
+
+/* Campaign v2: premium, sequential stage track with accessible locks. */
+main.trivia-app, main.trivia-app :is(h1,h2,h3,h4,p,span,small,label,strong,button,input,select,option,a,summary,output,li){
+  font-weight:800!important;
+}
+main.trivia-app :is(h1,h2,h3,.campaign-stage-title,.campaign-stage-number,.game-author-credit){
+  font-weight:950!important;
+}
+.game-timebar{
+ display:flex;direction:ltr;justify-content:space-between;align-items:flex-start;
+ gap:18px;margin:0 0 8px;padding:12px clamp(12px,2vw,24px);
+ border-radius:19px;border:1px solid rgba(139,240,225,.28);
+ background:linear-gradient(115deg,rgba(17,38,73,.50),rgba(35,56,94,.30));
+ backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+ box-shadow:inset 0 1px 0 rgba(230,252,255,.18);
+ color:#9BF5E6;font-weight:900;font-variant-numeric:tabular-nums;
+}
+.game-timebar .game-last-update{text-align:left;display:flex;flex-direction:column;gap:4px;min-width:0;}
+.game-timebar .game-last-update span{font-size:clamp(10px,1.5vw,13px);color:#A7EDEE;}
+.game-timebar .game-last-update time{font-size:clamp(11px,1.8vw,17px);white-space:nowrap;color:#A7F7F0;}
+.game-timebar .game-live-clock{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px;white-space:nowrap;color:#A3F9E8;}
+.game-timebar .game-live-clock time{font-size:clamp(18px,3.2vw,31px);line-height:1.08;letter-spacing:.03em;color:#B5F9F1;font-weight:950;}
+.game-timebar .game-live-clock strong{font-size:clamp(13px,1.8vw,16px);color:#B8FFEA;}
+.game-timebar .game-live-clock small{font-size:clamp(11px,1.5vw,14px);color:#98F1E9;}
+.campaign-section{margin:16px 0 23px;padding:clamp(12px,2.1vw,21px);border-radius:24px;border:1px solid rgba(231,241,255,.36);
+ background:linear-gradient(130deg,rgba(21,41,83,.48),rgba(40,46,96,.26));
+ backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);
+ box-shadow:0 12px 40px rgba(8,16,44,.16),inset 0 1px 0 rgba(255,255,255,.12);}
+.campaign-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#F9F6FF;margin-bottom:9px;}
+.campaign-heading h2{font-size:clamp(18px,2.2vw,25px);margin:0;}
+.campaign-heading span{font-size:13px;color:#BDF8E7;}
+.campaign-progress{height:7px;border-radius:99px;overflow:hidden;background:rgba(238,243,255,.15);margin:7px 0 16px;}
+.campaign-progress>span{display:block;height:100%;background:linear-gradient(90deg,#A4F4E2,#E7B5FF);border-radius:inherit;transition:width .4s ease;}
+.campaign-track{display:flex;gap:9px;overflow-x:auto;overscroll-behavior-inline:contain;padding:4px 2px 14px;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:#A4F6E0 rgba(220,235,255,.12);}
+.campaign-stage-card{scroll-snap-align:center;flex:0 0 clamp(115px,13vw,151px);min-height:134px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+ color:#F7F8FF;border-radius:17px;border:1px solid rgba(221,241,255,.43);
+ background:linear-gradient(144deg,rgba(107,111,179,.47),rgba(18,36,84,.5));box-shadow:inset 0 1px rgba(255,255,255,.15);
+ padding:11px 9px;cursor:pointer;position:relative;}
+.campaign-stage-card[aria-current=step]{background:linear-gradient(145deg,#FFE8AD,#EAB0E6);color:#331F4E;border:2px solid #FFF1C7;box-shadow:0 0 22px rgba(245,195,255,.24),inset 0 1px white;transform:translateY(-2px);}
+.campaign-stage-card:disabled{cursor:not-allowed;filter:saturate(.36);opacity:.46;transform:none;}
+.campaign-stage-card:focus-visible{outline:3px solid #A4F9E9;outline-offset:4px;}
+.campaign-stage-number{font-size:12px;letter-spacing:.06em;color:inherit;opacity:.82;}
+.campaign-stage-icon{font-size:29px;line-height:1.05;}
+.campaign-stage-title{font-size:12px;line-height:1.3;text-align:center;min-height:31px;overflow-wrap:anywhere;}
+.campaign-stage-card small{font-size:10px;opacity:.87;}
+.campaign-rule{text-align:center;font-size:12px;color:#C9F3F2;margin:8px 0 0;}
+.stage-board-size{display:block;line-height:1.4;text-align:center;user-select:none;background:rgba(225,241,255,.9)!important;color:#263458!important;}
+.game-author-credit{
+ max-width:790px;margin:14px auto 23px;padding:13px 16px;
+ border-radius:17px;border:2px solid #A472B1;
+ background:linear-gradient(120deg,#F1DCF7,#FFE9F7);
+ color:#552554!important;text-align:center;letter-spacing:.01em;
+ box-shadow:0 10px 24px rgba(13,18,38,.2);font-size:clamp(13px,1.6vw,17px);
+ direction:auto;
+}
+main.trivia-app[dir=ltr] .answer-option{text-align:left!important;}
+main.trivia-app[dir=ltr] .answer-letter{margin-left:0;margin-right:10px;}
+main.trivia-app[dir=ltr] .panel-title{text-align:left;}
+main.trivia-app[dir=ltr] .form-field{text-align:left;}
+@media(max-width:500px){
+ .game-timebar{gap:6px;padding:9px}
+ .game-timebar .game-last-update time{white-space:normal}
+ .campaign-track{gap:7px}
+ .campaign-stage-card{flex-basis:115px;min-height:121px;padding:7px}
+ .campaign-section{padding:11px}
+}
+@media(prefers-reduced-motion:reduce){.campaign-stage-card,.campaign-progress>span{transition:none!important}}
