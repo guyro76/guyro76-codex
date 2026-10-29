@@ -512,3 +512,106 @@ main.trivia-app[dir=ltr] .form-field{text-align:left;}
  .campaign-section{padding:11px}
 }
 @media(prefers-reduced-motion:reduce){.campaign-stage-card,.campaign-progress>span{transition:none!important}}
+
+/* Premium territory capture: five player-selectable treatments. */
+main.trivia-app .capture-tile{isolation:isolate;outline:none;transform-box:fill-box;transform-origin:center}
+main.trivia-app .capture-face{animation:territoryReveal .55s cubic-bezier(.18,.85,.24,1) both}
+main.trivia-app .capture-medallion{animation:territoryMedal .48s cubic-bezier(.2,1.4,.38,1) both;transform-box:fill-box;transform-origin:center;filter:drop-shadow(0 2px 5px #050E2AB3)}
+main.trivia-app .capture-mark{font-family:inherit;font-weight:950;paint-order:stroke;stroke:#0D1A38;stroke-width:.9;letter-spacing:-.02em;pointer-events:none}
+main.trivia-app .capture-inset{pointer-events:none}
+main.trivia-app .capture-neon-ring{filter:drop-shadow(0 0 4px #AAE8FFBB)}
+main.trivia-app .capture-style-neon .capture-face{filter:drop-shadow(0 0 6px #A2E8FF77)}
+main.trivia-app .capture-style-prism .capture-face{filter:drop-shadow(0 1px 3px #FFFFFF6D)}
+main.trivia-app .capture-style-seal .capture-medallion{filter:drop-shadow(1px 3px 3px #06132BA8)}
+main.trivia-app .capture-style-token .capture-medallion{stroke-width:3}
+main.trivia-app .capture-spark{animation:territorySpark .7s ease-out both}
+main.trivia-app .capture-spark:nth-of-type(even){animation-delay:.14s}
+main.trivia-app .capture-tile[role=button]:focus-visible .capture-face{
+ stroke:#FFF1B5!important;stroke-width:4;filter:drop-shadow(0 0 9px #FFFFFF99)
+}
+main.trivia-app .capture-tile[role=button]:hover .capture-face{filter:brightness(1.17)}
+@keyframes territoryReveal{0%{opacity:0;transform:scale(.87)}65%{opacity:1;transform:scale(1.035)}100%{opacity:1;transform:scale(1)}}
+@keyframes territoryMedal{0%{opacity:0;transform:scale(.45) rotate(-24deg)}70%{opacity:1;transform:scale(1.12) rotate(5deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes territorySpark{0%{opacity:0;transform:scale(.3)}40%{opacity:.9}100%{opacity:.45;transform:scale(1)}}
+main.trivia-app .capture-tip{
+ color:#E7F6FF;font-size:13px;font-weight:850;text-align:center;margin:12px auto 0;line-height:1.5
+}
+main.trivia-app .board-start-hint{
+ display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;margin:12px auto;
+ border:2px solid #FBE6A4;background:#193861;border-radius:16px;padding:12px;color:#FFFFFF;
+ box-shadow:0 5px 18px #061A3C55
+}
+main.trivia-app .board-start-hint label{font-weight:900;font-size:14px}
+main.trivia-app .board-start-hint input{
+ min-width:160px;max-width:230px;padding:10px;border:2px solid #A4CCED;border-radius:11px;
+ color:#102B51;background:#FFFFFF;font-weight:900;font-size:16px
+}
+main.trivia-app .capture-personalization{
+ margin:20px 0 10px;padding:16px;border-radius:19px;
+ background:linear-gradient(155deg,#1F3D72,#172C57);
+ border:1px solid #A5D4FB66;box-shadow:inset 0 1px #FFFFFF30
+}
+main.trivia-app .capture-personalization h3{
+ color:#FFF0B7;font-size:15px;font-weight:900;margin:15px 0 10px
+}
+main.trivia-app .capture-style-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+main.trivia-app .capture-style-option{
+ display:flex;align-items:center;gap:9px;min-height:53px;padding:9px;border:1px solid #AAC9FA66;
+ background:#10264D;color:#FFFFFF;border-radius:13px;text-align:start;font-weight:900;
+ cursor:pointer;transition:transform .15s ease,border-color .15s ease
+}
+main.trivia-app .capture-style-option[aria-pressed=true]{
+ border:2px solid #FFE9A1;background:#2D4F86;box-shadow:0 0 0 1px #FFE8A455,inset 0 1px #FFFFFF22
+}
+main.trivia-app .capture-style-option:focus-visible{outline:3px solid #FFE49D;outline-offset:2px}
+main.trivia-app .capture-style-option:hover{transform:translateY(-1px)}
+main.trivia-app .capture-style-option strong{font-size:12px;font-weight:900}
+main.trivia-app .capture-style-preview{
+ display:grid;place-items:center;flex:0 0 33px;width:33px;height:33px;border-radius:10px;
+ color:#FFFFFF;font-weight:950;background:linear-gradient(145deg,#4D8CFF,#18295C);
+ box-shadow:inset 0 1px #FFFFFF60,0 3px 8px #050B28AA
+}
+main.trivia-app .preview-neon{background:linear-gradient(135deg,#773BF5,#143884);box-shadow:0 0 8px #90AFFF66,inset 0 0 0 2px #E0C8FF}
+main.trivia-app .preview-seal{border-radius:50%;background:linear-gradient(145deg,#E0B963,#41315D)}
+main.trivia-app .preview-prism{background:linear-gradient(135deg,#8ADAFB,#7E55D7)}
+main.trivia-app .preview-token{background:linear-gradient(135deg,#51BFC8,#202E72)}
+main.trivia-app .capture-owner-mode{font-size:13px;font-weight:900}
+main.trivia-app .capture-owner-dialog{
+ width:min(92vw,530px);border-radius:27px;padding:clamp(20px,4vw,30px);
+ border:2px solid #F8DB94;
+ background:linear-gradient(150deg,#2D4A89 0%,#142850 55%,#1A2855 100%);
+ color:#FFFFFF;box-shadow:0 26px 85px #050B29CB,inset 0 1px #FFFFFF45;
+ text-align:center;font-weight:900
+}
+main.trivia-app .capture-owner-dialog h2{font-size:clamp(22px,4vw,30px);color:#FFFFFF;font-weight:950;margin:11px 0}
+main.trivia-app .capture-owner-dialog p{font-size:15px;color:#E6F4FF;font-weight:850}
+main.trivia-app .capture-owner-eyebrow{
+ color:#FFE49A;letter-spacing:.1em;font-size:12px;font-weight:950
+}
+main.trivia-app .capture-owner-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:18px 0}
+main.trivia-app .capture-owner-choice{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+ min-height:137px;background:#213B71;color:#FFFFFF;border:2px solid #92BEF688;
+ border-radius:18px;padding:14px;cursor:pointer;font-weight:900
+}
+main.trivia-app .capture-owner-choice:hover,
+main.trivia-app .capture-owner-choice:focus-visible{
+ border-color:#FFE29A;background:#31518A;outline:3px solid #FFE29A66;outline-offset:2px
+}
+main.trivia-app .capture-owner-choice strong{font-size:clamp(14px,2.7vw,18px);font-weight:950;overflow-wrap:anywhere}
+main.trivia-app .capture-owner-caption{font-size:12px;color:#DBF0FF;font-weight:850}
+main.trivia-app .capture-owner-symbol{
+ display:grid;place-items:center;width:51px;height:51px;border-radius:16px;
+ border:3px solid #FFFFFF;background:#112348;font-size:27px
+}
+main.trivia-app .capture-cancel{margin:6px auto 0}
+@media(max-width:440px){
+ main.trivia-app .capture-style-options{grid-template-columns:1fr}
+ main.trivia-app .capture-owner-buttons{gap:8px}
+ main.trivia-app .capture-owner-choice{min-height:118px;padding:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app .capture-tile *,main.trivia-app .capture-style-option{
+   animation:none!important;transition:none!important
+ }
+}
