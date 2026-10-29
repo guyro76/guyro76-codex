@@ -12,6 +12,8 @@ import { englishQuestions } from '../lib/englishQuestions';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
+import TutorialPreview from '../components/TutorialPreview';
+import './tutorial.css';
 import './premium.css';
 
 function canonicalQuestion(text:string):string {
@@ -46,12 +48,6 @@ const worlds = [
   { size: 5, name: 'ממלכת העננים', subtitle: 'הדרך עוברת בין הכוכבים', icon: '☁️', slug: 'clouds', badge: 'עולם 03', reward: 'בונוסים' },
   { size: 6, name: 'גלקסיית הכוכבים', subtitle: 'אתגר המאסטרים הגדול', icon: '🪐', slug: 'galaxy', badge: 'עולם 04', reward: 'גביעים' }
 ] as const;
-const practiceQuestions = [
-  { text: 'מהי בירת אוסטרליה?', answers: ['סידני', 'מלבורן', 'קנברה', 'פרת'], correct: 2 },
-  { text: 'איזה יסוד מסומן באות O?', answers: ['חמצן', 'ברזל', 'מימן', 'זהב'], correct: 0 },
-  { text: 'כמה דקות יש בשעה?', answers: ['30', '45', '60', '90'], correct: 2 },
-  { text: 'איזו יבשת כוללת את יפן?', answers: ['אירופה', 'אסיה', 'אפריקה', 'אמריקה'], correct: 1 }
-];
 const empty = (size: number): GameState => ({ rows: size, cols: size, mode: 'local', turn: 'host', edges: {}, owners: {}, scores: { host: 0, guest: 0, bot: 0 } });
 const css = {
   main: { maxWidth: 1100, margin: 'auto', padding: '16px' } as React.CSSProperties,
@@ -140,6 +136,10 @@ export default function TriviaGame() {
   const botBusy = useRef(false);
   const boardRef = useRef<SVGSVGElement>(null);
   const gesture = useRef<{ pointerId: number; start: Dot } | null>(null);
+  const inkPointsRef=useRef<BoardPoint[]>([]);
+  const inkGlowRef=useRef<SVGPathElement>(null);
+  const inkLineRef=useRef<SVGPathElement>(null);
+  const inkCursorRef=useRef<SVGCircleElement>(null);
   const [trace, setTrace] = useState<{ start: Dot; target: BoardPoint; end: Dot | null; ink: BoardPoint[] } | null>(null);
   const [keyboardStart, setKeyboardStart] = useState<Dot | null>(null);
   const [bonusSelect, setBonusSelect] = useState(false);
@@ -306,7 +306,7 @@ export default function TriviaGame() {
     const update=()=>{
       if(cancelled) return;
       const left=Math.max(0,Math.ceil((deadline-Date.now())/1000));
-      setSecondsLeft(left);
+      setSecondsLeft(previous=>previous===left?previous:left);
       if(left>=1&&(left<=10 || left%5===0)&&lastTickRef.current!==left){lastTickRef.current=left;play('clock');}
       if(left===0 && !timeoutBusy.current){
         timeoutBusy.current=true;
@@ -331,7 +331,7 @@ export default function TriviaGame() {
         }
       }
     };
-    update();const interval=window.setInterval(update,400);
+    update();const interval=window.setInterval(update,1000);
     return()=>{cancelled=true;window.clearInterval(interval);lastTickRef.current=null;};
   },[question?.deadline_at,question?.id,question?.edge,question?.text,client,remote?.id,refresh,play]);
 
@@ -701,28 +701,34 @@ export default function TriviaGame() {
     if (!start) return;
     event.preventDefault();
     gesture.current = { pointerId: event.pointerId, start };
+    inkPointsRef.current=[dotXY(start, state.rows, state.cols)];
     play('marker');
     event.currentTarget.setPointerCapture(event.pointerId);
     setTrace({ start, target: dotXY(start, state.rows, state.cols), end: null, ink: [dotXY(start, state.rows, state.cols)] });
   }
 
   function onBoardPointerMove(event: ReactPointerEvent<SVGSVGElement>) {
-    const active = gesture.current;
-    if (!active || event.pointerId !== active.pointerId) return;
+    const active=gesture.current;
+    if(!active || event.pointerId!==active.pointerId)return;
     event.preventDefault();
-    const target = boardPoint(event);
-    // Felt-tip friction sound follows hand movement, throttled inside gameAudio.
-    const origin = dotXY(active.start, state.rows, state.cols);
-    if (Math.hypot(target.x - origin.x, target.y - origin.y) > 10) play('marker');
-    const end = nearestDot(target, state.rows, state.cols);
-    const valid = end && edgeBetween(active.start, end, state.rows, state.cols);
-    setTrace(prev => {
-      if (!prev) return null;
-      const snapped = valid && !state.edges[valid] ? dotXY(end, state.rows, state.cols) : target;
-      const last = prev.ink[prev.ink.length - 1];
-      const moved = Math.hypot(snapped.x - last.x, snapped.y - last.y) > 2;
-      return { ...prev, target: snapped, end: valid && !state.edges[valid] ? end : null, ink: moved ? [...prev.ink.slice(-160), snapped] : prev.ink };
-    });
+    const target=boardPoint(event);
+    const start=dotXY(active.start,state.rows,state.cols);
+    if(Math.hypot(target.x-start.x,target.y-start.y)>10)play('marker');
+    const end=nearestDot(target,state.rows,state.cols);
+    const valid=end?edgeBetween(active.start,end,state.rows,state.cols):null;
+    const snapped=valid&&!state.edges[valid]&&end?dotXY(end,state.rows,state.cols):target;
+    const points=inkPointsRef.current;
+    const last=points[points.length-1];
+    if(!last || Math.hypot(snapped.x-last.x,snapped.y-last.y)>1.6){
+      points.push(snapped);
+      if(points.length>56)points.splice(1,points.length-56);
+    }
+    // Update only the active SVG paths: a drag no longer re-renders the entire board.
+    const d=points.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
+    inkGlowRef.current?.setAttribute('d',d);
+    inkLineRef.current?.setAttribute('d',d);
+    inkCursorRef.current?.setAttribute('cx',String(snapped.x));
+    inkCursorRef.current?.setAttribute('cy',String(snapped.y));
   }
 
   function onBoardPointerUp(event: ReactPointerEvent<SVGSVGElement>) {
@@ -731,6 +737,7 @@ export default function TriviaGame() {
     const end = nearestDot(boardPoint(event), state.rows, state.cols);
     const chosen = end ? edgeBetween(active.start, end, state.rows, state.cols) : null;
     gesture.current = null;
+    inkPointsRef.current=[];
     setTrace(null);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     if (chosen && !state.edges[chosen]) { play('draw'); void pick(chosen); }
@@ -740,6 +747,7 @@ export default function TriviaGame() {
   function onBoardPointerCancel(event: ReactPointerEvent<SVGSVGElement>) {
     if (gesture.current?.pointerId !== event.pointerId) return;
     gesture.current = null;
+    inkPointsRef.current=[];
     setTrace(null);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   }
@@ -1030,9 +1038,9 @@ export default function TriviaGame() {
               {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols }, (_, c) => drawLine('h-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + (c + 1) * step, 20 + r * step)))}
               {Array.from({ length: state.rows }, (_, r) => Array.from({ length: state.cols + 1 }, (_, c) => drawLine('v-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + c * step, 20 + (r + 1) * step)))}
               {trace && <g pointerEvents='none'>
-<path d={trace.ink.map((p,i) => (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ') + ' L' + trace.target.x.toFixed(1) + ' ' + trace.target.y.toFixed(1)} fill='none' stroke={lineColor} strokeOpacity='.35' strokeWidth='19' strokeLinecap='round' strokeLinejoin='round' filter='url(#lineGlow)'/>
-                <path d={trace.ink.map((p,i) => (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ') + ' L' + trace.target.x.toFixed(1) + ' ' + trace.target.y.toFixed(1)} fill='none' stroke={lineColor} strokeWidth='10' strokeLinecap='round' strokeLinejoin='round' filter='url(#markerTexture)'/>
-                <circle cx={trace.target.x} cy={trace.target.y} r='6' fill='#FFF1BE' fillOpacity='.6'/>
+                <path ref={inkGlowRef} d={'M'+trace.target.x+' '+trace.target.y} fill='none' stroke={lineColor} strokeOpacity='.35' strokeWidth='19' strokeLinecap='round' strokeLinejoin='round' filter='url(#lineGlow)'/>
+                <path ref={inkLineRef} d={'M'+trace.target.x+' '+trace.target.y} fill='none' stroke={lineColor} strokeWidth='10' strokeLinecap='round' strokeLinejoin='round'/>
+                <circle ref={inkCursorRef} cx={trace.target.x} cy={trace.target.y} r='6' fill='#FFF1BE' fillOpacity='.6'/>
               </g>}
               {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols + 1 }, (_, c) => {
                 const dot: Dot = { row: r, col: c };
@@ -1220,22 +1228,20 @@ export default function TriviaGame() {
     </div>
 
     {showTutorial && <div className='quiz-overlay' role='presentation'>
-      <section className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('הסבר משחק')} style={{textAlign:'center'}}>
+      <section className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('הסבר משחק')}
+        onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();dismissTutorial()}}}
+        style={{textAlign:'center'}}>
         <span className='quiz-badge'>{tr("🧭 הדרך לכיבוש מתחילה כאן")}</span>
         <h2>{tr(['צייר קו כמו בטוש','ענה נכון על שאלת טריוויה','סגור ריבוע וזכה בנקודות'][tutorialPage])}</h2>
-        <svg viewBox='0 0 280 145' aria-hidden='true' style={{width:'100%',maxWidth:320,margin:'0 auto',display:'block'}}>
-          {[0,1,2].flatMap(r=>[0,1,2].map(c=><circle key={r+'-'+c} cx={55+c*84} cy={22+r*48} r='7' fill='#FFFFFF' stroke='#9DC9FF' strokeWidth='3'/>))}
-          {tutorialPage===0 && <><path d='M55 22 L139 22' stroke='#FFD867' strokeWidth='11' strokeLinecap='round' strokeDasharray='84' className='tutorial-stroke'/><circle cx='139' cy='22' r='9' fill='#FFE8A3'/></>}
-          {tutorialPage===1 && <><path d='M55 22 L139 22' stroke='#FFD867' strokeWidth='9' strokeLinecap='round'/><text x='140' y='94' textAnchor='middle' fill='#FFFFFF' fontSize='18' fontWeight='900'>{tr("מהי התשובה הנכונה?")}</text></>}
-          {tutorialPage===2 && <><rect x='61' y='28' width='72' height='36' rx='8' fill={color}/><text x='97' y='54' textAnchor='middle' fontSize='25'>{avatar}</text><path d='M55 22 H139 V70 H55 Z' fill='none' stroke='#FFE48A' strokeWidth='8' strokeLinecap='round'/></>}
-        </svg>
+        <TutorialPreview locale={locale} page={tutorialPage} color={lineColor} avatar={avatar}/>
         <p style={{color:'#ECF4FF',fontSize:15,lineHeight:1.7}}>{tr([
           'נוגעים בנקודה, גוררים באצבע או בעכבר אל נקודה סמוכה ומשחררים. לא לוחצים על הקו.',
           'לכל קו תופיע שאלה עם ארבע אפשרויות. תשובה שגויה תשאיר את הקו פתוח.',
           'הריבוע יתמלא בצבע ובאוואטר שלך. סגירה מעניקה נקודה ותור נוסף. אחרי רצף תשובות מחכה שאלת זהב!'
         ][tutorialPage])}</p>
         <div className='control-row'>
-          <button className='glass-button' onClick={dismissTutorial}>{tr("דלג או סיים")}</button>
+          <button id='tutorial-dismiss' className='glass-button' onClick={dismissTutorial}>{tr("דלג או סיים")}</button>
+          {tutorialPage>0 && <button className='glass-button' onClick={()=>setTutorialPage(p=>Math.max(0,p-1))}>{locale==='en'?'Back':'הקודם'}</button>
           {tutorialPage<2 && <button className='gold-button' onClick={()=>setTutorialPage(v=>v+1)}>{tr("הבא ←")}</button>}
         </div>
       </section>
