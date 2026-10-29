@@ -21,15 +21,37 @@ async function draw(page: Page, a:[number,number], b:[number,number]) {
   const end=await dotPoint(page,b[0],b[1]);
   const isTouch=await page.evaluate(()=>navigator.maxTouchPoints>0 && matchMedia('(pointer: coarse)').matches);
   if(isTouch){
+    // Mobile Chromium touch events require time between frames, just like a human swipe.
+    await page.evaluate(() => {
+      const el = document.querySelector('svg.board');
+      if (!el) return;
+      (window as unknown as {__touchTrace?:string[]}).__touchTrace=[];
+      for(const type of ['pointerdown','pointermove','pointerup','pointercancel','touchstart','touchend']){
+        el.addEventListener(type, event => {
+          const log=(window as unknown as {__touchTrace?:string[]}).__touchTrace || [];
+          if(log.length<30)log.push(type+':' + (event.target as Element)?.tagName);
+        },{passive:true});
+      }
+    });
     const cdp=await page.context().newCDPSession(page);
+    const point=(x:number,y:number)=>({x,y,radiusX:2,radiusY:2,force:0.8,id:1});
     try{
-      await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[start]});
-      for(let step=1;step<=15;step++){
-        const x=start.x+(end.x-start.x)*step/15;
-        const y=start.y+(end.y-start.y)*step/15;
-        await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y}]});
+      await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point(start.x,start.y)]});
+      await page.waitForTimeout(45);
+      for(let step=1;step<=16;step++){
+        const x=start.x+(end.x-start.x)*step/16;
+        const y=start.y+(end.y-start.y)*step/16;
+        await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[point(x,y)]});
+        await page.waitForTimeout(24);
       }
       await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+      await page.waitForTimeout(60);
+      const diag=await page.evaluate(() => ({
+        events:(window as unknown as {__touchTrace?:string[]}).__touchTrace,
+        message:document.querySelector('.status-line')?.textContent?.trim().slice(0,140),
+        quiz:Boolean(document.querySelector('[aria-label="שאלת טריוויה"]'))
+      }));
+      console.info('TOUCH_DIAGNOSTIC',JSON.stringify(diag));
     }finally{await cdp.detach();}
   }else{
     await page.mouse.move(start.x,start.y);
