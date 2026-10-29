@@ -710,7 +710,12 @@ export default function TriviaGame() {
               <input id='login-password' className='form-input' type='password' autoComplete='current-password' value={password} onChange={e => setPassword(e.target.value)} />
               <div className='control-row' style={{ marginTop: 12 }}>
                 <button className='glass-button' onClick={async () => { const { error } = await client.auth.signInWithPassword({ email, password }); setMessage(error?.message || 'התחברת בהצלחה'); }}>כניסה</button>
-                <button className='glass-button' onClick={async () => { const { error } = await client.auth.signUp({ email, password }); setMessage(error?.message || 'נשלח מייל לאימות החשבון'); }}>הרשמה</button>
+                <button className='glass-button' onClick={async () => { const { error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + '/' } }); setMessage(error?.message || 'נשלח מייל לאימות החשבון'); }}>הרשמה</button>
+                <button className='glass-button' onClick={async () => {
+                  if(!email.trim()){setMessage('יש להזין כתובת מייל לקבלת קישור איפוס סיסמה.');return;}
+                  const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/auth/reset-password'});
+                  setMessage(error?.message||'אם קיים חשבון עם כתובת זו, יישלח אליו קישור לאיפוס סיסמה.');
+                }}>שכחתי סיסמה</button>
               </div>
             </> : <p className='smalltxt'>משחק מקומי זמין כעת. התחברות מחייבת הגדרת Supabase במערכת הפריסה.</p>}
         </section>
