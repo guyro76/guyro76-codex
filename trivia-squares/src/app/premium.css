@@ -388,3 +388,38 @@ main.trivia-app .lumen-wheel{
  main.trivia-app .glass-panel{background:rgba(25,44,85,.9)!important}
  main.trivia-app .arena-inner{background-color:rgba(214,234,255,.16)!important}
 }
+
+
+/* International language dock. All world art stays stable across RTL and LTR. */
+main.trivia-app .locale-switch{
+ display:flex;align-items:center;justify-content:center;gap:8px;
+ padding:8px;margin:12px auto 10px;width:fit-content;max-width:100%;
+ background:linear-gradient(124deg,rgba(204,235,255,.19),rgba(47,77,138,.26));
+ border:1px solid rgba(226,243,255,.34);border-radius:999px;
+ backdrop-filter:blur(24px) saturate(135%);-webkit-backdrop-filter:blur(24px) saturate(135%);
+ box-shadow:inset 0 1px rgba(255,255,255,.22),0 10px 25px rgba(2,10,33,.16);
+}
+main.trivia-app .locale-option{
+ font-family:inherit;font-weight:900;font-size:14px;min-height:42px;
+ color:#F7FBFF;border:1px solid transparent;background:transparent;
+ padding:9px 16px;border-radius:999px;cursor:pointer;
+}
+main.trivia-app .locale-option[aria-pressed=true]{
+ color:#172B52;background:linear-gradient(135deg,#FFF7D7,#FFCE78);
+ border-color:rgba(255,255,255,.7);box-shadow:0 3px 12px rgba(255,203,115,.24);
+}
+main.trivia-app .locale-option:disabled{opacity:.55;cursor:not-allowed}
+main.trivia-app .locale-coming{color:#D7E6FF;font-size:11px;padding-inline:8px}
+main.trivia-app[dir=ltr] .hero,
+main.trivia-app[dir=ltr] .lumen-stage-reveal{text-align:center}
+main.trivia-app[dir=ltr] .answer-option{text-align:left}
+main.trivia-app[dir=ltr] .lumen-intermission-choices button{text-align:left}
+main.trivia-app[dir=ltr] .form-input{text-align:left}
+main.trivia-app[dir=ltr] .answer-letter{margin-left:0;margin-right:10px}
+main.trivia-app[dir=ltr] .arena-inner:before{left:auto;right:4px}
+main.trivia-app[dir=ltr] .arena-inner:after{background-position:calc(100% - 24px) 0}
+@media(max-width:450px){
+ main.trivia-app .locale-switch{width:100%;gap:4px;justify-content:space-around}
+ main.trivia-app .locale-coming{font-size:10px}
+ main.trivia-app .locale-option{padding:9px 11px}
+}
