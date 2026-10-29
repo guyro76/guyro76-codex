@@ -615,3 +615,5 @@ main.trivia-app .capture-cancel{margin:6px auto 0}
    animation:none!important;transition:none!important
  }
 }
+
+main.trivia-app .tutorial-demo-label{margin:9px 0 12px;padding:10px 12px;border:1px solid #FFE5AA88;border-radius:12px;background:#173361;color:#FFF0B7;font-size:13px;font-weight:900;text-align:center}
