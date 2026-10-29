@@ -193,7 +193,7 @@ export const englishDictionary:Readonly<Record<string,string>>={
   "ההרשמה חודשה": "Registration resumed",
   "חברו נקודות, ענו נכון, כבשו ריבועים והפכו לאלופי הטריוויה!": "Connect the dots. Answer the trivia. Claim the squares.",
   "שם שחקן (חובה)": "Player name (required)",
-  "🍎 במשחק מחובר צוברים פירות וקרדיטים, ובניצחון גם יהלומים והתקדמות.": "🍎 Earn fruit and credits in online play, plus gems and progression when you win.",
+  "🍎 במשחק מחובר צוברים פירות וקרדיטים, ובניצחון גם יהלומים והתקדמות.": "🍎 Earn fruit, credits and gems through connected play.",
   "🔄 משחק חוזר": "🔄 Rematch",
   "🌍 העולם הבא": "🌍 Next world",
   "❓ איך משחקים": "❓ How to play",
@@ -240,7 +240,13 @@ export const englishDictionary:Readonly<Record<string,string>>={
   "בחר צבע ": "Choose color ",
   "בחר צבע קו ": "Choose line color ",
   "בחר אוואטר ": "Choose avatar ",
-  "עוצמת הצלילים במשחק": "Game sound volume"
+  "עוצמת הצלילים במשחק": "Game sound volume",
+  "עברית": "עברית",
+  "קראתי את": "I have read the",
+  "ואני מסכים/ה ל": "and I agree to the",
+  "למדיניות הפרטיות המלאה": "Full privacy policy",
+  "בחירת שפת המשחק": "Game language",
+  "מהי בירת אוסטרליה?": "What is the capital of Australia?"
 };
 export function translate(locale:ActiveLocale,hebrew:string):string{
  return locale==='en'?(englishDictionary[hebrew]||hebrew):hebrew;
