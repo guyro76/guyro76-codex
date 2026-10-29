@@ -305,13 +305,13 @@ test('live clock shows Hebrew date only in Hebrew and copyright switches with lo
  const bar=page.locator('.game-timebar');
  await expect(bar.locator('.game-live-clock time')).toContainText(/^\d\d:\d\d:\d\d$/);
  await expect(bar.locator('.game-live-clock small')).toHaveCount(1);
- await expect(page.locator('.game-last-update')).toContainText('עדכון משחק אחרון');
+ await expect(page.locator('.game-version .game-status-kicker')).toContainText('גרסת המשחק');
  await expect(page.locator('.game-author-credit')).toContainText('גיא רוזנברג');
  await expect(page.locator('.game-author-credit')).toContainText('© 2026');
  await page.locator('.locale-switch').getByRole('button',{name:'English'}).click();
  await expect(bar.locator('.game-live-clock small')).toHaveCount(0);
  await expect(page.locator('.game-author-credit')).toContainText('Designed and developed by Guy Rosenberg');
- await expect(page.locator('.game-last-update')).toContainText('Last game update');
+ await expect(page.locator('.game-version .game-status-kicker')).toContainText('GAME VERSION');
  await expect(page.getByRole('heading',{name:'Game room'})).toBeVisible();
  await expect(page.getByRole('button',{name:/Computer/})).toBeVisible();
  await expect(page.getByRole('button',{name:/Online friend/})).toBeVisible();
