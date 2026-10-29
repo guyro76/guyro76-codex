@@ -660,3 +660,33 @@ main.trivia-app .game-author-credit{
  main.trivia-app .game-timebar{grid-template-columns:1fr}
  main.trivia-app .game-weather{grid-column:1;grid-row:auto}
 }
+
+/* Footer: warm stone/cream with deep aubergine text, accessible on small screens. */
+main.trivia-app #app-footer.game-author-credit{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:min(100%,840px)!important;max-width:840px!important;
+ margin:20px auto 22px!important;padding:19px clamp(15px,4vw,34px)!important;
+ border:3px solid #B5A38B!important;border-radius:18px!important;
+ background:linear-gradient(135deg,#FAF3E6 0%,#F1E7D6 55%,#E7DCC9 100%)!important;
+ color:#351438!important;
+ box-shadow:0 10px 23px rgba(12,12,23,.21),inset 0 1px rgba(255,255,255,.85)!important;
+ text-align:center!important;font-family:Arial,"Noto Sans Hebrew",sans-serif!important;
+ font-size:clamp(17px,2.1vw,21px)!important;line-height:1.7!important;
+ font-weight:950!important;letter-spacing:0!important;
+}
+main.trivia-app #app-footer .game-author-credit-copy{
+ color:#351438!important;font-size:inherit!important;line-height:inherit!important;
+ font-weight:950!important;text-wrap:balance;overflow-wrap:anywhere;
+}
+@media(max-width:520px){
+ main.trivia-app #app-footer.game-author-credit{
+  margin:16px auto 22px!important;padding:16px 13px!important;
+  font-size:17px!important;border-radius:14px!important;
+ }
+}
+@media(prefers-contrast:more){
+ main.trivia-app #app-footer.game-author-credit{
+  background:#FFF8EB!important;color:#24052C!important;border-color:#54355A!important;
+ }
+ main.trivia-app #app-footer .game-author-credit-copy{color:#24052C!important}
+}
