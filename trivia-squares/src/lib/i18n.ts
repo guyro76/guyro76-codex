@@ -246,7 +246,17 @@ export const englishDictionary:Readonly<Record<string,string>>={
   "ואני מסכים/ה ל": "and I agree to the",
   "למדיניות הפרטיות המלאה": "Full privacy policy",
   "בחירת שפת המשחק": "Game language",
-  "מהי בירת אוסטרליה?": "What is the capital of Australia?"
+  "מהי בירת אוסטרליה?": "What is the capital of Australia?",
+  "נקודות": "points",
+  "יריב": "Opponent",
+  "קמעות זמן: ": "Time charms: ",
+  "כיבושי בונוס: ": "Bonus captures: ",
+  "הסבר משחק": "How to play",
+  "+30 שניות · 25 קרדיטים": "+30 seconds · 25 credits",
+  "הפעל קמע זמן": "Use time charm",
+  "🔇 הפעל צלילים": "🔇 Turn on sound",
+  "🔊 השתק צלילים": "🔊 Mute sound",
+  "🎮 משחק חדש": "🎮 New match"
 };
 export function translate(locale:ActiveLocale,hebrew:string):string{
  return locale==='en'?(englishDictionary[hebrew]||hebrew):hebrew;
