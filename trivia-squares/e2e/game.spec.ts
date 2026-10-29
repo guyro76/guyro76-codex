@@ -6,6 +6,7 @@ async function ready(page: Page) {
   const tutorial = page.getByRole('dialog', { name: 'הסבר משחק' });
   if (await tutorial.isVisible()) await tutorial.getByRole('button', { name: 'דלג או סיים' }).click();
   await expect(page.locator('svg.board')).toBeVisible();
+  await page.getByLabel('כינוי שחקן').fill('טסטר');
 }
 async function dotPoint(page: Page, row: number, col: number) {
   const dot = page.locator('svg.board circle[aria-label="נקודה ' + row + ', ' + col + '"]');
@@ -89,4 +90,22 @@ test('local storage deletion actually removes the game preference keys',async({p
   const saved=await page.evaluate(()=>['trivia-local-game-v1','trivia-personal-choice','trivia-tutorial-seen-v1'].map(k=>localStorage.getItem(k)));
   expect(saved).toEqual([null,null,null]);
   await expect(page.getByRole('status')).toContainText('נמחקו');
+});
+
+test('one-minute spinning hourglass appears during a drawn-line question',async({page})=>{
+  await ready(page);
+  await draw(page,[1,1],[1,2]);
+  const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
+  await expect(quiz).toBeVisible();
+  await expect(quiz.getByRole('timer')).toContainText(/0[0-1]:[0-5][0-9]/);
+  await expect(quiz.locator('.hourglass-spin')).toContainText('⌛');
+  await expect(quiz.getByRole('button',{name:/30 שניות/})).toBeDisabled();
+});
+
+test('marker ink color is independent from territory color',async({page})=>{
+  await ready(page);
+  await page.getByRole('button',{name:'בחר צבע קו #EF4444'}).click();
+  await draw(page,[1,1],[1,2]);
+  await page.getByRole('dialog',{name:'שאלת טריוויה'}).getByRole('button',{name:/קנברה/}).click();
+  await expect(page.locator('svg.board line[stroke="#EF4444"][stroke-width="10"]')).toHaveCount(1);
 });
