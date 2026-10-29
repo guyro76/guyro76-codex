@@ -92,6 +92,20 @@ export default function TriviaGame() {
     seenQuestionTexts.current.add(fingerprint);
     try{localStorage.setItem('trivia-question-text-history-v1',JSON.stringify([...seenQuestionTexts.current]))}catch{}
   },[]);
+  const syncAccountQuestionHistory=useCallback(async ():Promise<boolean>=>{
+    if(!client || !user)return true;
+    for(let page=0;page<100;page++){
+      const {data,error}=await client.rpc('trivia_read_seen_question_texts',{p_page:page});
+      if(error || !Array.isArray(data))return false;
+      for(const text of data) if(typeof text==='string')
+        seenQuestionTexts.current.add(canonicalQuestion(text));
+      if(data.length<300)break;
+    }
+    try{
+      localStorage.setItem('trivia-question-text-history-v1',JSON.stringify([...seenQuestionTexts.current]));
+    }catch{}
+    return true;
+  },[client,user?.id]);
   const expandLocalPool=useCallback((preferred:'he'|'en')=>{
     const current=localPoolRef.current;
     const nextIndex=Math.min(countLocalReserve(preferred),current[preferred]+LOCAL_QUESTION_RELEASE_BATCH);
@@ -206,7 +220,14 @@ export default function TriviaGame() {
         en:Math.max(0,Math.min(countLocalReserve('en'),Math.trunc(Number(storedPool.en)||0)))};
       localPoolRef.current=available;setLocalPoolRelease(available);
       const ids=JSON.parse(localStorage.getItem('trivia-used-question-ids')||'[]') as number[];
-      if(Array.isArray(ids)) usedLocalQuestionIds.current=new Set(ids.filter(x=>Number.isInteger(x)));
+      if(Array.isArray(ids)){
+        usedLocalQuestionIds.current=new Set(ids.filter(x=>Number.isInteger(x)));
+        // Upgrade IDs-only legacy history into the permanent text fingerprints.
+        for(const q of [...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve])
+          if(usedLocalQuestionIds.current.has(q.id))
+            seenQuestionTexts.current.add(canonicalQuestion(q.text));
+      }
+      try{localStorage.setItem('trivia-question-text-history-v1',JSON.stringify([...seenQuestionTexts.current]))}catch{}
       const savedRun=localStorage.getItem('trivia-stage-run-id');
       if(savedRun && /^local-[a-zA-Z0-9_-]{1,72}$/.test(savedRun))setStageRunId(savedRun);
       const storedName=localStorage.getItem('trivia-player-name');
@@ -320,6 +341,11 @@ export default function TriviaGame() {
     void (async () => {
       const room = new URLSearchParams(window.location.search).get('room');
       if (room && /^[a-f0-9-]{36}$/i.test(room)) setInvite(room);
+      // Fetch server-side history on every signed-in device before local gameplay.
+      const synced=await syncAccountQuestionHistory();
+      if(!active)return;
+      if(!synced && navigator.onLine)
+        setMessage(locale==='en'?'Unable to sync your question history. Try again online.':'לא ניתן לסנכרן היסטוריית שאלות. נסה שוב כשיש חיבור תקין.');
       const { data: allowed, error } = await client.rpc('trivia_get_my_legal_acceptance');
       if (!active) return;
       if (error || allowed !== true) {
@@ -346,7 +372,7 @@ export default function TriviaGame() {
       if (id) await refresh(id);
     })();
     return () => { active = false; };
-  }, [client, user, refresh, legalAccepted, languageLoaded]);
+  }, [client, user, refresh, legalAccepted, languageLoaded, syncAccountQuestionHistory]);
   useEffect(() => {
     if (!remote || (remote.status !== 'playing' && remote.status !== 'waiting') || !client) return;
     const timer = window.setInterval(() => { void refresh(remote.id); }, 2300);
@@ -388,6 +414,10 @@ export default function TriviaGame() {
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
     setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false);
     if (mode === 'local') {
+      if(user&&client&&navigator.onLine&&!await syncAccountQuestionHistory()){
+        setMessage(locale==='en'?'Unable to sync your question history. Please retry.':'אי אפשר להתחיל משחק מחובר לפני סנכרון היסטוריית השאלות.');
+        setBusy(false);return;
+      }
       const added=expandLocalPool(locale);
       const nextRun='local-'+crypto.randomUUID();
       setStageRunId(nextRun);
@@ -462,6 +492,17 @@ export default function TriviaGame() {
         ? remaining.find(v=>v.text.includes('בירת אוסטרליה')) || inCategory[0]
         : inCategory[Math.floor(Math.random()*inCategory.length)];
       if(!q){setEdge(null);setMessage('כל השאלות נוצלו. לא נחזור על שאלה שכבר נשאלה.');return;}
+      if(user&&client&&navigator.onLine){
+        // Register the question globally before showing it on an authenticated device.
+        setBusy(true);
+        const {error}=await client.rpc('trivia_import_local_history',{p_question_texts:[q.text]});
+        if(error){
+          setEdge(null);setBusy(false);
+          setMessage(locale==='en'?'Could not secure your question history. Please retry.':'שמירת היסטוריית השאלות נכשלה. נסה שוב.');
+          return;
+        }
+        setBusy(false);
+      }
       lastQuestionCategory.current=q.category;
       usedLocalQuestionIds.current.add(q.id);
       rememberShownQuestion(q.text);
