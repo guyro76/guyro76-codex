@@ -214,12 +214,13 @@ export default function TriviaGame() {
       if(m.question?.text)rememberShownQuestion(m.question.text);
       setEdge(m.question?.edge || null);
       if (m.status === 'completed') setMessage('המשחק הסתיים, כל הכבוד!');
+      if(m.state.campaign_stage && Number.isInteger(m.state.campaign_stage)){
+        setStageId(m.state.campaign_stage);
+        setSize(stageFor(m.state.campaign_stage).size);
+        try{localStorage.setItem('trivia-stage-id-v1',String(m.state.campaign_stage))}catch{}
+      }
+      setStageStarted(m.status==='playing'||m.status==='waiting');
     } else if (error) setMessage('שגיאת טעינת משחק: ' + error.message);
-    if(m.state.campaign_stage && Number.isInteger(m.state.campaign_stage)){
-      setStageId(m.state.campaign_stage);
-      try{localStorage.setItem('trivia-stage-id-v1',String(m.state.campaign_stage))}catch{}
-    }
-    setStageStarted(m.status==='playing'||m.status==='waiting');
   }, [client,rememberShownQuestion]);
 
   useEffect(() => {
@@ -1013,6 +1014,7 @@ export default function TriviaGame() {
       .tutorial-stroke{animation:drawTutorial 1.5s ease-in-out both}
       .claimed-tile{animation:tileClaim .36s cubic-bezier(.2,1.3,.4,1);transform-origin:center}
     `}</style>
+    <GameTimeBar locale={locale}/>
     <header className='hero'>
       {user && <div className='google-player-header' aria-label={tr('החשבון המחובר')}>
         {googlePhoto ? <img src={googlePhoto} referrerPolicy='no-referrer' alt={tr('תמונת הפרופיל שלך מ-Google')}
@@ -1040,34 +1042,48 @@ export default function TriviaGame() {
       </div>
     </header>
 
-    <nav className='adventure-track' aria-label={tr('בחירת עולם')}>
-      {worlds.map((w, i) => <button
-        key={w.slug}
-        type='button'
-        className={'world-choice world-card-'+w.slug}
-        data-selected={w.size === state.rows}
-        onClick={() => chooseWorld(w.size)}
-        data-world={w.slug}
-      >
-        <span className='wc-icon' aria-hidden='true'>{w.icon}</span>
-        <span className='wc-badge'>{translatedWorlds[locale][i].badge}</span>
-        <strong className='wc-name'>{translatedWorlds[locale][i].name}</strong>
-        <div className='wc-level'>{w.size}×{w.size} · {translatedWorlds[locale][i].reward}</div>
-      </button>)}
-    </nav>
+    <section className='campaign-section' aria-label={locale==='en'?'Thirty sequential stages':'שלושים שלבים לפי סדר'}>
+      <div className='campaign-heading'>
+        <h2>{locale==='en'?'Adventure: 30 stages':'הרפתקה: 30 שלבים'}</h2>
+        <span>{locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
+      </div>
+      <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={30} aria-valuenow={completedStage}
+           aria-label={locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
+        <span style={{width:(completedStage/STAGE_COUNT*100)+'%'}}/>
+      </div>
+      <div className='campaign-track' aria-label={locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
+        {CAMPAIGN_STAGES.map(stage=>{
+          const unlocked=stage.id<=stageUnlocked;
+          const isSelected=stage.id===stageId;
+          const enabled=unlocked&&(isSelected||!stageBusy)&&(!stageStarted||finished||isSelected);
+          return <button key={stage.id} type='button' className={'campaign-stage-card theme-card-'+stage.theme}
+             aria-current={isSelected?'step':undefined} aria-label={(locale==='en'?'Stage ':'שלב ')+stage.id+': '+(locale==='en'?stage.nameEn:stage.nameHe)+(unlocked?'':locale==='en'?', locked':', נעול')}
+             aria-disabled={!enabled} disabled={!enabled} data-stage={stage.id} data-locked={!unlocked}
+             onClick={()=>chooseStage(stage.id)}>
+            <span className='campaign-stage-number'>{isSelected?'✦ ':unlocked?'': '🔒 '}{String(stage.id).padStart(2,'0')}</span>
+            <strong className='campaign-stage-icon' aria-hidden='true'>{stage.icon}</strong>
+            <span className='campaign-stage-title'>{locale==='en'?stage.nameEn:stage.nameHe}</span>
+            <small>{unlocked?(locale==='en'?'Board':'לוח')+' '+stage.size+'×'+stage.size:(locale==='en'?'Locked':'נעול')}</small>
+          </button>
+        })}
+      </div>
+      <p className='campaign-rule'>{locale==='en'
+        ?'Stages unlock one at a time. Finish every square of the current board to open the next stage.'
+        :'כל שלב נפתח רק אחרי שסוגרים את כל הריבועים בשלב שלפניו. אי אפשר לדלג על שלבים.'}</p>
+    </section>
 
     <div className='game-grid'>
       <section className='glass-panel arena-panel'>
         <div className='arena-title'>
           <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
-          <div className='level-pill'>{tr('שלב ')}{themeIndex + 1} / 4</div>
+          <div className='level-pill'>{locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
         </div>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
             <div className='portrait'>{remote && player === 'guest' ? opponentIcon : avatar}</div>
             <div><div className='score-name'>{remote?.players?.host?.name || name || tr('שחקן 1')}</div><div className='score-num'>{state.scores.host}</div></div>
           </div>
-          <div className='versus'>{(state.mode === 'local' ? state.turn === 'host' : state.turn === player) ? 'התור שלך' : 'תור היריב'}<div style={{ fontSize: 17 }}>⚔️</div></div>
+          <div className='versus'>{tr((state.mode === 'local' ? state.turn === 'host' : state.turn === player) ? 'התור שלך' : 'תור היריב')}<div style={{ fontSize: 17 }}>⚔️</div></div>
           <div className='player-tile left-side other'>
             <div className='portrait'>{state.mode === 'bot' ? '🤖' : remote?.players?.guest?.avatar || '🐲'}</div>
             <div><div className='score-name'>{state.mode === 'bot' ? tr('המחשב') : remote?.players?.guest?.name || tr('שחקן 2')}</div><div className='score-num'>{state.scores.guest + state.scores.bot}</div></div>
@@ -1151,11 +1167,11 @@ export default function TriviaGame() {
           <p className='smalltxt'>{tr("🍎 במשחק מחובר צוברים פירות וקרדיטים, ובניצחון גם יהלומים והתקדמות.")}</p>
           <div className='control-row' style={{marginTop:13}}>
             <button className='gold-button' disabled={busy} onClick={()=>void start()}>{tr("🔄 משחק חוזר")}</button>
-            {size<6 && <button className='glass-button' onClick={()=>chooseWorld(size+1)}>{tr("🌍 העולם הבא")}</button>}
+            {stageId<STAGE_COUNT && <button className='glass-button' disabled={stageId>completedStage} onClick={advanceStage}>{locale==='en'?'Next stage':'השלב הבא'}</button>}
           </div>
         </section>}
         <div className='status-line' aria-live='polite'>
-          {finished ? '🏆 ' + (state.scores.host === state.scores.guest + state.scores.bot ? 'המשחק הסתיים בתיקו!' : state.scores.host > state.scores.guest + state.scores.bot ? 'ניצחת! כל הכבוד!' : 'היריב ניצח. משחק חוזר?') : tr(message)}
+          {finished ? '🏆 ' + tr(state.scores.host === state.scores.guest + state.scores.bot ? 'המשחק הסתיים בתיקו!' : state.scores.host > state.scores.guest + state.scores.bot ? 'ניצחת! כל הכבוד!' : 'היריב ניצח. משחק חוזר?') : tr(message)}
         </div>
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>{tr("ממתינים שהחבר ייכנס לחדר...")}</p>}
         <div className='control-row'>
@@ -1175,7 +1191,7 @@ export default function TriviaGame() {
           {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>{tr("⭐ שאלת זהב!")}</button>}
           {availableBonus>0 && state.mode!=='online' && <button className='gold-button' disabled={busy||!!question} onClick={()=>setBonusSelect(v=>!v)}>
             ✨ {tr(bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס')} ({availableBonus})</button>}
-          {finished && size < 6 && <button className='glass-button' onClick={() => chooseWorld(size + 1)}>{tr("העולם הבא ←")}</button>}
+          {finished && stageId<STAGE_COUNT && <button className='glass-button' disabled={stageId>completedStage} onClick={advanceStage}>{locale==='en'?'Next stage →':'השלב הבא ←'}</button>}
         </div>
         {finished && <StageReward
           locale={locale}
@@ -1194,13 +1210,15 @@ export default function TriviaGame() {
         <section className='glass-panel'>
           <h2 className='panel-title'>{tr("🎯 חדר המשחק")}</h2>
           <div className='mode-row'>
-            {([['bot','🤖 מחשב'],['online','🌐 חבר'],['local','👥 מקומי']] as const).map(([value, label]) =>
-              <button key={value} className='choice' aria-pressed={mode === value} onClick={() => setMode(value)}>{tr(label)}</button>)}
+            {([['bot','🤖 מחשב','🤖 Computer'],['online','🌐 חבר','🌐 Online friend'],['local','👥 מקומי','👥 Local'] ] as const).map(([value, he, en]) =>
+              <button key={value} className='choice' disabled={stageStarted&&!finished} aria-pressed={mode===value}
+                onClick={()=>{setMode(value);if(value!=='local'&&stageId>serverStageCompleted+1){setStageId(serverStageCompleted+1);setSize(stageFor(Math.min(30,serverStageCompleted+1)).size)} }}>
+                {locale==='en'?en:he}</button>)}
           </div>
-          <label className='form-field' htmlFor='board-size'>{tr("גודל לוח")}</label>
-          <select id='board-size' className='form-input' value={size} onChange={e => chooseWorld(Number(e.target.value))}>
-            {worlds.map((w,i) => <option key={w.size} value={w.size}>{w.icon} {translatedWorlds[locale][i].name} ({w.size}×{w.size})</option>)}
-          </select>
+          <div className='form-field'>{tr('גודל לוח')}</div>
+          <output id='board-size' className='form-input stage-board-size' aria-label={locale==='en'?'Current board size':'גודל הלוח הנוכחי'}>
+            {selectedStage.size} × {selectedStage.size} · {locale==='en'?'Determined by stage':'נקבע לפי שלב'}
+          </output>
           {inviteLink && <div style={{ marginTop: 13 }}>
             <div className='smalltxt'>{tr("קישור לחדר הפרטי")}</div>
             <button className='glass-button' style={{ marginTop: 7 }} onClick={async () => {
@@ -1269,9 +1287,9 @@ export default function TriviaGame() {
           </>
             : client ? <>
               <p className='smalltxt' style={{lineHeight:1.8,background:'#2E467A',borderRadius:12,padding:10}}>
-                הרשמה נדרשת רק למשחקים מחוברים. נאסוף כתובת מייל ומזהה חשבון, ובמשחק נשמור כינוי, תוצאה והתקדמות.
-                המסירה לבחירתך; ללא הרשמה ניתן לשחק מקומית.
-                הפרטים נשמרים בעזרת Supabase והאתר מאוחסן ב-Vercel.
+                {locale==='en'
+                   ? 'Registration is only needed for connected play. We collect your email and account ID. Your nickname, score and progress are saved to your account. You can play locally without signing up. Data is stored using Supabase and the website runs on Vercel.'
+                   : 'הרשמה נדרשת רק למשחקים מחוברים. נאסוף כתובת מייל ומזהה חשבון, ובמשחק נשמור כינוי, תוצאה והתקדמות. המסירה לבחירתך; ללא הרשמה ניתן לשחק מקומית. הפרטים נשמרים בעזרת Supabase והאתר מאוחסן ב-Vercel.'}
                 <a href={locale==='en'?'/en/privacy':'/privacy'} style={{color:'#FFE5A5'}}> {tr("למדיניות הפרטיות המלאה")}</a>.
               </p>
               <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'10px 0'}}>
@@ -1353,5 +1371,10 @@ export default function TriviaGame() {
     <LocalQuestionBackup locale={locale} onRestored={entries=>{for(const item of entries)seenQuestionTexts.current.add(item)}}/>
     <footer className='footer'><a href={locale==='en'?'/en/privacy':'/privacy'}>{tr("פרטיות")}</a><a href={locale==='en'?'/en/terms':'/terms'}>{tr("תנאי שימוש")}</a><a href={locale==='en'?'/en/cookies':'/cookies'}>{tr("עוגיות ואחסון")}</a><a href={locale==='en'?'/en/accessibility':'/accessibility'}>{tr("נגישות")}</a><a href='/account/privacy'>{tr("המידע שלי")}</a></footer>
     <p className='smalltxt' style={{ textAlign: 'center' }}>{tr("פרסים וירטואליים בלבד · ללא רכישות בכסף אמיתי")}</p>
+    <div className='game-author-credit' role='contentinfo'>
+      {locale==='en'
+       ?'© 2026 Designed and developed by Guy Rosenberg · All rights reserved.'
+       :'© 2026 תוכנן ובוצע ע״י גיא רוזנברג · כל הזכויות שמורות.'}
+    </div>
   </main>;
 }
