@@ -8,12 +8,14 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawi
 import { applyLocalAnswer } from '../lib/engine';
 import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
+import { englishQuestions } from '../lib/englishQuestions';
+import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
 import './premium.css';
 
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local';
-type Question = { text: string; answers: string[]; edge?: string; id?: number; kind?: 'edge' | 'bonus'; deadline_at?: string | null; extensions?: number };
+type Question = { text: string; answers: string[]; edge?: string; id?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus'; deadline_at?: string | null; extensions?: number };
 type GameState = {
   rows: number;
   cols: number;
@@ -29,7 +31,7 @@ type GameState = {
 };
 type PlayerIdentity = { name: string; color: string; line_color?: string; avatar: string };
 type RemoteMatch = { id: string; status: string; host_id: string; guest_id: string | null; version: number; state: GameState; question?: Question; players?: { host?: PlayerIdentity; guest?: PlayerIdentity } };
-type Profile = { display_name: string; color: string; line_color?: string; avatar: string; remember_color: boolean };
+type Profile = { display_name: string; color: string; line_color?: string; avatar: string; remember_color: boolean; locale?: ActiveLocale };
 type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number; time_charms?: number };
 
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
@@ -59,6 +61,9 @@ export default function TriviaGame() {
     return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   }, []);
   const [user, setUser] = useState<User | null>(null);
+  const [locale, setLocale] = useState<ActiveLocale>('he');
+  const [languageLoaded, setLanguageLoaded] = useState(false);
+  const tr = useCallback((value: string) => translate(locale,value),[locale]);
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [policiesAcknowledged, setPoliciesAcknowledged] = useState(false);
@@ -124,6 +129,7 @@ export default function TriviaGame() {
   const showTimer = Boolean(question) && question?.deadline_at !== null && !timeFreezeActive;
   const timerText = secondsLeft === null ? '01:00' : String(Math.floor(secondsLeft/60)).padStart(2,'0')+':'+String(secondsLeft%60).padStart(2,'0');
   const world = worlds.find(w => w.size === state.rows) || worlds[0];
+  const questionBank = locale === 'en' ? englishQuestions : offlineQuestions;
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
 
@@ -139,6 +145,22 @@ export default function TriviaGame() {
     } else if (error) setMessage('שגיאת טעינת משחק: ' + error.message);
   }, [client]);
 
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('trivia-language');
+      if(isActiveLocale(stored))setLocale(stored);
+    } catch{}
+    setLanguageLoaded(true);
+  }, []);
+  useEffect(()=>{
+    if(!languageLoaded)return;
+    document.documentElement.lang=locale;
+    document.documentElement.dir=localeDirection(locale);
+    try{localStorage.setItem('trivia-language',locale)}catch{}
+    if(user&&client)void client.rpc('trivia_set_locale',{p_locale:locale}).then(({error})=>{
+      if(error)setMessage(locale==='en'?'Could not save language preference: '+error.message:'שמירת העדפת השפה נכשלה: '+error.message);
+    });
+  },[locale,languageLoaded,client,user?.id]);
   useEffect(() => {
     try {
       const saved = localStorage.getItem('trivia-personal-choice');
@@ -259,7 +281,7 @@ export default function TriviaGame() {
   },[question?.deadline_at,question?.id,question?.edge,question?.text,client,remote?.id,refresh,play]);
 
   useEffect(() => {
-    if (!client || !user) return;
+    if (!client || !user || !languageLoaded) return;
     let active = true;
     void (async () => {
       const room = new URLSearchParams(window.location.search).get('room');
@@ -276,6 +298,7 @@ export default function TriviaGame() {
       if (!active) return;
       if (data?.profile) {
         const p = data.profile as Profile;
+        if(!localStorage.getItem('trivia-language') && p.locale && isActiveLocale(p.locale))setLocale(p.locale);
         if (p.display_name && p.display_name.trim() !== 'שחקן' && p.display_name.trim().length>=2) setName(p.display_name);
         else if(user?.user_metadata?.full_name || user?.user_metadata?.name)
           setName(String(user.user_metadata.full_name || user.user_metadata.name).trim().slice(0,32));
@@ -289,7 +312,7 @@ export default function TriviaGame() {
       if (id) await refresh(id);
     })();
     return () => { active = false; };
-  }, [client, user, refresh, legalAccepted]);
+  }, [client, user, refresh, legalAccepted, languageLoaded]);
   useEffect(() => {
     if (!remote || (remote.status !== 'playing' && remote.status !== 'waiting') || !client) return;
     const timer = window.setInterval(() => { void refresh(remote.id); }, 2300);
@@ -336,6 +359,8 @@ export default function TriviaGame() {
       try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
       setRemote(null); setLocal(empty(size)); setLocalFreeze({host:false,guest:false}); setMessage('משחק מקומי לכל שני שחקנים, עם יתרות זמן נפרדות לכל אחד.');
     } else if (client && user && legalAccepted) {
+      const {error:localeError}=await client.rpc('trivia_set_locale',{p_locale:locale});
+      if(localeError){setMessage(localeError.message);setBusy(false);return;}
       const {error:profileError}=await client.rpc('trivia_save_appearance',{
         p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
       });
@@ -355,6 +380,8 @@ export default function TriviaGame() {
     if (!client || !user || !legalAccepted || !invite) { setMessage('יש להתחבר ולאשר את תנאי השימוש לפני הצטרפות לחדר.'); return; }
     if (!validName) {setMessage('יש להקליד שם שחקן לפני הצטרפות לחדר.');return;}
     setBusy(true);
+    const {error:localeError}=await client.rpc('trivia_set_locale',{p_locale:locale});
+    if(localeError){setMessage(localeError.message);setBusy(false);return;}
     const {error: profileError}=await client.rpc('trivia_save_appearance',{
       p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
     });
@@ -374,14 +401,14 @@ export default function TriviaGame() {
       setBusy(false);
     } else {
       setEdge(key);
-      const remaining=offlineQuestions.filter(q=>!usedLocalQuestionIds.current.has(q.id));
-      const q=usedLocalQuestionIds.current.size===0
+      const remaining=questionBank.filter(q=>!usedLocalQuestionIds.current.has(q.id));
+      const q=usedLocalQuestionIds.current.size===0 && locale==='he'
         ? remaining.find(v=>v.text.includes('בירת אוסטרליה')) || remaining[0]
         : remaining[0];
       if(!q){setEdge(null);setMessage('כל השאלות נוצלו. לא נחזור על שאלה שכבר נשאלה.');return;}
       usedLocalQuestionIds.current.add(q.id);
       try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
-      setQuestion({id:q.id,text:q.text,answers:q.answers,edge:key,deadline_at:new Date(Date.now()+60_000).toISOString(),extensions:0});
+      setQuestion({id:q.id,text:q.text,answers:q.answers,locale,edge:key,deadline_at:new Date(Date.now()+60_000).toISOString(),extensions:0});
     }
   }
   async function answer(i: number) {
@@ -410,7 +437,7 @@ export default function TriviaGame() {
       }
     } else {
       if (!edge) { setBusy(false); return; }
-      const q=offlineQuestions.find(v=>v.id===question.id);
+      const q=[...englishQuestions,...offlineQuestions].find(v=>v.id===question.id);
       if(!q){setMessage('לא נמצאה השאלה המקורית.');setBusy(false);return;}
       const correct = i === q.correct;
       const next = applyLocalAnswer(local, edge, correct);
@@ -632,7 +659,7 @@ export default function TriviaGame() {
     bot: '#FB923C'
   };
   const opponentIcon = remote?.players?.[player === 'host'?'guest':'host']?.avatar || '🐲';
-  const opponentName = remote?.state.mode === 'bot' ? 'המחשב' : remote?.players?.[player === 'host'?'guest':'host']?.name || 'שחקן 2';
+  const opponentName = remote?.state.mode === 'bot' ? tr('המחשב') : remote?.players?.[player === 'host'?'guest':'host']?.name || tr('שחקן 2');
   const drawLine = (key: string, x1: number, y1: number, x2: number, y2: number) => {
     const owner = state.edges[key];
     return <g key={key} pointerEvents='none'>
@@ -663,8 +690,9 @@ export default function TriviaGame() {
     chooseWorld(nextSize);
   },[state.rows,chooseWorld]);
   const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
+  const displayWorld=translatedWorlds[locale][themeIndex];
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
-  return <main className={'trivia-app theme-' + world.slug} style={css.main}>
+  return <main className={'trivia-app theme-' + world.slug} style={css.main} dir={localeDirection(locale)} lang={locale}>
     <style>{`
       *{box-sizing:border-box} body{background:#111C48;color:white;font-family:Arial,'Noto Sans Hebrew',sans-serif;font-weight:800;margin:0}
       .trivia-app{--accent:#8CE8FF;min-height:100vh;position:relative;isolation:isolate}
@@ -818,16 +846,16 @@ export default function TriviaGame() {
         data-world={w.slug}
       >
         <span className='wc-icon' aria-hidden='true'>{w.icon}</span>
-        <span className='wc-badge'>{w.badge}</span>
-        <strong className='wc-name'>{w.name}</strong>
-        <div className='wc-level'>{w.size}×{w.size} · {w.reward}</div>
+        <span className='wc-badge'>{translatedWorlds[locale][i].badge}</span>
+        <strong className='wc-name'>{translatedWorlds[locale][i].name}</strong>
+        <div className='wc-level'>{w.size}×{w.size} · {translatedWorlds[locale][i].reward}</div>
       </button>)}
     </nav>
 
     <div className='game-grid'>
       <section className='glass-panel arena-panel'>
         <div className='arena-title'>
-          <div><h2>{world.icon} {world.name}</h2><p>{world.subtitle} • {state.rows * state.cols} ריבועים</p></div>
+          <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
           <div className='level-pill'>שלב {themeIndex + 1} / 4</div>
         </div>
         <div className='scoreboard'>
@@ -968,7 +996,7 @@ export default function TriviaGame() {
           </div>
           <label className='form-field' htmlFor='board-size'>גודל לוח</label>
           <select id='board-size' className='form-input' value={size} onChange={e => chooseWorld(Number(e.target.value))}>
-            {worlds.map(w => <option key={w.size} value={w.size}>{w.icon} {w.name} ({w.size}×{w.size})</option>)}
+            {worlds.map((w,i) => <option key={w.size} value={w.size}>{w.icon} {translatedWorlds[locale][i].name} ({w.size}×{w.size})</option>)}
           </select>
           {inviteLink && <div style={{ marginTop: 13 }}>
             <div className='smalltxt'>קישור לחדר הפרטי</div>
