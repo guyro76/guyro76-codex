@@ -9,7 +9,8 @@ export default function CookiesPage(){
       for(const k of [
         'trivia-local-game-v1','trivia-personal-choice','trivia-tutorial-seen-v1',
         'trivia-player-name','trivia-used-question-ids','trivia-local-question',
-        'trivia-local-rewards','trivia-sound-muted','trivia-sound-volume'
+        'trivia-local-rewards','trivia-sound-muted','trivia-sound-volume',
+        'trivia-question-text-history-v1','trivia-local-pool-release-v1','trivia-stage-run-id'
       ]) window.localStorage.removeItem(k);
       for(let i=window.localStorage.length-1;i>=0;i--){
         const key=window.localStorage.key(i);
