@@ -48,7 +48,7 @@ export default function TutorialPreview({locale,page,color,avatar}:{locale:Activ
    {page===2&&<g>
      <path d='M80 49H170V114H80Z' stroke={color} strokeWidth='10' fill='none' strokeLinejoin='round' strokeLinecap='round'/>
      <CaptureTile row={0} col={0} x={90} y={59} width={70} height={45} color={color}
-       name={en?'Player':'שחקן'} icon={avatar} style='lumen' locale={locale}/>
+       name={en?'Player':'שחקן'} icon={avatar} style='lumen' locale={locale} idPrefix='tutorial'/>
      <g className='lumen-tutorial-star' fill='#FFE8A0'><path d='M217 66l7 14 15 3-11 11 3 16-14-8-14 8 3-16-11-11 15-3z'/><circle cx='270' cy='151' r='4'/><circle cx='51' cy='155' r='3'/></g>
      <text x='226' y='130' fill='#FFE9B3' textAnchor='middle' fontFamily='Arial,sans-serif' fontWeight='900' fontSize='18'>+1</text>
    </g>}
