@@ -865,3 +865,65 @@ main.trivia-app .scoreboard:not(:has(.player-tile.other)){
   transition:none!important;
  }
 }
+
+
+/* Each adventure world has a distinct art direction, not merely a color swap.
+   All art is generated with CSS, making it fast in mobile browsers and offline. */
+main.trivia-app.theme-orchard{
+ --world-border:#D3EFA5;--world-tint:#214C35;
+}
+main.trivia-app.theme-crystal{
+ --world-border:#E3BBFF;--world-tint:#352E70;
+}
+main.trivia-app.theme-clouds{
+ --world-border:#E0FCFF;--world-tint:#346EA9;
+}
+main.trivia-app.theme-galaxy{
+ --world-border:#FDBDEA;--world-tint:#271D60;
+}
+main.trivia-app .arena{
+ outline:2px solid var(--world-border,transparent);
+ outline-offset:-8px;animation:worldArrival .75s cubic-bezier(.2,.8,.25,1) both;
+}
+main.trivia-app .arena.orchard{
+ background:
+ radial-gradient(ellipse 28% 20% at 14% 25%,#D5FCA26A,transparent 100%),
+ radial-gradient(ellipse 20% 35% at 88% 65%,#FCE59D62,transparent 100%),
+ repeating-radial-gradient(ellipse at 20% 80%,#3DA56C22 0 8px,transparent 9px 28px),
+ linear-gradient(135deg,#0D4433,#205A3F 56%,#2C7251)!important;
+}
+main.trivia-app .arena.orchard::before{content:"🌿   ✿   🍃   ✿   🌿";font-size:22px;letter-spacing:.22em}
+main.trivia-app .arena.crystal{
+ background:
+ repeating-linear-gradient(135deg,transparent 0 30px,#C5D1FF14 31px 33px,transparent 34px 65px),
+ conic-gradient(from 45deg at 15% 20%,#A8F6FE33,#BF7AFF42,#24205F,#4B2C87,#A8F6FE33)!important;
+ box-shadow:0 24px 60px #201A54A9,inset 0 0 48px #BEA6FF66!important;
+}
+main.trivia-app .arena.crystal::before{content:"◆   ◇   ✧   ◇   ◆";color:#E2C8FF;font-size:26px;letter-spacing:.3em}
+main.trivia-app .arena.clouds{
+ background:
+ radial-gradient(ellipse 56% 23% at 14% 18%,#F8FFFFBC,transparent 100%),
+ radial-gradient(ellipse 43% 25% at 84% 80%,#D9F5FFC4,transparent 100%),
+ radial-gradient(ellipse 48% 19% at 83% 30%,#E6F4FF6F,transparent 100%),
+ linear-gradient(155deg,#3D7FAF,#7792C8 54%,#4B70AD)!important;
+}
+main.trivia-app .arena.clouds::before{content:"☁   ☁   ✦   ☁   ☁";color:#FFFFFF;font-size:24px;letter-spacing:.3em}
+main.trivia-app .arena.galaxy{
+ background:
+ radial-gradient(circle at 25% 20%,#FFF8FE 0 1px,transparent 2px),
+ radial-gradient(circle at 73% 67%,#EEFCFF 0 1px,transparent 2px),
+ radial-gradient(circle at 42% 80%,#FFE5FF 0 2px,transparent 3px),
+ radial-gradient(ellipse 45% 45% at 80% 17%,#F779D15C,transparent 100%),
+ radial-gradient(ellipse 50% 45% at 11% 78%,#5C84F585,transparent 100%),
+ linear-gradient(140deg,#141034,#2A1C5C 55%,#12194D)!important;
+ background-size:70px 85px,107px 95px,140px 130px,auto,auto,auto!important;
+}
+main.trivia-app .arena.galaxy::before{content:"✦    ·    ✧    ✧    ·    ✦";color:#F8CFFF;font-size:25px;letter-spacing:.2em}
+main.trivia-app .arena-inner{border-color:var(--world-border,#A6BDF4)!important}
+main.trivia-app .arena-panel .level-pill{
+ border:1px solid var(--world-border,#E5F2FF);
+ box-shadow:0 0 20px color-mix(in srgb,var(--world-border),transparent 60%);
+}
+@keyframes worldArrival{from{opacity:.35;transform:translateY(15px) scale(.975)}to{opacity:1;transform:translateY(0) scale(1)}}
+main.trivia-app .mode-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+@media(prefers-reduced-motion:reduce){main.trivia-app .arena{animation:none!important}}
