@@ -789,8 +789,8 @@ export default function TriviaGame() {
   const drawLine = (key: string, x1: number, y1: number, x2: number, y2: number) => {
     const owner = state.edges[key];
     return <g key={key} pointerEvents='none'>
-      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={lineColors[owner]} strokeWidth='17' strokeOpacity='.26' strokeLinecap='round' filter='url(#lineGlow)' />}
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? lineColors[owner] : '#B7D1F6'} strokeOpacity={owner ? .95 : .2} strokeWidth={owner ? 10 : 3} strokeLinecap='round' strokeDasharray={owner ? undefined : '1 11'} filter={owner ? 'url(#markerTexture)' : undefined}/>
+      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={lineColors[owner]} strokeWidth='17' strokeOpacity='.26' strokeLinecap='round' />}
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? lineColors[owner] : '#B7D1F6'} strokeOpacity={owner ? .95 : .2} strokeWidth={owner ? 10 : 3} strokeLinecap='round' strokeDasharray={owner ? undefined : '1 11'}/>
       {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={lineColors[owner]} strokeOpacity='.42' strokeWidth='4' strokeLinecap='round' />}
       {owner && <line x1={x1+1} y1={y1+1} x2={x2+1} y2={y2+1} stroke='#FFFFFF' strokeOpacity='.12' strokeWidth='1.5' strokeLinecap='round' />}
     </g>;
@@ -1021,10 +1021,6 @@ export default function TriviaGame() {
             >
               <defs>
                 <filter id='lineGlow' x='-50%' y='-50%' width='200%' height='200%'><feGaussianBlur stdDeviation='4' /></filter>
-                <filter id='markerTexture' x='-10%' y='-10%' width='120%' height='120%'>
-                  <feTurbulence baseFrequency='.062' numOctaves='2' type='fractalNoise' seed='17' result='grain'/>
-                  <feDisplacementMap in='SourceGraphic' in2='grain' scale='1.8' xChannelSelector='R' yChannelSelector='G'/>
-                </filter>
                 <radialGradient id='dotGlow'><stop offset='0%' stopColor='#FFFFFF'/><stop offset='58%' stopColor='#D7EAFF'/><stop offset='100%' stopColor='#7BA9ED'/></radialGradient>
                 <linearGradient id='cellTint' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stopColor='#FFFFFF' stopOpacity='.12'/><stop offset='100%' stopColor='#FFFFFF' stopOpacity='.015'/></linearGradient>
               </defs>
