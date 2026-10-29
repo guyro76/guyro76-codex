@@ -3,16 +3,17 @@
  * Russian, French and Arabic are registered as future locale adapters only.
  * Strings are authored by editors, never machine-translated at runtime.
  */
-export type ActiveLocale='he'|'en';
-export type PlannedLocale='ru'|'fr'|'ar';
-export const activeLocales=['he','en'] as const;
-export const plannedLocales=['ru','fr','ar'] as const;
+import {extraDictionaries} from './i18nExtra';
+export type ActiveLocale='he'|'en'|'ru'|'fr'|'ar';
+export type PlannedLocale=never;
+export const activeLocales=['he','en','ru','fr','ar'] as const;
+export const plannedLocales=[] as const;
 export const localeCatalog={
  he:{nativeName:'עברית',direction:'rtl',enabled:true},
  en:{nativeName:'English',direction:'ltr',enabled:true},
- ru:{nativeName:'Русский',direction:'ltr',enabled:false},
- fr:{nativeName:'Français',direction:'ltr',enabled:false},
- ar:{nativeName:'العربية',direction:'rtl',enabled:false}
+ ru:{nativeName:'Русский',direction:'ltr',enabled:true},
+ fr:{nativeName:'Français',direction:'ltr',enabled:true},
+ ar:{nativeName:'العربية',direction:'rtl',enabled:true}
 } as const;
 export const englishDictionary:Readonly<Record<string,string>>={
   "טריוויה ריבועים": "TRIVIA SQUARES",
@@ -259,13 +260,15 @@ export const englishDictionary:Readonly<Record<string,string>>={
   "🎮 משחק חדש": "🎮 New match"
 };
 export function translate(locale:ActiveLocale,hebrew:string):string{
- return locale==='en'?(englishDictionary[hebrew]||hebrew):hebrew;
+ if(locale==='he')return hebrew;
+ if(locale==='en')return englishDictionary[hebrew]||hebrew;
+ return extraDictionaries[locale][hebrew]||englishDictionary[hebrew]||hebrew;
 }
 export function localeDirection(locale:ActiveLocale):'rtl'|'ltr'{
- return locale==='he'?'rtl':'ltr';
+ return locale==='he'||locale==='ar'?'rtl':'ltr';
 }
 export function isActiveLocale(value:unknown):value is ActiveLocale{
- return value==='he'||value==='en';
+ return value==='he'||value==='en'||value==='ru'||value==='fr'||value==='ar';
 }
 export const translatedWorlds={
  he:[
@@ -279,5 +282,23 @@ export const translatedWorlds={
   {name:'Crystal Mines',subtitle:'Uncover sparkling treasures',badge:'WORLD 02',reward:'Gems'},
   {name:'Kingdom of Clouds',subtitle:'Take the path across the sky',badge:'WORLD 03',reward:'Bonuses'},
   {name:'Starlight Galaxy',subtitle:"The ultimate masters' challenge",badge:'WORLD 04',reward:'Trophies'}
+ ],
+ ru:[
+  {name:'Фруктовый сад',subtitle:'Приключение начинается здесь',badge:'МИР 01',reward:'Фрукты'},
+  {name:'Алмазные шахты',subtitle:'Откройте сверкающие сокровища',badge:'МИР 02',reward:'Алмазы'},
+  {name:'Королевство облаков',subtitle:'Путь среди звёзд',badge:'МИР 03',reward:'Бонусы'},
+  {name:'Звёздная галактика',subtitle:'Испытание чемпионов',badge:'МИР 04',reward:'Кубки'}
+ ],
+ fr:[
+  {name:'Jardin des fruits',subtitle:'L’aventure commence ici',badge:'MONDE 01',reward:'Fruits'},
+  {name:'Mines de diamants',subtitle:'Découvrez des trésors étincelants',badge:'MONDE 02',reward:'Diamants'},
+  {name:'Royaume des nuages',subtitle:'Un voyage parmi les étoiles',badge:'MONDE 03',reward:'Bonus'},
+  {name:'Galaxie des étoiles',subtitle:'Le grand défi des maîtres',badge:'MONDE 04',reward:'Trophées'}
+ ],
+ ar:[
+  {name:'حديقة الفواكه',subtitle:'تبدأ المغامرة هنا',badge:'العالم 01',reward:'الفواكه'},
+  {name:'مناجم الألماس',subtitle:'اكتشف كنوزًا متلألئة',badge:'العالم 02',reward:'ألماس'},
+  {name:'مملكة الغيوم',subtitle:'رحلة بين النجوم',badge:'العالم 03',reward:'مكافآت'},
+  {name:'مجرة النجوم',subtitle:'تحدي الأبطال الأكبر',badge:'العالم 04',reward:'كؤوس'}
  ]
 } as const;
