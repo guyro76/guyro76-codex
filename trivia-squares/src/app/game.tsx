@@ -55,13 +55,14 @@ type PlayerIdentity = { name: string; color: string; line_color?: string; avatar
 type RemoteMatch = { id: string; status: string; host_id: string; guest_id: string | null; version: number; state: GameState; question?: Question; players?: { host?: PlayerIdentity; guest?: PlayerIdentity } };
 type Profile = { display_name: string; color: string; line_color?: string; avatar: string; remember_color: boolean; locale?: ActiveLocale };
 type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number; time_charms?: number };
-type SkinId='royal'|'ocean'|'neon'|'stone'|'forest';
+type SkinId='regular'|'urban'|'vintage'|'retro'|'pop'|'future';
 const skins:{id:SkinId;he:string;en:string;colors:[string,string,string]}[]=[
- {id:'royal',he:'סגול מלכותי',en:'Royal Amethyst',colors:['#32235E','#B587E3','#F4C774']},
- {id:'ocean',he:'אוקיינוס זכוכית',en:'Ocean Glass',colors:['#0A5570','#5CD7DF','#C2F8FF']},
- {id:'neon',he:'ניאון לילה',en:'Midnight Neon',colors:['#12153F','#EE65D5','#55F8EB']},
- {id:'stone',he:'אבן ושמפניה',en:'Stone & Champagne',colors:['#5B3953','#E1BC90','#FBEDD6']},
- {id:'forest',he:'אוצר היער',en:'Forest Treasure',colors:['#174F44','#72C49B','#F6D681']}
+ {id:'regular',he:'רגיל · מקורי',en:'Original',colors:['#1F3265','#688FD8','#F9DA90']},
+ {id:'urban',he:'אורבני · מטרופולין',en:'Urban Metro',colors:['#172935','#5A8C9C','#F4BD70']},
+ {id:'vintage',he:'וינטג׳ קלאסי',en:'Classic Vintage',colors:['#583D36','#D1AC7C','#F7E9CE']},
+ {id:'retro',he:'רטרו · ארקייד',en:'Retro Arcade',colors:['#302B5D','#FAAE4C','#71D4BC']},
+ {id:'pop',he:'פופ · צבעוני',en:'Pop Art',colors:['#F34594','#FFD952','#4994EA']},
+ {id:'future',he:'עתידני AI · סגול כתום',en:'AI Future · Purple & Orange',colors:['#42117E','#F15A24','#E946CC']}
 ];
 
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
@@ -105,7 +106,7 @@ export default function TriviaGame() {
   const [remote, setRemote] = useState<RemoteMatch | null>(null);
   const [question, setQuestion] = useState<Question | null>(null);
   const [wrongAnswerFeedback,setWrongAnswerFeedback]=useState<WrongAnswerFeedback|null>(null);
-  const [skin,setSkin]=useState<SkinId>('royal');
+  const [skin,setSkin]=useState<SkinId>('regular');
   const [skinPickerOpen,setSkinPickerOpen]=useState(false);
   const [selectedTopics,setSelectedTopics]=useState<QuestionTopic[]>([...ALL_QUESTION_TOPICS]);
   const toggleTopic=(id:QuestionTopic)=>setSelectedTopics(previous=>{
@@ -307,7 +308,9 @@ export default function TriviaGame() {
        if(avatars.includes(savedCapture.guestAvatar||''))setGuestAvatar(savedCapture.guestAvatar!);
        setSelectedTopics(parseTopicPreferences(JSON.parse(localStorage.getItem('trivia-question-topics-v1')||'null')));
        const storedSkin=localStorage.getItem('trivia-skin-v1');
+       const migratedSkin:Record<string,SkinId>={royal:'regular',ocean:'urban',neon:'future',stone:'vintage',forest:'retro'};
        if(skins.some(item=>item.id===storedSkin))setSkin(storedSkin as SkinId);
+       else if(storedSkin&&migratedSkin[storedSkin])setSkin(migratedSkin[storedSkin]);
        const seen=JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]') as string[];
       if(Array.isArray(seen))seenQuestionTexts.current=new Set(seen.filter(x=>typeof x==='string'));
       const storedPool=JSON.parse(localStorage.getItem('trivia-local-pool-release-v1')||'{}') as {he?:number;en?:number};
@@ -1171,7 +1174,7 @@ export default function TriviaGame() {
         <span className='skin-palette-icon' aria-hidden='true'>🎨</span><span>{tr('עיצוב המשחק')}</span>
       </button>
       {skinPickerOpen&&<section id='skin-picker-panel' className='skin-picker-panel' aria-label={tr('בחר סקין למשחק')}>
-        <div className='skin-picker-title'>{tr('חמש ערכות עיצוב — בחרו את האהובה')}</div>
+        <div className='skin-picker-title'>{locale==='he'?'6 סקינים לבחירה · ההתקדמות נשמרת':'6 skins to choose from · progress is preserved'}</div>
         <div className='skin-picker-options' role='group' aria-label={tr('ערכות עיצוב')}>
           {skins.map(theme=><button type='button' key={theme.id} className='skin-picker-item'
             aria-pressed={skin===theme.id} onClick={()=>{setSkin(theme.id);setSkinPickerOpen(false)}}>
