@@ -40,13 +40,6 @@ export function applyLocalAnswer<T extends BoardState>(board: T, edge: string, c
   return {...board,edges,owners,scores,turn:solo?'host':gained?acting:nextTurn};
 }
 
-/** Repair legacy solo boards which accidentally granted edges and squares to a phantom second player. */
-export function repairSoloBoard<T extends BoardState>(board:T):T {
-  const edges=Object.fromEntries(Object.entries(board.edges).map(([key])=>[key,'host' as Side]));
-  const owners=Object.fromEntries(Object.entries(board.owners).map(([key])=>[key,'host' as Side]));
-  return {...board,turn:'host',edges,owners,scores:{...board.scores,host:Object.keys(owners).length,guest:0,bot:0}};
-}
-
 /** Generic placeholders are never valid opponents. An empty second-player
  * field means a solo game; single player cannot surrender a turn. */
 export function hasNamedSecondPlayer(value:unknown,hostName=''):boolean{
