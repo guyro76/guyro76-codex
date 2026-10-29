@@ -1129,3 +1129,96 @@ main.trivia-app .topic-select-all{margin-top:5px}
 @media(prefers-reduced-motion:reduce){
  main.trivia-app .skin-picker-item,main.trivia-app .skin-palette-trigger{transition:none!important}
 }
+
+/* AI FUTURE — purple to orange neon glass. Higher-priority finishing layer is
+   intentionally placed after generic skin rules. No animated overlay can
+   intercept board drawing or gameplay gestures. */
+main.trivia-app.skin-future {
+ --skin-border:#EF81CD;
+ --skin-contrast:#FFAF69;
+ --skin-surface:#210943;
+ --skin-panel:#431273;
+ --skin-secondary:#FF8035;
+ --lumen-accent:#FF9B5D;
+ --lumen-gold:#FFB472;
+ --ambient-a:#CF40D9A3;
+ --ambient-b:#FF742E90;
+ font-family:'Heebo','Noto Sans Hebrew',Inter,system-ui,Arial,sans-serif;
+}
+main.trivia-app.skin-future::after {
+ background:
+ radial-gradient(ellipse 30% 23% at 16% 13%,#FF742F88,transparent 77%),
+ radial-gradient(ellipse 38% 29% at 82% 28%,#F33DBB99,transparent 77%),
+ radial-gradient(ellipse 37% 30% at 62% 87%,#7D38D890,transparent 77%);
+ opacity:.8;
+}
+main.trivia-app.skin-future .hero,
+main.trivia-app.skin-future .glass-panel,
+main.trivia-app.skin-future .quiz-card:not(.answer-feedback-card) {
+ background:linear-gradient(140deg,#541791E8,#200943EE)!important;
+ border:1.5px solid #FF87C5!important;
+ box-shadow:0 19px 56px #160525A6,0 0 28px #F14DBD32,inset 0 1px 0 #FFFFFF45!important;
+ backdrop-filter:blur(18px) saturate(1.2);
+}
+main.trivia-app.skin-future .hero h1,
+main.trivia-app.skin-future .panel-title,
+main.trivia-app.skin-future .quiz-card h2 {
+ font-family:'Heebo','Noto Sans Hebrew',Inter,Arial,sans-serif;
+ font-weight:900!important;
+ letter-spacing:-.03em;
+ text-shadow:0 0 18px #EA56CE86;
+}
+main.trivia-app.skin-future .hero h1 {
+ background:linear-gradient(102deg,#FFF1E2,#FFA36B 45%,#FFD1F6 75%,#FFFFFF);
+ background-clip:text;-webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+ filter:drop-shadow(0 3px 18px #BB2BBC80);
+}
+main.trivia-app.skin-future .gold-button {
+ background:linear-gradient(104deg,#FFCB83,#FF792B 52%,#F255B4)!important;
+ color:#280C44!important;
+ border:1.5px solid #FFE9CA!important;
+ box-shadow:0 10px 27px #FF6C3673,inset 0 2px 0 #FFFFFFB3!important;
+ font-weight:900!important;
+}
+main.trivia-app.skin-future .gold-button:focus-visible,
+main.trivia-app.skin-future .skin-palette-trigger:focus-visible {
+ outline:3px solid #FFE5A6!important;outline-offset:3px;
+}
+main.trivia-app.skin-future .glass-button,
+main.trivia-app.skin-future .skin-palette-trigger {
+ background:linear-gradient(135deg,#6E2496D9,#2D0A5CDB)!important;
+ color:#FFF4FB!important;
+ border:1.5px solid #FF9CD9!important;
+ box-shadow:inset 0 1px 0 #FFFFFF40,0 0 20px #F15BBA42!important;
+}
+main.trivia-app.skin-future .skin-picker-panel {
+ background:linear-gradient(155deg,#3C0C6A,#210944)!important;
+ box-shadow:0 18px 50px #120522C9,0 0 29px #E34DBF56;
+}
+main.trivia-app.skin-future .skin-picker-item[aria-pressed=true] {
+ border:2px solid #FFC58A!important;
+ background:linear-gradient(115deg,#8C2CB0,#A93671)!important;
+ box-shadow:0 0 19px #F86EA972,inset 0 0 0 1px #FFD8A9;
+}
+main.trivia-app.skin-future .arena-inner {
+ border:2px solid #F7A5E9!important;
+ box-shadow:0 0 26px #F650BA64,0 18px 54px #0E032B99,inset 0 0 28px #914AE82E!important;
+}
+main.trivia-app.skin-future .player-tile,
+main.trivia-app.skin-future .wallet-item,
+main.trivia-app.skin-future .capture-personalization {
+ background:linear-gradient(145deg,#53248BEA,#260C57F0)!important;
+ border:1px solid #DD8EDC!important;
+ box-shadow:inset 0 1px 0 #FFFFFF3A,0 5px 21px #15073180;
+}
+main.trivia-app.skin-future .level-progress-fill {
+ background:linear-gradient(90deg,#FD7530,#EE43BB,#B96FFF)!important;
+ box-shadow:0 0 14px #F363B89A;
+}
+main.trivia-app.skin-future .answer-option:not(.feedback-answer):not(:disabled):hover {
+ background:#FFE8F6!important;border-color:#F77EBC!important;
+}
+@media(prefers-reduced-motion:reduce) {
+ main.trivia-app.skin-future::after {animation:none!important}
+}
