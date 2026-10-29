@@ -23,6 +23,12 @@ import {CAMPAIGN_STAGES,STAGE_COUNT,stageFor,canOpenStage} from '../lib/campaign
 import './tutorial.css';
 import './premium.css';
 
+function hasActualOpponent(guest:unknown,host=''):boolean{
+ if(typeof guest!=='string')return false;
+ const name=guest.trim();
+ return name.length>=2 && !/^(?:שחקן\s*(?:2|שני|ב)|player\s*(?:2|two)|second\s*player)$/iu.test(name)
+  && name.toLocaleLowerCase()!==host.trim().toLocaleLowerCase();
+}
 function canonicalQuestion(text:string):string {
   return text.normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 }
@@ -160,7 +166,7 @@ export default function TriviaGame() {
   const [lineColor, setLineColor] = useState('#358CFF');
   const [avatar, setAvatar] = useState('🦊');
   const [remember, setRemember] = useState(false);
-  const [guestName,setGuestName]=useState('שחקן 2');
+  const [guestName,setGuestName]=useState('');
   const [guestColor,setGuestColor]=useState('#F97316');
   const [guestAvatar,setGuestAvatar]=useState('👑');
   const [captureStyle,setCaptureStyle]=useState<CaptureStyle>('lumen');
@@ -278,7 +284,7 @@ export default function TriviaGame() {
       const savedCapture=JSON.parse(localStorage.getItem('trivia-capture-settings-v1')||'{}') as {style?:CaptureStyle;ownerMode?:LocalOwnerMode;guestName?:string;guestColor?:string;guestAvatar?:string};
        if(['lumen','neon','seal','prism','token'].includes(savedCapture.style||''))setCaptureStyle(savedCapture.style!);
        if(['auto','manual','auto_with_override'].includes(savedCapture.ownerMode||''))setOwnerMode(savedCapture.ownerMode!);
-       if(typeof savedCapture.guestName==='string' && savedCapture.guestName.trim())setGuestName(savedCapture.guestName.slice(0,32));
+       if(hasActualOpponent(savedCapture.guestName,localStorage.getItem('trivia-player-name')||''))setGuestName(savedCapture.guestName!.trim().slice(0,32));
        if(palettes.includes(savedCapture.guestColor||''))setGuestColor(savedCapture.guestColor!);
        if(avatars.includes(savedCapture.guestAvatar||''))setGuestAvatar(savedCapture.guestAvatar!);
        const seen=JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]') as string[];
@@ -340,9 +346,22 @@ export default function TriviaGame() {
           const savedStage=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
           const validStage=Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=30?savedStage:1;
           if(stageFor(validStage).size===value.rows){
-            const explicitlyTwoPlayers=localStorage.getItem('trivia-mode-v2')==='local';
-            const repaired=value.mode==='local'&&!explicitlyTwoPlayers?{...repairSoloBoard(value),mode:'solo' as const}:value;
+            const savedCapture=JSON.parse(localStorage.getItem('trivia-capture-settings-v1')||'{}') as {guestName?:string};
+            const realGuest=hasActualOpponent(savedCapture.guestName,localStorage.getItem('trivia-player-name')||'');
+            const migrating=value.mode==='local'&&!realGuest;
+            const repaired=migrating?{...repairSoloBoard(value),mode:'solo' as const}:value;
             setLocal(repaired);setSize(repaired.rows);
+            if(migrating){
+              setMode('solo');localStorage.setItem('trivia-mode-v2','solo');
+              // Restore earned credits and charms from the phantom player without clearing the board.
+              try{
+                const rewards=JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}');
+                localStorage.setItem('trivia-local-rewards',JSON.stringify({
+                  credits:{host:Number(rewards.credits?.host||0)+Number(rewards.credits?.guest||0),guest:0},
+                  charms:{host:Number(rewards.charms?.host||0)+Number(rewards.charms?.guest||0),guest:0}
+                }));
+              }catch{}
+            }
           }
         }
       }
@@ -534,6 +553,10 @@ export default function TriviaGame() {
     if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
     setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false); setCapturePending(null);
+    if(mode==='local' && !hasActualOpponent(guestName,name)){
+      setMessage('כדי לשחק בשניים יש להקליד שם אמיתי של משתתף נוסף. למשחק לבד בחרו משחק עצמאי.');
+      document.getElementById('local-guest-name')?.focus();setBusy(false);return;
+    }
     if (mode === 'local'||mode === 'solo') {
       if(user&&client&&navigator.onLine&&!await syncAccountQuestionHistory()){
         setMessage(locale==='en'?'Unable to sync your question history. Please retry.':'אי אפשר להתחיל משחק מחובר לפני סנכרון היסטוריית השאלות.');
@@ -679,7 +702,7 @@ export default function TriviaGame() {
  (correct?(gained?'You captured '+gained+' squares!':'Correct answer!'):'Wrong answer!'):
  (correct?(gained?'סגרת '+gained+' ריבועים!':'תשובה נכונה!'):'תשובה שגויה!'));
       if(gained>0){
-        setLocalCredits(prev=>({...prev,[local.turn==='guest'?'guest':'host']:prev[local.turn==='guest'?'guest':'host']+10*gained}));
+        setLocalCredits(prev=>({...prev,[local.mode==='solo'?'host':local.turn==='guest'?'guest':'host']:prev[local.mode==='solo'?'host':local.turn==='guest'?'guest':'host']+10*gained}));
         if(Object.keys(next.owners).length===next.rows*next.cols && ownerMode!=='manual'){
           const winner=next.scores.host>next.scores.guest?'host':next.scores.guest>next.scores.host?'guest':null;
           if(winner)setLocalCharms(prev=>({...prev,[winner]:prev[winner]+1}));
@@ -1368,10 +1391,11 @@ export default function TriviaGame() {
                  <option value='manual'>{locale==='en'?'Ask me after each capture':'בחירה ידנית לאחר כל סגירה'}</option>
                  <option value='auto'>{locale==='en'?'Automatic only':'אוטומטי בלבד'}</option>
                </select>
-               <h3>{locale==='en'?'Second player':'שחקן 2'}</h3>
-               <label className='form-field' htmlFor='local-guest-name'>{locale==='en'?'Second player name':'שם שחקן 2'}</label>
-               <input className='form-input' id='local-guest-name' maxLength={32} value={guestName}
-                 onChange={e=>setGuestName(e.target.value.slice(0,32))}/>
+               <h3>{locale==='en'?'Second player — required name':'משתתף נוסף — חובה להזין שם'}</h3>
+               <label className='form-field' htmlFor='local-guest-name'>{locale==='en'?'Real second player name':'שם המשתתף הנוסף'}</label>
+               <input className='form-input' id='local-guest-name' maxLength={32} value={guestName} placeholder={locale==='en'?'A real player name':'לדוגמה: עדי'}
+                  onChange={e=>setGuestName(e.target.value.slice(0,32))}/>
+                {!hasActualOpponent(guestName,name)&&<p className='smalltxt'>ללא שם של משתתף אמיתי, בחרו ״משחק עצמאי״. לא יוקצה יותר ניקוד לשחקן 2 אוטומטי.</p>}
                <div className='form-field'>{locale==='en'?'Player 2 capture color':'צבע הכיבוש של שחקן 2'}</div>
                <div className='swatches' role='group' aria-label={locale==='en'?'Player 2 color':'צבע שחקן 2'}>
                  {palettes.map(c=><button key={'guest-'+c} type='button' className='swatch'
