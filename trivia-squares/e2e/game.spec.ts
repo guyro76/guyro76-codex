@@ -245,3 +245,26 @@ test('dragging keeps marker path responsive without continuous React board rende
   await page.mouse.up();
   await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toBeVisible();
 });
+
+test('guest can recover previously seen questions from a portable backup after storage loss',async({page})=>{
+  await ready(page);
+  await page.evaluate(()=>localStorage.setItem('trivia-question-text-history-v1',JSON.stringify(['מהי בירת אוסטרליה'])));
+  const backup=page.locator('details.local-history-backup');
+  await backup.locator('summary').click();
+  const downloadPromise=page.waitForEvent('download');
+  await backup.getByRole('button',{name:'הורד גיבוי שאלות'}).click();
+  const download=await downloadPromise;
+  expect(download.suggestedFilename()).toBe('trivia-squares-question-history.json');
+  await page.evaluate(()=>localStorage.removeItem('trivia-question-text-history-v1'));
+  await backup.getByLabel('בחר קובץ גיבוי היסטוריה').setInputFiles({
+    name:'trivia-squares-question-history.json',
+    mimeType:'application/json',
+    buffer:Buffer.from(JSON.stringify({
+      format:'trivia-squares-history',version:1,exportedAt:new Date().toISOString(),
+      questions:['מהי בירת אוסטרליה']
+    }))
+  });
+  await expect(backup.getByRole('status')).toContainText('שוחזרו');
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
+  expect(saved).toContain('מהי בירת אוסטרליה');
+});
