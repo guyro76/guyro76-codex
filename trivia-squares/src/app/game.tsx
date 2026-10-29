@@ -661,9 +661,11 @@ export default function TriviaGame() {
       setBusy(false);
     } else {
       setEdge(key);
-      const remaining=questionBank.filter(q=>
-        selectedTopics.includes(topicForQuestion(q.category,q.text)) &&
+      const unseen=questionBank.filter(q=>
         !usedLocalQuestionIds.current.has(q.id) && !seenQuestionTexts.current.has(canonicalQuestion(q.text)));
+      // Respect chosen topics until they run out; gracefully widen without repeating.
+      const preferred=unseen.filter(q=>selectedTopics.includes(topicForQuestion(q.category,q.text)));
+      const remaining=preferred.length?preferred:unseen;
       // Rotate categories fairly: movies, music and TV are accessible from the first stage.
       // Never sacrifice the ban on repeating a previously seen question.
       const alternatives=remaining.filter(v=>v.category!==lastQuestionCategory.current);
@@ -675,9 +677,26 @@ export default function TriviaGame() {
         ? remaining.find(v=>v.text.includes('בירת אוסטרליה')) || inCategory[0]
         : inCategory[Math.floor(Math.random()*inCategory.length)];
       if(!q){
+        // Exhaustion must not block a saved local board, or fabricate a repeated question.
+        // Grant only this free local stroke (never a server-ranked result).
+        const next=applyLocalAnswer(local,key,true,local.mode==='solo');
+        setLocal(next);
+        const gained=Object.keys(next.owners).length-Object.keys(local.owners).length;
+        if(gained){
+          const acting=local.mode==='solo'?'host':local.turn==='guest'?'guest':'host';
+          setLocalCredits(prev=>({...prev,[acting]:prev[acting]+10*gained}));
+          play('capture');
+        }else play('draw');
         setEdge(null);
-        setMessage(locale==='en'?'No unused questions remain in your selected topics. Choose additional topics to continue the same stage.':'אין כרגע שאלות חדשות בנושאים שנבחרו. אפשר לסמן נושאים נוספים ולהמשיך באותו השלב בלי לאפס את הלוח.');
+        setMessage(locale==='he'
+          ? 'כל השאלות החדשות הזמינות מוצו. הקו הושלם ללא שאלה כדי שתוכלו להמשיך באותו הלוח בלי לאפס אותו.'
+          : 'All new questions are exhausted. This line is free so you can continue the same board without a reset.');
         return;
+      }
+      if(preferred.length===0){
+        setMessage(locale==='he'
+          ? 'השאלות בנושאים שבחרת אזלו. מצאנו עבורך שאלה חדשה בנושא אחר, בלי למחוק את ההתקדמות.'
+          : 'Your chosen topics ran out. A new question from another topic is shown without resetting your progress.');
       }
       if(user&&client&&navigator.onLine){
         // Register the question globally before showing it on an authenticated device.
