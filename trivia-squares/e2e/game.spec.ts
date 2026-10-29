@@ -319,3 +319,31 @@ test('live clock shows Hebrew date only in Hebrew and copyright switches with lo
  await expect(page.getByText(/Registration is only needed for connected play/)).toBeVisible();
  await expect(page.locator('.campaign-stage-card')).toHaveCount(30);
 });
+
+
+test('nickname saves while typing, survives reload and return visit without pressing Save or Start',async({page})=>{
+  await page.goto('/');
+  const tutorial=page.getByRole('dialog',{name:'הסבר משחק'});
+  await expect(tutorial).toBeVisible();
+  await tutorial.getByRole('button',{name:'דלג או סיים'}).click();
+  await page.getByLabel('שם שחקן (חובה)').fill('גיא בודק');
+  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('trivia-player-name'))).toBe('גיא בודק');
+  await expect(page.getByText('השם נשמר אוטומטית במכשיר')).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('שם שחקן (חובה)')).toHaveValue('גיא בודק');
+  await page.getByLabel('שם שחקן (חובה)').fill('גיא חדש');
+  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('trivia-player-name'))).toBe('גיא חדש');
+  await page.goto('/terms');
+  await page.goto('/');
+  await expect(page.getByLabel('שם שחקן (חובה)')).toHaveValue('גיא חדש');
+});
+
+test('invalid nickname cannot start the game until a usable name is entered',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('dialog',{name:'הסבר משחק'}).getByRole('button',{name:'דלג או סיים'}).click();
+  await page.getByLabel('שם שחקן (חובה)').fill('א');
+  await expect(page.getByRole('button',{name:/התחל משחק/})).toBeDisabled();
+  await page.getByLabel('כדי לצייר קו ראשון, הכנס שם שחקן').fill('אורח משחק');
+  await expect(page.getByRole('button',{name:/התחל משחק/})).toBeEnabled();
+  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('trivia-player-name'))).toBe('אורח משחק');
+});
