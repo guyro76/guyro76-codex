@@ -27,7 +27,7 @@ jobs:
         run: npm install --ignore-scripts --no-audit --no-fund
       - name: TypeScript check
         run: npm run typecheck
-      - name: Drawing geometry tests
-        run: node --test tests/dotDrawing.test.mjs
+      - name: Gameplay and drawing unit tests
+        run: node --test tests/*.test.mjs
       - name: Next.js production build
         run: npm run build
