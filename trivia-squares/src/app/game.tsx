@@ -228,8 +228,9 @@ export default function TriviaGame() {
       if(left===0 && !timeoutBusy.current){
         timeoutBusy.current=true;
         if(remote&&client){
-          void client.rpc('trivia_timeout_question',{p_match:remote.id})
-            .then(async({error})=>{
+          void (async()=>{
+            try{
+              const {error}=await client.rpc('trivia_timeout_question',{p_match:remote.id});
               if(!error){
                 setQuestion(null);setEdge(null);play('wrong');
                 setMessage('הדקה הסתיימה! התור עבר.');
@@ -237,7 +238,8 @@ export default function TriviaGame() {
               }else if(!error.message.includes('No pending question')&&!error.message.includes('Question not expired')){
                 setMessage('שגיאת זמן: '+error.message);
               }else await refresh(remote.id);
-            }).finally(()=>{timeoutBusy.current=false;});
+            }finally{timeoutBusy.current=false;}
+          })();
         }else{
           setLocal(prev=>({...prev,turn:prev.turn==='host'?'guest':'host'}));
           setQuestion(null);setEdge(null);play('wrong');
@@ -405,7 +407,7 @@ export default function TriviaGame() {
       else play(correct ? 'correct' : 'wrong');
       setMessage(correct ? gained ? 'סגרת ' + gained + ' ריבועים!' : 'תשובה נכונה!' : 'תשובה שגויה!');
       if(gained>0){
-        setLocalCredits(prev=>({...prev,[local.turn]:prev[local.turn]+10*gained}));
+        setLocalCredits(prev=>({...prev,[local.turn==='guest'?'guest':'host']:prev[local.turn==='guest'?'guest':'host']+10*gained}));
         if(Object.keys(next.owners).length===next.rows*next.cols){
           const winner=next.scores.host>next.scores.guest?'host':next.scores.guest>next.scores.host?'guest':null;
           if(winner)setLocalCharms(prev=>({...prev,[winner]:prev[winner]+1}));
