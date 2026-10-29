@@ -66,6 +66,19 @@ const skins:{id:SkinId;he:string;en:string;colors:[string,string,string]}[]=[
  {id:'future',he:'עתידני AI · סגול כתום',en:'AI Future · Purple & Orange',colors:['#42117E','#F15A24','#E946CC']}
 ];
 
+const skinNames:Record<'ru'|'fr'|'ar',Record<SkinId,string>>={
+ ru:{regular:'Оригинальный',urban:'Городской',vintage:'Классический винтаж',retro:'Ретро-аркада',pop:'Поп-арт',future:'AI: фиолетовый и оранжевый'},
+ fr:{regular:'Original',urban:'Métropole urbaine',vintage:'Vintage classique',retro:'Arcade rétro',pop:'Pop Art',future:'IA futuriste : violet et orange'},
+ ar:{regular:'الأصلي',urban:'المدينة الحديثة',vintage:'كلاسيكي عتيق',retro:'ألعاب ريترو',pop:'فن البوب',future:'مستقبلي بالبنفسجي والبرتقالي'}
+};
+const authorCredits:Record<ActiveLocale,string>={
+ he:'© 2026 תוכנן ובוצע ע״י גיא רוזנברג · כל הזכויות שמורות ©',
+ en:'© 2026 Designed and developed by Guy Rosenberg · All rights reserved ©',
+ ru:'© 2026 Создано Гаем Розенбергом · Все права защищены ©',
+ fr:'© 2026 Conçu et développé par Guy Rosenberg · Tous droits réservés ©',
+ ar:'© 2026 تصميم وتطوير غاي روزنبرغ · جميع الحقوق محفوظة ©'
+};
+
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
 const avatars = ['🦊', '🦁', '🐼', '🐲', '🦄', '👑', '🚀', '⭐'];
 const worlds = [
@@ -1248,12 +1261,12 @@ export default function TriviaGame() {
         <span className='skin-palette-icon' aria-hidden='true'>🎨</span><span>{tr('עיצוב המשחק')}</span>
       </button>
       {skinPickerOpen&&<section id='skin-picker-panel' className='skin-picker-panel' aria-label={tr('בחר סקין למשחק')}>
-        <div className='skin-picker-title'>{locale==='he'?'6 סקינים לבחירה · ההתקדמות נשמרת':'6 skins to choose from · progress is preserved'}</div>
+        <div className='skin-picker-title'>{tr('6 סקינים לבחירה · ההתקדמות נשמרת')}</div>
         <div className='skin-picker-options' role='group' aria-label={tr('ערכות עיצוב')}>
           {skins.map(theme=><button type='button' key={theme.id} className='skin-picker-item'
             aria-pressed={skin===theme.id} onClick={()=>{setSkin(theme.id);setSkinPickerOpen(false)}}>
             <span className='skin-picker-swatch' aria-hidden='true' style={{background:`linear-gradient(135deg,${theme.colors.join(',')})`}}/>
-            <strong>{locale==='he'?theme.he:theme.en}</strong>
+            <strong>{locale==='he'?theme.he:locale==='en'?theme.en:skinNames[locale][theme.id]}</strong>
             {skin===theme.id&&<span className='skin-picker-selected' aria-hidden='true'>✓</span>}
           </button>)}
         </div>
@@ -1586,7 +1599,7 @@ export default function TriviaGame() {
               </label>
               <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'12px 0'}}>
                 <input type='checkbox' checked={policiesAcknowledged} onChange={e=>setPoliciesAcknowledged(e.target.checked)} style={{width:20,height:20,flexShrink:0}}/>
-                {tr("קראתי את")} <a href={locale==='en'?'/en/privacy':'/privacy'} style={{color:'#FFDC88'}}>{tr("הודעת הפרטיות")}</a> {tr("ואני מסכים/ה ל")}<a href={locale==='en'?'/en/terms':'/terms'} style={{color:'#FFDC88'}}>{tr("תנאי השימוש")}</a>
+                {tr("קראתי את")} <a href={locale==='he'?'/privacy':'/en/privacy'} style={{color:'#FFDC88'}}>{tr("הודעת הפרטיות")}</a> {tr("ואני מסכים/ה ל")}<a href={locale==='he'?'/terms':'/en/terms'} style={{color:'#FFDC88'}}>{tr("תנאי השימוש")}</a>
               </label>
               <button className='gold-button' disabled={legalBusy||!adultConfirmed||!policiesAcknowledged} onClick={()=>void acceptCurrentPolicies()}>
                 {tr(legalBusy?'שומר...':'אשר והפעל משחק מחובר')}
@@ -1717,19 +1730,17 @@ export default function TriviaGame() {
             onClick={()=>void activateTimeCharm()}>♾️ {tr('הפעל קמע זמן')} ({currentCharms})</button>}
         </div>
         <div className='answer-grid'>
-          {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{(locale==='en'?['A','B','C','D']:['א','ב','ג','ד'])[i]}</span>{a}</button>)}
+          {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{(locale==='he'?['א','ב','ג','ד']:locale==='ar'?['أ','ب','ج','د']:['A','B','C','D'])[i]}</span>{a}</button>)}
         </div>
         <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>{tr(question.kind==='premium_bonus'?'תשובה נכונה מעניקה עד שני כיבושים סמוכים, ניקוד ופרסים כפולים. אם נשאר ריבוע אחד ייכבש רק הוא.':question.kind==='bonus'?'תשובה נכונה מעניקה שני אסימוני כיבוש זהב':'תשובה שגויה משאירה את הקו פתוח ומעבירה את התור')}</p>
       </section>
     </div>}
 
     <LocalQuestionBackup locale={locale} onRestored={entries=>{for(const item of entries)seenQuestionTexts.current.add(item)}}/>
-    <footer className='footer'><a href={locale==='en'?'/en/privacy':'/privacy'}>{tr("פרטיות")}</a><a href={locale==='en'?'/en/terms':'/terms'}>{tr("תנאי שימוש")}</a><a href={locale==='en'?'/en/cookies':'/cookies'}>{tr("עוגיות ואחסון")}</a><a href={locale==='en'?'/en/accessibility':'/accessibility'}>{tr("נגישות")}</a><a href='/account/privacy'>{tr("המידע שלי")}</a></footer>
+    <footer className='footer'><a href={locale==='en'?'/en/privacy':'/privacy'}>{tr("פרטיות")}</a><a href={locale==='en'?'/en/terms':'/terms'}>{tr("תנאי שימוש")}</a><a href={locale==='he'?'/cookies':'/en/cookies'}>{tr("עוגיות ואחסון")}</a><a href={locale==='he'?'/accessibility':'/en/accessibility'}>{tr("נגישות")}</a><a href='/account/privacy'>{tr("המידע שלי")}</a></footer>
     <div id='app-footer' className='game-author-credit' role='contentinfo'>
-      <span className='game-author-credit-copy' dir={locale==='en'?'ltr':'rtl'}>
-        {locale==='en'
-         ? '© 2026 Designed and developed by Guy Rosenberg · All rights reserved ©'
-         : '© 2026 תוכנן ובוצע ע״י גיא רוזנברג · כל הזכויות שמורות ©'}
+      <span className='game-author-credit-copy' dir={localeDirection(locale)}>
+        {authorCredits[locale]}
       </span>
     </div>
   </main>;
