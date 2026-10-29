@@ -1,6 +1,6 @@
 // Local Hebrew questions. No math or arithmetic. Media questions are native Hebrew content.
 // Games do not receive server-ranked rewards from this offline bank.
-import {hebrewMediaQuestions} from './mediaQuestions';
+import {hebrewMediaQuestions} from './mediaQuestions.ts';
 export type OfflineQuestion={id:number;text:string;answers:string[];correct:number;category:string};
 const originalHebrew:OfflineQuestion[]=[
   {
