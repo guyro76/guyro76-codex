@@ -224,7 +224,7 @@ export default function TriviaGame() {
       if(cancelled) return;
       const left=Math.max(0,Math.ceil((deadline-Date.now())/1000));
       setSecondsLeft(left);
-      if(left>=1&&left<=10&&lastTickRef.current!==left){lastTickRef.current=left;play('clock');}
+      if(left>=1&&(left<=10 || left%5===0)&&lastTickRef.current!==left){lastTickRef.current=left;play('clock');}
       if(left===0 && !timeoutBusy.current){
         timeoutBusy.current=true;
         if(remote&&client){
@@ -566,6 +566,9 @@ export default function TriviaGame() {
     if (!active || event.pointerId !== active.pointerId) return;
     event.preventDefault();
     const target = boardPoint(event);
+    // Felt-tip friction sound follows hand movement, throttled inside gameAudio.
+    const origin = dotXY(active.start, state.rows, state.cols);
+    if (Math.hypot(target.x - origin.x, target.y - origin.y) > 10) play('marker');
     const end = nearestDot(target, state.rows, state.cols);
     const valid = end && edgeBetween(active.start, end, state.rows, state.cols);
     setTrace(prev => {
