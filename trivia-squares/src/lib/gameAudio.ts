@@ -3,7 +3,7 @@
  * No audio downloads, copyrighted samples, user tracking or microphone permission.
  * The Web Audio context is created only after a player interaction.
  */
-export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn';
+export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock';
 let audio: AudioContext | null = null;
 let lastStrokeAt = 0;
 
@@ -98,6 +98,9 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
       break;
     case 'win':
       [392, 523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((f, i) => note(f, i * 0.12, 0.42, 0.15));
+      break;
+    case 'clock':
+      note(660, 0, 0.045, 0.018, 'triangle');
       break;
     case 'turn':
       note(440, 0, 0.14, 0.065, 'sine');
