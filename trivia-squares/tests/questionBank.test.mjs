@@ -1,26 +1,38 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {offlineQuestions} from '../src/lib/offlineQuestions.ts';
+import {englishQuestions} from '../src/lib/englishQuestions.ts';
+import {hebrewMediaQuestions,englishMediaQuestions} from '../src/lib/mediaQuestions.ts';
 
-test('reserve of diverse unique offline questions does not duplicate IDs or wording',()=>{
-  assert.ok(offlineQuestions.length >= 400,'long games need >400 questions');
-  assert.equal(new Set(offlineQuestions.map(q=>q.id)).size,offlineQuestions.length);
-  assert.equal(new Set(offlineQuestions.map(q=>q.text)).size,offlineQuestions.length);
-});
-test('every question has four different answers and exactly one correct choice',()=>{
-  for(const q of offlineQuestions){
-    assert.equal(q.answers.length,4,q.text);
-    assert.equal(new Set(q.answers).size,4,q.text);
-    assert.ok(Number.isInteger(q.correct) && q.correct>=0 && q.correct<=3,q.text);
-    assert.ok(q.text.trim().length>9,q.text);
+const banks=[['he',offlineQuestions],['en',englishQuestions]];
+for(const[locale,questions] of banks){
+ test(`QA editorial: ${locale} has a broad, fully unique bank, no arithmetic`,()=>{
+  assert.ok(questions.length>=175,`${locale} must have at least 175 curated questions`);
+  assert.equal(new Set(questions.map(q=>q.id)).size,questions.length,'duplicate ID');
+  assert.equal(new Set(questions.map(q=>q.text)).size,questions.length,'duplicate wording');
+  for(const q of questions){
+   assert.equal(q.answers.length,4,q.text);
+   assert.equal(new Set(q.answers).size,4,q.text);
+   assert.ok(Number.isInteger(q.correct)&&q.correct>=0&&q.correct<=3,q.text);
+   assert.ok(q.text.trim().length>=12,q.text);
+   assert.doesNotMatch(q.category,/(math|מתמטיקה|חשבון|כפל)/i);
+   assert.doesNotMatch(q.text,/^(כמה הם? [0-9]|מה התוצאה של|מהו שורש|מהו רבע|כמה מעלות יש בזווית ישרה|כמה צלעות יש ל)/i);
   }
-});
-test('all automatically generated arithmetic answers are mathematically correct',()=>{
- for(const q of offlineQuestions.filter(q=>q.id>=20000)){
-   const addition=/^כמה הם (\d+) ועוד (\d+)\?$/.exec(q.text);
-   const multiply=/^כמה הם (\d+) כפול (\d+)\?$/.exec(q.text);
-   assert.ok(addition||multiply,q.text);
-   const groups=addition||multiply;
-   assert.equal(Number(q.answers[q.correct]),addition? Number(groups[1])+Number(groups[2]): Number(groups[1])*Number(groups[2]));
+ });
+}
+test('QA editorial: media coverage in both locale banks',()=>{
+ for(const q of [...hebrewMediaQuestions,...englishMediaQuestions]){
+  assert.equal(new Set(q.answers).size,4,q.text);
+  assert.equal(q.answers.length,4,q.text);
+  assert.ok(q.answers[q.correct],q.text);
+  assert.ok(['he','en'].includes(q.locale));
  }
+ const heCat=new Set(hebrewMediaQuestions.map(q=>q.category));
+ const enCat=new Set(englishMediaQuestions.map(q=>q.category));
+ for(const cat of ['קולנוע','סדרות טלוויזיה','מוזיקה עולמית','מוזיקה ישראלית'])assert.ok(heCat.has(cat));
+ for(const cat of ['Movies','Television','World music'])assert.ok(enCat.has(cat));
+});
+test('QA localization: Israeli artists are Hebrew-only',()=>{
+ assert.ok(hebrewMediaQuestions.filter(q=>q.category==='מוזיקה ישראלית').length>=40);
+ assert.equal(englishMediaQuestions.some(q=>q.category==='מוזיקה ישראלית'||/Noa Kirel|Omer Adam|Netta Barzilai|Arik Einstein/i.test(q.text)),false);
 });
