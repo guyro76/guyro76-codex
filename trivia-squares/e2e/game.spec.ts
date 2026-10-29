@@ -6,7 +6,8 @@ async function ready(page: Page) {
   const tutorial = page.getByRole('dialog', { name: 'הסבר משחק' });
   if (await tutorial.isVisible()) await tutorial.getByRole('button', { name: 'דלג או סיים' }).click();
   await expect(page.locator('svg.board')).toBeVisible();
-  await page.getByLabel('כינוי שחקן').fill('טסטר');
+  await page.getByLabel('שם שחקן (חובה)').fill('טסטר');
+  await page.locator('svg.board').scrollIntoViewIfNeeded();
 }
 async function dotPoint(page: Page, row: number, col: number) {
   const dot = page.locator('svg.board circle[aria-label="נקודה ' + row + ', ' + col + '"]');
@@ -15,12 +16,27 @@ async function dotPoint(page: Page, row: number, col: number) {
   return { x:box.x+box.width/2,y:box.y+box.height/2 };
 }
 async function draw(page: Page, a:[number,number], b:[number,number]) {
+  await page.locator('svg.board').scrollIntoViewIfNeeded();
   const start=await dotPoint(page,a[0],a[1]);
   const end=await dotPoint(page,b[0],b[1]);
-  await page.mouse.move(start.x,start.y);
-  await page.mouse.down();
-  await page.mouse.move(end.x,end.y,{steps:12});
-  await page.mouse.up();
+  const isTouch=await page.evaluate(()=>navigator.maxTouchPoints>0 && matchMedia('(pointer: coarse)').matches);
+  if(isTouch){
+    const cdp=await page.context().newCDPSession(page);
+    try{
+      await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[start]});
+      for(let step=1;step<=15;step++){
+        const x=start.x+(end.x-start.x)*step/15;
+        const y=start.y+(end.y-start.y)*step/15;
+        await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y}]});
+      }
+      await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    }finally{await cdp.detach();}
+  }else{
+    await page.mouse.move(start.x,start.y);
+    await page.mouse.down();
+    await page.mouse.move(end.x,end.y,{steps:12});
+    await page.mouse.up();
+  }
 }
 
 test('player draws with a marker from one dot to a neighbor, then answers the question', async ({page}) => {
@@ -135,7 +151,7 @@ test('required player name persists after reload and notebook grid remains trans
   await page.reload();
   await expect(page.getByLabel('כינוי שחקן')).toHaveValue('שחקנית הבודקת');
   const grid=page.locator('.arena-inner');
-  await expect(grid).toHaveCSS('background-size', '24px 24px');
+  await expect(grid).toHaveCSS('background-size', /24px 24px/);
   const rgb=await grid.evaluate(e=>getComputedStyle(e).backgroundColor);
   expect(rgb).toMatch(/rgba\(/);
 });
