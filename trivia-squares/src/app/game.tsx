@@ -211,7 +211,7 @@ export default function TriviaGame() {
     }catch{}
     try{
       const pending=JSON.parse(localStorage.getItem('trivia-local-question')||'null') as Question|null;
-      if(pending?.id && pending?.edge && offlineQuestions.some(q=>q.id===pending.id)){
+      if(pending?.id && pending?.edge && [...offlineQuestions,...englishQuestions].some(q=>q.id===pending.id)){
         setQuestion(pending);
         setEdge(pending.edge);
       }
@@ -427,9 +427,13 @@ export default function TriviaGame() {
         else if (data.bonus && data.correct) play('bonus');
         else if (gained) play('capture');
         else play(data.correct ? 'correct' : 'wrong');
-        setMessage(data.bonus
-          ? data.correct ? 'שאלת הזהב הצליחה! הרווחת שני אסימוני סגירה ✨' : 'שאלת הזהב הוחמצה. אפשר לנסות שוב אחרי רצף חדש.'
-          : data.correct ? gained ? 'מצוין! כבשת ' + gained + ' ריבועים!' : 'תשובה נכונה, הקו שלך!' : 'תשובה שגויה, התור עובר.');
+        setMessage(locale==='en'
+          ? (data.bonus
+              ? data.correct?'Golden question complete! Two bonus captures earned! ✨':'Golden question missed. Try a new streak.'
+              : data.correct ? gained?'Great! You claimed '+gained+' squares!':'Correct! The line is yours!':'Wrong answer. Next player.')
+          : (data.bonus
+              ? data.correct?'שאלת הזהב הצליחה! הרווחת שני אסימוני סגירה ✨':'שאלת הזהב הוחמצה. אפשר לנסות שוב אחרי רצף חדש.'
+              : data.correct ? gained?'מצוין! כבשת '+gained+' ריבועים!':'תשובה נכונה, הקו שלך!':'תשובה שגויה, התור עובר.'));
         setQuestion(null); setEdge(null);
         await refresh(remote.id);
         const { data: update } = await client.rpc('trivia_my_profile');
@@ -446,7 +450,9 @@ export default function TriviaGame() {
       if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
       else if (gained) play('capture');
       else play(correct ? 'correct' : 'wrong');
-      setMessage(correct ? gained ? 'סגרת ' + gained + ' ריבועים!' : 'תשובה נכונה!' : 'תשובה שגויה!');
+      setMessage(locale==='en'?
+ (correct?(gained?'You captured '+gained+' squares!':'Correct answer!'):'Wrong answer!'):
+ (correct?(gained?'סגרת '+gained+' ריבועים!':'תשובה נכונה!'):'תשובה שגויה!'));
       if(gained>0){
         setLocalCredits(prev=>({...prev,[local.turn==='guest'?'guest':'host']:prev[local.turn==='guest'?'guest':'host']+10*gained}));
         if(Object.keys(next.owners).length===next.rows*next.cols){
@@ -845,7 +851,7 @@ export default function TriviaGame() {
       </div>
     </header>
 
-    <nav className='adventure-track' aria-label='בחירת עולם'>
+    <nav className='adventure-track' aria-label={tr('בחירת עולם')}>
       {worlds.map((w, i) => <button
         key={w.slug}
         type='button'
@@ -962,7 +968,7 @@ export default function TriviaGame() {
           </div>
         </section>}
         <div className='status-line' aria-live='polite'>
-          {finished ? '🏆 ' + (state.scores.host === state.scores.guest + state.scores.bot ? 'המשחק הסתיים בתיקו!' : state.scores.host > state.scores.guest + state.scores.bot ? 'ניצחת! כל הכבוד!' : 'היריב ניצח. משחק חוזר?') : message}
+          {finished ? '🏆 ' + (state.scores.host === state.scores.guest + state.scores.bot ? 'המשחק הסתיים בתיקו!' : state.scores.host > state.scores.guest + state.scores.bot ? 'ניצחת! כל הכבוד!' : 'היריב ניצח. משחק חוזר?') : tr(message)}
         </div>
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>{tr("ממתינים שהחבר ייכנס לחדר...")}</p>}
         <div className='control-row'>
@@ -1112,7 +1118,7 @@ export default function TriviaGame() {
     </div>
 
     {showTutorial && <div className='quiz-overlay' role='presentation'>
-      <section className='quiz-card' role='dialog' aria-modal='true' aria-label='הסבר משחק' style={{textAlign:'center'}}>
+      <section className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('הסבר משחק')} style={{textAlign:'center'}}>
         <span className='quiz-badge'>{tr("🧭 הדרך לכיבוש מתחילה כאן")}</span>
         <h2>{['צייר קו כמו בטוש','ענה נכון על שאלת טריוויה','סגור ריבוע וזכה בנקודות'][tutorialPage]}</h2>
         <svg viewBox='0 0 280 145' aria-hidden='true' style={{width:'100%',maxWidth:320,margin:'0 auto',display:'block'}}>
@@ -1133,7 +1139,7 @@ export default function TriviaGame() {
       </section>
     </div>}
     {question && <div className='quiz-overlay' role='presentation'>
-      <section className='quiz-card' role='dialog' aria-modal='true' aria-label='שאלת טריוויה'>
+      <section className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('שאלת טריוויה')}>
         <span className='quiz-badge'>{question.kind==='bonus'?'✨ שאלת זהב: הזדמנות לשני כיבושים ✨':'⭐ רק תשובה נכונה תסגור את הקו ⭐'}</span>
         <div className={'question-timer '+((secondsLeft??60)<=10?'urgent':'')} role='timer' aria-live='off'>
           <span className='hourglass-spin' aria-hidden='true'>⌛</span>
