@@ -906,7 +906,7 @@ export default function TriviaGame() {
         <label htmlFor='quick-player-name'>{tr("שם שחקן (חובה)")}</label>
         <input id='quick-player-name' type='text' minLength={2} maxLength={32} required
           value={name} onChange={e=>setName(e.target.value)}
-          placeholder='הקלד שם לפני המשחק' autoComplete='nickname'/>
+          placeholder={tr('הקלד שם לפני המשחק')} autoComplete='nickname'/>
       </div>
     </header>
 
@@ -930,17 +930,17 @@ export default function TriviaGame() {
       <section className='glass-panel arena-panel'>
         <div className='arena-title'>
           <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
-          <div className='level-pill'>שלב {themeIndex + 1} / 4</div>
+          <div className='level-pill'>{tr('שלב ')}{themeIndex + 1} / 4</div>
         </div>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
             <div className='portrait'>{remote && player === 'guest' ? opponentIcon : avatar}</div>
-            <div><div className='score-name'>{remote?.players?.host?.name || name || 'שחקן 1'}</div><div className='score-num'>{state.scores.host}</div></div>
+            <div><div className='score-name'>{remote?.players?.host?.name || name || tr('שחקן 1')}</div><div className='score-num'>{state.scores.host}</div></div>
           </div>
           <div className='versus'>{(state.mode === 'local' ? state.turn === 'host' : state.turn === player) ? 'התור שלך' : 'תור היריב'}<div style={{ fontSize: 17 }}>⚔️</div></div>
           <div className='player-tile left-side other'>
             <div className='portrait'>{state.mode === 'bot' ? '🤖' : remote?.players?.guest?.avatar || '🐲'}</div>
-            <div><div className='score-name'>{state.mode === 'bot' ? 'המחשב' : remote?.players?.guest?.name || 'שחקן 2'}</div><div className='score-num'>{state.scores.guest + state.scores.bot}</div></div>
+            <div><div className='score-name'>{state.mode === 'bot' ? tr('המחשב') : remote?.players?.guest?.name || tr('שחקן 2')}</div><div className='score-num'>{state.scores.guest + state.scores.bot}</div></div>
           </div>
         </div>
         <div className={'arena ' + world.slug}>
@@ -1006,7 +1006,7 @@ export default function TriviaGame() {
             </svg>
           </div>
         </div>
-        <div className='gesture-hint'><span className='draw-icon'>✍️</span>{bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח'}</div>
+        <div className='gesture-hint'><span className='draw-icon'>✍️</span>{tr(bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח')}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>{tr("שטחים שנכבשו")}</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
         {!online && <div role='alert' style={{background:'#D94C37',color:'#FFFFFF',padding:10,borderRadius:12,textAlign:'center',marginTop:12}}>
@@ -1016,12 +1016,12 @@ export default function TriviaGame() {
           <div className='victory-symbol' aria-hidden='true'>🏆</div>
           <h2 style={{margin:'5px 0',fontSize:'clamp(22px,3.8vw,31px)'}}>
             {state.scores.host === state.scores.guest+state.scores.bot
-              ? 'תיקו גדול!' : state.scores.host>state.scores.guest+state.scores.bot ? 'אליפות! כל הריבועים נסגרו' : 'היריב ניצח הפעם'}
+              ? tr('תיקו גדול!') : state.scores.host>state.scores.guest+state.scores.bot ? tr('אליפות! כל הריבועים נסגרו') : tr('היריב ניצח הפעם')}
           </h2>
           <div style={{fontSize:16,color:'#FFEAA6',marginBottom:12}}>
             {'⭐'.repeat(state.scores.host>state.scores.guest+state.scores.bot?3:state.scores.host===state.scores.guest+state.scores.bot?2:1)}
           </div>
-          <p style={{margin:'6px 0',color:'#FFFFFF'}}>שחקן 1: {state.scores.host} נקודות · יריב: {state.scores.guest+state.scores.bot} נקודות</p>
+          <p style={{margin:'6px 0',color:'#FFFFFF'}}>{tr('שחקן 1')}: {state.scores.host} {tr('נקודות')} · {tr('יריב')}: {state.scores.guest+state.scores.bot} {tr('נקודות')}</p>
           <p className='smalltxt'>{tr("🍎 במשחק מחובר צוברים פירות וקרדיטים, ובניצחון גם יהלומים והתקדמות.")}</p>
           <div className='control-row' style={{marginTop:13}}>
             <button className='gold-button' disabled={busy} onClick={()=>void start()}>{tr("🔄 משחק חוזר")}</button>
@@ -1033,22 +1033,22 @@ export default function TriviaGame() {
         </div>
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>{tr("ממתינים שהחבר ייכנס לחדר...")}</p>}
         <div className='control-row'>
-          <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {remote ? 'משחק חדש' : 'התחל משחק'}</button>
+          <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>
           <button className='glass-button' onClick={() => {
             if (muted) playGameSound('correct',{muted:false,volume:volume/100});
             setMuted(v=>!v);
-          }} aria-pressed={muted} aria-label={muted ? 'הפעל צלילים' : 'השתק צלילים'}>
-            {muted ? '🔇 הפעל צלילים' : '🔊 השתק צלילים'}
+          }} aria-pressed={muted} aria-label={tr(muted ? 'הפעל צלילים' : 'השתק צלילים')}>
+            {tr(muted ? '🔇 הפעל צלילים' : '🔊 השתק צלילים')}
           </button>
           <label className='glass-button' style={{display:'inline-flex',gap:7,alignItems:'center'}} htmlFor='game-volume'>
             {tr("עוצמה")} <input id='game-volume' type='range' min='0' max='100' step='5'
-              aria-label='עוצמת הצלילים במשחק' value={volume} onChange={e=>setVolume(Number(e.target.value))}
+              aria-label={tr('עוצמת הצלילים במשחק')} value={volume} onChange={e=>setVolume(Number(e.target.value))}
               style={{width:80,accentColor:'#FFE38F'}} /> {volume}%
           </label>
           <button className='glass-button' onClick={()=>{setTutorialPage(0);setShowTutorial(true)}}>{tr("❓ איך משחקים")}</button>
           {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>{tr("⭐ שאלת זהב!")}</button>}
           {availableBonus>0 && state.mode!=='online' && <button className='gold-button' disabled={busy||!!question} onClick={()=>setBonusSelect(v=>!v)}>
-            ✨ {bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס'} ({availableBonus})</button>}
+            ✨ {tr(bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס')} ({availableBonus})</button>}
           {finished && size < 6 && <button className='glass-button' onClick={() => chooseWorld(size + 1)}>{tr("העולם הבא ←")}</button>}
         </div>
         {finished && <StageReward
@@ -1089,20 +1089,20 @@ export default function TriviaGame() {
         <section className='glass-panel'>
           <h2 className='panel-title'>{tr("👑 השחקן שלי")}</h2>
           <label className='form-field' htmlFor='player-name'>{tr("כינוי שחקן")}</label>
-          <input id='player-name' className='form-input' value={name} onChange={e => setName(e.target.value)} maxLength={32} minLength={2} required placeholder='הקלד שם שחקן (חובה)' aria-required='true'/>
+          <input id='player-name' className='form-input' value={name} onChange={e => setName(e.target.value)} maxLength={32} minLength={2} required placeholder={tr('הקלד שם שחקן (חובה)')} aria-required='true'/>
           {!validName && <p className='smalltxt' role='status' style={{color:'#FFE7A1'}}>{tr("יש למלא שם שחקן לפני ציור הקו הראשון.")}</p>}
           <div className='form-field'>{tr("צבע הכיבוש שלי")}</div>
-          <div className='swatches'>{palettes.map(c => <button key={c} className='swatch' style={{ background: c }} aria-label={'בחר צבע ' + c} aria-pressed={color === c} onClick={() => setColor(c)} />)}</div>
+          <div className='swatches'>{palettes.map(c => <button key={c} className='swatch' style={{ background: c }} aria-label={tr('בחר צבע ')+c} aria-pressed={color === c} onClick={() => setColor(c)} />)}</div>
           <div className='form-field'>{tr("🖍️ צבע הטוש לקווים")}</div>
-          <div className='swatches' role='group' aria-label='בחר את צבע הקו'>
+          <div className='swatches' role='group' aria-label={tr('בחר את צבע הקו')}>
             {palettes.map(c => <button key={'line-'+c} className='swatch' style={{background:c}}
-              aria-label={'בחר צבע קו '+c} aria-pressed={lineColor===c} onClick={()=>setLineColor(c)}/>)}
-            <input type='color' aria-label='צבע קו מותאם אישית' value={lineColor}
+              aria-label={tr('בחר צבע קו ')+c} aria-pressed={lineColor===c} onClick={()=>setLineColor(c)}/>)}
+            <input type='color' aria-label={tr('צבע קו מותאם אישית')} value={lineColor}
               onChange={e=>setLineColor(e.target.value)} style={{width:42,height:35,border:0,background:'none'}}/>
           </div>
           <div style={{margin:'4px 0 9px',fontSize:12,color:'#E6F3FF'}}>{tr("תצוגת הטוש:")} <span style={{display:'inline-block',width:80,borderTop:'8px solid '+lineColor,borderRadius:9,verticalAlign:'middle'}}/></div>
           <div className='form-field'>{tr("סמל שיופיע בכל ריבוע")}</div>
-          <div className='avatar-row'>{avatars.map(a => <button className='avatar-choice' key={a} aria-label={'בחר אוואטר ' + a} aria-pressed={avatar === a} onClick={() => setAvatar(a)}>{a}</button>)}</div>
+          <div className='avatar-row'>{avatars.map(a => <button className='avatar-choice' key={a} aria-label={tr('בחר אוואטר ')+a} aria-pressed={avatar === a} onClick={() => setAvatar(a)}>{a}</button>)}</div>
           <label className='form-field' style={{ display: 'flex', gap: 10, alignItems: 'center' }}><input type='checkbox' style={{ width: 18, height: 18, accentColor: '#FFDE85' }} checked={remember} onChange={e => setRemember(e.target.checked)} /> {tr("זכור את הבחירות שלי תמיד")}</label>
           <button className='glass-button' style={{ marginTop: 13 }} disabled={!validName} onClick={() => void saveProfile()}>{tr("שמור שם, צבע טוש ועיצוב אישי")}</button>
         </section>
@@ -1110,19 +1110,19 @@ export default function TriviaGame() {
           <h2 className='panel-title'>{tr("💎 אוצרות והישגים")}</h2>
           <div className='wallet'>
             {([['🍎','פירות',progress.fruits],['💎','יהלומים',progress.diamonds],['🪙','קרדיטים',progress.credits],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
-              <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{label}</span></div>)}
+              <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{tr(label)}</span></div>)}
           </div>
           <p className='smalltxt' style={{margin:'10px 0 5px'}}>{tr("⏳ כל שאלה: דקה. אפשר לקנות עוד 30 שניות ב־25 קרדיטים, פעם אחת לשאלה.")}</p>
           <p className='smalltxt' style={{margin:'0 0 9px'}}>{tr("♾️ קמע זמן מבטל את הטיימר עבורך עד סוף השלב. זוכים בקמע עם ניצחון במשחק מחובר או מקומי.")}</p>
-          <p className='smalltxt' style={{margin:'0 0 8px'}}>קרדיטים זמינים: {currentCredits} | קמעות זמן: {currentCharms} {timeFreezeActive?'· ללא שעון כרגע':''}</p>
+          <p className='smalltxt' style={{margin:'0 0 8px'}}>{tr('קרדיטים זמינים: ')}{currentCredits} | {tr('קמעות זמן: ')}{currentCharms} {timeFreezeActive?tr('· ללא שעון כרגע'):''}</p>
           {!timeFreezeActive && currentCharms>0 && <button className='glass-button' disabled={busy} onClick={()=>void activateTimeCharm()}>{tr("הפעל קמע זמן עד סוף השלב")}</button>}
-          <p className='smalltxt' style={{marginBottom:0}}>🔥 רצף תשובות: {streak} | ⭐ כיבושי בונוס: {availableBonus}</p>
+          <p className='smalltxt' style={{marginBottom:0}}>🔥 {tr('רצף תשובות: ')}{streak} | ⭐ {tr('כיבושי בונוס: ')}{availableBonus}</p>
           <p className='smalltxt' style={{marginBottom:0}}>{tr("אחרי שלוש תשובות נכונות תקבל שאלת זהב. הצלחה מעניקה שני אסימוני כיבוש. המשחק התחרותי נשאר ללא בונוסים משני ניקוד.")}</p>
         </section>
         <section className='glass-panel'>
           <h2 className='panel-title'>{tr("🔐 מועדון השחקנים")}</h2>
           {user ? <>
-            <p className='smalltxt'>מחובר: {user.email}</p>
+            <p className='smalltxt'>{tr('מחובר: ')}{user.email}</p>
             {!legalAccepted && <section style={{background:'#293D72',border:'1px solid #FFDE8D',borderRadius:13,padding:13,margin:'10px 0'}}>
               <h3 style={{margin:'0 0 7px',color:'#FFE7A4'}}>{tr("השלמת הרשמה למשחק")}</h3>
               <p className='smalltxt'>{tr("חשבון המשחק מיועד למבוגרים בני 18 ומעלה. משחק מקומי זמין גם ללא חשבון. לפני הפעלת פרופיל וחדרים יש לאשר את התנאים.")}</p>
@@ -1135,7 +1135,7 @@ export default function TriviaGame() {
                 {tr("קראתי את")} <a href={locale==='en'?'/en/privacy':'/privacy'} style={{color:'#FFDC88'}}>{tr("הודעת הפרטיות")}</a> {tr("ואני מסכים/ה ל")}<a href={locale==='en'?'/en/terms':'/terms'} style={{color:'#FFDC88'}}>{tr("תנאי השימוש")}</a>
               </label>
               <button className='gold-button' disabled={legalBusy||!adultConfirmed||!policiesAcknowledged} onClick={()=>void acceptCurrentPolicies()}>
-                {legalBusy?'שומר...':'אשר והפעל משחק מחובר'}
+                {tr(legalBusy?'שומר...':'אשר והפעל משחק מחובר')}
               </button>
             </section>}
             {legalAccepted && <p className='smalltxt' style={{color:'#B0FFD6'}}>{tr("החשבון פעיל למשחקים מחוברים.")}</p>}
@@ -1181,7 +1181,7 @@ export default function TriviaGame() {
     {showTutorial && <div className='quiz-overlay' role='presentation'>
       <section className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('הסבר משחק')} style={{textAlign:'center'}}>
         <span className='quiz-badge'>{tr("🧭 הדרך לכיבוש מתחילה כאן")}</span>
-        <h2>{['צייר קו כמו בטוש','ענה נכון על שאלת טריוויה','סגור ריבוע וזכה בנקודות'][tutorialPage]}</h2>
+        <h2>{tr(['צייר קו כמו בטוש','ענה נכון על שאלת טריוויה','סגור ריבוע וזכה בנקודות'][tutorialPage])}</h2>
         <svg viewBox='0 0 280 145' aria-hidden='true' style={{width:'100%',maxWidth:320,margin:'0 auto',display:'block'}}>
           {[0,1,2].flatMap(r=>[0,1,2].map(c=><circle key={r+'-'+c} cx={55+c*84} cy={22+r*48} r='7' fill='#FFFFFF' stroke='#9DC9FF' strokeWidth='3'/>))}
           {tutorialPage===0 && <><path d='M55 22 L139 22' stroke='#FFD867' strokeWidth='11' strokeLinecap='round' strokeDasharray='84' className='tutorial-stroke'/><circle cx='139' cy='22' r='9' fill='#FFE8A3'/></>}
@@ -1192,7 +1192,7 @@ export default function TriviaGame() {
           'נוגעים בנקודה, גוררים באצבע או בעכבר אל נקודה סמוכה ומשחררים. לא לוחצים על הקו.',
           'לכל קו תופיע שאלה עם ארבע אפשרויות. תשובה שגויה תשאיר את הקו פתוח.',
           'הריבוע יתמלא בצבע ובאוואטר שלך. סגירה מעניקה נקודה ותור נוסף. אחרי רצף תשובות מחכה שאלת זהב!'
-        ][tutorialPage]}</p>
+        ][tutorialPage])}</p>
         <div className='control-row'>
           <button className='glass-button' onClick={dismissTutorial}>{tr("דלג או סיים")}</button>
           {tutorialPage<2 && <button className='gold-button' onClick={()=>setTutorialPage(v=>v+1)}>{tr("הבא ←")}</button>}
@@ -1201,7 +1201,7 @@ export default function TriviaGame() {
     </div>}
     {question && <div className='quiz-overlay' role='presentation'>
       <section className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('שאלת טריוויה')}>
-        <span className='quiz-badge'>{question.kind==='bonus'?'✨ שאלת זהב: הזדמנות לשני כיבושים ✨':'⭐ רק תשובה נכונה תסגור את הקו ⭐'}</span>
+        <span className='quiz-badge'>{tr(question.kind==='bonus'?'✨ שאלת זהב: הזדמנות לשני כיבושים ✨':'⭐ רק תשובה נכונה תסגור את הקו ⭐')}</span>
         <div className={'question-timer '+((secondsLeft??60)<=10?'urgent':'')} role='timer' aria-live='off'>
           <span className='hourglass-spin' aria-hidden='true'>⌛</span>
           {question.deadline_at===null || timeFreezeActive
@@ -1211,14 +1211,14 @@ export default function TriviaGame() {
         <h2>{question.text}</h2>
         <div className='control-row' style={{marginBottom:13}}>
           {showTimer && <button className='glass-button' disabled={busy || currentCredits<25 || (question.extensions||0)>=1 || (secondsLeft??0)<=0}
-            onClick={()=>void extendQuestionTime()}>⏳ +30 שניות · 25 קרדיטים ({currentCredits})</button>}
+            onClick={()=>void extendQuestionTime()}>⏳ {tr('+30 שניות · 25 קרדיטים')} ({currentCredits})</button>}
           {!timeFreezeActive && currentCharms>0 && <button className='gold-button' disabled={busy}
-            onClick={()=>void activateTimeCharm()}>♾️ הפעל קמע זמן ({currentCharms})</button>}
+            onClick={()=>void activateTimeCharm()}>♾️ {tr('הפעל קמע זמן')} ({currentCharms})</button>}
         </div>
         <div className='answer-grid'>
           {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{(locale==='en'?['A','B','C','D']:['א','ב','ג','ד'])[i]}</span>{a}</button>)}
         </div>
-        <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>{question.kind==='bonus'?'תשובה נכונה מעניקה שני אסימוני כיבוש זהב':'תשובה שגויה משאירה את הקו פתוח ומעבירה את התור'}</p>
+        <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>{tr(question.kind==='bonus'?'תשובה נכונה מעניקה שני אסימוני כיבוש זהב':'תשובה שגויה משאירה את הקו פתוח ומעבירה את התור')}</p>
       </section>
     </div>}
 
