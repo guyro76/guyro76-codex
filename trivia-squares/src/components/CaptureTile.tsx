@@ -6,11 +6,11 @@ export type CaptureStyle = 'lumen' | 'neon' | 'seal' | 'prism' | 'token';
 type Props = {
   row: number; col: number; x: number; y: number; width: number; height: number;
   color: string; name: string; icon: string; style: CaptureStyle;
-  selectable?: boolean; onSelect?: () => void; locale: 'he' | 'en';
+  selectable?: boolean; onSelect?: () => void; locale: 'he' | 'en'; idPrefix?: string;
 };
 
-export default function CaptureTile({row,col,x,y,width,height,color,name,icon,style,selectable=false,onSelect,locale}:Props) {
-  const id = 'capture-' + row + '-' + col;
+export default function CaptureTile({row,col,x,y,width,height,color,name,icon,style,selectable=false,onSelect,locale,idPrefix='board'}:Props) {
+  const id = idPrefix+'-capture-' + row + '-' + col;
   const cx = x + width / 2, cy = y + height / 2;
   const radius = Math.min(width,height) * .265;
   const mark = (name.trim().slice(0,1) || '★').toLocaleUpperCase();
