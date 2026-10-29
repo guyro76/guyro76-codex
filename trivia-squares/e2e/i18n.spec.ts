@@ -5,9 +5,9 @@ async function ready(page:Page){
  if(await intro.isVisible())await intro.getByRole('button',{name:'דלג או סיים'}).click();
 }
 async function drawFirstLine(page:Page){
- const dot=page.locator('svg.board circle[aria-label="נקודה 1, 1"]');
- const neighbor=page.locator('svg.board circle[aria-label="נקודה 1, 2"]');
- // Dots retain their original Hebrew a11y names for compatible existing keyboard tests.
+ const dot=page.locator('svg.board circle[aria-label="Dot row 1, column 1"]');
+ const neighbor=page.locator('svg.board circle[aria-label="Dot row 1, column 2"]');
+ // Dot accessibility labels follow the active locale.
  const d=await dot.boundingBox();const n=await neighbor.boundingBox();
  if(!d||!n)throw Error('Board dots missing');
  await page.mouse.move(d.x+d.width/2,d.y+d.height/2);
