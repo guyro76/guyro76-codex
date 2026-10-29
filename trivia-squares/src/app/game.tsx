@@ -10,6 +10,7 @@ import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/play
 import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
+import { internationalQuestions } from '../lib/internationalQuestions';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
@@ -104,7 +105,7 @@ export default function TriviaGame() {
     if(!client || !user)return true;
     const {data:stats,error:statsError}=await client.rpc('trivia_my_question_stats');
     if(statsError||!stats)return false;
-    const total=['he','en'].reduce((count,key)=>{
+    const total=['he','en','ru','fr','ar'].reduce((count,key)=>{
       const value=(stats as Record<string,{seen?:number}>)[key];
       return count+Number(value?.seen||0);
     },0);
@@ -220,10 +221,12 @@ export default function TriviaGame() {
   const showTimer = Boolean(question) && question?.deadline_at !== null && !timeFreezeActive;
   const timerText = secondsLeft === null ? '01:00' : String(Math.floor(secondsLeft/60)).padStart(2,'0')+':'+String(secondsLeft%60).padStart(2,'0');
   const world = worlds.find(w => w.slug === selectedStage.theme) || worlds[0];
-  const questionBank = [
-    ...(locale === 'en' ? englishQuestions : offlineQuestions),
-    ...freshLocalQuestions(locale,localPoolRelease[locale])
-  ];
+  const questionBank = (locale==='he'||locale==='en')
+    ? [
+      ...(locale === 'en' ? englishQuestions : offlineQuestions),
+      ...freshLocalQuestions(locale,localPoolRelease[locale])
+    ]
+    : internationalQuestions.filter(q=>q.locale===locale);
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
 
@@ -288,7 +291,7 @@ export default function TriviaGame() {
       if(Array.isArray(ids)){
         usedLocalQuestionIds.current=new Set(ids.filter(x=>Number.isInteger(x)));
         // Upgrade IDs-only legacy history into the permanent text fingerprints.
-        for(const q of [...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve])
+        for(const q of [...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve,...internationalQuestions])
           if(usedLocalQuestionIds.current.has(q.id))
             seenQuestionTexts.current.add(canonicalQuestion(q.text));
       }
@@ -347,7 +350,7 @@ export default function TriviaGame() {
     }catch{}
     try{
       const pending=JSON.parse(localStorage.getItem('trivia-local-question')||'null') as Question|null;
-      if(pending?.id && pending?.edge && [...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve].some(q=>q.id===pending.id)){
+      if(pending?.id && pending?.edge && [...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve,...internationalQuestions].some(q=>q.id===pending.id)){
         setQuestion(pending);
         setEdge(pending.edge);
       }
@@ -532,7 +535,7 @@ export default function TriviaGame() {
         setMessage(locale==='en'?'Unable to sync your question history. Please retry.':'אי אפשר להתחיל משחק מחובר לפני סנכרון היסטוריית השאלות.');
         setBusy(false);return;
       }
-      const added=expandLocalPool(locale);
+      const added=(locale==='he'||locale==='en')?expandLocalPool(locale):0;
       const nextRun='local-'+crypto.randomUUID();
       setStageRunId(nextRun);
       try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
@@ -545,7 +548,7 @@ export default function TriviaGame() {
       const {error:localeError}=await client.rpc('trivia_set_locale',{p_locale:locale});
       if(localeError){setMessage(localeError.message);setBusy(false);return;}
       // Unify previous local play with the signed-in, device-independent history.
-      const localSeen=[...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve]
+      const localSeen=[...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve,...internationalQuestions]
        .filter(q=>seenQuestionTexts.current.has(canonicalQuestion(q.text)))
        .map(q=>q.text);
       for(let offset=0;offset<localSeen.length;offset+=300){
@@ -657,7 +660,7 @@ export default function TriviaGame() {
       }
     } else {
       if (!edge) { setBusy(false); return; }
-      const q=[...englishQuestions,...offlineQuestions,...freshLocalQuestionReserve].find(v=>v.id===question.id);
+      const q=[...englishQuestions,...offlineQuestions,...freshLocalQuestionReserve,...internationalQuestions].find(v=>v.id===question.id);
       if(!q){setMessage('לא נמצאה השאלה המקורית.');setBusy(false);return;}
       const correct = i === q.correct;
       const next = applyLocalAnswer(local, edge, correct);
@@ -1104,12 +1107,15 @@ export default function TriviaGame() {
           className='locale-option' onClick={()=>setLocale('he')}>{tr("עברית")}</button>
         <button type='button' lang='en' aria-pressed={locale==='en'} disabled={!!question}
           className='locale-option' onClick={()=>setLocale('en')}>English</button>
-        <span className='locale-coming' title={locale==='en'?'Coming later: Russian, French, Arabic':'בהמשך: רוסית, צרפתית וערבית'}>
-          {locale==='en'?'More languages soon':'שפות נוספות בהמשך'}
-        </span>
+        <button type='button' lang='ru' aria-pressed={locale==='ru'} disabled={!!question} className='locale-option'
+          onClick={()=>setLocale('ru')}>Русский</button>
+        <button type='button' lang='fr' aria-pressed={locale==='fr'} disabled={!!question} className='locale-option'
+          onClick={()=>setLocale('fr')}>Français</button>
+        <button type='button' lang='ar' aria-pressed={locale==='ar'} disabled={!!question} className='locale-option'
+          onClick={()=>setLocale('ar')}>العربية</button>
       </div>
       <div className='eyebrow'>✦ TRIVIA SQUARES · ADVENTURE ✦</div>
-      <h1>{locale==='en'?'Trivia Squares':'טריוויה ריבועים'}</h1>
+      <h1>{tr('טריוויה ריבועים')}</h1>
       <p>{tr("חברו נקודות, ענו נכון, כבשו ריבועים והפכו לאלופי הטריוויה!")}</p>
       <div className='hero-name'>
         <label htmlFor='quick-player-name'>{tr("שם שחקן (חובה)")}</label>
@@ -1476,6 +1482,9 @@ export default function TriviaGame() {
         <div className='tutorial-language-picker' role='group' aria-label={locale==='he'?'שפת ההדרכה':'Tutorial language'}>
           <button type='button' lang='he' aria-pressed={locale==='he'} onClick={()=>setLocale('he')}>עברית</button>
           <button type='button' lang='en' aria-pressed={locale==='en'} onClick={()=>setLocale('en')}>English</button>
+          <button type='button' lang='ru' aria-pressed={locale==='ru'} onClick={()=>setLocale('ru')}>Русский</button>
+          <button type='button' lang='fr' aria-pressed={locale==='fr'} onClick={()=>setLocale('fr')}>Français</button>
+          <button type='button' lang='ar' aria-pressed={locale==='ar'} onClick={()=>setLocale('ar')}>العربية</button>
         </div>
         <span className='quiz-badge'>{tr("🧭 הדרך לכיבוש מתחילה כאן")}</span>
         <h2>{tr(['צייר קו כמו בטוש','ענה נכון על שאלת טריוויה','סגור ריבוע וזכה בנקודות'][tutorialPage])}</h2>
