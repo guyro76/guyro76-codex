@@ -302,11 +302,12 @@ export default function TriviaGame() {
         const value=JSON.parse(stored) as GameState;
         if(value && Number.isInteger(value.rows) && value.rows>=3 && value.rows<=6
           && value.cols===value.rows && value.edges && value.owners && value.scores){
-          setLocal(value);
-          // Preserve the stage geometry, not an arbitrary saved board size.
+          // Restore only a board whose size matches the saved locked campaign stage.
           const savedStage=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
-          if(stageFor(Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=30?savedStage:1).size===value.rows)
-            setSize(value.rows);
+          const validStage=Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=30?savedStage:1;
+          if(stageFor(validStage).size===value.rows){
+            setLocal(value);setSize(value.rows);
+          }
         }
       }
     } catch { /* invalid save is ignored */ }
