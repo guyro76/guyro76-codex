@@ -56,7 +56,7 @@ test('successful local move remains on board after page reload',async({page})=>{
   await expect(page.locator('svg.board')).toBeVisible();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}'));
   expect(saved.edges['h-0-0']).toBe('host');
-  await expect(page.locator('svg.board line[stroke="#358CFF"]').first()).toBeVisible();
+  await expect(page.locator('svg.board line[stroke="#358CFF"][stroke-width="10"]')).toHaveCount(1);
 });
 
 test('account and legal routes are rendered', async ({page})=>{
