@@ -18,11 +18,12 @@ export function validEdge(board: BoardState, value: string): boolean {
   return r>=0 && r<board.rows && c>=0 && c<=board.cols;
 }
 
-export function applyLocalAnswer<T extends BoardState>(board: T, edge: string, correct: boolean): T {
+export function applyLocalAnswer<T extends BoardState>(board: T, edge: string, correct: boolean, solo = false): T {
   if(!validEdge(board,edge) || board.edges[edge]) return board;
-  const nextTurn=board.turn==='host'?'guest':'host';
+  const acting:Side=solo?'host':board.turn;
+  const nextTurn=solo?'host':board.turn==='host'?'guest':'host';
   if(!correct) return {...board,turn:nextTurn};
-  const edges={...board.edges,[edge]:board.turn};
+  const edges={...board.edges,[edge]:acting};
   const owners={...board.owners};
   const scores={...board.scores};
   let gained=0;
@@ -30,10 +31,17 @@ export function applyLocalAnswer<T extends BoardState>(board: T, edge: string, c
     const square=`${r}-${c}`;
     if(owners[square]) continue;
     if(edges[`h-${r}-${c}`]&&edges[`h-${r+1}-${c}`]&&edges[`v-${r}-${c}`]&&edges[`v-${r}-${c+1}`]){
-      owners[square]=board.turn;
+      owners[square]=acting;
       gained++;
     }
   }
-  scores[board.turn]+=gained;
-  return {...board,edges,owners,scores,turn:gained?board.turn:nextTurn};
+  scores[acting]+=gained;
+  return {...board,edges,owners,scores,turn:solo?'host':gained?acting:nextTurn};
+}
+
+/** Repair legacy solo boards which accidentally granted edges and squares to a phantom second player. */
+export function repairSoloBoard<T extends BoardState>(board:T):T {
+  const edges=Object.fromEntries(Object.entries(board.edges).map(([key])=>[key,'host' as Side]));
+  const owners=Object.fromEntries(Object.entries(board.owners).map(([key])=>[key,'host' as Side]));
+  return {...board,turn:'host',edges,owners,scores:{...board.scores,host:Object.keys(owners).length,guest:0,bot:0}};
 }
