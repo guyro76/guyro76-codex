@@ -650,6 +650,9 @@ export default function TriviaGame() {
       .eyebrow{color:#FFE68C;font-size:12px;letter-spacing:2.2px;font-weight:900}
       .hero h1{font-size:clamp(37px,5vw,65px);letter-spacing:-1.4px;margin:4px;color:#FFFFFF;text-shadow:0 4px 26px #AAB4FF60}
       .hero p{font-size:15px;color:#EBF2FF;margin:6px}
+      .hero-name{margin:14px auto 0;max-width:440px;display:flex;align-items:center;gap:9px;justify-content:center;flex-wrap:wrap;background:rgba(13,30,65,.58);padding:9px 13px;border:1px solid #E3EDFF70;border-radius:15px}
+      .hero-name label{font-size:13px;color:#FFE5A0;font-weight:900}
+      .hero-name input{width:min(100%,230px);border-radius:9px;border:2px solid #DCE9FF;background:#FFF;color:#192A54;padding:10px;font-size:15px;font-weight:900}
       .adventure-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:0 0 20px}
       .world-choice{position:relative;overflow:hidden;isolation:isolate;border:1px solid #FFFFFF55!important;border-radius:18px;padding:14px 15px;min-height:105px;color:#FFFFFF;text-align:right;box-shadow:inset 0 1px 0 #FFFFFF30,0 7px 19px #0A133350;cursor:pointer}
       .world-choice:before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,#FFFFFF27,transparent 60%);z-index:-1}
@@ -764,6 +767,12 @@ export default function TriviaGame() {
       <div className='eyebrow'>✦ TRIVIA SQUARES · ADVENTURE ✦</div>
       <h1>טריוויה ריבועים</h1>
       <p>חברו נקודות, ענו נכון, כבשו ריבועים והפכו לאלופי הטריוויה!</p>
+      <div className='hero-name'>
+        <label htmlFor='quick-player-name'>שם שחקן (חובה)</label>
+        <input id='quick-player-name' type='text' minLength={2} maxLength={32} required
+          value={name} onChange={e=>setName(e.target.value)}
+          placeholder='הקלד שם לפני המשחק' autoComplete='nickname'/>
+      </div>
     </header>
 
     <nav className='adventure-track' aria-label='בחירת עולם'>
