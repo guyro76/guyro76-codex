@@ -82,6 +82,7 @@ export default function TriviaGame() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [edge, setEdge] = useState<string | null>(null);
   const usedLocalQuestionIds=useRef<Set<number>>(new Set());
+  const lastQuestionCategory=useRef<string|null>(null);
   const seenQuestionTexts=useRef<Set<string>>(new Set());
   const [localPoolRelease,setLocalPoolRelease]=useState<{he:number;en:number}>({he:0,en:0});
   const localPoolRef=useRef<{he:number;en:number}>({he:0,en:0});
@@ -450,10 +451,18 @@ export default function TriviaGame() {
       setEdge(key);
       const remaining=questionBank.filter(q=>
         !usedLocalQuestionIds.current.has(q.id) && !seenQuestionTexts.current.has(canonicalQuestion(q.text)));
+      // Rotate categories fairly: movies, music and TV are accessible from the first stage.
+      // Never sacrifice the ban on repeating a previously seen question.
+      const alternatives=remaining.filter(v=>v.category!==lastQuestionCategory.current);
+      const pool=alternatives.length?alternatives:remaining;
+      const categories=[...new Set(pool.map(v=>v.category))];
+      const category=categories[Math.floor(Math.random()*categories.length)];
+      const inCategory=pool.filter(v=>v.category===category);
       const q=usedLocalQuestionIds.current.size===0 && locale==='he'
-        ? remaining.find(v=>v.text.includes('בירת אוסטרליה')) || remaining[0]
-        : remaining[0];
+        ? remaining.find(v=>v.text.includes('בירת אוסטרליה')) || inCategory[0]
+        : inCategory[Math.floor(Math.random()*inCategory.length)];
       if(!q){setEdge(null);setMessage('כל השאלות נוצלו. לא נחזור על שאלה שכבר נשאלה.');return;}
+      lastQuestionCategory.current=q.category;
       usedLocalQuestionIds.current.add(q.id);
       rememberShownQuestion(q.text);
       try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
