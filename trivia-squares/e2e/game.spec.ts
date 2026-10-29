@@ -317,9 +317,9 @@ test('live clock shows Hebrew date only in Hebrew and copyright switches with lo
  await expect(page.locator('.game-author-credit')).toContainText('Designed and developed by Guy Rosenberg');
  await expect(page.locator('.game-version .game-status-kicker')).toContainText('GAME VERSION');
  await expect(page.getByRole('heading',{name:'Game room'})).toBeVisible();
- await expect(page.getByRole('button',{name:/Computer/})).toBeVisible();
- await expect(page.getByRole('button',{name:/Online friend/})).toBeVisible();
- await expect(page.getByRole('button',{name:/Local/})).toBeVisible();
+ await expect(page.getByRole('button',{name:/computer/i})).toBeVisible();
+ await expect(page.getByRole('button',{name:/friend/i})).toBeVisible();
+ await expect(page.getByRole('button',{name:/Two players/i})).toBeVisible();
  await expect(page.getByText(/Registration is only needed for connected play/)).toBeVisible();
  await expect(page.locator('.campaign-stage-card')).toHaveCount(30);
 });
@@ -385,6 +385,9 @@ test('previously exhausted topic preferences switch to unused other topics witho
 
 test('exhausted complete Hebrew question bank allows continued drawing without resets or repeats',async({page})=>{
   await page.addInitScript(()=>{
+    // Prepare the veteran's history once, not every time the page reloads.
+    if(localStorage.getItem('qa-stage-seven-seeded'))return;
+    localStorage.setItem('qa-stage-seven-seeded','1');
     // Hebrew authored IDs are below 100,000; simulate an experienced player's
     // permanent history across many sessions. This must never brick stage 7.
     localStorage.setItem('trivia-used-question-ids',JSON.stringify(Array.from({length:100000},(_,i)=>i)));
