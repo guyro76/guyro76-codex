@@ -13,6 +13,7 @@ import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QU
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
 import TutorialPreview from '../components/TutorialPreview';
+import LocalQuestionBackup from '../components/LocalQuestionBackup';
 import './tutorial.css';
 import './premium.css';
 
@@ -1280,6 +1281,7 @@ export default function TriviaGame() {
       </section>
     </div>}
 
+    <LocalQuestionBackup locale={locale} onRestored={entries=>{for(const item of entries)seenQuestionTexts.current.add(item)}}/>
     <footer className='footer'><a href={locale==='en'?'/en/privacy':'/privacy'}>{tr("פרטיות")}</a><a href={locale==='en'?'/en/terms':'/terms'}>{tr("תנאי שימוש")}</a><a href={locale==='en'?'/en/cookies':'/cookies'}>{tr("עוגיות ואחסון")}</a><a href={locale==='en'?'/en/accessibility':'/accessibility'}>{tr("נגישות")}</a><a href='/account/privacy'>{tr("המידע שלי")}</a></footer>
     <p className='smalltxt' style={{ textAlign: 'center' }}>{tr("פרסים וירטואליים בלבד · ללא רכישות בכסף אמיתי")}</p>
   </main>;
