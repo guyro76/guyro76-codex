@@ -7,7 +7,7 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawi
 
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local';
-type Question = { text: string; answers: string[]; edge: string };
+type Question = { text: string; answers: string[]; edge?: string; kind?: 'edge' | 'bonus' };
 type GameState = {
   rows: number;
   cols: number;
@@ -16,8 +16,12 @@ type GameState = {
   edges: Record<string, Side>;
   owners: Record<string, Side>;
   scores: Record<Side, number>;
+  streak?: Partial<Record<Side,number>>;
+  bonus_ready?: Partial<Record<Side,boolean>>;
+  bonus_tokens?: Partial<Record<Side,number>>;
 };
-type RemoteMatch = { id: string; status: string; host_id: string; guest_id: string | null; version: number; state: GameState; question?: Question };
+type PlayerIdentity = { name: string; color: string; avatar: string };
+type RemoteMatch = { id: string; status: string; host_id: string; guest_id: string | null; version: number; state: GameState; question?: Question; players?: { host?: PlayerIdentity; guest?: PlayerIdentity } };
 type Profile = { display_name: string; color: string; avatar: string; remember_color: boolean };
 type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number };
 
@@ -89,7 +93,7 @@ export default function TriviaGame() {
     return url && key ? createClient(url, key) : null;
   }, []);
   const [user, setUser] = useState<User | null>(null);
-  const [mode, setMode] = useState<Mode>('bot');
+  const [mode, setMode] = useState<Mode>('local');
   const [size, setSize] = useState(3);
   const [local, setLocal] = useState<GameState>(() => empty(3));
   const [remote, setRemote] = useState<RemoteMatch | null>(null);
@@ -112,11 +116,17 @@ export default function TriviaGame() {
   const gesture = useRef<{ pointerId: number; start: Dot } | null>(null);
   const [trace, setTrace] = useState<{ start: Dot; target: BoardPoint; end: Dot | null; ink: BoardPoint[] } | null>(null);
   const [keyboardStart, setKeyboardStart] = useState<Dot | null>(null);
+  const [bonusSelect, setBonusSelect] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialPage, setTutorialPage] = useState(0);
   const state = remote?.state || local;
   const player = user?.id && remote?.guest_id === user.id ? 'guest' : 'host';
   const onlineTurn = remote?.state.mode === 'local' || player === state.turn;
   const canPlay = remote ? remote.status === 'playing' && onlineTurn && !busy : !busy;
   const finished = Object.keys(state.owners).length === state.rows * state.cols;
+  const earnedBonus = Boolean(remote?.state.bonus_ready?.[state.turn]);
+  const availableBonus = Number(remote?.state.bonus_tokens?.[state.turn] || 0);
+  const streak = Number(remote?.state.streak?.[state.turn] || 0);
   const world = worlds.find(w => w.size === state.rows) || worlds[0];
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
@@ -142,6 +152,7 @@ export default function TriviaGame() {
         setRemember(true);
       }
     } catch { /* storage may be disabled */ }
+    if (!localStorage.getItem('trivia-tutorial-seen-v1')) setShowTutorial(true);
     if (!client) return;
     void client.auth.getUser().then(({ data }) => setUser(data.user));
     const { data } = client.auth.onAuthStateChange((_event, session) => setUser(session?.user || null));
@@ -182,7 +193,7 @@ export default function TriviaGame() {
   }, [client, remote?.id, remote?.version, remote?.state.turn, remote?.status, refresh, muted]);
 
   async function start() {
-    setBusy(true); setQuestion(null); setEdge(null);
+    setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false);
     if (client && user) {
       const { data, error } = await client.rpc('trivia_create_match', { p_mode: mode, p_size: size });
       if (error) setMessage(error.message);
@@ -206,7 +217,7 @@ export default function TriviaGame() {
     setBusy(false);
   }
   async function pick(key: string) {
-    if (!canPlay || finished || state.edges[key] || question) return;
+    if (!canPlay || finished || state.edges[key] || question || bonusSelect) return;
     if (remote && client) {
       setBusy(true);
       const { data, error } = await client.rpc('trivia_choose_edge', { p_match: remote.id, p_edge: key });
@@ -220,7 +231,7 @@ export default function TriviaGame() {
     }
   }
   async function answer(i: number) {
-    if (!question || !edge || busy) return;
+    if (!question || (question.kind !== 'bonus' && !edge) || busy) return;
     setBusy(true);
     if (remote && client) {
       const { data, error } = await client.rpc('trivia_answer', { p_match: remote.id, p_answer: i });
@@ -228,9 +239,13 @@ export default function TriviaGame() {
       else {
         const gained = Number(data.gained || 0);
         if (gained > 0 && !muted) sound(gained);
-        setMessage(data.correct ? gained ? 'מצוין! כבשת ' + gained + ' ריבועים!' : 'תשובה נכונה, הקו שלך!' : 'תשובה שגויה, התור עובר.');
+        setMessage(data.bonus
+          ? data.correct ? 'שאלת הזהב הצליחה! הרווחת שני אסימוני סגירה ✨' : 'שאלת הזהב הוחמצה. אפשר לנסות שוב אחרי רצף חדש.'
+          : data.correct ? gained ? 'מצוין! כבשת ' + gained + ' ריבועים!' : 'תשובה נכונה, הקו שלך!' : 'תשובה שגויה, התור עובר.');
         setQuestion(null); setEdge(null);
         await refresh(remote.id);
+        const { data: update } = await client.rpc('trivia_my_profile');
+        if (update?.progress) setProgress(update.progress as Progress);
       }
     } else {
       const q = practiceQuestions[practiceIndex % practiceQuestions.length];
@@ -244,6 +259,43 @@ export default function TriviaGame() {
     }
     setBusy(false);
   }
+
+  async function startGoldQuestion() {
+    if (!client || !remote || !canPlay || !earnedBonus || question) return;
+    setBusy(true);
+    const { data, error } = await client.rpc('trivia_bonus_question',{p_match:remote.id});
+    if (error) setMessage(error.message);
+    else if (data) {
+      setQuestion(data as Question);
+      setEdge(null);
+      setMessage('שאלת זהב! תשובה נכונה תעניק שתי סגירות בונוס.');
+    }
+    setBusy(false);
+  }
+
+  async function claimBonusSquare(r: number, c: number) {
+    if (!client || !remote || !bonusSelect || !canPlay || question || finished) return;
+    if (remote.state.owners[r+'-'+c]) return;
+    setBusy(true);
+    const {data,error}=await client.rpc('trivia_claim_bonus',{p_match:remote.id,p_row:r,p_col:c});
+    if(error) setMessage(error.message);
+    else {
+      setBonusSelect(false);
+      setMessage('כיבוש זהב! הרווחת '+data.gained+' ריבועים. נשארו '+data.remaining+' אסימונים.');
+      if (!muted) sound(Number(data.gained||1));
+      await refresh(remote.id);
+      const {data: update}=await client.rpc('trivia_my_profile');
+      if(update?.progress) setProgress(update.progress as Progress);
+    }
+    setBusy(false);
+  }
+
+  function dismissTutorial() {
+    setShowTutorial(false);
+    setTutorialPage(0);
+    try { localStorage.setItem('trivia-tutorial-seen-v1','1'); } catch {}
+  }
+
   async function saveProfile() {
     if (remember) localStorage.setItem('trivia-personal-choice', JSON.stringify({ color, avatar }));
     else localStorage.removeItem('trivia-personal-choice');
@@ -263,6 +315,7 @@ export default function TriviaGame() {
     setTrace(null);
     gesture.current = null;
     setKeyboardStart(null);
+    setBonusSelect(false);
     setMessage('העולם התחלף! גרור קו מנקודה לנקודה סמוכה.');
   }
 
@@ -281,7 +334,7 @@ export default function TriviaGame() {
   }
 
   function onBoardPointerDown(event: ReactPointerEvent<SVGSVGElement>) {
-    if (!canPlay || finished || !!question || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    if (!canPlay || finished || !!question || bonusSelect || (event.pointerType === 'mouse' && event.button !== 0)) return;
     const start = nearestDot(boardPoint(event), state.rows, state.cols);
     if (!start) return;
     event.preventDefault();
@@ -326,7 +379,7 @@ export default function TriviaGame() {
   }
 
   function onDotKeyDown(event: ReactKeyboardEvent<SVGCircleElement>, dot: Dot) {
-    if (!canPlay || question || finished || (event.key !== 'Enter' && event.key !== ' ')) return;
+    if (!canPlay || question || bonusSelect || finished || (event.key !== 'Enter' && event.key !== ' ')) return;
     event.preventDefault();
     if (!keyboardStart) { setKeyboardStart(dot); setMessage('בחר כעת נקודה סמוכה כדי להשלים קו'); return; }
     const chosen = edgeBetween(keyboardStart, dot, state.rows, state.cols);
@@ -335,7 +388,13 @@ export default function TriviaGame() {
     else setMessage('יש לבחור רק שתי נקודות סמוכות עם קו פנוי.');
   }
 
-  const colors: Record<Side, string> = { host: color, guest: '#FA9143', bot: '#FA9143' };
+  const colors: Record<Side, string> = {
+    host: player === 'host' ? color : remote?.players?.host?.color || '#358CFF',
+    guest: player === 'guest' && remote?.state.mode === 'online' ? color : remote?.players?.guest?.color || '#FA9143',
+    bot: '#FA9143'
+  };
+  const opponentIcon = remote?.players?.[player === 'host'?'guest':'host']?.avatar || '🐲';
+  const opponentName = remote?.state.mode === 'bot' ? 'המחשב' : remote?.players?.[player === 'host'?'guest':'host']?.name || 'שחקן 2';
   const drawLine = (key: string, x1: number, y1: number, x2: number, y2: number) => {
     const owner = state.edges[key];
     return <g key={key} pointerEvents='none'>
@@ -440,6 +499,8 @@ export default function TriviaGame() {
       @media(max-width:440px){.player-tile .portrait{width:36px;height:36px}.player-tile{padding:6px}.score-num{font-size:22px}.scoreboard{gap:5px}.world-choice{min-height:89px;padding:9px}.wc-name{font-size:15px}.answer-grid{grid-template-columns:1fr}.wallet{grid-template-columns:repeat(4,minmax(0,1fr))}.quiz-card{padding:16px}}
       @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
       @keyframes tileClaim{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+      @keyframes drawTutorial{from{stroke-dashoffset:84}to{stroke-dashoffset:0}}
+      .tutorial-stroke{animation:drawTutorial 1.5s ease-in-out both}
       .claimed-tile{animation:tileClaim .36s cubic-bezier(.2,1.3,.4,1);transform-origin:center}
     `}</style>
     <header className='hero'>
@@ -472,13 +533,13 @@ export default function TriviaGame() {
         </div>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
-            <div className='portrait'>{avatar}</div>
-            <div><div className='score-name'>{name || 'שחקן 1'}</div><div className='score-num'>{state.scores.host}</div></div>
+            <div className='portrait'>{remote && player === 'guest' ? opponentIcon : avatar}</div>
+            <div><div className='score-name'>{remote?.players?.host?.name || name || 'שחקן 1'}</div><div className='score-num'>{state.scores.host}</div></div>
           </div>
-          <div className='versus'>{state.turn === 'host' ? 'התור שלך' : 'תור היריב'}<div style={{ fontSize: 17 }}>⚔️</div></div>
+          <div className='versus'>{(state.mode === 'local' ? state.turn === 'host' : state.turn === player) ? 'התור שלך' : 'תור היריב'}<div style={{ fontSize: 17 }}>⚔️</div></div>
           <div className='player-tile left-side other'>
-            <div className='portrait'>{state.mode === 'bot' ? '🤖' : '🐲'}</div>
-            <div><div className='score-name'>{state.mode === 'bot' ? 'המחשב' : 'שחקן 2'}</div><div className='score-num'>{state.scores.guest + state.scores.bot}</div></div>
+            <div className='portrait'>{state.mode === 'bot' ? '🤖' : remote?.players?.guest?.avatar || '🐲'}</div>
+            <div><div className='score-name'>{state.mode === 'bot' ? 'המחשב' : remote?.players?.guest?.name || 'שחקן 2'}</div><div className='score-num'>{state.scores.guest + state.scores.bot}</div></div>
           </div>
         </div>
         <div className={'arena ' + world.slug}>
@@ -509,11 +570,16 @@ export default function TriviaGame() {
                 const h = 288 / state.rows;
                 const x = 20 + c * w + 5;
                 const y = 20 + r * h + 5;
-                return <g key={'cell-' + r + '-' + c} pointerEvents='none'>
+                return <g key={'cell-' + r + '-' + c} pointerEvents={bonusSelect ? undefined : 'none'}>
                   <rect x={x} y={y} width={w - 10} height={h - 10} rx='10' fill={owner ? colors[owner] : 'url(#cellTint)'} fillOpacity={owner ? '.82' : '1'} className={owner ? 'claimed-tile' : ''} />
+                  {bonusSelect && !owner && <rect x={x} y={y} width={w-10} height={h-10} rx='10'
+                    role='button' tabIndex={0} aria-label={'כבוש ריבוע בשורה '+(r+1)+' עמודה '+(c+1)}
+                    onClick={()=>void claimBonusSquare(r,c)}
+                    onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();void claimBonusSquare(r,c)}}}
+                    fill='#FFE18C' fillOpacity='.22' stroke='#FFE18C' strokeWidth='3' strokeDasharray='6 4' style={{cursor:'pointer'}} />}
                   {owner ? <>
                     <rect x={x + 3} y={y + 3} width={w - 16} height={h - 16} rx='8' fill='none' stroke='#FFFFFF' strokeOpacity='.4' strokeWidth='1.5' />
-                    <text x={x + (w - 10) / 2} y={y + h * .63} textAnchor='middle' fontSize={Math.min(37, w * .42)} aria-hidden='true'>{owner === 'host' ? avatar : '🐲'}</text>
+                    <text x={x + (w - 10) / 2} y={y + h * .63} textAnchor='middle' fontSize={Math.min(37, w * .42)} aria-hidden='true'>{owner === player ? avatar : owner === 'bot' ? '🤖' : opponentIcon}</text>
                   </> : <text x={x + (w - 10) / 2} y={y + h * .62} textAnchor='middle' fontSize={Math.min(24, w * .3)} opacity='.26' aria-hidden='true'>{decorative}</text>}
                 </g>;
               }))}
@@ -537,7 +603,7 @@ export default function TriviaGame() {
             </svg>
           </div>
         </div>
-        <div className='gesture-hint'><span className='draw-icon'>✍️</span> גע בנקודה וצייר אל הנקודה הסמוכה כמו בטוש אמיתי</div>
+        <div className='gesture-hint'><span className='draw-icon'>✍️</span>{bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'גע בנקודה וצייר אל הנקודה הסמוכה כמו בטוש אמיתי'}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>שטחים שנכבשו</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
         <div className='status-line' aria-live='polite'>
@@ -547,6 +613,10 @@ export default function TriviaGame() {
         <div className='control-row'>
           <button className='gold-button' disabled={busy} onClick={() => void start()}>🎮 {remote ? 'משחק חדש' : 'התחל משחק'}</button>
           <button className='glass-button' onClick={() => setMuted(m => !m)} aria-pressed={muted}>{muted ? '🔇 צלילים כבויים' : '🔊 צלילים פועלים'}</button>
+          <button className='glass-button' onClick={()=>{setTutorialPage(0);setShowTutorial(true)}}>❓ איך משחקים</button>
+          {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>⭐ שאלת זהב!</button>}
+          {availableBonus>0 && state.mode!=='online' && <button className='gold-button' disabled={busy||!!question} onClick={()=>setBonusSelect(v=>!v)}>
+            ✨ {bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס'} ({availableBonus})</button>}
           {finished && size < 6 && <button className='glass-button' onClick={() => chooseWorld(size + 1)}>העולם הבא ←</button>}
         </div>
       </section>
@@ -585,7 +655,8 @@ export default function TriviaGame() {
             {([['🍎','פירות',progress.fruits],['💎','יהלומים',progress.diamonds],['🪙','קרדיטים',progress.credits],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
               <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{label}</span></div>)}
           </div>
-          <p className='smalltxt' style={{ marginBottom: 0 }}>הפרסים הווירטואליים נשמרים לחשבון מחובר. מנגנוני הבונוס המתקדמים בפיתוח.</p>
+          <p className='smalltxt' style={{marginBottom:0}}>🔥 רצף תשובות: {streak} | ⭐ כיבושי בונוס: {availableBonus}</p>
+          <p className='smalltxt' style={{marginBottom:0}}>אחרי שלוש תשובות נכונות תקבל שאלת זהב. הצלחה מעניקה שני אסימוני כיבוש. המשחק התחרותי נשאר ללא בונוסים משני ניקוד.</p>
         </section>
         <section className='glass-panel'>
           <h2 className='panel-title'>🔐 מועדון השחקנים</h2>
@@ -605,14 +676,35 @@ export default function TriviaGame() {
       </aside>
     </div>
 
+    {showTutorial && <div className='quiz-overlay' role='presentation'>
+      <section className='quiz-card' role='dialog' aria-modal='true' aria-label='הסבר משחק' style={{textAlign:'center'}}>
+        <span className='quiz-badge'>🧭 הדרך לכיבוש מתחילה כאן</span>
+        <h2>{['צייר קו כמו בטוש','ענה נכון על שאלת טריוויה','סגור ריבוע וזכה בנקודות'][tutorialPage]}</h2>
+        <svg viewBox='0 0 280 145' aria-hidden='true' style={{width:'100%',maxWidth:320,margin:'0 auto',display:'block'}}>
+          {[0,1,2].flatMap(r=>[0,1,2].map(c=><circle key={r+'-'+c} cx={55+c*84} cy={22+r*48} r='7' fill='#FFFFFF' stroke='#9DC9FF' strokeWidth='3'/>))}
+          {tutorialPage===0 && <><path d='M55 22 L139 22' stroke='#FFD867' strokeWidth='11' strokeLinecap='round' strokeDasharray='84' className='tutorial-stroke'/><circle cx='139' cy='22' r='9' fill='#FFE8A3'/></>}
+          {tutorialPage===1 && <><path d='M55 22 L139 22' stroke='#FFD867' strokeWidth='9' strokeLinecap='round'/><text x='140' y='94' textAnchor='middle' fill='#FFFFFF' fontSize='18' fontWeight='900'>מהי התשובה הנכונה?</text></>}
+          {tutorialPage===2 && <><rect x='61' y='28' width='72' height='36' rx='8' fill={color}/><text x='97' y='54' textAnchor='middle' fontSize='25'>{avatar}</text><path d='M55 22 H139 V70 H55 Z' fill='none' stroke='#FFE48A' strokeWidth='8' strokeLinecap='round'/></>}
+        </svg>
+        <p style={{color:'#ECF4FF',fontSize:15,lineHeight:1.7}}>{[
+          'נוגעים בנקודה, גוררים באצבע או בעכבר אל נקודה סמוכה ומשחררים. לא לוחצים על הקו.',
+          'לכל קו תופיע שאלה עם ארבע אפשרויות. תשובה שגויה תשאיר את הקו פתוח.',
+          'הריבוע יתמלא בצבע ובאוואטר שלך. סגירה מעניקה נקודה ותור נוסף. אחרי רצף תשובות מחכה שאלת זהב!'
+        ][tutorialPage]}</p>
+        <div className='control-row'>
+          <button className='glass-button' onClick={dismissTutorial}>דלג או סיים</button>
+          {tutorialPage<2 && <button className='gold-button' onClick={()=>setTutorialPage(v=>v+1)}>הבא ←</button>}
+        </div>
+      </section>
+    </div>}
     {question && <div className='quiz-overlay' role='presentation'>
       <section className='quiz-card' role='dialog' aria-modal='true' aria-label='שאלת טריוויה'>
-        <span className='quiz-badge'>⭐ רק תשובה נכונה תסגור את הקו ⭐</span>
+        <span className='quiz-badge'>{question.kind==='bonus'?'✨ שאלת זהב: הזדמנות לשני כיבושים ✨':'⭐ רק תשובה נכונה תסגור את הקו ⭐'}</span>
         <h2>{question.text}</h2>
         <div className='answer-grid'>
           {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{['א','ב','ג','ד'][i]}</span>{a}</button>)}
         </div>
-        <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>תשובה שגויה משאירה את הקו פתוח ומעבירה את התור</p>
+        <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>{question.kind==='bonus'?'תשובה נכונה מעניקה שני אסימוני כיבוש זהב':'תשובה שגויה משאירה את הקו פתוח ומעבירה את התור'}</p>
       </section>
     </div>}
 
