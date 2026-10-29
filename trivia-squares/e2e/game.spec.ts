@@ -268,3 +268,18 @@ test('guest can recover previously seen questions from a portable backup after s
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
   expect(saved).toContain('מהי בירת אוסטרליה');
 });
+
+test('first-run tutorial changes its instructional language without dismissing the dialog',async({page})=>{
+  await page.goto('/');
+  const he=page.getByRole('dialog',{name:'הסבר משחק'});
+  await expect(he).toBeVisible();
+  await he.getByRole('button',{name:'English',exact:true}).click();
+  const en=page.getByRole('dialog',{name:'How to play'});
+  await expect(en).toBeVisible();
+  await expect(en.getByRole('heading',{name:'Draw a marker line'})).toBeVisible();
+  await expect(en.getByTestId('tutorial-preview')).toHaveAttribute('data-locale','en');
+  await expect(page.locator('main.trivia-app')).toHaveAttribute('dir','ltr');
+  await en.getByRole('button',{name:'עברית'}).click();
+  await expect(he).toBeVisible();
+  await expect(he.getByTestId('tutorial-preview')).toHaveAttribute('data-locale','he');
+});
