@@ -231,7 +231,7 @@ export default function TriviaGame() {
   const googlePhotoRaw = providerGoogle ? String(user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '') : '';
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
   const canPlay = validName && localReady && !showTutorial && !capturePending && !wrongAnswerFeedback && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
-  const finished = !capturePending && Object.keys(state.owners).length === state.rows * state.cols;
+  const finished = !capturePending && !question && !wrongAnswerFeedback && Object.keys(state.owners).length === state.rows * state.cols;
   const completedStage = mode==='local'||mode==='solo' ? localStageCompleted : serverStageCompleted;
   const stageUnlocked = Math.min(STAGE_COUNT,completedStage+1);
   const selectedStage = stageFor(stageId);
@@ -1070,9 +1070,16 @@ export default function TriviaGame() {
       setLocalCredits(prev=>({...prev,host:prev.host+amount}));
     }else if(prize.includes('קמע')){
       setLocalCharms(prev=>({...prev,host:prev.host+1}));
+    }else if(prize.includes('פירות')){
+      setLocalWallet(prev=>({...prev,fruits:prev.fruits+(Number.parseInt(prize,10)||0)}));
+      playGameSound('fruit',{muted,volume:volume/100},.15);
+    }else if(prize.includes('יהלום')){
+      setLocalWallet(prev=>({...prev,diamonds:prev.diamonds+1}));
+      playGameSound('diamond',{muted,volume:volume/100},.15);
     }
+    if(prize.includes('קרדיטים'))playGameSound('coin',{muted,volume:volume/100},.15);
     setMessage('קיבלת את הפרס: '+prize);
-  },[]);
+  },[muted,volume]);
   const stageRemoteReward=useCallback(()=>{
     if(client)void client.rpc('trivia_my_profile').then(({data})=>{
       if(data?.progress)setProgress(data.progress as Progress);
@@ -1537,7 +1544,7 @@ export default function TriviaGame() {
         <section className='glass-panel'>
           <h2 className='panel-title'>{tr("💎 אוצרות והישגים")}</h2>
           <div className='wallet'>
-            {([['🍎','פירות',progress.fruits],['💎','יהלומים',progress.diamonds],['🪙','קרדיטים',progress.credits],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
+            {([['🍎','פירות',remote?progress.fruits:localWallet.fruits],['💎','יהלומים',remote?progress.diamonds:localWallet.diamonds],['🪙','קרדיטים',currentCredits],['⭐','כוכבים',remote?0:localWallet.stars],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
               <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{tr(label)}</span></div>)}
           </div>
           <p className='smalltxt' style={{margin:'10px 0 5px'}}>{tr("⏳ כל שאלה: דקה. אפשר לקנות עוד 30 שניות ב־25 קרדיטים, פעם אחת לשאלה.")}</p>
