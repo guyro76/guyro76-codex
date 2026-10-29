@@ -87,7 +87,7 @@ export default function TriviaGame() {
   const localPoolRef=useRef<{he:number;en:number}>({he:0,en:0});
   const rememberShownQuestion=useCallback((text:string)=>{
     const fingerprint=canonicalQuestion(text);
-    if(!fingerprint)return;
+    if(!fingerprint || seenQuestionTexts.current.has(fingerprint))return;
     seenQuestionTexts.current.add(fingerprint);
     try{localStorage.setItem('trivia-question-text-history-v1',JSON.stringify([...seenQuestionTexts.current]))}catch{}
   },[]);
@@ -398,6 +398,16 @@ export default function TriviaGame() {
     } else if (client && user && legalAccepted) {
       const {error:localeError}=await client.rpc('trivia_set_locale',{p_locale:locale});
       if(localeError){setMessage(localeError.message);setBusy(false);return;}
+      // Unify previous local play with the signed-in, device-independent history.
+      const localSeen=[...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve]
+       .filter(q=>seenQuestionTexts.current.has(canonicalQuestion(q.text)))
+       .map(q=>q.text);
+      for(let offset=0;offset<localSeen.length;offset+=300){
+        const {error:importError}=await client.rpc('trivia_import_local_history',{
+          p_question_texts:localSeen.slice(offset,offset+300)
+        });
+        if(importError){setMessage('Unable to sync past questions: '+importError.message);setBusy(false);return;}
+      }
       const {error:profileError}=await client.rpc('trivia_save_appearance',{
         p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
       });
