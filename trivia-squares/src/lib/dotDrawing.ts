@@ -22,7 +22,7 @@ export function nearestDot(pos: BoardPoint, rows: number, cols: number): Dot | n
   const dot = { row, col };
   const center = dotXY(dot, rows, cols);
   // Scale sensitivity for dense boards; no hit zone reaches an adjacent dot.
-  const radius = Math.min(22, Math.min(stepX, stepY) * .41);
+  const radius = Math.min(29, Math.min(stepX, stepY) * .48);
   return Math.hypot(pos.x - center.x, pos.y - center.y) <= radius ? dot : null;
 }
 
