@@ -5,7 +5,7 @@ import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicConfig';
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawing';
-import { applyLocalAnswer } from '../lib/engine';
+import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
 import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
@@ -27,7 +27,7 @@ function canonicalQuestion(text:string):string {
   return text.normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 }
 type Side = 'host' | 'guest' | 'bot';
-type Mode = 'bot' | 'online' | 'local';
+type Mode = 'bot' | 'online' | 'local' | 'solo';
 type Question = { text: string; answers: string[]; edge?: string; id?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus'; deadline_at?: string | null; extensions?: number };
 type GameState = {
   rows: number;
@@ -56,7 +56,7 @@ const worlds = [
   { size: 5, name: 'ממלכת העננים', subtitle: 'הדרך עוברת בין הכוכבים', icon: '☁️', slug: 'clouds', badge: 'עולם 03', reward: 'בונוסים' },
   { size: 6, name: 'גלקסיית הכוכבים', subtitle: 'אתגר המאסטרים הגדול', icon: '🪐', slug: 'galaxy', badge: 'עולם 04', reward: 'גביעים' }
 ] as const;
-const empty = (size: number): GameState => ({ rows: size, cols: size, mode: 'local', turn: 'host', edges: {}, owners: {}, scores: { host: 0, guest: 0, bot: 0 } });
+const empty = (size: number, kind:'solo'|'local'='solo'): GameState => ({ rows: size, cols: size, mode: kind, turn: 'host', edges: {}, owners: {}, scores: { host: 0, guest: 0, bot: 0 } });
 const css = {
   main: { maxWidth: 1100, margin: 'auto', padding: '16px' } as React.CSSProperties,
   panel: { background: '#182858', border: '1px solid #5168A9', boxShadow: '0 15px 40px #080f2688', borderRadius: 22, padding: 18 } as React.CSSProperties,
@@ -76,7 +76,7 @@ export default function TriviaGame() {
   const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [policiesAcknowledged, setPoliciesAcknowledged] = useState(false);
   const [legalBusy, setLegalBusy] = useState(false);
-  const [mode, setMode] = useState<Mode>('local');
+  const [mode, setMode] = useState<Mode>('solo');
   const [size, setSize] = useState(3);
   const [stageId,setStageId]=useState(1);
   const [localStageCompleted,setLocalStageCompleted]=useState(0);
@@ -205,14 +205,14 @@ export default function TriviaGame() {
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
   const canPlay = validName && localReady && !showTutorial && !capturePending && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
   const finished = !capturePending && Object.keys(state.owners).length === state.rows * state.cols;
-  const completedStage = mode==='local' ? localStageCompleted : serverStageCompleted;
+  const completedStage = mode==='local'||mode==='solo' ? localStageCompleted : serverStageCompleted;
   const stageUnlocked = Math.min(STAGE_COUNT,completedStage+1);
   const selectedStage = stageFor(stageId);
   const stageBusy=busy||!!question||(stageStarted&&!finished);
   const earnedBonus = Boolean(remote?.state.bonus_ready?.[state.turn]);
   const availableBonus = Number(remote?.state.bonus_tokens?.[state.turn] || 0);
   const streak = Number(remote?.state.streak?.[state.turn] || 0);
-  const currentLocalSide: 'host'|'guest' = state.turn === 'guest' ? 'guest' : 'host';
+  const currentLocalSide: 'host'|'guest' = state.mode==='solo' ? 'host' : state.turn === 'guest' ? 'guest' : 'host';
   const currentCredits = remote ? progress.credits : localCredits[currentLocalSide];
   const currentCharms = remote ? (progress.time_charms || 0) : localCharms[currentLocalSide];
   const timeFreezeActive = remote
@@ -327,6 +327,8 @@ export default function TriviaGame() {
         setStageId(savedLevel);setSize(stageFor(savedLevel).size);
       }
       setStageStarted(localStorage.getItem('trivia-stage-started-v1')==='true');
+      const savedMode=localStorage.getItem('trivia-mode-v2');
+      if(savedMode==='solo'||savedMode==='local'||savedMode==='online'||savedMode==='bot')setMode(savedMode);
     }catch{}
     try {
       const stored=localStorage.getItem('trivia-local-game-v1');
@@ -338,7 +340,9 @@ export default function TriviaGame() {
           const savedStage=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
           const validStage=Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=30?savedStage:1;
           if(stageFor(validStage).size===value.rows){
-            setLocal(value);setSize(value.rows);
+            const explicitlyTwoPlayers=localStorage.getItem('trivia-mode-v2')==='local';
+            const repaired=value.mode==='local'&&!explicitlyTwoPlayers?{...repairSoloBoard(value),mode:'solo' as const}:value;
+            setLocal(repaired);setSize(repaired.rows);
           }
         }
       }
@@ -431,7 +435,7 @@ export default function TriviaGame() {
             }finally{timeoutBusy.current=false;}
           })();
         }else{
-          setLocal(prev=>({...prev,turn:prev.turn==='host'?'guest':'host'}));
+          setLocal(prev=>({...prev,turn:prev.mode==='solo'?'host':prev.turn==='host'?'guest':'host'}));
           setQuestion(null);setEdge(null);play('wrong');
           setMessage('הזמן נגמר! הקו לא נצבע והתור עבר.');
           timeoutBusy.current=false;
@@ -530,7 +534,7 @@ export default function TriviaGame() {
     if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
     setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false); setCapturePending(null);
-    if (mode === 'local') {
+    if (mode === 'local'||mode === 'solo') {
       if(user&&client&&navigator.onLine&&!await syncAccountQuestionHistory()){
         setMessage(locale==='en'?'Unable to sync your question history. Please retry.':'אי אפשר להתחיל משחק מחובר לפני סנכרון היסטוריית השאלות.');
         setBusy(false);return;
@@ -539,7 +543,7 @@ export default function TriviaGame() {
       const nextRun='local-'+crypto.randomUUID();
       setStageRunId(nextRun);
       try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
-      setRemote(null); setLocal(empty(selectedStage.size)); setLocalFreeze({host:false,guest:false});
+      setRemote(null); setLocal(empty(selectedStage.size,mode==='local'?'local':'solo')); setLocalFreeze({host:false,guest:false});
       setStageStarted(true);
       setMessage(added>0
        ? (locale==='en'?added+' fresh reviewed questions added to your practice bank.':'נוספו '+added+' שאלות חדשות ממאגר מאושר.')
@@ -663,11 +667,11 @@ export default function TriviaGame() {
       const q=[...englishQuestions,...offlineQuestions,...freshLocalQuestionReserve,...internationalQuestions].find(v=>v.id===question.id);
       if(!q){setMessage('לא נמצאה השאלה המקורית.');setBusy(false);return;}
       const correct = i === q.correct;
-      const next = applyLocalAnswer(local, edge, correct);
+      const next = applyLocalAnswer(local, edge, correct, local.mode==='solo');
       setLocal(next);
       const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
       const gained = newSquares.length;
-      if(gained && ownerMode==='manual')setCapturePending({keys:newSquares,from:'new'});
+      if(gained && local.mode==='local' && ownerMode==='manual')setCapturePending({keys:newSquares,from:'new'});
       if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
       else if (gained) play('capture');
       else play(correct ? 'correct' : 'wrong');
@@ -805,7 +809,7 @@ export default function TriviaGame() {
   }
 
   function chooseCaptureOwner(owner:LocalOwner){
-    if(!capturePending || remote)return;
+    if(!capturePending || remote || local.mode==='solo')return;
     const next=reassignCapture(local,capturePending.keys,owner);
     setLocal(next);
     if(capturePending.from==='new' && Object.keys(next.owners).length===next.rows*next.cols){
@@ -823,7 +827,7 @@ export default function TriviaGame() {
     }
     if(nextId===stageId)return;
     const next=stageFor(nextId);
-    expandLocalPool(locale);
+    if(locale==='he'||locale==='en')expandLocalPool(locale);
     const nextRun='local-'+crypto.randomUUID();
     setStageRunId(nextRun);
     try{
@@ -831,7 +835,7 @@ export default function TriviaGame() {
       localStorage.setItem('trivia-stage-id-v1',String(nextId));
     }catch{}
     setStageId(nextId);setSize(next.size);
-    setStageStarted(false);setRemote(null);setLocal(empty(next.size));
+    setStageStarted(false);setRemote(null);setLocal(empty(next.size,mode==='local'?'local':'solo'));
     setQuestion(null);setEdge(null);setTrace(null);gesture.current=null;
     setKeyboardStart(null);setBonusSelect(false);setCapturePending(null);setLocalFreeze({host:false,guest:false});
     setMessage(locale==='en'?('Stage '+nextId+' unlocked. Draw between adjacent dots.'):('שלב '+nextId+' נפתח. גרור קו בין נקודות סמוכות.'));
@@ -923,12 +927,12 @@ export default function TriviaGame() {
 
   const colors: Record<Side, string> = {
     host: player === 'host' ? color : remote?.players?.host?.color || '#358CFF',
-    guest: state.mode==='local' ? guestColor : player === 'guest' && remote?.state.mode === 'online' ? color : remote?.players?.guest?.color || '#FA9143',
+    guest: state.mode==='solo'?color:state.mode==='local' ? guestColor : player === 'guest' && remote?.state.mode === 'online' ? color : remote?.players?.guest?.color || '#FA9143',
     bot: '#FA9143'
   };
   const lineColors: Record<Side,string> = {
     host: player === 'host' ? lineColor : remote?.players?.host?.line_color || '#358CFF',
-    guest: player === 'guest' && remote?.state.mode === 'online' ? lineColor : remote?.players?.guest?.line_color || '#F97316',
+    guest: state.mode==='solo'?lineColor:state.mode==='local'?guestColor:player === 'guest' && remote?.state.mode === 'online' ? lineColor : remote?.players?.guest?.line_color || '#F97316',
     bot: '#FB923C'
   };
   const opponentIcon = state.mode==='local' ? guestAvatar : remote?.players?.[player === 'host'?'guest':'host']?.avatar || '🐲';
@@ -1170,10 +1174,10 @@ export default function TriviaGame() {
             <div><div className='score-name'>{remote?.players?.host?.name || name || tr('שחקן 1')}</div><div className='score-num'>{state.scores.host}</div></div>
           </div>
           <div className='versus'>{tr((state.mode === 'local' ? state.turn === 'host' : state.turn === player) ? 'התור שלך' : 'תור היריב')}<div style={{ fontSize: 17 }}>⚔️</div></div>
-          <div className='player-tile left-side other'>
+          {state.mode!=='solo' && <div className='player-tile left-side other'>
             <div className='portrait'>{state.mode === 'bot' ? '🤖' : state.mode==='local' ? guestAvatar : remote?.players?.guest?.avatar || '🐲'}</div>
             <div><div className='score-name'>{state.mode === 'bot' ? tr('המחשב') : state.mode==='local' ? guestName : remote?.players?.guest?.name || tr('שחקן 2')}</div><div className='score-num'>{state.scores.guest + state.scores.bot}</div></div>
-          </div>
+          </div>}
         </div>
         <div className={'arena ' + world.slug}>
           <div className='arena-inner'>
@@ -1201,9 +1205,9 @@ export default function TriviaGame() {
                 const h = 288 / state.rows;
                 const x = 20 + c * w + 5;
                 const y = 20 + r * h + 5;
-                const ownerName=owner==='host'?(remote?.players?.host?.name||name||'Player 1'):owner==='guest'?(state.mode==='local'?guestName:remote?.players?.guest?.name||'Player 2'):'Computer';
-                const ownerIcon=owner==='host'?(remote?.players?.host?.avatar||avatar):owner==='guest'?(state.mode==='local'?guestAvatar:remote?.players?.guest?.avatar||'👑'):'🤖';
-                const editable=Boolean(owner && !remote && ownerMode!=='auto' && !bonusSelect && !question);
+                const ownerName=state.mode==='solo'?(name||'Player 1'):owner==='host'?(remote?.players?.host?.name||name||'Player 1'):owner==='guest'?(state.mode==='local'?guestName:remote?.players?.guest?.name||'Player 2'):'Computer';
+                const ownerIcon=state.mode==='solo'?avatar:owner==='host'?(remote?.players?.host?.avatar||avatar):owner==='guest'?(state.mode==='local'?guestAvatar:remote?.players?.guest?.avatar||'👑'):'🤖';
+                const editable=Boolean(owner && !remote && state.mode==='local' && ownerMode!=='auto' && !bonusSelect && !question);
                 return <g key={'cell-' + r + '-' + c} pointerEvents={bonusSelect || editable ? undefined : 'none'}>
                   {owner
                     ? <CaptureTile row={r} col={c} x={x} y={y} width={w-10} height={h-10}
@@ -1244,7 +1248,7 @@ export default function TriviaGame() {
           <input id='board-start-name' type='text' minLength={2} maxLength={32} value={name}
             placeholder={locale==='en'?'Player name':'שם השחקן'} onChange={e=>updatePlayerName(e.target.value)} />
         </div>}
-        {!remote && ownerMode!=='auto' && <p className='capture-tip'>{locale==='en'?'Tap any captured square to correct its owner.':'ניתן ללחוץ על ריבוע שנכבש כדי לשנות למי הוא שייך.'}</p>}
+        {!remote && state.mode==='local' && ownerMode!=='auto' && <p className='capture-tip'>{locale==='en'?'Tap any captured square to correct its owner.':'ניתן ללחוץ על ריבוע שנכבש כדי לשנות למי הוא שייך.'}</p>}
         <div className='gesture-hint'><span className='draw-icon'>✍️</span>{tr(bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח')}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>{tr("שטחים שנכבשו")}</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
@@ -1254,13 +1258,13 @@ export default function TriviaGame() {
         {finished && <section className='victory-panel' role='status' aria-label={locale==='en'?'Match result':'תוצאות המשחק'}>
           <div className='victory-symbol' aria-hidden='true'>🏆</div>
           <h2 style={{margin:'5px 0',fontSize:'clamp(22px,3.8vw,31px)'}}>
-            {state.scores.host === state.scores.guest+state.scores.bot
+            {state.mode==='solo' ? tr('אליפות! כל הריבועים נסגרו') : state.scores.host === state.scores.guest+state.scores.bot
               ? tr('תיקו גדול!') : state.scores.host>state.scores.guest+state.scores.bot ? tr('אליפות! כל הריבועים נסגרו') : tr('היריב ניצח הפעם')}
           </h2>
           <div style={{fontSize:16,color:'#FFEAA6',marginBottom:12}}>
             {'⭐'.repeat(state.scores.host>state.scores.guest+state.scores.bot?3:state.scores.host===state.scores.guest+state.scores.bot?2:1)}
           </div>
-          <p style={{margin:'6px 0',color:'#FFFFFF'}}>{tr('שחקן 1')}: {state.scores.host} {tr('נקודות')} · {tr('יריב')}: {state.scores.guest+state.scores.bot} {tr('נקודות')}</p>
+          <p style={{margin:'6px 0',color:'#FFFFFF'}}>{name||tr('שחקן 1')}: {state.scores.host} {tr('נקודות')}{state.mode==='solo'?'':' · '+(state.mode==='local'?guestName:tr('יריב'))+': '+(state.scores.guest+state.scores.bot)+' '+tr('נקודות')}</p>
           <p className='smalltxt'>{tr("🍎 במשחק מחובר צוברים פירות וקרדיטים, ובניצחון גם יהלומים והתקדמות.")}</p>
           <div className='control-row' style={{marginTop:13}}>
             <button className='gold-button' disabled={busy} onClick={()=>void start()}>{tr("🔄 משחק חוזר")}</button>
@@ -1268,7 +1272,7 @@ export default function TriviaGame() {
           </div>
         </section>}
         <div className='status-line' aria-live='polite'>
-          {finished ? '🏆 ' + tr(state.scores.host === state.scores.guest + state.scores.bot ? 'המשחק הסתיים בתיקו!' : state.scores.host > state.scores.guest + state.scores.bot ? 'ניצחת! כל הכבוד!' : 'היריב ניצח. משחק חוזר?') : tr(message)}
+          {finished ? '🏆 ' + tr(state.mode==='solo'?'ניצחת! כל הכבוד!':state.scores.host === state.scores.guest + state.scores.bot ? 'המשחק הסתיים בתיקו!' : state.scores.host > state.scores.guest + state.scores.bot ? 'ניצחת! כל הכבוד!' : 'היריב ניצח. משחק חוזר?') : tr(message)}
         </div>
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>{tr("ממתינים שהחבר ייכנס לחדר...")}</p>}
         <div className='control-row'>
@@ -1308,9 +1312,12 @@ export default function TriviaGame() {
         <section className='glass-panel'>
           <h2 className='panel-title'>{tr("🎯 חדר המשחק")}</h2>
           <div className='mode-row'>
-            {([['bot','🤖 מחשב','🤖 Computer'],['online','🌐 חבר','🌐 Online friend'],['local','👥 מקומי','👥 Local'] ] as const).map(([value, he, en]) =>
+            {([['solo','👤 משחק עצמאי','👤 Solo'],['bot','🤖 נגד מחשב','🤖 Vs computer'],['online','🌐 נגד חבר','🌐 Vs friend'],['local','👥 שניים במכשיר','👥 Two players'] ] as const).map(([value, he, en]) =>
               <button key={value} className='choice' disabled={stageStarted&&!finished} aria-pressed={mode===value}
-                onClick={()=>{setMode(value);if(value!=='local'&&stageId>serverStageCompleted+1){setStageId(serverStageCompleted+1);setSize(stageFor(Math.min(30,serverStageCompleted+1)).size)} }}>
+                onClick={()=>{setMode(value);try{localStorage.setItem('trivia-mode-v2',value)}catch{};
+                 if(value==='solo'&&!remote){setLocal(prev=>({...repairSoloBoard(prev),mode:'solo'}));setCapturePending(null)}
+                 if(value==='local'&&!remote){setLocal(prev=>({...prev,mode:'local'}))}
+                 if(value!=='local'&&value!=='solo'&&stageId>serverStageCompleted+1){setStageId(serverStageCompleted+1);setSize(stageFor(Math.min(STAGE_COUNT,serverStageCompleted+1)).size)} }}>
                 {locale==='en'?en:he}</button>)}
           </div>
           <div className='form-field'>{tr('גודל לוח')}</div>
