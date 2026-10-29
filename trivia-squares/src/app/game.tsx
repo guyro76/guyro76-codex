@@ -1268,7 +1268,7 @@ export default function TriviaGame() {
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
         aria-label={tr('בחר סקין למשחק')} title={tr('בחר סקין למשחק')}>
-        <span className='skin-palette-icon' aria-hidden='true'>🎨</span><span>{tr('עיצוב המשחק')}</span>
+        <span className='skin-palette-icon' aria-hidden='true'>🎨</span><span>{tr('בחר סקין למשחק')}</span>
       </button>
       {skinPickerOpen&&<section id='skin-picker-panel' className='skin-picker-panel' aria-label={tr('בחר סקין למשחק')}>
         <div className='skin-picker-title'>{localeExtras[locale].skin}</div>
