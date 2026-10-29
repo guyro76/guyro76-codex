@@ -1,6 +1,6 @@
-// English-first editorial trivia, written for international audiences.
-// Not machine-translated from Hebrew. Each entry belongs to the English question bank.
-// Answers are authored and checked for structural quality before import.
+// English-first trivia. Locally relevant global knowledge, not a translation of Hebrew data.
+// No arithmetic, no Israeli-artist category. Editorial media facts are curated separately.
+import {englishMediaQuestions} from './mediaQuestions';
 export type EnglishQuestion={id:number;category:string;text:string;answers:string[];correct:number;difficulty:number};
 export const englishCuratedQuestions:EnglishQuestion[]=[
   {
@@ -1148,162 +1148,6 @@ export const englishCuratedQuestions:EnglishQuestion[]=[
     "difficulty": 1
   },
   {
-    "id": 1088,
-    "category": "Mathematics",
-    "text": "What is 12 squared?",
-    "answers": [
-      "124",
-      "144",
-      "132",
-      "154"
-    ],
-    "correct": 1,
-    "difficulty": 2
-  },
-  {
-    "id": 1089,
-    "category": "Mathematics",
-    "text": "What is the square root of 81?",
-    "answers": [
-      "9",
-      "8",
-      "7",
-      "11"
-    ],
-    "correct": 0,
-    "difficulty": 3
-  },
-  {
-    "id": 1090,
-    "category": "Mathematics",
-    "text": "How many degrees are in a right angle?",
-    "answers": [
-      "45",
-      "60",
-      "180",
-      "90"
-    ],
-    "correct": 3,
-    "difficulty": 1
-  },
-  {
-    "id": 1091,
-    "category": "Mathematics",
-    "text": "What is one quarter of 200?",
-    "answers": [
-      "25",
-      "40",
-      "50",
-      "75"
-    ],
-    "correct": 2,
-    "difficulty": 2
-  },
-  {
-    "id": 1092,
-    "category": "Mathematics",
-    "text": "How many sides does an octagon have?",
-    "answers": [
-      "6",
-      "8",
-      "7",
-      "9"
-    ],
-    "correct": 1,
-    "difficulty": 3
-  },
-  {
-    "id": 1093,
-    "category": "Mathematics",
-    "text": "What is 2 raised to the fifth power?",
-    "answers": [
-      "32",
-      "16",
-      "25",
-      "64"
-    ],
-    "correct": 0,
-    "difficulty": 1
-  },
-  {
-    "id": 1094,
-    "category": "Mathematics",
-    "text": "How many minutes are in two and a half hours?",
-    "answers": [
-      "120",
-      "130",
-      "180",
-      "150"
-    ],
-    "correct": 3,
-    "difficulty": 2
-  },
-  {
-    "id": 1095,
-    "category": "Mathematics",
-    "text": "What is 15 percent of 200?",
-    "answers": [
-      "15",
-      "20",
-      "30",
-      "45"
-    ],
-    "correct": 2,
-    "difficulty": 3
-  },
-  {
-    "id": 1096,
-    "category": "Mathematics",
-    "text": "Which of these numbers is prime?",
-    "answers": [
-      "15",
-      "17",
-      "21",
-      "27"
-    ],
-    "correct": 1,
-    "difficulty": 1
-  },
-  {
-    "id": 1097,
-    "category": "Mathematics",
-    "text": "What is the smallest positive even prime number?",
-    "answers": [
-      "2",
-      "4",
-      "6",
-      "8"
-    ],
-    "correct": 0,
-    "difficulty": 2
-  },
-  {
-    "id": 1098,
-    "category": "Mathematics",
-    "text": "How many millimetres make one centimetre?",
-    "answers": [
-      "100",
-      "1",
-      "1000",
-      "10"
-    ],
-    "correct": 3,
-    "difficulty": 3
-  },
-  {
-    "id": 1099,
-    "category": "Mathematics",
-    "text": "What is the perimeter of a square with side length 5?",
-    "answers": [
-      "10",
-      "25",
-      "20",
-      "15"
-    ],
-    "correct": 2,
-    "difficulty": 1
-  },
-  {
     "id": 1100,
     "category": "Nature and wildlife",
     "text": "Which mammal is famous for being able to fly?",
@@ -1434,19 +1278,7 @@ export const englishCuratedQuestions:EnglishQuestion[]=[
     "difficulty": 2
   }
 ];
-export function createEnglishReserve():EnglishQuestion[]{
-  const reserve:EnglishQuestion[]=[];
-  let id=50000;
-  const emit=(text:string,answer:number,pos:number,category:string,a:number,b:number,c:number)=>{
-    const distractors=[a,b,c];
-    const choices=Array.from({length:4},(_,i)=>String(i===pos?answer:distractors[(i-pos+3)%4]));
-    if(new Set(choices).size!==4)throw Error('duplicate distractor');
-    reserve.push({id:id++,text,category,answers:choices,correct:pos,difficulty:1});
-  };
-  for(let a=14;a<=37;a++) for(let b=5;b<=12;b++)
-    emit(`What is ${a} plus ${b}?`,a+b,(a+b)%4,'Mental maths',a+b-2,a+b+3,a+b+7);
-  for(let a=3;a<=14;a++)for(let b=4;b<=13;b++)
-    emit(`What is ${a} multiplied by ${b}?`,a*b,(a+b)%4,'Mental maths',a*b-2,a*b+3,a*b+5);
-  return reserve;
-}
-export const englishQuestions:EnglishQuestion[]=[...englishCuratedQuestions,...createEnglishReserve()];
+export const englishQuestions:EnglishQuestion[]=[
+ ...englishCuratedQuestions,
+ ...englishMediaQuestions.map(q=>({id:q.id,text:q.text,category:q.category,answers:q.answers,correct:q.correct,difficulty:q.difficulty}))
+];
