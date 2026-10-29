@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawing';
+import { applyLocalAnswer } from '../lib/engine';
 
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local';
@@ -47,24 +48,6 @@ const css = {
   secondary: { padding: '12px 16px', background: '#334F91', color: '#FFFFFF', border: '1px solid #6A87C4', borderRadius: 11, fontWeight: 900, cursor: 'pointer' } as React.CSSProperties,
   input: { display: 'block', width: '100%', padding: 11, borderRadius: 9, border: '2px solid #B7C7F6', background: '#FFFFFF', color: '#102048', fontWeight: 800, marginTop: 5 } as React.CSSProperties
 };
-function copyState(s: GameState, edge: string, correct: boolean) {
-  if (s.edges[edge]) return s;
-  if (!correct) return { ...s, turn: (s.turn === 'host' ? 'guest' : 'host') as Side };
-  const edges = { ...s.edges, [edge]: s.turn };
-  const owners = { ...s.owners };
-  const scores = { ...s.scores };
-  let gained = 0;
-  for (let r = 0; r < s.rows; r++) for (let c = 0; c < s.cols; c++) {
-    const k = r + '-' + c;
-    if (owners[k]) continue;
-    if (edges['h-' + r + '-' + c] && edges['h-' + (r + 1) + '-' + c] && edges['v-' + r + '-' + c] && edges['v-' + r + '-' + (c + 1)]) {
-      owners[k] = s.turn;
-      gained++;
-    }
-  }
-  scores[s.turn] += gained;
-  return { ...s, edges, owners, scores, turn: (gained ? s.turn : s.turn === 'host' ? 'guest' : 'host') as Side };
-}
 function sound(gained: number) {
   if (typeof window === 'undefined') return;
   try {
@@ -281,7 +264,7 @@ export default function TriviaGame() {
       if (!edge) { setBusy(false); return; }
       const q = practiceQuestions[practiceIndex % practiceQuestions.length];
       const correct = i === q.correct;
-      const next = copyState(local, edge, correct);
+      const next = applyLocalAnswer(local, edge, correct);
       setLocal(next);
       const gained = Object.keys(next.owners).length - Object.keys(local.owners).length;
       if (gained && !muted) sound(gained);
