@@ -768,3 +768,100 @@ main.trivia-app .capture-tile .capture-face{
  }
  main.trivia-app .capture-tile .capture-firework{display:none!important}
 }
+
+/* Four visually distinct worlds. Changing the campaign chapter transforms the
+   stage, score cards, arena material and captured-cell atmosphere — no downloads. */
+main.trivia-app.theme-orchard {
+ --world-accent:#B0F7B4;--world-edge:rgba(185,255,171,.60);
+ --world-stage:radial-gradient(ellipse at 15% 16%,rgba(60,194,120,.55),transparent 45%),
+   radial-gradient(ellipse at 85% 85%,rgba(223,127,61,.35),transparent 50%),
+   linear-gradient(138deg,#183D3B,#173348 60%,#122D2E);
+ --world-arena:radial-gradient(circle at 80% 18%,rgba(246,227,128,.38),transparent 32%),
+   repeating-radial-gradient(ellipse at 13% 85%,rgba(127,242,158,.13) 0 2px,transparent 2px 25px),
+   linear-gradient(148deg,#224F40,#173D34 55%,#1D4B49);
+ --world-motif:radial-gradient(ellipse 16px 32px at 6% 12%,rgba(157,249,132,.24) 0 40%,transparent 45%),
+   radial-gradient(ellipse 20px 39px at 92% 78%,rgba(157,249,132,.18) 0 40%,transparent 45%);
+}
+main.trivia-app.theme-crystal {
+ --world-accent:#E8C0FF;--world-edge:rgba(224,161,255,.71);
+ --world-stage:conic-gradient(from 225deg at 88% 18%,rgba(176,113,255,.43),transparent 35%,rgba(80,223,254,.21) 72%,transparent),
+   linear-gradient(147deg,#272651,#30336A 52%,#191E47);
+ --world-arena:repeating-conic-gradient(from 30deg at 27% 75%,rgba(221,154,255,.10) 0deg 20deg,transparent 20deg 60deg),
+   radial-gradient(circle at 68% 17%,rgba(235,181,255,.41),transparent 38%),
+   linear-gradient(155deg,#37285E,#252A5D 62%,#213254);
+ --world-motif:linear-gradient(32deg,transparent 44%,rgba(213,171,255,.23) 45% 46%,transparent 47%),
+   linear-gradient(122deg,transparent 65%,rgba(125,224,255,.20) 66% 67%,transparent 68%);
+}
+main.trivia-app.theme-clouds {
+ --world-accent:#A8EEFF;--world-edge:rgba(184,240,255,.77);
+ --world-stage:radial-gradient(ellipse at 18% 20%,rgba(188,231,255,.40),transparent 35%),
+   radial-gradient(ellipse at 83% 58%,rgba(116,168,255,.33),transparent 42%),
+   linear-gradient(158deg,#174B72,#375184 68%,#1A4264);
+ --world-arena:radial-gradient(ellipse 52% 19% at 8% 77%,rgba(232,248,255,.39),transparent),
+   radial-gradient(ellipse 55% 20% at 93% 33%,rgba(221,240,255,.30),transparent),
+   radial-gradient(ellipse 45% 14% at 52% 75%,rgba(212,238,255,.28),transparent),
+   linear-gradient(145deg,#427BB0,#2C5A95 58%,#224E84);
+ --world-motif:radial-gradient(ellipse 150px 30px at 20% 85%,rgba(255,255,255,.19),transparent),
+   radial-gradient(ellipse 120px 25px at 85% 12%,rgba(255,255,255,.17),transparent);
+}
+main.trivia-app.theme-galaxy {
+ --world-accent:#FFCBF7;--world-edge:rgba(252,173,255,.77);
+ --world-stage:radial-gradient(ellipse at 72% 12%,rgba(227,100,247,.40),transparent 46%),
+   radial-gradient(ellipse at 12% 86%,rgba(51,156,243,.35),transparent 45%),
+   linear-gradient(150deg,#1F174D,#2F195B 48%,#13153D);
+ --world-arena:radial-gradient(ellipse at 24% 30%,rgba(239,106,255,.27),transparent 36%),
+   radial-gradient(ellipse at 77% 72%,rgba(95,151,255,.31),transparent 44%),
+   radial-gradient(circle at 30% 24%,#FFF 0 1px,transparent 1.4px),
+   radial-gradient(circle at 73% 60%,#D2E8FF 0 1.5px,transparent 2px),
+   radial-gradient(circle at 48% 87%,#FFF 0 1px,transparent 1.5px),
+   linear-gradient(145deg,#22164F,#251650 45%,#151538);
+ --world-motif:radial-gradient(circle at 20% 12%,rgba(255,255,255,.42) 0 1.2px,transparent 1.8px),
+   radial-gradient(circle at 74% 80%,rgba(255,255,255,.35) 0 1.3px,transparent 2px);
+}
+main.trivia-app:is(.theme-orchard,.theme-crystal,.theme-clouds,.theme-galaxy) .arena-panel{
+ background:var(--world-stage)!important;
+ border:2px solid var(--world-edge)!important;
+ box-shadow:0 15px 48px rgba(5,12,40,.46),inset 0 1px 0 rgba(255,255,255,.31),
+ 0 0 35px color-mix(in srgb,var(--world-accent),transparent 86%)!important;
+}
+main.trivia-app:is(.theme-orchard,.theme-crystal,.theme-clouds,.theme-galaxy) .arena{
+ background:var(--world-arena)!important;
+ border:2px solid var(--world-edge)!important;
+ box-shadow:inset 0 0 55px rgba(0,0,0,.28),0 0 38px color-mix(in srgb,var(--world-accent),transparent 80%)!important;
+}
+main.trivia-app:is(.theme-orchard,.theme-crystal,.theme-clouds,.theme-galaxy) .arena-inner{
+ background-image:var(--world-motif)!important;
+ background-color:rgba(13,26,53,.21)!important;
+ border:1px solid var(--world-edge)!important;
+}
+main.trivia-app:is(.theme-orchard,.theme-crystal,.theme-clouds,.theme-galaxy) :is(.arena-title h2,.level-pill,.score-num){
+ color:#FFFFFF!important;
+ text-shadow:0 0 13px color-mix(in srgb,var(--world-accent),transparent 45%)!important;
+}
+main.trivia-app:is(.theme-orchard,.theme-crystal,.theme-clouds,.theme-galaxy) :is(.player-tile,.level-pill){
+ border-color:var(--world-edge)!important;
+ background:rgba(6,13,37,.66)!important;
+}
+main.trivia-app:is(.theme-orchard,.theme-crystal,.theme-clouds,.theme-galaxy) .level-progress-fill{
+ background:linear-gradient(90deg,var(--world-accent),#FFFFFF)!important;
+}
+main.trivia-app:is(.theme-orchard,.theme-crystal,.theme-clouds,.theme-galaxy) .arena-title{
+ border-block-end:1px solid var(--world-edge);
+ padding-block-end:13px;
+}
+main.trivia-app:is(.theme-orchard,.theme-crystal,.theme-clouds,.theme-galaxy) .hero .eyebrow{
+ color:var(--world-accent)!important;
+ text-shadow:0 0 12px color-mix(in srgb,var(--world-accent),transparent 40%);
+}
+main.trivia-app .scoreboard:has(.player-tile:first-child:last-child){
+ grid-template-columns:1fr!important;
+}
+main.trivia-app .scoreboard:not(:has(.player-tile.other)){
+ grid-template-columns:minmax(0,1fr) auto!important;
+}
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app:is(.theme-orchard,.theme-crystal,.theme-clouds,.theme-galaxy) .arena,
+ main.trivia-app:is(.theme-orchard,.theme-crystal,.theme-clouds,.theme-galaxy) .arena-panel{
+  transition:none!important;
+ }
+}
