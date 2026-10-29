@@ -482,7 +482,7 @@ export default function TriviaGame() {
     setLegalBusy(false);
   }
   async function start() {
-    if(stageStarted&&!finished){setMessage(locale==='en'?'Finish the current stage before restarting or moving on.':'צריך לסיים את השלב הנוכחי לפני התחלה מחדש או מעבר.');return;}
+    // Restarting this same stage is allowed, but unlocking another stage requires completion.
     if(stageId>stageUnlocked){setMessage(locale==='en'?'Finish the earlier stages to unlock this one.':'יש לסיים את השלבים הקודמים כדי לפתוח את השלב הזה.');return;}
     if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
