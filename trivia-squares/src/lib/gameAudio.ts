@@ -79,13 +79,18 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
       note(440, 0.045, 0.12, 0.05, 'sine');
       break;
     case 'correct':
-      note(523.25, 0, 0.16, 0.13);
-      note(659.25, 0.09, 0.18, 0.13);
-      note(783.99, 0.18, 0.24, 0.15);
+      // Cheerful "ta-da!" rising fanfare, with warm bell-like overtones.
+      note(523.25, 0, 0.11, 0.12, 'triangle');
+      note(659.25, 0.095, 0.13, 0.12, 'sine');
+      note(783.99, 0.19, 0.16, 0.12, 'sine');
+      note(1046.50, 0.28, 0.31, 0.13, 'triangle');
+      note(1567.98, 0.31, 0.27, 0.035, 'sine');
       break;
     case 'wrong':
-      note(330, 0, 0.20, 0.10, 'triangle');
-      note(246.94, 0.12, 0.24, 0.09, 'triangle');
+      // Gentle disappointed "wah-wah": clearly descending, never punishing.
+      note(392, 0, 0.16, 0.075, 'triangle');
+      note(329.63, 0.14, 0.20, 0.070, 'triangle');
+      note(261.63, 0.30, 0.33, 0.060, 'sine');
       break;
     case 'capture':
       note(523.25, 0, 0.16, 0.14);
