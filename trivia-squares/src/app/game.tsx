@@ -119,6 +119,9 @@ export default function TriviaGame() {
   const [localReady, setLocalReady] = useState(false);
   const [online, setOnline] = useState(true);
   const [remote, setRemote] = useState<RemoteMatch | null>(null);
+  // Never discard a saved offline question when Supabase reports a guest session.
+  const remoteRef=useRef<RemoteMatch|null>(null);
+  useEffect(()=>{remoteRef.current=remote;},[remote]);
   const [question, setQuestion] = useState<Question | null>(null);
   const [wrongAnswerFeedback,setWrongAnswerFeedback]=useState<WrongAnswerFeedback|null>(null);
   const [skin,setSkin]=useState<SkinId>('regular');
@@ -359,7 +362,13 @@ export default function TriviaGame() {
     void client.auth.getUser().then(({ data }) => setUser(data.user));
     const { data } = client.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
-      if (!session) { setLegalAccepted(false); setRemote(null); setQuestion(null); setEdge(null); setBonusSelect(false); }
+      if (!session) {
+        setLegalAccepted(false);
+        // A guest session is normal in solo play. Only clear pending questions
+        // when signing out of an actual remote match, never a local match.
+        if(remoteRef.current){setQuestion(null);setEdge(null);setBonusSelect(false);}
+        setRemote(null);
+      }
     });
     return () => data.subscription.unsubscribe();
   }, [client]);

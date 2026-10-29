@@ -2,8 +2,8 @@
 
 Mandatory target: at least 5,000 verified distinct *active* questions for each of he, en, ru, fr, ar, cumulative over 30 stages (25,000 minimum overall). Each successive stage should have more approved questions available, without reusing previously seen questions. Do not pad with alternative wording or unverified/generated answers.
 
-The five-language frontend, locale switch, six independent skins and intermission games exist in source. Backend parity is NOT COMPLETE:
-- At inspection, SQL showed 213 active Hebrew and 181 active English records; zero Russian, French and Arabic records.
+The five-language frontend, locale switch, six independent skins and intermission games exist in source. The first extensive E2E run passed 83 browser tests and failed 25. An identified root bug allowed an anonymous Supabase auth callback to clear a locally restored question; correction is in this PR pending validation. Do not mark browser QA passed until green. Backend parity is NOT COMPLETE:
+- At reinspection, SQL showed 213 active Hebrew, 181 active English, and 40 active Russian, 40 active French, 40 active Arabic. Total 514 active of 25,000 required; 24,486 missing.
 - On-device Arabic, Russian and French have approximately 40 curated trivia questions each. This is not a 5,000-question release.
 - Supabase locale_catalog still marked ru/fr/ar planned, and online RPC selectors supported only he/en and could fall back to Hebrew.
 - Vercel READY is build status, not end-to-end acceptance.
