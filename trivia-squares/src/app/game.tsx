@@ -172,7 +172,7 @@ export default function TriviaGame() {
   const googleName = providerGoogle ? String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim().slice(0,70) : '';
   const googlePhotoRaw = providerGoogle ? String(user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '') : '';
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
-  const canPlay = validName && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
+  const canPlay = validName && localReady && !showTutorial && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
   const finished = Object.keys(state.owners).length === state.rows * state.cols;
   const earnedBonus = Boolean(remote?.state.bonus_ready?.[state.turn]);
   const availableBonus = Number(remote?.state.bonus_tokens?.[state.turn] || 0);
