@@ -11,7 +11,7 @@ import { offlineQuestions } from '../lib/offlineQuestions';
 
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local';
-type Question = { text: string; answers: string[]; edge?: string; kind?: 'edge' | 'bonus' };
+type Question = { text: string; answers: string[]; edge?: string; id?: number; kind?: 'edge' | 'bonus'; deadline_at?: string | null; extensions?: number };
 type GameState = {
   rows: number;
   cols: number;
@@ -23,11 +23,12 @@ type GameState = {
   streak?: Partial<Record<Side,number>>;
   bonus_ready?: Partial<Record<Side,boolean>>;
   bonus_tokens?: Partial<Record<Side,number>>;
+  time_freeze?: Partial<Record<Side,boolean>>;
 };
 type PlayerIdentity = { name: string; color: string; line_color?: string; avatar: string };
 type RemoteMatch = { id: string; status: string; host_id: string; guest_id: string | null; version: number; state: GameState; question?: Question; players?: { host?: PlayerIdentity; guest?: PlayerIdentity } };
 type Profile = { display_name: string; color: string; line_color?: string; avatar: string; remember_color: boolean };
-type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number };
+type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number; time_charms?: number };
 
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
 const avatars = ['🦊', '🦁', '🐼', '🐲', '🦄', '👑', '🚀', '⭐'];
@@ -68,7 +69,13 @@ export default function TriviaGame() {
   const [remote, setRemote] = useState<RemoteMatch | null>(null);
   const [question, setQuestion] = useState<Question | null>(null);
   const [edge, setEdge] = useState<string | null>(null);
-  const [practiceIndex, setPracticeIndex] = useState(0);
+  const usedLocalQuestionIds=useRef<Set<number>>(new Set());
+  const [secondsLeft,setSecondsLeft]=useState<number | null>(null);
+  const timeoutBusy=useRef(false);
+  const lastTickRef=useRef<number | null>(null);
+  const [localCredits,setLocalCredits]=useState<Record<'host'|'guest',number>>({host:0,guest:0});
+  const [localCharms,setLocalCharms]=useState<Record<'host'|'guest',number>>({host:0,guest:0});
+  const [localFreeze,setLocalFreeze]=useState<Record<'host'|'guest',boolean>>({host:false,guest:false});
   const [name, setName] = useState('');
   const [color, setColor] = useState('#358CFF');
   const [lineColor, setLineColor] = useState('#358CFF');
@@ -130,6 +137,8 @@ export default function TriviaGame() {
         if (avatars.includes(v.avatar)) setAvatar(v.avatar);
         setRemember(true);
       }
+      const ids=JSON.parse(localStorage.getItem('trivia-used-question-ids')||'[]') as number[];
+      if(Array.isArray(ids)) usedLocalQuestionIds.current=new Set(ids.filter(x=>Number.isInteger(x)));
       const storedName=localStorage.getItem('trivia-player-name');
       if(storedName && storedName.trim().length>=2 && storedName.trim()!=='שחקן') setName(storedName.slice(0,32));
     } catch { /* storage may be disabled */ }
@@ -159,6 +168,18 @@ export default function TriviaGame() {
         }
       }
     } catch { /* invalid save is ignored */ }
+    try {
+      const rewards=JSON.parse(localStorage.getItem('trivia-local-rewards')||'null');
+      if(rewards?.credits) setLocalCredits(rewards.credits);
+      if(rewards?.charms) setLocalCharms(rewards.charms);
+    }catch{}
+    try{
+      const pending=JSON.parse(localStorage.getItem('trivia-local-question')||'null') as Question|null;
+      if(pending?.id && pending?.edge && offlineQuestions.some(q=>q.id===pending.id)){
+        setQuestion(pending);
+        setEdge(pending.edge);
+      }
+    }catch{}
     setLocalReady(true);
     setOnline(navigator.onLine);
     const up=()=>setOnline(true);
@@ -174,6 +195,52 @@ export default function TriviaGame() {
     if(!localReady) return;
     try{localStorage.setItem('trivia-local-game-v1',JSON.stringify(local))}catch{}
   },[local,localReady]);
+  useEffect(()=>{
+    if(!localReady) return;
+    try{localStorage.setItem('trivia-local-rewards',JSON.stringify({credits:localCredits,charms:localCharms}))}catch{}
+  },[localCredits,localCharms,localReady]);
+  useEffect(()=>{
+    if(!localReady || remote) return;
+    try{
+      if(question?.id && question.edge) localStorage.setItem('trivia-local-question',JSON.stringify(question));
+      else localStorage.removeItem('trivia-local-question');
+    }catch{}
+  },[question,localReady,remote]);
+
+  useEffect(() => {
+    if(!question) {setSecondsLeft(null);lastTickRef.current=null;return;}
+    if(question.deadline_at === null) {setSecondsLeft(null);return;}
+    const deadline=question.deadline_at ? new Date(question.deadline_at).getTime() : Date.now()+60_000;
+    let cancelled=false;
+    const update=()=>{
+      if(cancelled) return;
+      const left=Math.max(0,Math.ceil((deadline-Date.now())/1000));
+      setSecondsLeft(left);
+      if(left>=1&&left<=10&&lastTickRef.current!==left){lastTickRef.current=left;play('clock');}
+      if(left===0 && !timeoutBusy.current){
+        timeoutBusy.current=true;
+        if(remote&&client){
+          void client.rpc('trivia_timeout_question',{p_match:remote.id})
+            .then(async({error})=>{
+              if(!error){
+                setQuestion(null);setEdge(null);play('wrong');
+                setMessage('הדקה הסתיימה! התור עבר.');
+                await refresh(remote.id);
+              }else if(!error.message.includes('No pending question')&&!error.message.includes('Question not expired')){
+                setMessage('שגיאת זמן: '+error.message);
+              }else await refresh(remote.id);
+            }).finally(()=>{timeoutBusy.current=false;});
+        }else{
+          setLocal(prev=>({...prev,turn:prev.turn==='host'?'guest':'host'}));
+          setQuestion(null);setEdge(null);play('wrong');
+          setMessage('הזמן נגמר! הקו לא נצבע והתור עבר.');
+          timeoutBusy.current=false;
+        }
+      }
+    };
+    update();const interval=window.setInterval(update,400);
+    return()=>{cancelled=true;window.clearInterval(interval);lastTickRef.current=null;};
+  },[question?.deadline_at,question?.id,question?.edge,question?.text,client,remote?.id,refresh,play]);
 
   useEffect(() => {
     if (!client || !user) return;
@@ -283,8 +350,14 @@ export default function TriviaGame() {
       setBusy(false);
     } else {
       setEdge(key);
-      const q = practiceQuestions[practiceIndex % practiceQuestions.length];
-      setQuestion({ text: q.text, answers: q.answers, edge: key });
+      const remaining=offlineQuestions.filter(q=>!usedLocalQuestionIds.current.has(q.id));
+      const q=usedLocalQuestionIds.current.size===0
+        ? remaining.find(v=>v.text.includes('בירת אוסטרליה')) || remaining[0]
+        : remaining[0];
+      if(!q){setEdge(null);setMessage('כל השאלות נוצלו. לא נחזור על שאלה שכבר נשאלה.');return;}
+      usedLocalQuestionIds.current.add(q.id);
+      try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
+      setQuestion({id:q.id,text:q.text,answers:q.answers,edge:key,deadline_at:new Date(Date.now()+60_000).toISOString(),extensions:0});
     }
   }
   async function answer(i: number) {
@@ -309,7 +382,8 @@ export default function TriviaGame() {
       }
     } else {
       if (!edge) { setBusy(false); return; }
-      const q = practiceQuestions[practiceIndex % practiceQuestions.length];
+      const q=offlineQuestions.find(v=>v.id===question.id);
+      if(!q){setMessage('לא נמצאה השאלה המקורית.');setBusy(false);return;}
       const correct = i === q.correct;
       const next = applyLocalAnswer(local, edge, correct);
       setLocal(next);
@@ -318,7 +392,13 @@ export default function TriviaGame() {
       else if (gained) play('capture');
       else play(correct ? 'correct' : 'wrong');
       setMessage(correct ? gained ? 'סגרת ' + gained + ' ריבועים!' : 'תשובה נכונה!' : 'תשובה שגויה!');
-      setQuestion(null); setEdge(null); setPracticeIndex(v => v + 1);
+      if(gained>0){
+        setLocalCredits(prev=>({...prev,[local.turn]:prev[local.turn]+10*gained}));
+        if(Object.keys(next.owners).length===next.rows*next.cols && next.scores[local.turn]>next.scores[local.turn==='host'?'guest':'host']){
+          setLocalCharms(prev=>({...prev,[local.turn]:prev[local.turn]+1}));
+        }
+      }
+      setQuestion(null); setEdge(null);
     }
     setBusy(false);
   }
@@ -385,6 +465,7 @@ export default function TriviaGame() {
     gesture.current = null;
     setKeyboardStart(null);
     setBonusSelect(false);
+    setLocalFreeze({host:false,guest:false});
     setMessage('העולם התחלף! גרור קו מנקודה לנקודה סמוכה.');
   }
 
