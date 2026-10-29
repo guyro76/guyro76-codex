@@ -14,6 +14,8 @@ import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLo
 import StageReward from '../components/StageReward';
 import TutorialPreview from '../components/TutorialPreview';
 import LocalQuestionBackup from '../components/LocalQuestionBackup';
+import GameTimeBar from '../components/GameTimeBar';
+import {CAMPAIGN_STAGES,STAGE_COUNT,stageFor,canOpenStage} from '../lib/campaignStages';
 import './tutorial.css';
 import './premium.css';
 
@@ -35,6 +37,7 @@ type GameState = {
   bonus_ready?: Partial<Record<Side,boolean>>;
   bonus_tokens?: Partial<Record<Side,number>>;
   time_freeze?: Partial<Record<Side,boolean>>;
+  campaign_stage?: number;
 };
 type PlayerIdentity = { name: string; color: string; line_color?: string; avatar: string };
 type RemoteMatch = { id: string; status: string; host_id: string; guest_id: string | null; version: number; state: GameState; question?: Question; players?: { host?: PlayerIdentity; guest?: PlayerIdentity } };
@@ -71,6 +74,10 @@ export default function TriviaGame() {
   const [legalBusy, setLegalBusy] = useState(false);
   const [mode, setMode] = useState<Mode>('local');
   const [size, setSize] = useState(3);
+  const [stageId,setStageId]=useState(1);
+  const [localStageCompleted,setLocalStageCompleted]=useState(0);
+  const [serverStageCompleted,setServerStageCompleted]=useState(0);
+  const [stageStarted,setStageStarted]=useState(false);
   const [local, setLocal] = useState<GameState>(() => empty(3));
   const [stageRunId,setStageRunId] = useState('local-first');
   const [localReady, setLocalReady] = useState(false);
@@ -174,6 +181,10 @@ export default function TriviaGame() {
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
   const canPlay = validName && localReady && !showTutorial && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
   const finished = Object.keys(state.owners).length === state.rows * state.cols;
+  const completedStage = mode==='local' ? localStageCompleted : serverStageCompleted;
+  const stageUnlocked = Math.min(STAGE_COUNT,completedStage+1);
+  const selectedStage = stageFor(stageId);
+  const stageBusy=busy||!!question||(stageStarted&&!finished);
   const earnedBonus = Boolean(remote?.state.bonus_ready?.[state.turn]);
   const availableBonus = Number(remote?.state.bonus_tokens?.[state.turn] || 0);
   const streak = Number(remote?.state.streak?.[state.turn] || 0);
@@ -185,7 +196,7 @@ export default function TriviaGame() {
     : localFreeze[currentLocalSide];
   const showTimer = Boolean(question) && question?.deadline_at !== null && !timeFreezeActive;
   const timerText = secondsLeft === null ? '01:00' : String(Math.floor(secondsLeft/60)).padStart(2,'0')+':'+String(secondsLeft%60).padStart(2,'0');
-  const world = worlds.find(w => w.size === state.rows) || worlds[0];
+  const world = worlds.find(w => w.slug === selectedStage.theme) || worlds[0];
   const questionBank = [
     ...(locale === 'en' ? englishQuestions : offlineQuestions),
     ...freshLocalQuestions(locale,localPoolRelease[locale])
@@ -204,6 +215,11 @@ export default function TriviaGame() {
       setEdge(m.question?.edge || null);
       if (m.status === 'completed') setMessage('המשחק הסתיים, כל הכבוד!');
     } else if (error) setMessage('שגיאת טעינת משחק: ' + error.message);
+    if(m.state.campaign_stage && Number.isInteger(m.state.campaign_stage)){
+      setStageId(m.state.campaign_stage);
+      try{localStorage.setItem('trivia-stage-id-v1',String(m.state.campaign_stage))}catch{}
+    }
+    setStageStarted(m.status==='playing'||m.status==='waiting');
   }, [client,rememberShownQuestion]);
 
   useEffect(() => {
@@ -270,13 +286,26 @@ export default function TriviaGame() {
   }, [client]);
   useEffect(() => {
     try {
+      const savedLevel=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
+      const completed=Number(localStorage.getItem('trivia-stage-completed-v1')||'0');
+      const safeCompleted=Number.isInteger(completed)?Math.min(30,Math.max(0,completed)):0;
+      setLocalStageCompleted(safeCompleted);
+      if(Number.isInteger(savedLevel)&&savedLevel>=1&&savedLevel<=Math.min(30,safeCompleted+1)){
+        setStageId(savedLevel);setSize(stageFor(savedLevel).size);
+      }
+      setStageStarted(localStorage.getItem('trivia-stage-started-v1')==='true');
+    }catch{}
+    try {
       const stored=localStorage.getItem('trivia-local-game-v1');
       if(stored){
         const value=JSON.parse(stored) as GameState;
         if(value && Number.isInteger(value.rows) && value.rows>=3 && value.rows<=6
           && value.cols===value.rows && value.edges && value.owners && value.scores){
           setLocal(value);
-          setSize(value.rows);
+          // Preserve the stage geometry, not an arbitrary saved board size.
+          const savedStage=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
+          if(stageFor(Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=30?savedStage:1).size===value.rows)
+            setSize(value.rows);
         }
       }
     } catch { /* invalid save is ignored */ }
@@ -303,6 +332,25 @@ export default function TriviaGame() {
     if(!localReady) return;
     try { localStorage.setItem('trivia-sound-muted', String(muted));localStorage.setItem('trivia-sound-volume', String(volume)); } catch {}
   }, [muted,volume,localReady]);
+  useEffect(()=>{
+    if(!localReady)return;
+    try {
+      localStorage.setItem('trivia-stage-id-v1',String(stageId));
+      localStorage.setItem('trivia-stage-completed-v1',String(localStageCompleted));
+      localStorage.setItem('trivia-stage-started-v1',String(stageStarted));
+    }catch{}
+  },[localReady,stageId,localStageCompleted,stageStarted]);
+  useEffect(()=>{
+    if(!finished||!localReady)return;
+    if(remote){
+      if(client&&user)void client.rpc('trivia_get_campaign_progress').then(({data,error})=>{
+        if(!error&&typeof data==='number')setServerStageCompleted(v=>Math.max(v,data));
+      });
+    }else{
+      setLocalStageCompleted(v=>Math.max(v,stageId));
+    }
+  },[finished,remote?.id,stageId,localReady,client,user?.id]);
+
   useEffect(()=>{
     if(!localReady) return;
     try{localStorage.setItem('trivia-local-game-v1',JSON.stringify(local))}catch{}
@@ -367,6 +415,8 @@ export default function TriviaGame() {
       if(!active)return;
       if(!synced && navigator.onLine)
         setMessage(locale==='en'?'Unable to sync your question history. Try again online.':'לא ניתן לסנכרן היסטוריית שאלות. נסה שוב כשיש חיבור תקין.');
+      const {data:campProgress,error:campError}=await client.rpc('trivia_get_campaign_progress');
+      if(!campError&&typeof campProgress==='number')setServerStageCompleted(campProgress);
       const { data: allowed, error } = await client.rpc('trivia_get_my_legal_acceptance');
       if (!active) return;
       if (error || allowed !== true) {
@@ -431,6 +481,8 @@ export default function TriviaGame() {
     setLegalBusy(false);
   }
   async function start() {
+    if(stageStarted&&!finished){setMessage(locale==='en'?'Finish the current stage before restarting or moving on.':'צריך לסיים את השלב הנוכחי לפני התחלה מחדש או מעבר.');return;}
+    if(stageId>stageUnlocked){setMessage(locale==='en'?'Finish the earlier stages to unlock this one.':'יש לסיים את השלבים הקודמים כדי לפתוח את השלב הזה.');return;}
     if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
     setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false);
@@ -443,7 +495,8 @@ export default function TriviaGame() {
       const nextRun='local-'+crypto.randomUUID();
       setStageRunId(nextRun);
       try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
-      setRemote(null); setLocal(empty(size)); setLocalFreeze({host:false,guest:false});
+      setRemote(null); setLocal(empty(selectedStage.size)); setLocalFreeze({host:false,guest:false});
+      setStageStarted(true);
       setMessage(added>0
        ? (locale==='en'?added+' fresh reviewed questions added to your practice bank.':'נוספו '+added+' שאלות חדשות ממאגר מאושר.')
        : (locale==='en'?'Local game ready. Your previous questions will not repeat.':'משחק מקומי מוכן. שאלות שכבר הוצגו לא יחזרו.'));
@@ -464,9 +517,10 @@ export default function TriviaGame() {
         p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
       });
       if(profileError){setMessage('שמירת שם השחקן נכשלה: '+profileError.message);setBusy(false);return;}
-      const { data, error } = await client.rpc('trivia_create_match', { p_mode: mode, p_size: size });
+      const { data, error } = await client.rpc('trivia_create_campaign_match', { p_mode: mode, p_stage: stageId });
       if (error) setMessage(error.message);
       else if (data) {
+        setStageStarted(true);
         const id = String(data);
         localStorage.setItem('trivia-match-' + user.id, id);
         await refresh(id);
@@ -491,6 +545,7 @@ export default function TriviaGame() {
     setBusy(false);
   }
   async function pick(key: string) {
+    if(!stageStarted)setStageStarted(true);
     if (!canPlay || finished || state.edges[key] || question || bonusSelect) return;
     if (remote && client) {
       setBusy(true);
@@ -683,23 +738,25 @@ export default function TriviaGame() {
     } else setMessage('העדפות נשמרו במכשיר בלבד');
   }
 
-  function chooseWorld(nextSize: number) {
-    if (busy) return;
+  function chooseStage(nextId:number) {
+    if(!canOpenStage(nextId,completedStage,stageId,finished) || stageBusy){
+      setMessage(locale==='en'?'Finish the current stage before opening another.':'יש לסיים את השלב הנוכחי לפני שעוברים לשלב אחר.');
+      return;
+    }
+    if(nextId===stageId)return;
+    const next=stageFor(nextId);
     expandLocalPool(locale);
     const nextRun='local-'+crypto.randomUUID();
     setStageRunId(nextRun);
-    try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
-    setSize(nextSize);
-    setRemote(null);
-    setLocal(empty(nextSize));
-    setQuestion(null);
-    setEdge(null);
-    setTrace(null);
-    gesture.current = null;
-    setKeyboardStart(null);
-    setBonusSelect(false);
-    setLocalFreeze({host:false,guest:false});
-    setMessage('העולם התחלף! גרור קו מנקודה לנקודה סמוכה.');
+    try{
+      localStorage.setItem('trivia-stage-run-id',nextRun);
+      localStorage.setItem('trivia-stage-id-v1',String(nextId));
+    }catch{}
+    setStageId(nextId);setSize(next.size);
+    setStageStarted(false);setRemote(null);setLocal(empty(next.size));
+    setQuestion(null);setEdge(null);setTrace(null);gesture.current=null;
+    setKeyboardStart(null);setBonusSelect(false);setLocalFreeze({host:false,guest:false});
+    setMessage(locale==='en'?('Stage '+nextId+' unlocked. Draw between adjacent dots.'):('שלב '+nextId+' נפתח. גרור קו בין נקודות סמוכות.'));
   }
 
   function boardPoint(event: ReactPointerEvent<SVGSVGElement>): BoardPoint {
@@ -820,12 +877,15 @@ export default function TriviaGame() {
       if(data?.progress)setProgress(data.progress as Progress);
     });
   },[client]);
-  const advanceStage=useCallback(()=>{
-    const nextSize=state.rows<6?state.rows+1:3;
-    chooseWorld(nextSize);
-  },[state.rows,chooseWorld]);
+  const advanceStage=()=>{
+    if(!finished||stageId>=STAGE_COUNT||stageId>completedStage)return;
+    chooseStage(stageId+1);
+  };
   const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
-  const displayWorld=translatedWorlds[locale][themeIndex];
+  const displayWorld={
+    name:locale==='en'?selectedStage.nameEn:selectedStage.nameHe,
+    subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
+  };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
   return <main className={'trivia-app theme-' + world.slug} style={css.main} dir={localeDirection(locale)} lang={locale}>
     <style>{`
