@@ -344,7 +344,12 @@ export default function TriviaGame() {
   }
   async function join() {
     if (!client || !user || !legalAccepted || !invite) { setMessage('יש להתחבר ולאשר את תנאי השימוש לפני הצטרפות לחדר.'); return; }
+    if (!validName) {setMessage('יש להקליד שם שחקן לפני הצטרפות לחדר.');return;}
     setBusy(true);
+    const {error: profileError}=await client.rpc('trivia_save_appearance',{
+      p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
+    });
+    if(profileError){setMessage(profileError.message);setBusy(false);return;}
     const { error } = await client.rpc('trivia_join_match', { p_match: invite });
     if (error) setMessage(error.message);
     else { localStorage.setItem('trivia-match-' + user.id, invite); await refresh(invite); setInvite(null); setMessage('הצטרפת למשחק!'); }
