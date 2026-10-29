@@ -2,6 +2,8 @@ import {test,expect} from '@playwright/test';
 
 test('captured tile is premium and its owner can be corrected and persisted',async({page})=>{
   await page.addInitScript(()=>{
+    if(localStorage.getItem('trivia-capture-test-seeded'))return;
+    localStorage.setItem('trivia-capture-test-seeded','true');
     localStorage.setItem('trivia-tutorial-seen-v1','true');
     localStorage.setItem('trivia-player-name','טסטר');
     localStorage.setItem('trivia-stage-id-v1','1');
