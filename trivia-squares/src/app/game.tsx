@@ -1519,7 +1519,7 @@ export default function TriviaGame() {
     <LocalQuestionBackup locale={locale} onRestored={entries=>{for(const item of entries)seenQuestionTexts.current.add(item)}}/>
     <footer className='footer'><a href={locale==='en'?'/en/privacy':'/privacy'}>{tr("פרטיות")}</a><a href={locale==='en'?'/en/terms':'/terms'}>{tr("תנאי שימוש")}</a><a href={locale==='en'?'/en/cookies':'/cookies'}>{tr("עוגיות ואחסון")}</a><a href={locale==='en'?'/en/accessibility':'/accessibility'}>{tr("נגישות")}</a><a href='/account/privacy'>{tr("המידע שלי")}</a></footer>
     <p className='smalltxt' style={{ textAlign: 'center' }}>{tr("פרסים וירטואליים בלבד · ללא רכישות בכסף אמיתי")}</p>
-    <div className='game-author-credit' role='contentinfo'>
+    <div id='app-footer' className='game-author-credit' role='contentinfo'>
       {locale==='en'
        ?'© 2026 Designed and developed by Guy Rosenberg · All rights reserved.'
        :'© 2026 תוכנן ובוצע ע״י גיא רוזנברג · כל הזכויות שמורות.'}
