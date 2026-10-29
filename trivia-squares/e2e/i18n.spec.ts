@@ -43,7 +43,7 @@ test('QA specialist 4: live switch to English updates screen and direction',asyn
  await expect(page.locator('main.trivia-app')).toHaveAttribute('dir','ltr');
  await expect(page.getByRole('heading',{name:'Trivia Squares'})).toBeVisible();
  await expect(page.getByText('Game room',{exact:false}).first()).toBeVisible();
- await expect(page.getByText('Orchard of Wonders').first()).toBeVisible();
+ await expect(page.getByText('Apple Trail').first()).toBeVisible();
  await expect(page.locator('.locale-switch').getByRole('button',{name:'English'})).toHaveAttribute('aria-pressed','true');
 });
 test('QA specialist 4: English language preference persists across reload',async({page})=>{
