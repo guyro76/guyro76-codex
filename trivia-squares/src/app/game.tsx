@@ -75,6 +75,10 @@ export default function TriviaGame() {
     return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   }, []);
   const [user, setUser] = useState<User | null>(null);
+  const [legalAccepted, setLegalAccepted] = useState(false);
+  const [adultConfirmed, setAdultConfirmed] = useState(false);
+  const [policiesAcknowledged, setPoliciesAcknowledged] = useState(false);
+  const [legalBusy, setLegalBusy] = useState(false);
   const [mode, setMode] = useState<Mode>('local');
   const [size, setSize] = useState(3);
   const [local, setLocal] = useState<GameState>(() => empty(3));
@@ -106,7 +110,7 @@ export default function TriviaGame() {
   const state = remote?.state || local;
   const player = user?.id && remote?.guest_id === user.id ? 'guest' : 'host';
   const onlineTurn = remote?.state.mode === 'local' || player === state.turn;
-  const canPlay = remote ? Boolean(user) && remote.status === 'playing' && onlineTurn && !busy : !busy;
+  const canPlay = remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy;
   const finished = Object.keys(state.owners).length === state.rows * state.cols;
   const earnedBonus = Boolean(remote?.state.bonus_ready?.[state.turn]);
   const availableBonus = Number(remote?.state.bonus_tokens?.[state.turn] || 0);
@@ -142,7 +146,7 @@ export default function TriviaGame() {
     void client.auth.getUser().then(({ data }) => setUser(data.user));
     const { data } = client.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
-      if (!session) { setRemote(null); setQuestion(null); setEdge(null); setBonusSelect(false); }
+      if (!session) { setLegalAccepted(false); setRemote(null); setQuestion(null); setEdge(null); setBonusSelect(false); }
     });
     return () => data.subscription.unsubscribe();
   }, [client]);
@@ -172,8 +176,20 @@ export default function TriviaGame() {
 
   useEffect(() => {
     if (!client || !user) return;
+    let active = true;
     void (async () => {
+      const room = new URLSearchParams(window.location.search).get('room');
+      if (room && /^[a-f0-9-]{36}$/i.test(room)) setInvite(room);
+      const { data: allowed, error } = await client.rpc('trivia_get_my_legal_acceptance');
+      if (!active) return;
+      if (error || allowed !== true) {
+        setLegalAccepted(false);
+        if (error) setMessage('בדיקת תנאי החשבון נכשלה. אפשר להמשיך במשחק מקומי.');
+        return;
+      }
+      setLegalAccepted(true);
       const { data } = await client.rpc('trivia_my_profile');
+      if (!active) return;
       if (data?.profile) {
         const p = data.profile as Profile;
         setName(p.display_name);
@@ -182,10 +198,9 @@ export default function TriviaGame() {
       }
       const id = localStorage.getItem('trivia-match-' + user.id);
       if (id) await refresh(id);
-      const room = new URLSearchParams(window.location.search).get('room');
-      if (room && /^[a-f0-9-]{36}$/i.test(room)) setInvite(room);
     })();
-  }, [client, user, refresh]);
+    return () => { active = false; };
+  }, [client, user, refresh, legalAccepted]);
   useEffect(() => {
     if (!remote || (remote.status !== 'playing' && remote.status !== 'waiting') || !client) return;
     const timer = window.setInterval(() => { void refresh(remote.id); }, 2300);
@@ -204,9 +219,27 @@ export default function TriviaGame() {
     });
   }, [client, remote?.id, remote?.version, remote?.state.turn, remote?.status, refresh, muted]);
 
+  function hasPreRegistrationAcknowledgement() {
+    if (adultConfirmed && policiesAcknowledged) return true;
+    setMessage('הרשמה מחוברת מיועדת לבני 18 ומעלה. יש לקרוא את הודעת הפרטיות ואת תנאי השימוש ולסמן אישור לפני יצירת חשבון.');
+    return false;
+  }
+  async function acceptCurrentPolicies() {
+    if (!client || !user || !hasPreRegistrationAcknowledgement()) return;
+    setLegalBusy(true);
+    const { data, error } = await client.rpc('trivia_accept_current_policies', {
+      p_adult: adultConfirmed,
+      p_acknowledged: policiesAcknowledged
+    });
+    if (error || data !== true) setMessage(error?.message || 'לא ניתן להשלים את אישור התנאים.');
+    else { setLegalAccepted(true); setMessage('אישור התנאים נשמר. אפשר להתחיל לשחק אונליין.'); }
+    setLegalBusy(false);
+  }
   async function start() {
     setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false);
-    if (client && user) {
+    if (mode === 'local' && (!user || !legalAccepted)) {
+      setRemote(null); setLocal(empty(size)); setMessage('משחק מקומי ללא הרשמה וללא שמירה בשרת.');
+    } else if (client && user && legalAccepted) {
       const { data, error } = await client.rpc('trivia_create_match', { p_mode: mode, p_size: size });
       if (error) setMessage(error.message);
       else if (data) {
@@ -215,13 +248,11 @@ export default function TriviaGame() {
         await refresh(id);
         setMessage(mode === 'online' ? 'החדר נפתח. שלח את הקישור לחבר' : 'המשחק התחיל!');
       }
-    } else if (mode === 'local') {
-      setRemote(null); setLocal(empty(size)); setMessage('משחק מקומי. כל קו מחייב תשובה נכונה.');
-    } else setMessage('למשחק מול מחשב או אונליין יש להתחבר לחשבון.');
+    } else setMessage('כדי לשחק מול מחשב או חבר נדרשת כניסה לחשבון ואישור תנאי השימוש. המשחק המקומי זמין ללא חשבון.');
     setBusy(false);
   }
   async function join() {
-    if (!client || !user || !invite) return;
+    if (!client || !user || !legalAccepted || !invite) { setMessage('יש להתחבר ולאשר את תנאי השימוש לפני הצטרפות לחדר.'); return; }
     setBusy(true);
     const { error } = await client.rpc('trivia_join_match', { p_match: invite });
     if (error) setMessage(error.message);
@@ -312,7 +343,7 @@ export default function TriviaGame() {
   async function saveProfile() {
     if (remember) localStorage.setItem('trivia-personal-choice', JSON.stringify({ color, avatar }));
     else localStorage.removeItem('trivia-personal-choice');
-    if (client && user) {
+    if (client && user && legalAccepted) {
       const { error } = await client.rpc('trivia_save_profile', { p_name: name, p_color: color, p_avatar: avatar, p_remember: remember });
       setMessage(error ? error.message : 'הפרופיל נשמר!');
     } else setMessage('העדפות נשמרו במכשיר בלבד');
@@ -700,16 +731,52 @@ export default function TriviaGame() {
         </section>
         <section className='glass-panel'>
           <h2 className='panel-title'>🔐 מועדון השחקנים</h2>
-          {user ? <><p className='smalltxt'>מחובר: {user.email}</p><button className='glass-button' onClick={() => void client?.auth.signOut()}>התנתק</button></>
+          {user ? <>
+            <p className='smalltxt'>מחובר: {user.email}</p>
+            {!legalAccepted && <section style={{background:'#293D72',border:'1px solid #FFDE8D',borderRadius:13,padding:13,margin:'10px 0'}}>
+              <h3 style={{margin:'0 0 7px',color:'#FFE7A4'}}>השלמת הרשמה למשחק</h3>
+              <p className='smalltxt'>חשבון המשחק מיועד למבוגרים בני 18 ומעלה. משחק מקומי זמין גם ללא חשבון. לפני הפעלת פרופיל וחדרים יש לאשר את התנאים.</p>
+              <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'12px 0'}}>
+                <input type='checkbox' checked={adultConfirmed} onChange={e=>setAdultConfirmed(e.target.checked)} style={{width:20,height:20,flexShrink:0}}/>
+                אני מאשר/ת שגילי 18 ומעלה
+              </label>
+              <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'12px 0'}}>
+                <input type='checkbox' checked={policiesAcknowledged} onChange={e=>setPoliciesAcknowledged(e.target.checked)} style={{width:20,height:20,flexShrink:0}}/>
+                קראתי את <a href='/privacy' style={{color:'#FFDC88'}}>הודעת הפרטיות</a> ואני מסכים/ה ל<a href='/terms' style={{color:'#FFDC88'}}>תנאי השימוש</a>
+              </label>
+              <button className='gold-button' disabled={legalBusy||!adultConfirmed||!policiesAcknowledged} onClick={()=>void acceptCurrentPolicies()}>
+                {legalBusy?'שומר...':'אשר והפעל משחק מחובר'}
+              </button>
+            </section>}
+            {legalAccepted && <p className='smalltxt' style={{color:'#B0FFD6'}}>החשבון פעיל למשחקים מחוברים.</p>}
+            <button className='glass-button' onClick={() => void client?.auth.signOut()}>התנתק</button>
+          </>
             : client ? <>
-              <button className='gold-button' onClick={() => void client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/' } })}>התחבר באמצעות Google</button>
+              <p className='smalltxt' style={{lineHeight:1.8,background:'#2E467A',borderRadius:12,padding:10}}>
+                הרשמה נדרשת רק למשחקים מחוברים. נאסוף כתובת מייל ומזהה חשבון, ובמשחק נשמור כינוי, תוצאה והתקדמות.
+                המסירה לבחירתך; ללא הרשמה ניתן לשחק מקומית.
+                הפרטים נשמרים בעזרת Supabase והאתר מאוחסן ב-Vercel.
+                <a href='/privacy' style={{color:'#FFE5A5'}}> למדיניות הפרטיות המלאה</a>.
+              </p>
+              <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'10px 0'}}>
+                <input type='checkbox' checked={adultConfirmed} onChange={e=>setAdultConfirmed(e.target.checked)} style={{width:20,height:20,flexShrink:0}} />
+                אני בן/בת 18 ומעלה; חשבונות עצמאיים לילדים אינם זמינים כרגע
+              </label>
+              <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'10px 0'}}>
+                <input type='checkbox' checked={policiesAcknowledged} onChange={e=>setPoliciesAcknowledged(e.target.checked)} style={{width:20,height:20,flexShrink:0}} />
+                קראתי את <a href='/privacy' style={{color:'#FFE5A5'}}>הודעת הפרטיות</a> ואני מסכים/ה ל<a href='/terms' style={{color:'#FFE5A5'}}>תנאי השימוש</a>
+              </label>
+              <button className='gold-button' disabled={!adultConfirmed||!policiesAcknowledged} onClick={() => {
+                if (!hasPreRegistrationAcknowledgement()) return;
+                void client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/' } }).then(({error}) => { if(error)setMessage(error.message); });
+              }}>התחבר באמצעות Google</button>
               <label htmlFor='login-email' className='form-field'>דואר אלקטרוני</label>
               <input id='login-email' className='form-input' type='email' autoComplete='email' value={email} onChange={e => setEmail(e.target.value)} />
               <label htmlFor='login-password' className='form-field'>סיסמה</label>
               <input id='login-password' className='form-input' type='password' autoComplete='current-password' value={password} onChange={e => setPassword(e.target.value)} />
               <div className='control-row' style={{ marginTop: 12 }}>
                 <button className='glass-button' onClick={async () => { const { error } = await client.auth.signInWithPassword({ email, password }); setMessage(error?.message || 'התחברת בהצלחה'); }}>כניסה</button>
-                <button className='glass-button' onClick={async () => { const { error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + '/' } }); setMessage(error?.message || 'נשלח מייל לאימות החשבון'); }}>הרשמה</button>
+                <button className='glass-button' onClick={async () => { if(!hasPreRegistrationAcknowledgement())return; const { error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + '/' } }); setMessage(error?.message || 'נשלח מייל לאימות החשבון'); }}>הרשמה</button>
                 <button className='glass-button' onClick={async () => {
                   if(!email.trim()){setMessage('יש להזין כתובת מייל לקבלת קישור איפוס סיסמה.');return;}
                   const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/auth/reset-password'});
@@ -753,7 +820,7 @@ export default function TriviaGame() {
       </section>
     </div>}
 
-    <footer className='footer'><a href='/privacy'>פרטיות</a><a href='/terms'>תנאי שימוש</a><a href='/accessibility'>נגישות</a><a href='/account/privacy'>המידע שלי</a></footer>
+    <footer className='footer'><a href='/privacy'>פרטיות</a><a href='/terms'>תנאי שימוש</a><a href='/cookies'>עוגיות ואחסון</a><a href='/accessibility'>נגישות</a><a href='/account/privacy'>המידע שלי</a></footer>
     <p className='smalltxt' style={{ textAlign: 'center' }}>פרסים וירטואליים בלבד · ללא רכישות בכסף אמיתי</p>
   </main>;
 }
