@@ -12,6 +12,8 @@ import { englishQuestions } from '../lib/englishQuestions';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
+import CaptureTile, {type CaptureStyle} from '../components/CaptureTile';
+import {reassignCapture,type LocalOwner,type LocalOwnerMode} from '../lib/captureOwnership';
 import TutorialPreview from '../components/TutorialPreview';
 import LocalQuestionBackup from '../components/LocalQuestionBackup';
 import GameTimeBar from '../components/GameTimeBar';
@@ -142,6 +144,12 @@ export default function TriviaGame() {
   const [lineColor, setLineColor] = useState('#358CFF');
   const [avatar, setAvatar] = useState('🦊');
   const [remember, setRemember] = useState(false);
+  const [guestName,setGuestName]=useState('שחקן 2');
+  const [guestColor,setGuestColor]=useState('#F97316');
+  const [guestAvatar,setGuestAvatar]=useState('👑');
+  const [captureStyle,setCaptureStyle]=useState<CaptureStyle>('lumen');
+  const [ownerMode,setOwnerMode]=useState<LocalOwnerMode>('auto_with_override');
+  const [capturePending,setCapturePending]=useState<{keys:string[];from:'new'|'edit'}|null>(null);
   const [progress, setProgress] = useState<Progress>({ level: 1, fruits: 0, diamonds: 0, credits: 0, hearts: 3 });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -179,8 +187,8 @@ export default function TriviaGame() {
   const googleName = providerGoogle ? String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim().slice(0,70) : '';
   const googlePhotoRaw = providerGoogle ? String(user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '') : '';
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
-  const canPlay = validName && localReady && !showTutorial && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
-  const finished = Object.keys(state.owners).length === state.rows * state.cols;
+  const canPlay = validName && localReady && !showTutorial && !capturePending && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
+  const finished = !capturePending && Object.keys(state.owners).length === state.rows * state.cols;
   const completedStage = mode==='local' ? localStageCompleted : serverStageCompleted;
   const stageUnlocked = Math.min(STAGE_COUNT,completedStage+1);
   const selectedStage = stageFor(stageId);
@@ -249,7 +257,13 @@ export default function TriviaGame() {
         if (avatars.includes(v.avatar)) setAvatar(v.avatar);
         setRemember(true);
       }
-      const seen=JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]') as string[];
+      const savedCapture=JSON.parse(localStorage.getItem('trivia-capture-settings-v1')||'{}') as {style?:CaptureStyle;ownerMode?:LocalOwnerMode;guestName?:string;guestColor?:string;guestAvatar?:string};
+       if(['lumen','neon','seal','prism','token'].includes(savedCapture.style||''))setCaptureStyle(savedCapture.style!);
+       if(['auto','manual','auto_with_override'].includes(savedCapture.ownerMode||''))setOwnerMode(savedCapture.ownerMode!);
+       if(typeof savedCapture.guestName==='string' && savedCapture.guestName.trim())setGuestName(savedCapture.guestName.slice(0,32));
+       if(palettes.includes(savedCapture.guestColor||''))setGuestColor(savedCapture.guestColor!);
+       if(avatars.includes(savedCapture.guestAvatar||''))setGuestAvatar(savedCapture.guestAvatar!);
+       const seen=JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]') as string[];
       if(Array.isArray(seen))seenQuestionTexts.current=new Set(seen.filter(x=>typeof x==='string'));
       const storedPool=JSON.parse(localStorage.getItem('trivia-local-pool-release-v1')||'{}') as {he?:number;en?:number};
       const available={he:Math.max(0,Math.min(countLocalReserve('he'),Math.trunc(Number(storedPool.he)||0))),
@@ -330,6 +344,10 @@ export default function TriviaGame() {
     window.addEventListener('online',up); window.addEventListener('offline',down);
     return ()=>{window.removeEventListener('online',up);window.removeEventListener('offline',down)};
   },[]);
+  useEffect(()=>{
+    if(!localReady)return;
+    try{localStorage.setItem('trivia-capture-settings-v1',JSON.stringify({style:captureStyle,ownerMode,guestName,guestColor,guestAvatar}));}catch{}
+  },[localReady,captureStyle,ownerMode,guestName,guestColor,guestAvatar]);
   useEffect(() => {
     if(!localReady) return;
     try { localStorage.setItem('trivia-sound-muted', String(muted));localStorage.setItem('trivia-sound-volume', String(volume)); } catch {}
@@ -487,7 +505,7 @@ export default function TriviaGame() {
     if(stageId>stageUnlocked){setMessage(locale==='en'?'Finish the earlier stages to unlock this one.':'יש לסיים את השלבים הקודמים כדי לפתוח את השלב הזה.');return;}
     if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
-    setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false);
+    setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false); setCapturePending(null);
     if (mode === 'local') {
       if(user&&client&&navigator.onLine&&!await syncAccountQuestionHistory()){
         setMessage(locale==='en'?'Unable to sync your question history. Please retry.':'אי אפשר להתחיל משחק מחובר לפני סנכרון היסטוריית השאלות.');
@@ -623,7 +641,9 @@ export default function TriviaGame() {
       const correct = i === q.correct;
       const next = applyLocalAnswer(local, edge, correct);
       setLocal(next);
-      const gained = Object.keys(next.owners).length - Object.keys(local.owners).length;
+      const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
+      const gained = newSquares.length;
+      if(gained && ownerMode==='manual')setCapturePending({keys:newSquares,from:'new'});
       if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
       else if (gained) play('capture');
       else play(correct ? 'correct' : 'wrong');
@@ -632,7 +652,7 @@ export default function TriviaGame() {
  (correct?(gained?'סגרת '+gained+' ריבועים!':'תשובה נכונה!'):'תשובה שגויה!'));
       if(gained>0){
         setLocalCredits(prev=>({...prev,[local.turn==='guest'?'guest':'host']:prev[local.turn==='guest'?'guest':'host']+10*gained}));
-        if(Object.keys(next.owners).length===next.rows*next.cols){
+        if(Object.keys(next.owners).length===next.rows*next.cols && ownerMode!=='manual'){
           const winner=next.scores.host>next.scores.guest?'host':next.scores.guest>next.scores.host?'guest':null;
           if(winner)setLocalCharms(prev=>({...prev,[winner]:prev[winner]+1}));
         }
@@ -740,6 +760,18 @@ export default function TriviaGame() {
     } else setMessage('העדפות נשמרו במכשיר בלבד');
   }
 
+  function chooseCaptureOwner(owner:LocalOwner){
+    if(!capturePending || remote)return;
+    const next=reassignCapture(local,capturePending.keys,owner);
+    setLocal(next);
+    if(capturePending.from==='new' && Object.keys(next.owners).length===next.rows*next.cols){
+      const winner=next.scores.host>next.scores.guest?'host':next.scores.guest>next.scores.host?'guest':null;
+      if(winner)setLocalCharms(prev=>({...prev,[winner]:prev[winner]+1}));
+      play('win');
+    }
+    setCapturePending(null);
+    setMessage(locale==='en'?'Square assigned to '+(owner==='host'?name:guestName):'הריבוע שויך ל'+(owner==='host'?name:guestName));
+  }
   function chooseStage(nextId:number) {
     if(!canOpenStage(nextId,completedStage,stageId,finished) || stageBusy){
       setMessage(locale==='en'?'Finish the current stage before opening another.':'יש לסיים את השלב הנוכחי לפני שעוברים לשלב אחר.');
@@ -757,7 +789,7 @@ export default function TriviaGame() {
     setStageId(nextId);setSize(next.size);
     setStageStarted(false);setRemote(null);setLocal(empty(next.size));
     setQuestion(null);setEdge(null);setTrace(null);gesture.current=null;
-    setKeyboardStart(null);setBonusSelect(false);setLocalFreeze({host:false,guest:false});
+    setKeyboardStart(null);setBonusSelect(false);setCapturePending(null);setLocalFreeze({host:false,guest:false});
     setMessage(locale==='en'?('Stage '+nextId+' unlocked. Draw between adjacent dots.'):('שלב '+nextId+' נפתח. גרור קו בין נקודות סמוכות.'));
   }
 
@@ -776,7 +808,10 @@ export default function TriviaGame() {
   }
 
   function onBoardPointerDown(event: ReactPointerEvent<SVGSVGElement>) {
-    if (!canPlay || finished || !!question || bonusSelect || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    if (!canPlay || finished || !!question || bonusSelect || (event.pointerType === 'mouse' && event.button !== 0)) {
+      if(!validName && !showTutorial){setMessage(locale==='en'?'Enter a player name to draw your first line.':'כדי לצייר קו, הזן קודם שם שחקן.');document.getElementById('quick-player-name')?.focus();}
+      return;
+    }
     const start = nearestDot(boardPoint(event), state.rows, state.cols);
     if (!start) return;
     event.preventDefault();
@@ -844,7 +879,7 @@ export default function TriviaGame() {
 
   const colors: Record<Side, string> = {
     host: player === 'host' ? color : remote?.players?.host?.color || '#358CFF',
-    guest: player === 'guest' && remote?.state.mode === 'online' ? color : remote?.players?.guest?.color || '#FA9143',
+    guest: state.mode==='local' ? guestColor : player === 'guest' && remote?.state.mode === 'online' ? color : remote?.players?.guest?.color || '#FA9143',
     bot: '#FA9143'
   };
   const lineColors: Record<Side,string> = {
@@ -852,8 +887,8 @@ export default function TriviaGame() {
     guest: player === 'guest' && remote?.state.mode === 'online' ? lineColor : remote?.players?.guest?.line_color || '#F97316',
     bot: '#FB923C'
   };
-  const opponentIcon = remote?.players?.[player === 'host'?'guest':'host']?.avatar || '🐲';
-  const opponentName = remote?.state.mode === 'bot' ? tr('המחשב') : remote?.players?.[player === 'host'?'guest':'host']?.name || tr('שחקן 2');
+  const opponentIcon = state.mode==='local' ? guestAvatar : remote?.players?.[player === 'host'?'guest':'host']?.avatar || '🐲';
+  const opponentName = state.mode==='local' ? guestName : remote?.state.mode === 'bot' ? tr('המחשב') : remote?.players?.[player === 'host'?'guest':'host']?.name || tr('שחקן 2');
   const drawLine = (key: string, x1: number, y1: number, x2: number, y2: number) => {
     const owner = state.edges[key];
     return <g key={key} pointerEvents='none'>
