@@ -250,7 +250,9 @@ export default function TriviaGame() {
       const v=localStorage.getItem('trivia-sound-volume');
       if (v !== null && Number.isFinite(Number(v))) setVolume(Math.max(0,Math.min(100,Number(v))));
     } catch {}
-    if (!localStorage.getItem('trivia-tutorial-seen-v1')) setShowTutorial(true);
+    try {
+      if (!localStorage.getItem('trivia-tutorial-seen-v1')) setShowTutorial(true);
+    } catch { setShowTutorial(true); }
     if (!client) return;
     void client.auth.getUser().then(({ data }) => setUser(data.user));
     const { data } = client.auth.onAuthStateChange((_event, session) => {
@@ -1239,6 +1241,10 @@ export default function TriviaGame() {
       <section className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('הסבר משחק')}
         onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();dismissTutorial()}}}
         style={{textAlign:'center'}}>
+        <div className='tutorial-language-picker' role='group' aria-label={locale==='he'?'שפת ההדרכה':'Tutorial language'}>
+          <button type='button' lang='he' aria-pressed={locale==='he'} onClick={()=>setLocale('he')}>עברית</button>
+          <button type='button' lang='en' aria-pressed={locale==='en'} onClick={()=>setLocale('en')}>English</button>
+        </div>
         <span className='quiz-badge'>{tr("🧭 הדרך לכיבוש מתחילה כאן")}</span>
         <h2>{tr(['צייר קו כמו בטוש','ענה נכון על שאלת טריוויה','סגור ריבוע וזכה בנקודות'][tutorialPage])}</h2>
         <TutorialPreview locale={locale} page={tutorialPage} color={lineColor} avatar={avatar}/>
