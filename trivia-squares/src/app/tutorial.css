@@ -1,0 +1,24 @@
+/* Lumen instructional animation — runs on the compositor, not as a game React loop. */
+.lumen-tutorial-preview{width:100%;max-width:380px;margin:8px auto 12px;contain:layout style;}
+.lumen-tutorial-visual{display:block;width:100%;height:auto;filter:drop-shadow(0 12px 25px rgba(2,9,38,.2));}
+.lumen-tutorial-step-indicator{display:flex;justify-content:center;gap:8px;margin:6px 0 8px;}
+.lumen-tutorial-step-indicator span{height:6px;width:24px;border-radius:99px;background:rgba(233,248,255,.24);transition:background .2s ease;}
+.lumen-tutorial-step-indicator span.active{width:38px;background:linear-gradient(90deg,#FFF3B9,#9EEED4);}
+.lumen-tutorial-step-caption{font-size:13px!important;color:#D8ECFF!important;line-height:1.6!important;margin:6px 0 12px!important;}
+.lumen-tutorial-ink{stroke-dasharray:90;stroke-dashoffset:90;animation:lumenTutDraw 2.8s .45s ease-in-out infinite;}
+.lumen-tutorial-pen{transform:translate(80px,49px);animation:lumenTutPen 2.8s .45s ease-in-out infinite;transform-origin:center;}
+.lumen-tutorial-answer-correct{animation:lumenTutCorrect 2.8s .3s ease-in-out infinite;transform-origin:center;}
+.lumen-tutorial-captured{animation:lumenTutCapture 2.8s .2s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
+.lumen-tutorial-avatar{animation:lumenTutAvatar 2.8s .25s ease-in-out infinite;transform-origin:center;}
+.lumen-tutorial-star{animation:lumenTutStar 2.8s .4s ease-in-out infinite;transform-origin:center;}
+@keyframes lumenTutDraw{0%,12%{stroke-dashoffset:90}52%,82%{stroke-dashoffset:0}100%{stroke-dashoffset:90}}
+@keyframes lumenTutPen{0%,12%{transform:translate(80px,49px);opacity:1}52%,75%{transform:translate(170px,49px);opacity:1}85%,100%{transform:translate(170px,49px);opacity:0}}
+@keyframes lumenTutCorrect{0%,28%{opacity:.5;filter:none}39%,79%{opacity:1;filter:drop-shadow(0 0 7px #A2F4C5)}100%{opacity:.5;filter:none}}
+@keyframes lumenTutCapture{0%,16%{opacity:0;transform:scale(.65)}41%,81%{opacity:.88;transform:scale(1)}100%{opacity:0;transform:scale(.8)}}
+@keyframes lumenTutAvatar{0%,27%{opacity:0;transform:scale(.6)}44%,82%{opacity:1;transform:scale(1.12)}100%{opacity:0;transform:scale(.8)}}
+@keyframes lumenTutStar{0%,45%{opacity:0;transform:scale(.65)}55%,86%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.6)}}
+@media (prefers-reduced-motion: reduce){
+ .lumen-tutorial-ink{animation:none;stroke-dashoffset:0}
+ .lumen-tutorial-pen{animation:none;transform:translate(170px,49px)}
+ .lumen-tutorial-answer-correct,.lumen-tutorial-captured,.lumen-tutorial-avatar,.lumen-tutorial-star{animation:none;opacity:1;transform:none}
+}
