@@ -31,3 +31,8 @@ jobs:
         run: node --test tests/*.test.mjs
       - name: Next.js production build
         run: npm run build
+      - name: Install Chromium browser for E2E
+        run: npx playwright install --with-deps chromium
+      - name: Browser tests - drawing, local persistence, mobile and legal routes
+        run: npm run test:e2e
+
