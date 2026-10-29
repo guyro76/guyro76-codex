@@ -1071,7 +1071,7 @@ export default function TriviaGame() {
               </label>
               <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'12px 0'}}>
                 <input type='checkbox' checked={policiesAcknowledged} onChange={e=>setPoliciesAcknowledged(e.target.checked)} style={{width:20,height:20,flexShrink:0}}/>
-                {tr("קראתי את")} <a href='/privacy' style={{color:'#FFDC88'}}>{tr("הודעת הפרטיות")}</a> {tr("ואני מסכים/ה ל")}<a href='/terms' style={{color:'#FFDC88'}}>{tr("תנאי השימוש")}</a>
+                {tr("קראתי את")} <a href={locale==='en'?'/en/privacy':'/privacy'} style={{color:'#FFDC88'}}>{tr("הודעת הפרטיות")}</a> {tr("ואני מסכים/ה ל")}<a href={locale==='en'?'/en/terms':'/terms'} style={{color:'#FFDC88'}}>{tr("תנאי השימוש")}</a>
               </label>
               <button className='gold-button' disabled={legalBusy||!adultConfirmed||!policiesAcknowledged} onClick={()=>void acceptCurrentPolicies()}>
                 {legalBusy?'שומר...':'אשר והפעל משחק מחובר'}
@@ -1085,7 +1085,7 @@ export default function TriviaGame() {
                 הרשמה נדרשת רק למשחקים מחוברים. נאסוף כתובת מייל ומזהה חשבון, ובמשחק נשמור כינוי, תוצאה והתקדמות.
                 המסירה לבחירתך; ללא הרשמה ניתן לשחק מקומית.
                 הפרטים נשמרים בעזרת Supabase והאתר מאוחסן ב-Vercel.
-                <a href='/privacy' style={{color:'#FFE5A5'}}> {tr("למדיניות הפרטיות המלאה")}</a>.
+                <a href={locale==='en'?'/en/privacy':'/privacy'} style={{color:'#FFE5A5'}}> {tr("למדיניות הפרטיות המלאה")}</a>.
               </p>
               <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'10px 0'}}>
                 <input type='checkbox' checked={adultConfirmed} onChange={e=>setAdultConfirmed(e.target.checked)} style={{width:20,height:20,flexShrink:0}} />
@@ -1093,7 +1093,7 @@ export default function TriviaGame() {
               </label>
               <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'10px 0'}}>
                 <input type='checkbox' checked={policiesAcknowledged} onChange={e=>setPoliciesAcknowledged(e.target.checked)} style={{width:20,height:20,flexShrink:0}} />
-                {tr("קראתי את")} <a href='/privacy' style={{color:'#FFE5A5'}}>{tr("הודעת הפרטיות")}</a> {tr("ואני מסכים/ה ל")}<a href='/terms' style={{color:'#FFE5A5'}}>{tr("תנאי השימוש")}</a>
+                {tr("קראתי את")} <a href={locale==='en'?'/en/privacy':'/privacy'} style={{color:'#FFE5A5'}}>{tr("הודעת הפרטיות")}</a> {tr("ואני מסכים/ה ל")}<a href={locale==='en'?'/en/terms':'/terms'} style={{color:'#FFE5A5'}}>{tr("תנאי השימוש")}</a>
               </label>
               <button className='gold-button' disabled={!adultConfirmed||!policiesAcknowledged} onClick={() => {
                 if (!hasPreRegistrationAcknowledgement()) return;
@@ -1161,7 +1161,7 @@ export default function TriviaGame() {
       </section>
     </div>}
 
-    <footer className='footer'><a href='/privacy'>{tr("פרטיות")}</a><a href='/terms'>{tr("תנאי שימוש")}</a><a href='/cookies'>{tr("עוגיות ואחסון")}</a><a href='/accessibility'>{tr("נגישות")}</a><a href='/account/privacy'>{tr("המידע שלי")}</a></footer>
+    <footer className='footer'><a href={locale==='en'?'/en/privacy':'/privacy'}>{tr("פרטיות")}</a><a href={locale==='en'?'/en/terms':'/terms'}>{tr("תנאי שימוש")}</a><a href={locale==='en'?'/en/cookies':'/cookies'}>{tr("עוגיות ואחסון")}</a><a href={locale==='en'?'/en/accessibility':'/accessibility'}>{tr("נגישות")}</a><a href='/account/privacy'>{tr("המידע שלי")}</a></footer>
     <p className='smalltxt' style={{ textAlign: 'center' }}>{tr("פרסים וירטואליים בלבד · ללא רכישות בכסף אמיתי")}</p>
   </main>;
 }
