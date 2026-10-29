@@ -188,7 +188,7 @@ export default function TriviaGame() {
     })();
   }, [client, user, refresh]);
   useEffect(() => {
-    if (!remote || remote.status !== 'playing' || !client) return;
+    if (!remote || (remote.status !== 'playing' && remote.status !== 'waiting') || !client) return;
     const timer = window.setInterval(() => { void refresh(remote.id); }, 2300);
     return () => window.clearInterval(timer);
   }, [client, remote?.id, remote?.status, refresh]);
