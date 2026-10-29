@@ -825,8 +825,8 @@ export default function TriviaGame() {
       .claimed-tile{animation:tileClaim .36s cubic-bezier(.2,1.3,.4,1);transform-origin:center}
     `}</style>
     <header className='hero'>
-      {user && <div className='google-player-header' aria-label='החשבון המחובר'>
-        {googlePhoto ? <img src={googlePhoto} referrerPolicy='no-referrer' alt='תמונת הפרופיל שלך מ-Google'
+      {user && <div className='google-player-header' aria-label={tr('החשבון המחובר')}>
+        {googlePhoto ? <img src={googlePhoto} referrerPolicy='no-referrer' alt={tr('תמונת הפרופיל שלך מ-Google')}
            style={{width:44,height:44,objectFit:'cover',borderRadius:'50%',border:'2px solid #FFE08A'}} />
           : <span aria-hidden='true' style={{fontSize:28}}>{avatar}</span>}
         <span><strong>{googleName || name || 'שחקן מחובר'}</strong><small style={{display:'block',fontSize:11,color:'#DAE9FF'}}>{providerGoogle ? 'מחובר באמצעות Google' : 'מחובר לחשבון המשחק'}</small></span>
@@ -891,7 +891,9 @@ export default function TriviaGame() {
               className='board'
               viewBox='0 0 328 328'
               role='group'
-              aria-label={'לוח ' + world.name + ': גרור מנקודה לנקודה סמוכה. ניווט מקלדת באמצעות Tab ו-Enter על הנקודות.'}
+              aria-label={locale==='en'
+   ? 'Board '+displayWorld.name+': draw between adjacent dots. Keyboard users can press Tab then Enter on the dots.'
+   : 'לוח '+world.name+': גרור מנקודה לנקודה סמוכה. ניווט מקלדת באמצעות Tab ו-Enter על הנקודות.'}
               onPointerDown={onBoardPointerDown}
               onPointerMove={onBoardPointerMove}
               onPointerUp={onBoardPointerUp}
@@ -915,7 +917,7 @@ export default function TriviaGame() {
                 return <g key={'cell-' + r + '-' + c} pointerEvents={bonusSelect ? undefined : 'none'}>
                   <rect x={x} y={y} width={w - 10} height={h - 10} rx='10' fill={owner ? colors[owner] : 'url(#cellTint)'} fillOpacity={owner ? '.82' : '1'} className={owner ? 'claimed-tile' : ''} />
                   {bonusSelect && !owner && <rect x={x} y={y} width={w-10} height={h-10} rx='10'
-                    role='button' tabIndex={0} aria-label={'כבוש ריבוע בשורה '+(r+1)+' עמודה '+(c+1)}
+                    role='button' tabIndex={0} aria-label={locale==='en'?'Capture square at row '+(r+1)+', column '+(c+1):'כבוש ריבוע בשורה '+(r+1)+' עמודה '+(c+1)}
                     onClick={()=>void claimBonusSquare(r,c)}
                     onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();void claimBonusSquare(r,c)}}}
                     fill='#FFE18C' fillOpacity='.22' stroke='#FFE18C' strokeWidth='3' strokeDasharray='6 4' style={{cursor:'pointer'}} />}
@@ -939,7 +941,7 @@ export default function TriviaGame() {
                 return <g key={'dot-' + r + '-' + c}>
                   <circle cx={px.x} cy={px.y} r={selected ? 13 : 10} fill='#BBD9FF' fillOpacity={selected ? '.35' : '.16'} pointerEvents='none' />
                   <circle cx={px.x} cy={px.y} r={selected ? 7.3 : 5.5} fill={selected ? '#FFE48A' : 'url(#dotGlow)'} stroke={selected ? '#FFFFFF' : '#D9EAFF'} strokeWidth='1.5' pointerEvents='none' />
-                  <circle cx={px.x} cy={px.y} r='13' fill='transparent' role='button' tabIndex={canPlay ? 0 : -1} aria-label={'נקודה ' + (r + 1) + ', ' + (c + 1)} onKeyDown={event => onDotKeyDown(event, dot)} />
+                  <circle cx={px.x} cy={px.y} r='13' fill='transparent' role='button' tabIndex={canPlay ? 0 : -1} aria-label={locale==='en'?'Dot row '+(r+1)+', column '+(c+1):'נקודה '+(r+1)+', '+(c+1)} onKeyDown={event => onDotKeyDown(event, dot)} />
                 </g>;
               }))}
             </svg>
@@ -951,7 +953,7 @@ export default function TriviaGame() {
         {!online && <div role='alert' style={{background:'#D94C37',color:'#FFFFFF',padding:10,borderRadius:12,textAlign:'center',marginTop:12}}>
           {tr("📡 החיבור לרשת נותק. משחק מקומי עדיין זמין, ומשחק מחובר יתחדש עם חזרת החיבור.")}
         </div>}
-        {finished && <section className='victory-panel' role='status' aria-label='תוצאות המשחק'>
+        {finished && <section className='victory-panel' role='status' aria-label={locale==='en'?'Match result':'תוצאות המשחק'}>
           <div className='victory-symbol' aria-hidden='true'>🏆</div>
           <h2 style={{margin:'5px 0',fontSize:'clamp(22px,3.8vw,31px)'}}>
             {state.scores.host === state.scores.guest+state.scores.bot
