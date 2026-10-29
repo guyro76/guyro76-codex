@@ -825,11 +825,20 @@ export default function TriviaGame() {
           : <span aria-hidden='true' style={{fontSize:28}}>{avatar}</span>}
         <span><strong>{googleName || name || 'שחקן מחובר'}</strong><small style={{display:'block',fontSize:11,color:'#DAE9FF'}}>{providerGoogle ? 'מחובר באמצעות Google' : 'מחובר לחשבון המשחק'}</small></span>
       </div>}
+      <div className='locale-switch' role='group' aria-label={locale==='he'?'בחירת שפת המשחק':'Game language'}>
+        <button type='button' lang='he' aria-pressed={locale==='he'} disabled={!!question}
+          className='locale-option' onClick={()=>setLocale('he')}>{tr("עברית")}</button>
+        <button type='button' lang='en' aria-pressed={locale==='en'} disabled={!!question}
+          className='locale-option' onClick={()=>setLocale('en')}>English</button>
+        <span className='locale-coming' title={locale==='en'?'Coming later: Russian, French, Arabic':'בהמשך: רוסית, צרפתית וערבית'}>
+          {locale==='en'?'More languages soon':'שפות נוספות בהמשך'}
+        </span>
+      </div>
       <div className='eyebrow'>✦ TRIVIA SQUARES · ADVENTURE ✦</div>
-      <h1>טריוויה ריבועים</h1>
-      <p>חברו נקודות, ענו נכון, כבשו ריבועים והפכו לאלופי הטריוויה!</p>
+      <h1>{locale==='en'?'Trivia Squares':'טריוויה ריבועים'}</h1>
+      <p>{tr("חברו נקודות, ענו נכון, כבשו ריבועים והפכו לאלופי הטריוויה!")}</p>
       <div className='hero-name'>
-        <label htmlFor='quick-player-name'>שם שחקן (חובה)</label>
+        <label htmlFor='quick-player-name'>{tr("שם שחקן (חובה)")}</label>
         <input id='quick-player-name' type='text' minLength={2} maxLength={32} required
           value={name} onChange={e=>setName(e.target.value)}
           placeholder='הקלד שם לפני המשחק' autoComplete='nickname'/>
@@ -931,10 +940,10 @@ export default function TriviaGame() {
           </div>
         </div>
         <div className='gesture-hint'><span className='draw-icon'>✍️</span>{bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח'}</div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>שטחים שנכבשו</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>{tr("שטחים שנכבשו")}</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
         {!online && <div role='alert' style={{background:'#D94C37',color:'#FFFFFF',padding:10,borderRadius:12,textAlign:'center',marginTop:12}}>
-          📡 החיבור לרשת נותק. משחק מקומי עדיין זמין, ומשחק מחובר יתחדש עם חזרת החיבור.
+          {tr("📡 החיבור לרשת נותק. משחק מקומי עדיין זמין, ומשחק מחובר יתחדש עם חזרת החיבור.")}
         </div>}
         {finished && <section className='victory-panel' role='status' aria-label='תוצאות המשחק'>
           <div className='victory-symbol' aria-hidden='true'>🏆</div>
@@ -946,16 +955,16 @@ export default function TriviaGame() {
             {'⭐'.repeat(state.scores.host>state.scores.guest+state.scores.bot?3:state.scores.host===state.scores.guest+state.scores.bot?2:1)}
           </div>
           <p style={{margin:'6px 0',color:'#FFFFFF'}}>שחקן 1: {state.scores.host} נקודות · יריב: {state.scores.guest+state.scores.bot} נקודות</p>
-          <p className='smalltxt'>🍎 במשחק מחובר צוברים פירות וקרדיטים, ובניצחון גם יהלומים והתקדמות.</p>
+          <p className='smalltxt'>{tr("🍎 במשחק מחובר צוברים פירות וקרדיטים, ובניצחון גם יהלומים והתקדמות.")}</p>
           <div className='control-row' style={{marginTop:13}}>
-            <button className='gold-button' disabled={busy} onClick={()=>void start()}>🔄 משחק חוזר</button>
-            {size<6 && <button className='glass-button' onClick={()=>chooseWorld(size+1)}>🌍 העולם הבא</button>}
+            <button className='gold-button' disabled={busy} onClick={()=>void start()}>{tr("🔄 משחק חוזר")}</button>
+            {size<6 && <button className='glass-button' onClick={()=>chooseWorld(size+1)}>{tr("🌍 העולם הבא")}</button>}
           </div>
         </section>}
         <div className='status-line' aria-live='polite'>
           {finished ? '🏆 ' + (state.scores.host === state.scores.guest + state.scores.bot ? 'המשחק הסתיים בתיקו!' : state.scores.host > state.scores.guest + state.scores.bot ? 'ניצחת! כל הכבוד!' : 'היריב ניצח. משחק חוזר?') : message}
         </div>
-        {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>ממתינים שהחבר ייכנס לחדר...</p>}
+        {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>{tr("ממתינים שהחבר ייכנס לחדר...")}</p>}
         <div className='control-row'>
           <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {remote ? 'משחק חדש' : 'התחל משחק'}</button>
           <button className='glass-button' onClick={() => {
@@ -965,15 +974,15 @@ export default function TriviaGame() {
             {muted ? '🔇 הפעל צלילים' : '🔊 השתק צלילים'}
           </button>
           <label className='glass-button' style={{display:'inline-flex',gap:7,alignItems:'center'}} htmlFor='game-volume'>
-            עוצמה <input id='game-volume' type='range' min='0' max='100' step='5'
+            {tr("עוצמה")} <input id='game-volume' type='range' min='0' max='100' step='5'
               aria-label='עוצמת הצלילים במשחק' value={volume} onChange={e=>setVolume(Number(e.target.value))}
               style={{width:80,accentColor:'#FFE38F'}} /> {volume}%
           </label>
-          <button className='glass-button' onClick={()=>{setTutorialPage(0);setShowTutorial(true)}}>❓ איך משחקים</button>
-          {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>⭐ שאלת זהב!</button>}
+          <button className='glass-button' onClick={()=>{setTutorialPage(0);setShowTutorial(true)}}>{tr("❓ איך משחקים")}</button>
+          {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>{tr("⭐ שאלת זהב!")}</button>}
           {availableBonus>0 && state.mode!=='online' && <button className='gold-button' disabled={busy||!!question} onClick={()=>setBonusSelect(v=>!v)}>
             ✨ {bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס'} ({availableBonus})</button>}
-          {finished && size < 6 && <button className='glass-button' onClick={() => chooseWorld(size + 1)}>העולם הבא ←</button>}
+          {finished && size < 6 && <button className='glass-button' onClick={() => chooseWorld(size + 1)}>{tr("העולם הבא ←")}</button>}
         </div>
         {finished && <StageReward
           stageKey={remote?.id||stageRunId}
@@ -989,126 +998,126 @@ export default function TriviaGame() {
 
       <aside className='side-stack'>
         <section className='glass-panel'>
-          <h2 className='panel-title'>🎯 חדר המשחק</h2>
+          <h2 className='panel-title'>{tr("🎯 חדר המשחק")}</h2>
           <div className='mode-row'>
             {([['bot','🤖 מחשב'],['online','🌐 חבר'],['local','👥 מקומי']] as const).map(([value, label]) =>
-              <button key={value} className='choice' aria-pressed={mode === value} onClick={() => setMode(value)}>{label}</button>)}
+              <button key={value} className='choice' aria-pressed={mode === value} onClick={() => setMode(value)}>{tr(label)}</button>)}
           </div>
-          <label className='form-field' htmlFor='board-size'>גודל לוח</label>
+          <label className='form-field' htmlFor='board-size'>{tr("גודל לוח")}</label>
           <select id='board-size' className='form-input' value={size} onChange={e => chooseWorld(Number(e.target.value))}>
             {worlds.map((w,i) => <option key={w.size} value={w.size}>{w.icon} {translatedWorlds[locale][i].name} ({w.size}×{w.size})</option>)}
           </select>
           {inviteLink && <div style={{ marginTop: 13 }}>
-            <div className='smalltxt'>קישור לחדר הפרטי</div>
+            <div className='smalltxt'>{tr("קישור לחדר הפרטי")}</div>
             <button className='glass-button' style={{ marginTop: 7 }} onClick={async () => {
               try {
                 if (navigator.share) await navigator.share({title:'טריוויה ריבועים',text:'בוא לשחק איתי בטריוויה ריבועים!',url:inviteLink});
                 else { await navigator.clipboard.writeText(inviteLink); setMessage('קישור ההזמנה הועתק'); }
               } catch { setMessage('אפשר להעתיק את ההזמנה ולשלוח לחבר'); }
-            }}>📤 שתף הזמנה לחבר</button>
+            }}>{tr("📤 שתף הזמנה לחבר")}</button>
           </div>}
-          {invite && client && user && <button className='gold-button' style={{ marginTop: 12 }} disabled={busy} onClick={() => void join()}>הצטרף לחדר שהוזמנת אליו</button>}
+          {invite && client && user && <button className='gold-button' style={{ marginTop: 12 }} disabled={busy} onClick={() => void join()}>{tr("הצטרף לחדר שהוזמנת אליו")}</button>}
         </section>
         <section className='glass-panel'>
-          <h2 className='panel-title'>👑 השחקן שלי</h2>
-          <label className='form-field' htmlFor='player-name'>כינוי שחקן</label>
+          <h2 className='panel-title'>{tr("👑 השחקן שלי")}</h2>
+          <label className='form-field' htmlFor='player-name'>{tr("כינוי שחקן")}</label>
           <input id='player-name' className='form-input' value={name} onChange={e => setName(e.target.value)} maxLength={32} minLength={2} required placeholder='הקלד שם שחקן (חובה)' aria-required='true'/>
-          {!validName && <p className='smalltxt' role='status' style={{color:'#FFE7A1'}}>יש למלא שם שחקן לפני ציור הקו הראשון.</p>}
-          <div className='form-field'>צבע הכיבוש שלי</div>
+          {!validName && <p className='smalltxt' role='status' style={{color:'#FFE7A1'}}>{tr("יש למלא שם שחקן לפני ציור הקו הראשון.")}</p>}
+          <div className='form-field'>{tr("צבע הכיבוש שלי")}</div>
           <div className='swatches'>{palettes.map(c => <button key={c} className='swatch' style={{ background: c }} aria-label={'בחר צבע ' + c} aria-pressed={color === c} onClick={() => setColor(c)} />)}</div>
-          <div className='form-field'>🖍️ צבע הטוש לקווים</div>
+          <div className='form-field'>{tr("🖍️ צבע הטוש לקווים")}</div>
           <div className='swatches' role='group' aria-label='בחר את צבע הקו'>
             {palettes.map(c => <button key={'line-'+c} className='swatch' style={{background:c}}
               aria-label={'בחר צבע קו '+c} aria-pressed={lineColor===c} onClick={()=>setLineColor(c)}/>)}
             <input type='color' aria-label='צבע קו מותאם אישית' value={lineColor}
               onChange={e=>setLineColor(e.target.value)} style={{width:42,height:35,border:0,background:'none'}}/>
           </div>
-          <div style={{margin:'4px 0 9px',fontSize:12,color:'#E6F3FF'}}>תצוגת הטוש: <span style={{display:'inline-block',width:80,borderTop:'8px solid '+lineColor,borderRadius:9,verticalAlign:'middle'}}/></div>
-          <div className='form-field'>סמל שיופיע בכל ריבוע</div>
+          <div style={{margin:'4px 0 9px',fontSize:12,color:'#E6F3FF'}}>{tr("תצוגת הטוש:")} <span style={{display:'inline-block',width:80,borderTop:'8px solid '+lineColor,borderRadius:9,verticalAlign:'middle'}}/></div>
+          <div className='form-field'>{tr("סמל שיופיע בכל ריבוע")}</div>
           <div className='avatar-row'>{avatars.map(a => <button className='avatar-choice' key={a} aria-label={'בחר אוואטר ' + a} aria-pressed={avatar === a} onClick={() => setAvatar(a)}>{a}</button>)}</div>
-          <label className='form-field' style={{ display: 'flex', gap: 10, alignItems: 'center' }}><input type='checkbox' style={{ width: 18, height: 18, accentColor: '#FFDE85' }} checked={remember} onChange={e => setRemember(e.target.checked)} /> זכור את הבחירות שלי תמיד</label>
-          <button className='glass-button' style={{ marginTop: 13 }} disabled={!validName} onClick={() => void saveProfile()}>שמור שם, צבע טוש ועיצוב אישי</button>
+          <label className='form-field' style={{ display: 'flex', gap: 10, alignItems: 'center' }}><input type='checkbox' style={{ width: 18, height: 18, accentColor: '#FFDE85' }} checked={remember} onChange={e => setRemember(e.target.checked)} /> {tr("זכור את הבחירות שלי תמיד")}</label>
+          <button className='glass-button' style={{ marginTop: 13 }} disabled={!validName} onClick={() => void saveProfile()}>{tr("שמור שם, צבע טוש ועיצוב אישי")}</button>
         </section>
         <section className='glass-panel'>
-          <h2 className='panel-title'>💎 אוצרות והישגים</h2>
+          <h2 className='panel-title'>{tr("💎 אוצרות והישגים")}</h2>
           <div className='wallet'>
             {([['🍎','פירות',progress.fruits],['💎','יהלומים',progress.diamonds],['🪙','קרדיטים',progress.credits],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
               <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{label}</span></div>)}
           </div>
-          <p className='smalltxt' style={{margin:'10px 0 5px'}}>⏳ כל שאלה: דקה. אפשר לקנות עוד 30 שניות ב־25 קרדיטים, פעם אחת לשאלה.</p>
-          <p className='smalltxt' style={{margin:'0 0 9px'}}>♾️ קמע זמן מבטל את הטיימר עבורך עד סוף השלב. זוכים בקמע עם ניצחון במשחק מחובר או מקומי.</p>
+          <p className='smalltxt' style={{margin:'10px 0 5px'}}>{tr("⏳ כל שאלה: דקה. אפשר לקנות עוד 30 שניות ב־25 קרדיטים, פעם אחת לשאלה.")}</p>
+          <p className='smalltxt' style={{margin:'0 0 9px'}}>{tr("♾️ קמע זמן מבטל את הטיימר עבורך עד סוף השלב. זוכים בקמע עם ניצחון במשחק מחובר או מקומי.")}</p>
           <p className='smalltxt' style={{margin:'0 0 8px'}}>קרדיטים זמינים: {currentCredits} | קמעות זמן: {currentCharms} {timeFreezeActive?'· ללא שעון כרגע':''}</p>
-          {!timeFreezeActive && currentCharms>0 && <button className='glass-button' disabled={busy} onClick={()=>void activateTimeCharm()}>הפעל קמע זמן עד סוף השלב</button>}
+          {!timeFreezeActive && currentCharms>0 && <button className='glass-button' disabled={busy} onClick={()=>void activateTimeCharm()}>{tr("הפעל קמע זמן עד סוף השלב")}</button>}
           <p className='smalltxt' style={{marginBottom:0}}>🔥 רצף תשובות: {streak} | ⭐ כיבושי בונוס: {availableBonus}</p>
-          <p className='smalltxt' style={{marginBottom:0}}>אחרי שלוש תשובות נכונות תקבל שאלת זהב. הצלחה מעניקה שני אסימוני כיבוש. המשחק התחרותי נשאר ללא בונוסים משני ניקוד.</p>
+          <p className='smalltxt' style={{marginBottom:0}}>{tr("אחרי שלוש תשובות נכונות תקבל שאלת זהב. הצלחה מעניקה שני אסימוני כיבוש. המשחק התחרותי נשאר ללא בונוסים משני ניקוד.")}</p>
         </section>
         <section className='glass-panel'>
-          <h2 className='panel-title'>🔐 מועדון השחקנים</h2>
+          <h2 className='panel-title'>{tr("🔐 מועדון השחקנים")}</h2>
           {user ? <>
             <p className='smalltxt'>מחובר: {user.email}</p>
             {!legalAccepted && <section style={{background:'#293D72',border:'1px solid #FFDE8D',borderRadius:13,padding:13,margin:'10px 0'}}>
-              <h3 style={{margin:'0 0 7px',color:'#FFE7A4'}}>השלמת הרשמה למשחק</h3>
-              <p className='smalltxt'>חשבון המשחק מיועד למבוגרים בני 18 ומעלה. משחק מקומי זמין גם ללא חשבון. לפני הפעלת פרופיל וחדרים יש לאשר את התנאים.</p>
+              <h3 style={{margin:'0 0 7px',color:'#FFE7A4'}}>{tr("השלמת הרשמה למשחק")}</h3>
+              <p className='smalltxt'>{tr("חשבון המשחק מיועד למבוגרים בני 18 ומעלה. משחק מקומי זמין גם ללא חשבון. לפני הפעלת פרופיל וחדרים יש לאשר את התנאים.")}</p>
               <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'12px 0'}}>
                 <input type='checkbox' checked={adultConfirmed} onChange={e=>setAdultConfirmed(e.target.checked)} style={{width:20,height:20,flexShrink:0}}/>
-                אני מאשר/ת שגילי 18 ומעלה
+                {tr("אני מאשר/ת שגילי 18 ומעלה")}
               </label>
               <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'12px 0'}}>
                 <input type='checkbox' checked={policiesAcknowledged} onChange={e=>setPoliciesAcknowledged(e.target.checked)} style={{width:20,height:20,flexShrink:0}}/>
-                קראתי את <a href='/privacy' style={{color:'#FFDC88'}}>הודעת הפרטיות</a> ואני מסכים/ה ל<a href='/terms' style={{color:'#FFDC88'}}>תנאי השימוש</a>
+                {tr("קראתי את")} <a href='/privacy' style={{color:'#FFDC88'}}>{tr("הודעת הפרטיות")}</a> {tr("ואני מסכים/ה ל")}<a href='/terms' style={{color:'#FFDC88'}}>{tr("תנאי השימוש")}</a>
               </label>
               <button className='gold-button' disabled={legalBusy||!adultConfirmed||!policiesAcknowledged} onClick={()=>void acceptCurrentPolicies()}>
                 {legalBusy?'שומר...':'אשר והפעל משחק מחובר'}
               </button>
             </section>}
-            {legalAccepted && <p className='smalltxt' style={{color:'#B0FFD6'}}>החשבון פעיל למשחקים מחוברים.</p>}
-            <button className='glass-button' onClick={() => void client?.auth.signOut()}>התנתק</button>
+            {legalAccepted && <p className='smalltxt' style={{color:'#B0FFD6'}}>{tr("החשבון פעיל למשחקים מחוברים.")}</p>}
+            <button className='glass-button' onClick={() => void client?.auth.signOut()}>{tr("התנתק")}</button>
           </>
             : client ? <>
               <p className='smalltxt' style={{lineHeight:1.8,background:'#2E467A',borderRadius:12,padding:10}}>
                 הרשמה נדרשת רק למשחקים מחוברים. נאסוף כתובת מייל ומזהה חשבון, ובמשחק נשמור כינוי, תוצאה והתקדמות.
                 המסירה לבחירתך; ללא הרשמה ניתן לשחק מקומית.
                 הפרטים נשמרים בעזרת Supabase והאתר מאוחסן ב-Vercel.
-                <a href='/privacy' style={{color:'#FFE5A5'}}> למדיניות הפרטיות המלאה</a>.
+                <a href='/privacy' style={{color:'#FFE5A5'}}> {tr("למדיניות הפרטיות המלאה")}</a>.
               </p>
               <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'10px 0'}}>
                 <input type='checkbox' checked={adultConfirmed} onChange={e=>setAdultConfirmed(e.target.checked)} style={{width:20,height:20,flexShrink:0}} />
-                אני בן/בת 18 ומעלה; חשבונות עצמאיים לילדים אינם זמינים כרגע
+                {tr("אני בן/בת 18 ומעלה; חשבונות עצמאיים לילדים אינם זמינים כרגע")}
               </label>
               <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'10px 0'}}>
                 <input type='checkbox' checked={policiesAcknowledged} onChange={e=>setPoliciesAcknowledged(e.target.checked)} style={{width:20,height:20,flexShrink:0}} />
-                קראתי את <a href='/privacy' style={{color:'#FFE5A5'}}>הודעת הפרטיות</a> ואני מסכים/ה ל<a href='/terms' style={{color:'#FFE5A5'}}>תנאי השימוש</a>
+                {tr("קראתי את")} <a href='/privacy' style={{color:'#FFE5A5'}}>{tr("הודעת הפרטיות")}</a> {tr("ואני מסכים/ה ל")}<a href='/terms' style={{color:'#FFE5A5'}}>{tr("תנאי השימוש")}</a>
               </label>
               <button className='gold-button' disabled={!adultConfirmed||!policiesAcknowledged} onClick={() => {
                 if (!hasPreRegistrationAcknowledgement()) return;
                 void client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/' } }).then(({error}) => { if(error)setMessage(error.message); });
-              }}>התחבר באמצעות Google</button>
-              <label htmlFor='login-email' className='form-field'>דואר אלקטרוני</label>
+              }}>{tr("התחבר באמצעות Google")}</button>
+              <label htmlFor='login-email' className='form-field'>{tr("דואר אלקטרוני")}</label>
               <input id='login-email' className='form-input' type='email' autoComplete='email' value={email} onChange={e => setEmail(e.target.value)} />
-              <label htmlFor='login-password' className='form-field'>סיסמה</label>
+              <label htmlFor='login-password' className='form-field'>{tr("סיסמה")}</label>
               <input id='login-password' className='form-input' type='password' autoComplete='current-password' value={password} onChange={e => setPassword(e.target.value)} />
               <div className='control-row' style={{ marginTop: 12 }}>
-                <button className='glass-button' onClick={async () => { const { error } = await client.auth.signInWithPassword({ email, password }); setMessage(error?.message || 'התחברת בהצלחה'); }}>כניסה</button>
-                <button className='glass-button' onClick={async () => { if(!hasPreRegistrationAcknowledgement())return; const { error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + '/' } }); setMessage(error?.message || 'נשלח מייל לאימות החשבון'); }}>הרשמה</button>
+                <button className='glass-button' onClick={async () => { const { error } = await client.auth.signInWithPassword({ email, password }); setMessage(error?.message || 'התחברת בהצלחה'); }}>{tr("כניסה")}</button>
+                <button className='glass-button' onClick={async () => { if(!hasPreRegistrationAcknowledgement())return; const { error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + '/' } }); setMessage(error?.message || 'נשלח מייל לאימות החשבון'); }}>{tr("הרשמה")}</button>
                 <button className='glass-button' onClick={async () => {
                   if(!email.trim()){setMessage('יש להזין כתובת מייל לקבלת קישור איפוס סיסמה.');return;}
                   const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/auth/reset-password'});
                   setMessage(error?.message||'אם קיים חשבון עם כתובת זו, יישלח אליו קישור לאיפוס סיסמה.');
-                }}>שכחתי סיסמה</button>
+                }}>{tr("שכחתי סיסמה")}</button>
               </div>
-            </> : <p className='smalltxt'>משחק מקומי זמין כעת. התחברות מחייבת הגדרת Supabase במערכת הפריסה.</p>}
+            </> : <p className='smalltxt'>{tr("משחק מקומי זמין כעת. התחברות מחייבת הגדרת Supabase במערכת הפריסה.")}</p>}
         </section>
       </aside>
     </div>
 
     {showTutorial && <div className='quiz-overlay' role='presentation'>
       <section className='quiz-card' role='dialog' aria-modal='true' aria-label='הסבר משחק' style={{textAlign:'center'}}>
-        <span className='quiz-badge'>🧭 הדרך לכיבוש מתחילה כאן</span>
+        <span className='quiz-badge'>{tr("🧭 הדרך לכיבוש מתחילה כאן")}</span>
         <h2>{['צייר קו כמו בטוש','ענה נכון על שאלת טריוויה','סגור ריבוע וזכה בנקודות'][tutorialPage]}</h2>
         <svg viewBox='0 0 280 145' aria-hidden='true' style={{width:'100%',maxWidth:320,margin:'0 auto',display:'block'}}>
           {[0,1,2].flatMap(r=>[0,1,2].map(c=><circle key={r+'-'+c} cx={55+c*84} cy={22+r*48} r='7' fill='#FFFFFF' stroke='#9DC9FF' strokeWidth='3'/>))}
           {tutorialPage===0 && <><path d='M55 22 L139 22' stroke='#FFD867' strokeWidth='11' strokeLinecap='round' strokeDasharray='84' className='tutorial-stroke'/><circle cx='139' cy='22' r='9' fill='#FFE8A3'/></>}
-          {tutorialPage===1 && <><path d='M55 22 L139 22' stroke='#FFD867' strokeWidth='9' strokeLinecap='round'/><text x='140' y='94' textAnchor='middle' fill='#FFFFFF' fontSize='18' fontWeight='900'>מהי התשובה הנכונה?</text></>}
+          {tutorialPage===1 && <><path d='M55 22 L139 22' stroke='#FFD867' strokeWidth='9' strokeLinecap='round'/><text x='140' y='94' textAnchor='middle' fill='#FFFFFF' fontSize='18' fontWeight='900'>{tr("מהי התשובה הנכונה?")}</text></>}
           {tutorialPage===2 && <><rect x='61' y='28' width='72' height='36' rx='8' fill={color}/><text x='97' y='54' textAnchor='middle' fontSize='25'>{avatar}</text><path d='M55 22 H139 V70 H55 Z' fill='none' stroke='#FFE48A' strokeWidth='8' strokeLinecap='round'/></>}
         </svg>
         <p style={{color:'#ECF4FF',fontSize:15,lineHeight:1.7}}>{[
@@ -1117,8 +1126,8 @@ export default function TriviaGame() {
           'הריבוע יתמלא בצבע ובאוואטר שלך. סגירה מעניקה נקודה ותור נוסף. אחרי רצף תשובות מחכה שאלת זהב!'
         ][tutorialPage]}</p>
         <div className='control-row'>
-          <button className='glass-button' onClick={dismissTutorial}>דלג או סיים</button>
-          {tutorialPage<2 && <button className='gold-button' onClick={()=>setTutorialPage(v=>v+1)}>הבא ←</button>}
+          <button className='glass-button' onClick={dismissTutorial}>{tr("דלג או סיים")}</button>
+          {tutorialPage<2 && <button className='gold-button' onClick={()=>setTutorialPage(v=>v+1)}>{tr("הבא ←")}</button>}
         </div>
       </section>
     </div>}
@@ -1128,8 +1137,8 @@ export default function TriviaGame() {
         <div className={'question-timer '+((secondsLeft??60)<=10?'urgent':'')} role='timer' aria-live='off'>
           <span className='hourglass-spin' aria-hidden='true'>⌛</span>
           {question.deadline_at===null || timeFreezeActive
-            ? <span>∞ <span className='clock-label'>קמע זמן פעיל עד סוף השלב</span></span>
-            : <span>{timerText} <span className='clock-label'>נותרו לענות</span></span>}
+            ? <span>∞ <span className='clock-label'>{tr("קמע זמן פעיל עד סוף השלב")}</span></span>
+            : <span>{timerText} <span className='clock-label'>{tr("נותרו לענות")}</span></span>}
         </div>
         <h2>{question.text}</h2>
         <div className='control-row' style={{marginBottom:13}}>
@@ -1145,7 +1154,7 @@ export default function TriviaGame() {
       </section>
     </div>}
 
-    <footer className='footer'><a href='/privacy'>פרטיות</a><a href='/terms'>תנאי שימוש</a><a href='/cookies'>עוגיות ואחסון</a><a href='/accessibility'>נגישות</a><a href='/account/privacy'>המידע שלי</a></footer>
-    <p className='smalltxt' style={{ textAlign: 'center' }}>פרסים וירטואליים בלבד · ללא רכישות בכסף אמיתי</p>
+    <footer className='footer'><a href='/privacy'>{tr("פרטיות")}</a><a href='/terms'>{tr("תנאי שימוש")}</a><a href='/cookies'>{tr("עוגיות ואחסון")}</a><a href='/accessibility'>{tr("נגישות")}</a><a href='/account/privacy'>{tr("המידע שלי")}</a></footer>
+    <p className='smalltxt' style={{ textAlign: 'center' }}>{tr("פרסים וירטואליים בלבד · ללא רכישות בכסף אמיתי")}</p>
   </main>;
 }
