@@ -252,6 +252,7 @@ export default function TriviaGame() {
         if (update?.progress) setProgress(update.progress as Progress);
       }
     } else {
+      if (!edge) { setBusy(false); return; }
       const q = practiceQuestions[practiceIndex % practiceQuestions.length];
       const correct = i === q.correct;
       const next = copyState(local, edge, correct);
