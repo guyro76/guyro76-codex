@@ -48,10 +48,13 @@ for(const locale of locales){
    localStorage.setItem('trivia-language',lang);
    localStorage.setItem('trivia-mode-v2','solo');
    localStorage.setItem('trivia-stage-id-v1','1');
-   localStorage.setItem('trivia-stage-run-id','local-qa-'+lang);
-   localStorage.setItem('trivia-local-question',JSON.stringify({
-    id:q.id,text:q.text,answers:q.answers,edge:'h-0-0',deadline_at:null,extensions:0
-   }));
+   if(!localStorage.getItem('trivia-stage-run-id'))localStorage.setItem('trivia-stage-run-id','local-qa-'+lang);
+   if(!localStorage.getItem('qa-locale-seeded')){
+     localStorage.setItem('trivia-local-question',JSON.stringify({
+      id:q.id,text:q.text,answers:q.answers,edge:'h-0-0',deadline_at:null,extensions:0
+     }));
+     localStorage.setItem('qa-locale-seeded','1');
+   }
   },{lang:locale.id,q:question});
   await page.goto('/');
   const quiz=page.locator('.quiz-card').last();
@@ -76,6 +79,16 @@ for(const locale of locales){
   const answer=({he:'תפוח',en:'apple',ru:'яблоко',fr:'pomme',ar:'تفاحة'} as Record<string,string>)[locale.id];
   await page.locator('.lumen-word-game input').fill(answer);
   await page.locator('.lumen-word-game .lumen-cta').click();
+  await expect(page.locator('.lumen-prize-won')).toBeVisible();
+  // A fresh stage run permits an independent wheel check without repeating a collected prize.
+  await page.evaluate(locale=>{
+    localStorage.setItem('trivia-stage-run-id','local-qa-wheel-'+locale);
+  },locale.id);
+  await page.reload();
+  await expect(page.locator('.lumen-intermission-choices button')).toHaveCount(2);
+  await page.locator('.lumen-intermission-choices button').last().click();
+  await expect(page.locator('.lumen-wheel-game .lumen-cta')).toBeVisible();
+  await page.locator('.lumen-wheel-game .lumen-cta').click();
   await expect(page.locator('.lumen-prize-won')).toBeVisible();
  });
 }
