@@ -55,6 +55,14 @@ type PlayerIdentity = { name: string; color: string; line_color?: string; avatar
 type RemoteMatch = { id: string; status: string; host_id: string; guest_id: string | null; version: number; state: GameState; question?: Question; players?: { host?: PlayerIdentity; guest?: PlayerIdentity } };
 type Profile = { display_name: string; color: string; line_color?: string; avatar: string; remember_color: boolean; locale?: ActiveLocale };
 type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number; time_charms?: number };
+type SkinId='royal'|'ocean'|'neon'|'stone'|'forest';
+const skins:{id:SkinId;he:string;en:string;colors:[string,string,string]}[]=[
+ {id:'royal',he:'סגול מלכותי',en:'Royal Amethyst',colors:['#32235E','#B587E3','#F4C774']},
+ {id:'ocean',he:'אוקיינוס זכוכית',en:'Ocean Glass',colors:['#0A5570','#5CD7DF','#C2F8FF']},
+ {id:'neon',he:'ניאון לילה',en:'Midnight Neon',colors:['#12153F','#EE65D5','#55F8EB']},
+ {id:'stone',he:'אבן ושמפניה',en:'Stone & Champagne',colors:['#5B3953','#E1BC90','#FBEDD6']},
+ {id:'forest',he:'אוצר היער',en:'Forest Treasure',colors:['#174F44','#72C49B','#F6D681']}
+];
 
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
 const avatars = ['🦊', '🦁', '🐼', '🐲', '🦄', '👑', '🚀', '⭐'];
@@ -97,6 +105,8 @@ export default function TriviaGame() {
   const [remote, setRemote] = useState<RemoteMatch | null>(null);
   const [question, setQuestion] = useState<Question | null>(null);
   const [wrongAnswerFeedback,setWrongAnswerFeedback]=useState<WrongAnswerFeedback|null>(null);
+  const [skin,setSkin]=useState<SkinId>('royal');
+  const [skinPickerOpen,setSkinPickerOpen]=useState(false);
   const [selectedTopics,setSelectedTopics]=useState<QuestionTopic[]>([...ALL_QUESTION_TOPICS]);
   const toggleTopic=(id:QuestionTopic)=>setSelectedTopics(previous=>{
     const next=previous.includes(id)?previous.filter(t=>t!==id):[...previous,id];
@@ -296,6 +306,8 @@ export default function TriviaGame() {
        if(palettes.includes(savedCapture.guestColor||''))setGuestColor(savedCapture.guestColor!);
        if(avatars.includes(savedCapture.guestAvatar||''))setGuestAvatar(savedCapture.guestAvatar!);
        setSelectedTopics(parseTopicPreferences(JSON.parse(localStorage.getItem('trivia-question-topics-v1')||'null')));
+       const storedSkin=localStorage.getItem('trivia-skin-v1');
+       if(skins.some(item=>item.id===storedSkin))setSkin(storedSkin as SkinId);
        const seen=JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]') as string[];
       if(Array.isArray(seen))seenQuestionTexts.current=new Set(seen.filter(x=>typeof x==='string'));
       const storedPool=JSON.parse(localStorage.getItem('trivia-local-pool-release-v1')||'{}') as {he?:number;en?:number};
@@ -402,6 +414,10 @@ export default function TriviaGame() {
     if(!localReady)return;
     try{localStorage.setItem('trivia-question-topics-v1',JSON.stringify(selectedTopics));}catch{}
   },[localReady,selectedTopics]);
+  useEffect(()=>{
+    if(!localReady)return;
+    try{localStorage.setItem('trivia-skin-v1',skin)}catch{}
+  },[localReady,skin]);
   useEffect(() => {
     if(!localReady) return;
     try { localStorage.setItem('trivia-sound-muted', String(muted));localStorage.setItem('trivia-sound-volume', String(volume)); } catch {}
@@ -1021,7 +1037,7 @@ export default function TriviaGame() {
     subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
-  return <main className={'trivia-app theme-' + world.slug} style={css.main} dir={localeDirection(locale)} lang={locale}>
+  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin} style={css.main} dir={localeDirection(locale)} lang={locale}>
     <style>{`
       *{box-sizing:border-box} body{background:#111C48;color:white;font-family:Arial,'Noto Sans Hebrew',sans-serif;font-weight:800;margin:0}
       .trivia-app{--accent:#8CE8FF;min-height:100vh;position:relative;isolation:isolate}
@@ -1148,6 +1164,24 @@ export default function TriviaGame() {
       .claimed-tile{animation:tileClaim .36s cubic-bezier(.2,1.3,.4,1);transform-origin:center}
     `}</style>
     <GameTimeBar locale={locale}/>
+    <div className='skin-picker-bar'>
+      <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
+        aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
+        aria-label={tr('בחר סקין למשחק')} title={tr('בחר סקין למשחק')}>
+        <span className='skin-palette-icon' aria-hidden='true'>🎨</span><span>{tr('עיצוב המשחק')}</span>
+      </button>
+      {skinPickerOpen&&<section id='skin-picker-panel' className='skin-picker-panel' aria-label={tr('בחר סקין למשחק')}>
+        <div className='skin-picker-title'>{tr('חמש ערכות עיצוב — בחרו את האהובה')}</div>
+        <div className='skin-picker-options' role='group' aria-label={tr('ערכות עיצוב')}>
+          {skins.map(theme=><button type='button' key={theme.id} className='skin-picker-item'
+            aria-pressed={skin===theme.id} onClick={()=>{setSkin(theme.id);setSkinPickerOpen(false)}}>
+            <span className='skin-picker-swatch' aria-hidden='true' style={{background:`linear-gradient(135deg,${theme.colors.join(',')})`}}/>
+            <strong>{locale==='he'?theme.he:theme.en}</strong>
+            {skin===theme.id&&<span className='skin-picker-selected' aria-hidden='true'>✓</span>}
+          </button>)}
+        </div>
+      </section>}
+    </div>
     <header className='hero'>
       {user && <div className='google-player-header' aria-label={tr('החשבון המחובר')}>
         {googlePhoto ? <img src={googlePhoto} referrerPolicy='no-referrer' alt={tr('תמונת הפרופיל שלך מ-Google')}
