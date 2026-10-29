@@ -1295,7 +1295,40 @@ export default function TriviaGame() {
           <div style={{margin:'4px 0 9px',fontSize:12,color:'#E6F3FF'}}>{tr("תצוגת הטוש:")} <span style={{display:'inline-block',width:80,borderTop:'8px solid '+lineColor,borderRadius:9,verticalAlign:'middle'}}/></div>
           <div className='form-field'>{tr("סמל שיופיע בכל ריבוע")}</div>
           <div className='avatar-row'>{avatars.map(a => <button className='avatar-choice' key={a} aria-label={tr('בחר אוואטר ')+a} aria-pressed={avatar === a} onClick={() => setAvatar(a)}>{a}</button>)}</div>
-          <label className='form-field' style={{ display: 'flex', gap: 10, alignItems: 'center' }}><input type='checkbox' style={{ width: 18, height: 18, accentColor: '#FFDE85' }} checked={remember} onChange={e => setRemember(e.target.checked)} /> {tr("זכור את הבחירות שלי תמיד")}</label>
+          <section className='capture-personalization' aria-label={locale==='en'?'Square capture customization':'התאמה אישית לכיבוש הריבועים'}>
+             <h3>{locale==='en'?'Captured square design':'עיצוב הריבוע שנכבש'}</h3>
+             <div className='capture-style-options' role='group' aria-label={locale==='en'?'Capture visual style':'סגנון כיבוש'}>
+               {([['lumen','אור יוקרתי','Lumen glow'],['neon','ניאון','Neon'],['seal','חותמת מתכת','Metal seal'],['prism','קריסטל','Prism'],['token','סמל שחקן','Player token']] as const).map(([key,he,en])=><button key={key}
+                 type='button' className='capture-style-option' aria-pressed={captureStyle===key} onClick={()=>setCaptureStyle(key)}>
+                 <span className={'capture-style-preview preview-'+key} aria-hidden='true'>✦</span><strong>{locale==='en'?en:he}</strong>
+               </button>)}
+             </div>
+             {mode==='local' && <>
+               <h3>{locale==='en'?'Who gets a captured square?':'מי מקבל ריבוע שנסגר?'}</h3>
+               <select className='form-input capture-owner-mode' aria-label={locale==='en'?'Captured square ownership mode':'אופן שיוך ריבוע'}
+                 value={ownerMode} onChange={e=>setOwnerMode(e.target.value as LocalOwnerMode)}>
+                 <option value='auto_with_override'>{locale==='en'?'Automatic + tap to correct':'אוטומטי עם אפשרות לשינוי ידני'}</option>
+                 <option value='manual'>{locale==='en'?'Ask me after each capture':'בחירה ידנית לאחר כל סגירה'}</option>
+                 <option value='auto'>{locale==='en'?'Automatic only':'אוטומטי בלבד'}</option>
+               </select>
+               <h3>{locale==='en'?'Second player':'שחקן 2'}</h3>
+               <label className='form-field' htmlFor='local-guest-name'>{locale==='en'?'Second player name':'שם שחקן 2'}</label>
+               <input className='form-input' id='local-guest-name' maxLength={32} value={guestName}
+                 onChange={e=>setGuestName(e.target.value.slice(0,32))}/>
+               <div className='form-field'>{locale==='en'?'Player 2 capture color':'צבע הכיבוש של שחקן 2'}</div>
+               <div className='swatches' role='group' aria-label={locale==='en'?'Player 2 color':'צבע שחקן 2'}>
+                 {palettes.map(c=><button key={'guest-'+c} type='button' className='swatch'
+                    style={{background:c}} aria-label={c} aria-pressed={guestColor===c} onClick={()=>setGuestColor(c)}/>) }
+               </div>
+               <div className='form-field'>{locale==='en'?'Player 2 icon':'סמל שחקן 2'}</div>
+               <div className='avatar-row' role='group' aria-label={locale==='en'?'Player 2 avatar':'סמל שחקן 2'}>
+                 {avatars.map(a=><button type='button' key={'guest-icon-'+a} className='avatar-choice'
+                   aria-label={a} aria-pressed={guestAvatar===a} onClick={()=>setGuestAvatar(a)}>{a}</button>)}
+               </div>
+             </>}
+             {mode!=='local' && <p className='smalltxt'>{locale==='en'?'Online and bot ownership is verified by the game engine to keep scores fair.':'במשחק מחובר או מול המחשב הבעלות נקבעת לפי מנוע המשחק כדי לשמור על ניקוד הוגן.'}</p>}
+           </section>
+           <label className='form-field' style={{ display: 'flex', gap: 10, alignItems: 'center' }}><input type='checkbox' style={{ width: 18, height: 18, accentColor: '#FFDE85' }} checked={remember} onChange={e => setRemember(e.target.checked)} /> {tr("זכור את הבחירות שלי תמיד")}</label>
           <button className='glass-button' style={{ marginTop: 13 }} disabled={!validName} onClick={() => void saveProfile()}>{tr("שמור שם, צבע טוש ועיצוב אישי")}</button>
         </section>
         <section className='glass-panel'>
@@ -1370,6 +1403,28 @@ export default function TriviaGame() {
       </aside>
     </div>
 
+    {capturePending && !remote && <div className='quiz-overlay' role='presentation'>
+      <section className='capture-owner-dialog' role='dialog' aria-modal='true'
+        aria-label={locale==='en'?'Who captured this square?':'מי סגר את הריבוע?'}>
+        <span className='capture-owner-eyebrow'>{locale==='en'?'CAPTURE COMPLETE':'כיבוש הריבוע'}</span>
+        <h2>{locale==='en'?'Who captured this square?':'מי סגר את הריבוע?'}</h2>
+        <p>{locale==='en'?'Choose the player who gets the point.':'בחר למי לשייך את הריבוע והנקודה.'}</p>
+        <div className='capture-owner-buttons'>
+          <button type='button' className='capture-owner-choice' autoFocus onClick={()=>chooseCaptureOwner('host')}>
+            <span className='capture-owner-symbol' style={{borderColor:color}}>{avatar}</span>
+            <strong>{name || (locale==='en'?'Player 1':'שחקן 1')}</strong>
+            <span className='capture-owner-caption'>{locale==='en'?'Player 1':'שחקן 1'}</span>
+          </button>
+          <button type='button' className='capture-owner-choice' onClick={()=>chooseCaptureOwner('guest')}>
+            <span className='capture-owner-symbol' style={{borderColor:guestColor}}>{guestAvatar}</span>
+            <strong>{guestName || (locale==='en'?'Player 2':'שחקן 2')}</strong>
+            <span className='capture-owner-caption'>{locale==='en'?'Player 2':'שחקן 2'}</span>
+          </button>
+        </div>
+        {capturePending.from==='edit' && <button type='button' className='glass-button capture-cancel'
+          onClick={()=>setCapturePending(null)}>{locale==='en'?'Cancel':'ביטול'}</button>}
+      </section>
+    </div>}
     {showTutorial && <div className='quiz-overlay' role='presentation'>
       <section id='tutorial-modal' tabIndex={-1} className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('הסבר משחק')}
         onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();dismissTutorial()}}}
