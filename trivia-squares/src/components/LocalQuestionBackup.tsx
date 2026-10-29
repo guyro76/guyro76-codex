@@ -50,8 +50,8 @@ export default function LocalQuestionBackup({locale,onRestored}:{locale:ActiveLo
       setStatus(en?'This is not a valid Trivia Squares history backup.':'זה אינו קובץ גיבוי תקין של היסטוריית השאלות.');
     }finally{if(input.current)input.current.value='';}
   }
-  return <section className='local-history-backup' aria-label={en?'Guest history backup':'גיבוי היסטוריית אורח'}>
-    <h3>{en?'Save your question history':'שמור את היסטוריית השאלות'}</h3>
+  return <details className='local-history-backup'>
+    <summary>{en?'Question history backup & restore':'גיבוי ושחזור היסטוריית שאלות'}</summary>
     <p>{en
       ?'Without an account, clearing browser data erases the local history. Download a backup and restore it here later, or sign in to sync across devices.'
       :'ללא חשבון, מחיקת נתוני הדפדפן תמחק גם את ההיסטוריה המקומית. אפשר להוריד גיבוי ולשחזר אותו כאן, או להתחבר כדי לסנכרן בין מכשירים.'}</p>
@@ -62,5 +62,5 @@ export default function LocalQuestionBackup({locale,onRestored}:{locale:ActiveLo
         onChange={event=>void importBackup(event.target.files?.[0])} aria-label={en?'Choose history backup file':'בחר קובץ גיבוי היסטוריה'} />
     </div>
     <p role='status' aria-live='polite'>{status}</p>
-  </section>;
+  </details>;
 }
