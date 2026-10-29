@@ -334,7 +334,7 @@ export default function TriviaGame() {
       const nextRun='local-'+crypto.randomUUID();
       setStageRunId(nextRun);
       try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
-      setRemote(null); setLocal(empty(size); setLocalFreeze({host:false,guest:false}); setMessage('משחק מקומי לכל שני שחקנים, עם יתרות זמן נפרדות לכל אחד.');
+      setRemote(null); setLocal(empty(size)); setLocalFreeze({host:false,guest:false}); setMessage('משחק מקומי לכל שני שחקנים, עם יתרות זמן נפרדות לכל אחד.');
     } else if (client && user && legalAccepted) {
       const {error:profileError}=await client.rpc('trivia_save_appearance',{
         p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
