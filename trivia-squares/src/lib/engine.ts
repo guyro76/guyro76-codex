@@ -58,3 +58,42 @@ export function repairSoloBoard<T extends BoardState>(board:T):T{
  const owners=Object.fromEntries(Object.entries(board.owners).map(([key,owner])=>[key,owner==='guest'?'host':owner])) as Record<string,Side>;
  return {...board,solo:true,turn:'host',edges,owners,scores:{...board.scores,host:board.scores.host+board.scores.guest,guest:0}};
 }
+
+/** Premium prize: at most one EXTRA unclaimed square adjacent to a square
+ * completed by the current line. This cannot steal or silently claim other
+ * cells, and cannot move the player into the next campaign stage.
+ * The last square of a board has no neighbor: it remains a single capture.
+ */
+export function claimPremiumNeighbor<T extends BoardState>(
+ board:T,sourceSquares:readonly string[],owner:Side
+):{board:T;claimed:string|null}{
+ if(!sourceSquares.length||Object.keys(board.owners).length>=board.rows*board.cols)
+   return {board,claimed:null};
+ const candidates=new Set<string>();
+ for(const source of sourceSquares){
+   const [r,c]=source.split('-').map(Number);
+   if(!Number.isInteger(r)||!Number.isInteger(c))continue;
+   for(const [dr,dc] of [[0,-1],[0,1],[-1,0],[1,0]]){
+     const nr=r+dr,nc=c+dc,key=nr+'-'+nc;
+     if(nr>=0&&nc>=0&&nr<board.rows&&nc<board.cols&&!board.owners[key])candidates.add(key);
+   }
+ }
+ for(const key of candidates){
+   const [r,c]=key.split('-').map(Number);
+   const edges={...board.edges};
+   for(const edge of ['h-'+r+'-'+c,'h-'+(r+1)+'-'+c,'v-'+r+'-'+c,'v-'+r+'-'+(c+1)])
+     if(!edges[edge])edges[edge]=owner;
+   const completed:string[]=[];
+   for(let row=0;row<board.rows;row++)for(let col=0;col<board.cols;col++){
+     const square=row+'-'+col;
+     if(board.owners[square])continue;
+     if(edges['h-'+row+'-'+col]&&edges['h-'+(row+1)+'-'+col]&&
+        edges['v-'+row+'-'+col]&&edges['v-'+row+'-'+(col+1)])completed.push(square);
+   }
+   if(completed.length!==1||completed[0]!==key)continue;
+   const owners={...board.owners,[key]:owner};
+   const scores={...board.scores,[owner]:board.scores[owner]+1};
+   return {board:{...board,edges,owners,scores},claimed:key};
+ }
+ return {board,claimed:null};
+}
