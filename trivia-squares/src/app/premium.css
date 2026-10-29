@@ -971,44 +971,75 @@ main.trivia-app .answer-feedback-continue{
  main.trivia-app .answer-feedback-card,main.trivia-app .feedback-answer{animation:none!important;transition:none!important}
 }
 
-/* Five premium, user-controlled skins. Theme colors are cosmetic only: the
-   current board, ownership and question history never change on skin switch.
-   World scenes are kept as a textured inner layer for each campaign chapter. */
-main.trivia-app.skin-royal{
- --skin-border:#DDBCEB;--skin-contrast:#F7DAA2;
- --skin-surface:#261D53;--skin-panel:#403167;--skin-secondary:#9B70D9;
- --backdrop:radial-gradient(ellipse at 14% 8%,#7E4C9C88,transparent 49%),
- radial-gradient(ellipse at 85% 89%,#9F773E55,transparent 50%),
- linear-gradient(160deg,#302452,#130F31);
+/* Six high-contrast, independent visual systems. Switching skins never
+   changes saved board state, scores, question history or campaign world. */
+main.trivia-app.skin-regular{
+ --skin-border:#B7C9F0;--skin-contrast:#FFE095;--skin-surface:#152650;
+ --skin-panel:#293E75;--skin-secondary:#4262A1;
+ --backdrop:radial-gradient(ellipse at 9% 7%,#3B5C9C6F,transparent 47%),
+ radial-gradient(ellipse at 91% 91%,#B5A16A36,transparent 50%),
+ linear-gradient(155deg,#1A2B58,#0F1A3F);
 }
-main.trivia-app.skin-ocean{
- --skin-border:#A9F5F2;--skin-contrast:#A6F7EB;
- --skin-surface:#07374B;--skin-panel:#125973;--skin-secondary:#247A9E;
- --backdrop:radial-gradient(ellipse at 7% 6%,#26ADB588,transparent 49%),
- radial-gradient(ellipse at 87% 85%,#74DDE26B,transparent 55%),
- linear-gradient(165deg,#0C5670,#06213B);
+main.trivia-app.skin-urban{
+ --skin-border:#9AB5B8;--skin-contrast:#FFC98C;--skin-surface:#1A2932;
+ --skin-panel:#344751;--skin-secondary:#416E7D;
+ --backdrop:repeating-linear-gradient(90deg,transparent 0 56px,#FFFFFF07 57px 58px,transparent 59px 110px),
+ radial-gradient(circle at 9% 10%,#7AB0B955,transparent 46%),
+ linear-gradient(145deg,#283A46,#0C1B27);
 }
-main.trivia-app.skin-neon{
- --skin-border:#F9B6F6;--skin-contrast:#7DFFED;
- --skin-surface:#111334;--skin-panel:#30225A;--skin-secondary:#B34DCA;
- --backdrop:radial-gradient(circle at 11% 10%,#CF4DE170,transparent 43%),
- radial-gradient(circle at 88% 80%,#00DDBD5E,transparent 50%),
- linear-gradient(135deg,#111235,#0C0C26);
+main.trivia-app.skin-vintage{
+ --skin-border:#D4BB93;--skin-contrast:#FBE5BE;--skin-surface:#4B342D;
+ --skin-panel:#72534A;--skin-secondary:#8E6E52;
+ --backdrop:repeating-linear-gradient(30deg,#ECD7A608 0 2px,transparent 3px 20px),
+ radial-gradient(ellipse at 20% 10%,#D0A87A6B,transparent 50%),
+ linear-gradient(155deg,#62453B,#2E2426);
 }
-main.trivia-app.skin-stone{
- --skin-border:#F6DCC0;--skin-contrast:#FFE4BB;
- --skin-surface:#513849;--skin-panel:#74516B;--skin-secondary:#BD8E9B;
- --backdrop:radial-gradient(ellipse at 16% 13%,#CAA48B99,transparent 48%),
- radial-gradient(ellipse at 89% 81%,#E2BEA266,transparent 52%),
- linear-gradient(150deg,#66485C,#332A48);
+main.trivia-app.skin-retro{
+ --skin-border:#85E5CC;--skin-contrast:#FFC566;--skin-surface:#24234B;
+ --skin-panel:#474177;--skin-secondary:#E47978;
+ --backdrop:repeating-linear-gradient(0deg,transparent 0 23px,#8FFFE30F 24px 25px),
+ repeating-linear-gradient(90deg,transparent 0 23px,#8FFFE30C 24px 25px),
+ radial-gradient(ellipse at 13% 9%,#E5768980,transparent 45%),
+ linear-gradient(145deg,#39316C,#161834);
 }
-main.trivia-app.skin-forest{
- --skin-border:#A8E6C4;--skin-contrast:#FFE4A2;
- --skin-surface:#173E37;--skin-panel:#296459;--skin-secondary:#4F9A73;
- --backdrop:radial-gradient(ellipse at 18% 11%,#71BF8F70,transparent 48%),
- radial-gradient(ellipse at 90% 86%,#B69D4966,transparent 47%),
- linear-gradient(145deg,#174837,#0A2928);
+main.trivia-app.skin-pop{
+ --skin-border:#FFF0A5;--skin-contrast:#FFE868;--skin-surface:#6F226D;
+ --skin-panel:#B52F8E;--skin-secondary:#3D85E1;
+ --backdrop:radial-gradient(circle at 24px 24px,#FFFFFF16 0 3px,transparent 4px) 0 0/34px 34px,
+ radial-gradient(ellipse at 91% 7%,#FFCE4E9E,transparent 42%),
+ radial-gradient(ellipse at 9% 85%,#4B9CE899,transparent 48%),
+ linear-gradient(135deg,#D83D8A,#702A9B 66%,#254B9B);
 }
+main.trivia-app.skin-future{
+ --skin-border:#F98ABF;--skin-contrast:#FFA55A;--skin-surface:#250C51;
+ --skin-panel:#4D1B83;--skin-secondary:#EB5F9B;
+ --backdrop:
+ radial-gradient(circle at 7% 8%,#FF702A93 0,transparent 25%),
+ radial-gradient(ellipse at 86% 12%,#FE3A9A87,transparent 39%),
+ radial-gradient(ellipse at 68% 91%,#8A42F7AA,transparent 50%),
+ repeating-linear-gradient(145deg,transparent 0 32px,#F5A5FF0A 33px 34px,transparent 35px 67px),
+ linear-gradient(145deg,#2E0A60 3%,#511080 46%,#19113E 100%);
+}
+main.trivia-app.skin-urban .hero h1{letter-spacing:-.055em;text-shadow:0 6px 18px #030B1280}
+main.trivia-app.skin-vintage .hero h1{font-family:Georgia,'Noto Serif Hebrew',serif;letter-spacing:-.035em;text-shadow:0 3px 1px #26151070}
+main.trivia-app.skin-retro .hero h1{letter-spacing:.005em;text-shadow:4px 4px 0 #1DAEAE,0 12px 25px #10143F}
+main.trivia-app.skin-pop .hero h1{text-shadow:3px 4px 0 #522A91,0 0 30px #FFDCC7}
+main.trivia-app.skin-future .hero h1{text-shadow:0 0 14px #EE6FC9A0,0 0 42px #FD802770}
+main.trivia-app.skin-future .glass-panel,
+main.trivia-app.skin-future .quiz-card:not(.answer-feedback-card){
+ box-shadow:0 20px 55px #14043C8A,0 0 17px #ED70BE26,inset 0 1px 0 #FFFFFF52!important;
+ border-color:#F69FCE!important;
+}
+main.trivia-app.skin-future .gold-button{
+ background:linear-gradient(110deg,#FFC477,#FF8C36 52%,#F65D9C)!important;
+ box-shadow:0 8px 25px #FF652E55,0 2px 0 #FFF4D066 inset!important;
+ color:#2D0A43!important;
+}
+main.trivia-app.skin-future .skin-palette-trigger{
+ border-color:#FF9DC8;box-shadow:0 0 22px #EA5BC555,inset 0 1px 0 #FFFFFF32;
+}
+main.trivia-app.skin-pop .choice[aria-pressed=true]{background:#FFE36A!important;color:#48205F!important}
+main.trivia-app.skin-retro .glass-button{border-color:#76F3DB}
 main.trivia-app[class*='skin-'] .hero,
 main.trivia-app[class*='skin-'] .glass-panel,
 main.trivia-app[class*='skin-'] .quiz-card:not(.answer-feedback-card){
