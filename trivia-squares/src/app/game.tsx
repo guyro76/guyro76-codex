@@ -66,6 +66,19 @@ const skins:{id:SkinId;he:string;en:string;colors:[string,string,string]}[]=[
  {id:'future',he:'עתידני AI · סגול כתום',en:'AI Future · Purple & Orange',colors:['#42117E','#F15A24','#E946CC']}
 ];
 
+const localSkinLabels:Record<'ru'|'fr'|'ar',Record<SkinId,string>>={
+ ru:{regular:'Оригинал',urban:'Городской',vintage:'Винтаж',retro:'Ретро-аркада',pop:'Поп-арт',future:'ИИ: фиолетовый и оранжевый'},
+ fr:{regular:'Original',urban:'Urbain',vintage:'Vintage',retro:'Rétro arcade',pop:'Pop art',future:'IA : violet et orange'},
+ ar:{regular:'الأصلي',urban:'حضري',vintage:'كلاسيكي عتيق',retro:'أركيد قديم',pop:'فن البوب',future:'ذكاء اصطناعي: بنفسجي وبرتقالي'}
+};
+const localeExtras:Record<ActiveLocale,{skin:string;stages:string;completed:string;footer:string}>={
+ he:{skin:'6 סקינים לבחירה · ההתקדמות נשמרת',stages:'הרפתקה: 30 שלבים',completed:'הושלמו:',footer:'© 2026 תוכנן ובוצע ע״י גיא רוזנברג · כל הזכויות שמורות ©'},
+ en:{skin:'6 skins to choose from · progress is preserved',stages:'Adventure: 30 stages',completed:'Completed:',footer:'© 2026 Designed and developed by Guy Rosenberg · All rights reserved ©'},
+ ru:{skin:'6 тем оформления · прогресс сохраняется',stages:'Приключение: 30 уровней',completed:'Завершено:',footer:'© 2026 Разработка и дизайн: Гай Розенберг · Все права защищены ©'},
+ fr:{skin:'6 thèmes au choix · progression sauvegardée',stages:'Aventure : 30 niveaux',completed:'Terminés :',footer:'© 2026 Conçu et développé par Guy Rosenberg · Tous droits réservés ©'},
+ ar:{skin:'6 مظاهر للاختيار · يتم حفظ التقدم',stages:'المغامرة: 30 مرحلة',completed:'المكتملة:',footer:'© 2026 تصميم وتطوير غاي روزنبرغ · جميع الحقوق محفوظة ©'}
+};
+
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
 const avatars = ['🦊', '🦁', '🐼', '🐲', '🦄', '👑', '🚀', '⭐'];
 const worlds = [
@@ -1110,8 +1123,8 @@ export default function TriviaGame() {
   };
   const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
   const displayWorld={
-    name:locale==='en'?selectedStage.nameEn:selectedStage.nameHe,
-    subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
+    name:locale==='he'?selectedStage.nameHe:locale==='en'?selectedStage.nameEn:translatedWorlds[locale][Math.max(0,worlds.findIndex(w=>w.slug===selectedStage.theme))].name,
+    subtitle:locale==='he'?selectedStage.subtitleHe:locale==='en'?selectedStage.subtitleEn:translatedWorlds[locale][Math.max(0,worlds.findIndex(w=>w.slug===selectedStage.theme))].subtitle
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
   return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin} style={css.main} dir={localeDirection(locale)} lang={locale}>
@@ -1248,12 +1261,12 @@ export default function TriviaGame() {
         <span className='skin-palette-icon' aria-hidden='true'>🎨</span><span>{tr('עיצוב המשחק')}</span>
       </button>
       {skinPickerOpen&&<section id='skin-picker-panel' className='skin-picker-panel' aria-label={tr('בחר סקין למשחק')}>
-        <div className='skin-picker-title'>{locale==='he'?'6 סקינים לבחירה · ההתקדמות נשמרת':'6 skins to choose from · progress is preserved'}</div>
+        <div className='skin-picker-title'>{localeExtras[locale].skin}</div>
         <div className='skin-picker-options' role='group' aria-label={tr('ערכות עיצוב')}>
           {skins.map(theme=><button type='button' key={theme.id} className='skin-picker-item'
             aria-pressed={skin===theme.id} onClick={()=>{setSkin(theme.id);setSkinPickerOpen(false)}}>
             <span className='skin-picker-swatch' aria-hidden='true' style={{background:`linear-gradient(135deg,${theme.colors.join(',')})`}}/>
-            <strong>{locale==='he'?theme.he:theme.en}</strong>
+            <strong>{locale==='he'?theme.he:locale==='en'?theme.en:localSkinLabels[locale][theme.id]}</strong>
             {skin===theme.id&&<span className='skin-picker-selected' aria-hidden='true'>✓</span>}
           </button>)}
         </div>
@@ -1294,8 +1307,8 @@ export default function TriviaGame() {
 
     <section className='campaign-section' aria-label={locale==='en'?'Thirty sequential stages':'שלושים שלבים לפי סדר'}>
       <div className='campaign-heading'>
-        <h2>{locale==='en'?'Adventure: 30 stages':'הרפתקה: 30 שלבים'}</h2>
-        <span>{locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
+        <h2>{localeExtras[locale].stages}</h2>
+        <span>{localeExtras[locale].completed} {completedStage} / {STAGE_COUNT}</span>
       </div>
       <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={30} aria-valuenow={completedStage}
            aria-label={locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
@@ -1726,11 +1739,7 @@ export default function TriviaGame() {
     <LocalQuestionBackup locale={locale} onRestored={entries=>{for(const item of entries)seenQuestionTexts.current.add(item)}}/>
     <footer className='footer'><a href={locale==='en'?'/en/privacy':'/privacy'}>{tr("פרטיות")}</a><a href={locale==='en'?'/en/terms':'/terms'}>{tr("תנאי שימוש")}</a><a href={locale==='en'?'/en/cookies':'/cookies'}>{tr("עוגיות ואחסון")}</a><a href={locale==='en'?'/en/accessibility':'/accessibility'}>{tr("נגישות")}</a><a href='/account/privacy'>{tr("המידע שלי")}</a></footer>
     <div id='app-footer' className='game-author-credit' role='contentinfo'>
-      <span className='game-author-credit-copy' dir={locale==='en'?'ltr':'rtl'}>
-        {locale==='en'
-         ? '© 2026 Designed and developed by Guy Rosenberg · All rights reserved ©'
-         : '© 2026 תוכנן ובוצע ע״י גיא רוזנברג · כל הזכויות שמורות ©'}
-      </span>
+      <span className='game-author-credit-copy' dir={localeDirection(locale)}>{localeExtras[locale].footer}</span>
     </div>
   </main>;
 }

@@ -2,8 +2,19 @@
 
 import {useCallback,useEffect,useState} from 'react';
 import type {SupabaseClient} from '@supabase/supabase-js';
-import type {ActiveLocale} from '../lib/i18n';
+import {translate as translateUi,localeDirection,type ActiveLocale} from '../lib/i18n';
 import {cardById,localStageCard,readLocalAlbum,saveLocalAlbum,stageWords,type StageCard,type LocalEarned} from '../lib/stageRewards';
+
+const localizedPuzzleWords:Record<'ru'|'fr'|'ar',Record<number,{answer:string;hint:string}>>={
+ ru:{3:{answer:'яблоко',hint:'Фрукт из сада'},4:{answer:'алмаз',hint:'Драгоценный камень'},5:{answer:'облака',hint:'Плывут по небу'},6:{answer:'галактика',hint:'Миллиарды звёзд'}},
+ fr:{3:{answer:'pomme',hint:'Un fruit du verger'},4:{answer:'diamant',hint:'Une pierre précieuse'},5:{answer:'nuages',hint:'Flottent dans le ciel'},6:{answer:'galaxie',hint:'Un ensemble d’étoiles'}},
+ ar:{3:{answer:'تفاحة',hint:'فاكهة من البستان'},4:{answer:'ألماس',hint:'حجر كريم لامع'},5:{answer:'غيوم',hint:'تطفو في السماء'},6:{answer:'مجرة',hint:'مجموعة هائلة من النجوم'}}
+};
+const localizedRewardWords:Record<'ru'|'fr'|'ar',Record<string,string>>={
+ ru:{'🔠 נחש את המילה':'🔠 Угадай слово','🎡 גלגל ההפתעות':'🎡 Колесо призов','פרס וירטואלי, ללא תשלום':'Виртуальный приз бесплатно','רמז:':'Подсказка:','מה המילה?':'Какое слово?','בדוק מילה ✨':'Проверить ✨','סובב את הגלגל ✨':'Крутить колесо ✨','המשך לשלב הבא ←':'Следующий уровень →','🎉 הפרס שלך:':'🎉 Ваш приз:','קלפים':'карт'},
+ fr:{'🔠 נחש את המילה':'🔠 Devinez le mot','🎡 גלגל ההפתעות':'🎡 Roue des prix','פרס וירטואלי, ללא תשלום':'Prix virtuel gratuit','רמז:':'Indice :','מה המילה?':'Quel mot ?','בדוק מילה ✨':'Vérifier ✨','סובב את הגלגל ✨':'Tourner la roue ✨','המשך לשלב הבא ←':'Niveau suivant →','🎉 הפרס שלך:':'🎉 Votre prix :','קלפים':'cartes'},
+ ar:{'🔠 נחש את המילה':'🔠 خمن الكلمة','🎡 גלגל ההפתעות':'🎡 عجلة الجوائز','פרס וירטואלי, ללא תשלום':'جائزة افتراضية مجانية','רמז:':'تلميح:','מה המילה?':'ما الكلمة؟','בדוק מילה ✨':'تحقق ✨','סובב את הגלגל ✨':'أدر العجلة ✨','המשך לשלב הבא ←':'المرحلة التالية ←','🎉 הפרס שלך:':'🎉 جائزتك:','קלפים':'بطاقات'}
+};
 
 type RewardProps={
   stageKey:string;
@@ -93,14 +104,19 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     }
     return()=>{alive=false};
   },[stageKey,worldSize,remoteMatchId,client,onSound]);
-  const translate=(he:string,en:string)=>locale==='en'?en:he;
+  const translate=(he:string,en:string)=>{
+    if(locale==='he')return he;
+    if(locale==='en')return en;
+    const translated=translateUi(locale,he);
+    return localizedRewardWords[locale][he]|| (translated===he?en:translated);
+  };
   const wordsEnglish:Record<number,{answer:string;hint:string}>={
     3:{answer:'apple',hint:'A fruit from an orchard tree'},
     4:{answer:'diamond',hint:'A sparkling precious stone'},
     5:{answer:'clouds',hint:'They float in the sky and bring rain'},
     6:{answer:'galaxy',hint:'A vast collection of stars'}
   };
-  const word=locale==='en'?(wordsEnglish[worldSize]||wordsEnglish[3]):(stageWords[worldSize]||stageWords[3]);
+  const word=locale==='he'?(stageWords[worldSize]||stageWords[3]):locale==='en'?(wordsEnglish[worldSize]||wordsEnglish[3]):(localizedPuzzleWords[locale][worldSize]||localizedPuzzleWords[locale][3]);
   const cardTranslations:Record<string,[string,string]>={
    'world-3-portrait':['Leonardo da Vinci','Renaissance artist and inventor'],
    'world-4-portrait':['Marie Curie','Pioneering researcher of radioactivity'],
@@ -117,13 +133,13 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   };
   const displayCard=(c:StageCard):StageCard=>{
     const texts=cardTranslations[c.id];
-    if(locale!=='en'||!texts)return c;
+    if(locale==='he'||!texts)return c;
     return {...c,title:texts[0],subtitle:texts[1],glyph:c.kind==='letter'?texts[0].slice(-1):c.glyph,
       rarity:c.rarity,artistCredit:'Original artwork created for Trivia Squares'};
   };
   const shownCard=card?displayCard(card):null;
   const showPrize=(value:string)=>{
-    if(locale!=='en')return value;
+    if(locale==='he')return value;
     const translations:Record<string,string>={
       '10 קרדיטים':'10 credits','15 קרדיטים':'15 credits','5 פירות':'5 fruit',
       '2 פירות':'2 fruit','יהלום אחד':'1 gem','קמע זמן אחד':'1 time charm'
@@ -174,7 +190,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
           <p><strong>{translate('רמז:','Hint:')}</strong> {word.hint}</p>
           <p className='lumen-letter-slots' aria-label={locale==='en'?'Word with '+word.answer.length+' letters':'למילה '+word.answer.length+' אותיות'}>{Array.from({length:word.answer.length},(_,i)=><span key={i}>{guess[i]||'_'}</span>)}</p>
           <label htmlFor='lumen-word-guess'>{translate('מה המילה?','What is the word?')}</label>
-          <input id='lumen-word-guess' type='text' dir={locale==='en'?'ltr':'rtl'} maxLength={word.answer.length+2} value={guess} onChange={e=>setGuess(e.target.value)} autoComplete='off'/>
+          <input id='lumen-word-guess' type='text' dir={localeDirection(locale)} maxLength={word.answer.length+2} value={guess} onChange={e=>setGuess(e.target.value)} autoComplete='off'/>
           <button className='lumen-cta' type='button' onClick={()=>void finish('word')} disabled={playing||guess.trim().length===0}>{translate('בדוק מילה ✨','Check word ✨')}</button>
         </div>}
         {game==='wheel'&&!played&&<div className='lumen-wheel-game'>
