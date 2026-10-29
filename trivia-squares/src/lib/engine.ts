@@ -7,6 +7,7 @@ export type BoardState = {
   edges: Record<string, Side>;
   owners: Record<string, Side>;
   scores: Record<Side, number>;
+  solo?: boolean;
 };
 
 export function validEdge(board: BoardState, value: string): boolean {
@@ -44,4 +45,23 @@ export function repairSoloBoard<T extends BoardState>(board:T):T {
   const edges=Object.fromEntries(Object.entries(board.edges).map(([key])=>[key,'host' as Side]));
   const owners=Object.fromEntries(Object.entries(board.owners).map(([key])=>[key,'host' as Side]));
   return {...board,turn:'host',edges,owners,scores:{...board.scores,host:Object.keys(owners).length,guest:0,bot:0}};
+}
+
+/** Generic placeholders are never valid opponents. An empty second-player
+ * field means a solo game; single player cannot surrender a turn. */
+export function hasNamedSecondPlayer(value:unknown,hostName=''):boolean{
+ if(typeof value!=='string')return false;
+ const name=value.trim();
+ return name.length>=2 && !/^(?:שחקן\s*(?:2|שני|ב)|player\s*(?:2|two)|second\s*player)$/iu.test(name)
+  && name.toLocaleLowerCase()!==hostName.trim().toLocaleLowerCase();
+}
+
+/** Repair historic solo saves without resetting edges or the board.
+ * Only call when no real second player was configured. */
+export function repairSoloBoard<T extends BoardState>(board:T):T{
+ if(board.solo===true && board.turn==='host' && board.scores.guest===0 &&
+  !Object.values(board.owners).includes('guest') && !Object.values(board.edges).includes('guest'))return board;
+ const edges=Object.fromEntries(Object.entries(board.edges).map(([key,owner])=>[key,owner==='guest'?'host':owner])) as Record<string,Side>;
+ const owners=Object.fromEntries(Object.entries(board.owners).map(([key,owner])=>[key,owner==='guest'?'host':owner])) as Record<string,Side>;
+ return {...board,solo:true,turn:'host',edges,owners,scores:{...board.scores,host:board.scores.host+board.scores.guest,guest:0}};
 }
