@@ -812,7 +812,7 @@ export default function TriviaGame() {
       {worlds.map((w, i) => <button
         key={w.slug}
         type='button'
-        className='world-choice'
+        className={'world-choice world-card-'+w.slug}
         data-selected={w.size === state.rows}
         onClick={() => chooseWorld(w.size)}
         data-world={w.slug}
