@@ -8,6 +8,7 @@ import {cardById,localStageCard,readLocalAlbum,saveLocalAlbum,stageWords,type St
 type RewardProps={
   stageKey:string;
   worldSize:number;
+  stageNumber:number;
   locale:ActiveLocale;
   remoteMatchId?:string;
   client:SupabaseClient|null;
@@ -53,7 +54,7 @@ function Illustration({card}:{card:StageCard}){
   </svg>;
 }
 
-export default function StageReward({stageKey,worldSize,locale,remoteMatchId,client,onAdvance,onLocalPrize,onRemotePrize,onSound}:RewardProps){
+export default function StageReward({stageKey,worldSize,stageNumber,locale,remoteMatchId,client,onAdvance,onLocalPrize,onRemotePrize,onSound}:RewardProps){
   const [card,setCard]=useState<StageCard|null>(null);
   const [playing,setPlaying]=useState(false);
   const [played,setPlayed]=useState(false);
@@ -156,7 +157,7 @@ export default function StageReward({stageKey,worldSize,locale,remoteMatchId,cli
     <p className='lumen-stage-subtitle'>{translate('הרווחת קלף ייחודי לשלב הזה. הוא נכנס לאלבום שלך ואינו נעלם.','You earned a unique card for this stage. It stays in your collection.')}</p>
     <div className='lumen-reveal-layout'>
       <article className={'lumen-collectible-card kind-'+card.kind}>
-        <div className='lumen-card-top'><span>✦ {locale==='en'?card.rarity==='אגדי'?'Legendary':card.rarity==='נדיר'?'Rare':'Special':card.rarity}</span><span>WORLD {String(worldSize-2).padStart(2,'0')}</span></div>
+        <div className='lumen-card-top'><span>✦ {locale==='en'?card.rarity==='אגדי'?'Legendary':card.rarity==='נדיר'?'Rare':'Special':card.rarity}</span><span>{locale==='en'?'STAGE':'שלב'} {String(stageNumber).padStart(2,'0')}</span></div>
         <Illustration card={shownCard||card}/>
         <div className='lumen-card-copy'><h3>{shownCard?.title||card.title}</h3><p>{shownCard?.subtitle||card.subtitle}</p></div>
         <div className='lumen-card-bottom'>LUMEN COLLECTION · 01/01 <span>✦</span></div>
@@ -184,7 +185,8 @@ export default function StageReward({stageKey,worldSize,locale,remoteMatchId,cli
         </div>}
         {played && <div className='lumen-prize-won' role='status' aria-live='polite'><strong>{translate('🎉 הפרס שלך:','🎉 Your prize:')} {showPrize(prize)}</strong><span>{translate('נשמר באוסף המשחק שלך.','Saved to your game collection.')}</span></div>}
         {notice&&<p role='alert'>{notice}</p>}
-        <button type='button' className='lumen-next-button' onClick={onAdvance}>{worldSize<6?translate('המשך לעולם הבא ←','Continue to next world →'):translate('שחק שוב וגלֵה קלפים נוספים ↻','Play again for more cards ↻')}</button>
+        {stageNumber<30 ? <button type='button' className='lumen-next-button' onClick={onAdvance}>{translate('המשך לשלב הבא ←','Continue to next stage →')}</button>
+         : <p className='lumen-campaign-complete'>{translate('🏆 השלמת את כל 30 השלבים — אלוף הטריוויה!','🏆 You completed all 30 stages — Trivia Champion!')}</p>}
         <button type='button' className='lumen-album-trigger' onClick={()=>setAlbumExpanded(v=>!v)} aria-expanded={albumExpanded}>{translate('📚 האלבום שלי ·','📚 My album ·')} {album.length} {translate('קלפים','cards')}</button>
         {albumExpanded&&<div className='lumen-album-grid'>{[...album].reverse().slice(0,12).map(item=>{
           const found=cardById(item.cardId);
