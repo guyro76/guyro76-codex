@@ -620,3 +620,43 @@ main.trivia-app .tutorial-demo-label{margin:9px 0 12px;padding:10px 12px;border:
 
 /* Saved identity must remain readable over the colorful hero. */
 main.trivia-app .player-name-autosaved{display:block;margin-top:8px;padding:7px 10px;border-radius:10px;background:#173F49;color:#E1FFF5;font-size:13px;font-weight:900;border:1px solid #8CE7BE;text-align:start}
+
+/* A deliberately visible game utility strip, not a decorative placeholder. */
+main.trivia-app .game-timebar{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,.8fr);
+ align-items:center;gap:15px;padding:15px 18px;margin:0 0 18px;
+ background:linear-gradient(115deg,#183C68,#244577);
+ border:2px solid #A0D6FA;border-radius:19px;
+ box-shadow:0 10px 28px #07153277,inset 0 2px #FFFFFF26;
+ color:#FFFFFF;backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+main.trivia-app .game-timebar>div{display:flex;flex-direction:column;align-items:flex-start;text-align:start;gap:4px;min-width:0}
+main.trivia-app .game-status-kicker{font-size:11px;letter-spacing:.02em;font-weight:950!important;color:#FFE39B}
+main.trivia-app .game-live-clock time{font-size:clamp(23px,3vw,34px);font-weight:950!important;color:#FFFFFF}
+main.trivia-app .game-live-clock strong,
+main.trivia-app .game-live-clock small,
+main.trivia-app .game-weather-display,
+main.trivia-app .game-version strong{font-size:clamp(13px,1.6vw,18px);font-weight:950!important;color:#FFFFFF;line-height:1.4;white-space:normal}
+main.trivia-app .game-weather-display{min-height:25px}
+main.trivia-app .game-weather select{width:100%;max-width:220px;border:2px solid #8DC7F4;background:#FFFFFF;color:#172A4D;padding:7px 10px;border-radius:10px;font-size:13px;font-weight:900!important}
+main.trivia-app .game-weather-source,
+main.trivia-app .game-version a{font-size:11px;color:#C6F5FF!important;font-weight:900!important;text-underline-offset:3px}
+main.trivia-app .game-version strong{font-size:clamp(22px,3vw,31px);color:#FFE6A0!important;letter-spacing:.02em}
+main.trivia-app .game-version small{font-size:11px;color:#FFFFFF;font-weight:900!important}
+main.trivia-app .game-author-credit{
+ width:100%;max-width:800px;margin:18px auto 28px;padding:15px 20px;
+ border:2px solid #F8D995;border-radius:16px;text-align:center;
+ background:linear-gradient(125deg,#1F4970,#224273);color:#FFFFFF;
+ font-weight:950!important;font-size:clamp(13px,1.65vw,17px);
+ box-shadow:0 12px 25px #0C16365C;line-height:1.55;
+}
+@media(max-width:650px){
+ main.trivia-app .game-timebar{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px}
+ main.trivia-app .game-weather{grid-column:1 / -1;grid-row:2}
+ main.trivia-app .game-live-clock time{font-size:24px}
+ main.trivia-app .game-version strong{font-size:23px}
+}
+@media(max-width:370px){
+ main.trivia-app .game-timebar{grid-template-columns:1fr}
+ main.trivia-app .game-weather{grid-column:1;grid-row:auto}
+}
