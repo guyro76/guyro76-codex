@@ -88,8 +88,18 @@ export default function TriviaGame() {
     seenQuestionTexts.current.add(fingerprint);
     try{localStorage.setItem('trivia-question-text-history-v1',JSON.stringify([...seenQuestionTexts.current]))}catch{}
   },[]);
+  const serverHistoryCountRef=useRef<{userId:string;total:number}|null>(null);
   const syncAccountQuestionHistory=useCallback(async ():Promise<boolean>=>{
     if(!client || !user)return true;
+    const {data:stats,error:statsError}=await client.rpc('trivia_my_question_stats');
+    if(statsError||!stats)return false;
+    const total=['he','en'].reduce((count,key)=>{
+      const value=(stats as Record<string,{seen?:number}>)[key];
+      return count+Number(value?.seen||0);
+    },0);
+    if(serverHistoryCountRef.current?.userId===user.id &&
+       serverHistoryCountRef.current.total===total)return true;
+    // One count request on each start; bulk history pages only after new remote play.
     for(let page=0;page<100;page++){
       const {data,error}=await client.rpc('trivia_read_seen_question_texts',{p_page:page});
       if(error || !Array.isArray(data))return false;
@@ -97,6 +107,7 @@ export default function TriviaGame() {
         seenQuestionTexts.current.add(canonicalQuestion(text));
       if(data.length<300)break;
     }
+    serverHistoryCountRef.current={userId:user.id,total};
     try{
       localStorage.setItem('trivia-question-text-history-v1',JSON.stringify([...seenQuestionTexts.current]));
     }catch{}
