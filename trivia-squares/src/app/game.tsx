@@ -1443,6 +1443,7 @@ export default function TriviaGame() {
         ][tutorialPage])}</p>
         <div className='control-row'>
           <button id='tutorial-dismiss' className='glass-button' onClick={dismissTutorial}>{tr("דלג או סיים")}</button>
+           <button type='button' className='gold-button' onClick={dismissTutorial}>{locale==='en'?'Go to game board':'עבור ללוח המשחק'}</button>
           {tutorialPage>0 && <button className='glass-button' onClick={()=>setTutorialPage(p=>Math.max(0,p-1))}>{locale==='en'?'Back':'הקודם'}</button>}
           {tutorialPage<2 && <button className='gold-button' onClick={()=>setTutorialPage(v=>v+1)}>{tr("הבא ←")}</button>}
         </div>
