@@ -6,6 +6,7 @@ import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicCon
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawing';
 import { applyLocalAnswer } from '../lib/engine';
+import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
 import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
@@ -140,6 +141,20 @@ export default function TriviaGame() {
   const [localCharms,setLocalCharms]=useState<Record<'host'|'guest',number>>({host:0,guest:0});
   const [localFreeze,setLocalFreeze]=useState<Record<'host'|'guest',boolean>>({host:false,guest:false});
   const [name, setName] = useState('');
+  const [nameSavedOnDevice,setNameSavedOnDevice]=useState(false);
+  const [nameSyncedToAccount,setNameSyncedToAccount]=useState(false);
+  const nameEditedRef=useRef(false);
+  const lastSyncedNameRef=useRef('');
+  const updatePlayerName=(value:string)=>{
+    const next=value.slice(0,32);
+    nameEditedRef.current=true;
+    setName(next);
+    setNameSyncedToAccount(false);
+    if(validPlayerName(next)){
+      try{localStorage.setItem('trivia-player-name',normalizedPlayerName(next));setNameSavedOnDevice(true)}
+      catch{setNameSavedOnDevice(false)}
+    }else setNameSavedOnDevice(false);
+  };
   const [color, setColor] = useState('#358CFF');
   const [lineColor, setLineColor] = useState('#358CFF');
   const [avatar, setAvatar] = useState('🦊');
@@ -182,7 +197,7 @@ export default function TriviaGame() {
   const state = remote?.state || local;
   const player = user?.id && remote?.guest_id === user.id ? 'guest' : 'host';
   const onlineTurn = remote?.state.mode === 'local' || player === state.turn;
-  const validName = name.trim().length >= 2 && name.trim().length <= 32 && name.trim() !== 'שחקן';
+  const validName = validPlayerName(name) && name.length <= 32;
   const providerGoogle = Boolean(user?.app_metadata?.provider === 'google' || user?.app_metadata?.providers?.includes('google'));
   const googleName = providerGoogle ? String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim().slice(0,70) : '';
   const googlePhotoRaw = providerGoogle ? String(user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '') : '';
@@ -280,8 +295,8 @@ export default function TriviaGame() {
       try{localStorage.setItem('trivia-question-text-history-v1',JSON.stringify([...seenQuestionTexts.current]))}catch{}
       const savedRun=localStorage.getItem('trivia-stage-run-id');
       if(savedRun && /^local-[a-zA-Z0-9_-]{1,72}$/.test(savedRun))setStageRunId(savedRun);
-      const storedName=localStorage.getItem('trivia-player-name');
-      if(storedName && storedName.trim().length>=2 && storedName.trim()!=='שחקן') setName(storedName.slice(0,32));
+      const storedName=selectPlayerName(localStorage.getItem('trivia-player-name'),null);
+      if(storedName){setName(storedName);setNameSavedOnDevice(true)}
     } catch { /* storage may be disabled */ }
     try {
       setMuted(localStorage.getItem('trivia-sound-muted') === 'true');
@@ -450,9 +465,15 @@ export default function TriviaGame() {
       if (data?.profile) {
         const p = data.profile as Profile;
         if(!localStorage.getItem('trivia-language') && p.locale && isActiveLocale(p.locale))setLocale(p.locale);
-        if (p.display_name && p.display_name.trim() !== 'שחקן' && p.display_name.trim().length>=2) setName(p.display_name);
-        else if(user?.user_metadata?.full_name || user?.user_metadata?.name)
-          setName(String(user.user_metadata.full_name || user.user_metadata.name).trim().slice(0,32));
+        const accountName=selectPlayerName(p.display_name,String(user?.user_metadata?.full_name||user?.user_metadata?.name||''));
+        // Never replace a nickname typed during this visit or previously saved on this device.
+        if(!nameEditedRef.current){
+          const chosen=selectPlayerName(localStorage.getItem('trivia-player-name'),accountName);
+          if(chosen){
+            setName(chosen);
+            try{localStorage.setItem('trivia-player-name',chosen);setNameSavedOnDevice(true)}catch{}
+          }
+        }
         if (p.remember_color) {
           setColor(p.color);setAvatar(p.avatar);setRemember(true);
           if(p.line_color) setLineColor(p.line_color);
@@ -739,6 +760,24 @@ export default function TriviaGame() {
     setBusy(false);
   }
 
+  // Debounced account persistence for signed-in players. Local saving happens immediately on input.
+  useEffect(()=>{
+    if(!client || !user || !legalAccepted || !localReady || !validName || !nameEditedRef.current)return;
+    const nickname=normalizedPlayerName(name);
+    const key=user.id+':'+nickname;
+    if(lastSyncedNameRef.current===key)return;
+    const timeout=window.setTimeout(()=>{
+      void client.rpc('trivia_save_appearance',{
+        p_name:nickname,p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
+      }).then(({error})=>{
+        if(error){setNameSyncedToAccount(false);return;}
+        lastSyncedNameRef.current=key;
+        setNameSyncedToAccount(true);
+      });
+    },900);
+    return ()=>window.clearTimeout(timeout);
+  },[name,user?.id,client,legalAccepted,localReady,validName,color,lineColor,avatar,remember]);
+
   function dismissTutorial() {
     setShowTutorial(false);
     setTutorialPage(0);
@@ -748,7 +787,8 @@ export default function TriviaGame() {
   async function saveProfile() {
     if (!validName) {setMessage('שם שחקן חייב להכיל לפחות שני תווים.');return;}
     try {
-      localStorage.setItem('trivia-player-name',name.trim());
+      localStorage.setItem('trivia-player-name',normalizedPlayerName(name));
+      setNameSavedOnDevice(true);
       if(remember) localStorage.setItem('trivia-personal-choice',JSON.stringify({color,lineColor,avatar}));
       else localStorage.removeItem('trivia-personal-choice');
     } catch {}
@@ -756,6 +796,7 @@ export default function TriviaGame() {
       const { error } = await client.rpc('trivia_save_appearance', {
         p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
       });
+      if(!error){lastSyncedNameRef.current=user.id+':'+normalizedPlayerName(name);setNameSyncedToAccount(true)}
       setMessage(error ? error.message : 'הפרופיל נשמר!');
     } else setMessage('העדפות נשמרו במכשיר בלבד');
   }
@@ -1073,8 +1114,11 @@ export default function TriviaGame() {
       <div className='hero-name'>
         <label htmlFor='quick-player-name'>{tr("שם שחקן (חובה)")}</label>
         <input id='quick-player-name' type='text' minLength={2} maxLength={32} required
-          value={name} onChange={e=>setName(e.target.value)}
+          value={name} onChange={e=>updatePlayerName(e.target.value)}
           placeholder={tr('הקלד שם לפני המשחק')} autoComplete='nickname'/>
+        {validName && nameSavedOnDevice && <span className='player-name-autosaved' role='status'>
+          {locale==='en'?(nameSyncedToAccount?'Name saved on device and account':'Name saved automatically on this device'):(nameSyncedToAccount?'השם נשמר במכשיר ובחשבון':'השם נשמר אוטומטית במכשיר')}
+        </span>}
       </div>
     </header>
 
@@ -1192,7 +1236,7 @@ export default function TriviaGame() {
         {!validName && <div className='board-start-hint' role='status'>
           <label htmlFor='board-start-name'>{locale==='en'?'Enter your name to unlock marker drawing':'כדי לצייר קו ראשון, הכנס שם שחקן'}</label>
           <input id='board-start-name' type='text' minLength={2} maxLength={32} value={name}
-            placeholder={locale==='en'?'Player name':'שם השחקן'} onChange={e=>setName(e.target.value)} />
+            placeholder={locale==='en'?'Player name':'שם השחקן'} onChange={e=>updatePlayerName(e.target.value)} />
         </div>}
         {!remote && ownerMode!=='auto' && <p className='capture-tip'>{locale==='en'?'Tap any captured square to correct its owner.':'ניתן ללחוץ על ריבוע שנכבש כדי לשנות למי הוא שייך.'}</p>}
         <div className='gesture-hint'><span className='draw-icon'>✍️</span>{tr(bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח')}</div>
@@ -1281,7 +1325,7 @@ export default function TriviaGame() {
         <section className='glass-panel'>
           <h2 className='panel-title'>{tr("👑 השחקן שלי")}</h2>
           <label className='form-field' htmlFor='player-name'>{tr("כינוי שחקן")}</label>
-          <input id='player-name' className='form-input' value={name} onChange={e => setName(e.target.value)} maxLength={32} minLength={2} required placeholder={tr('הקלד שם שחקן (חובה)')} aria-required='true'/>
+          <input id='player-name' className='form-input' value={name} onChange={e => updatePlayerName(e.target.value)} maxLength={32} minLength={2} required placeholder={tr('הקלד שם שחקן (חובה)')} aria-required='true'/>
           {!validName && <p className='smalltxt' role='status' style={{color:'#FFE7A1'}}>{tr("יש למלא שם שחקן לפני ציור הקו הראשון.")}</p>}
           <div className='form-field'>{tr("צבע הכיבוש שלי")}</div>
           <div className='swatches'>{palettes.map(c => <button key={c} className='swatch' style={{ background: c }} aria-label={tr('בחר צבע ')+c} aria-pressed={color === c} onClick={() => setColor(c)} />)}</div>
