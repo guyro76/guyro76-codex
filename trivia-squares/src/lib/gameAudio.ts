@@ -7,6 +7,8 @@ export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bo
 let audio: AudioContext | null = null;
 let lastStrokeAt = -1;
 let pendingResume = false;
+let masterGain: GainNode | null = null;
+let masterMuted = false;
 
 // An AudioContext must be unlocked from a synchronous touch or click on mobile.
 function context(): AudioContext | null {
@@ -14,9 +16,22 @@ function context(): AudioContext | null {
   try{
     const ctor=window.AudioContext || (window as Window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
     if(!ctor)return null;
-    if(!audio || audio.state==='closed')audio=new ctor();
+    if(!audio || audio.state==='closed'){
+      audio=new ctor();
+      masterGain=audio.createGain();
+      masterGain.gain.value=masterMuted?0:1;
+      masterGain.connect(audio.destination);
+    }
     return audio;
   }catch{return null;}
+}
+/** Immediately mutes already-scheduled sound effects as well as future ones. */
+export function setGameAudioMuted(muted:boolean):void {
+  masterMuted=muted;
+  if(masterGain && audio?.state!=='closed'){
+    masterGain.gain.cancelScheduledValues(audio?.currentTime||0);
+    masterGain.gain.setTargetAtTime(muted?0:1,audio?.currentTime||0,.012);
+  }
 }
 export function unlockGameAudio():void {
   const ctx=context();
@@ -42,7 +57,7 @@ function tone(ctx: AudioContext, hz: number, at: number, duration: number, gain:
   envelope.gain.setValueAtTime(0.0001, at);
   envelope.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), at + 0.013);
   envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
-  osc.connect(envelope).connect(ctx.destination);
+  osc.connect(envelope).connect(masterGain || ctx.destination);
   osc.start(at);
   osc.stop(at + duration + 0.005);
 }
@@ -70,13 +85,14 @@ function marker(ctx: AudioContext, strength: number) {
   gain.gain.setValueAtTime(0.0001, now);
   gain.gain.linearRampToValueAtTime(strength * 0.09, now + 0.025);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
-  source.connect(filter).connect(gain).connect(ctx.destination);
+  source.connect(filter).connect(gain).connect(masterGain || ctx.destination);
   source.start(now);
   source.stop(now + 0.17);
 }
 
 /** All values are original short UI effects. No music or external assets. */
-export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: number }): void {
+export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: number }, delaySeconds = 0): void {
+  setGameAudioMuted(opts.muted);
   if (opts.muted || opts.volume <= 0) return;
   const ctx = context();
   if (!ctx) return;
@@ -84,7 +100,7 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
     // The cue is scheduled once the mobile device unlocks audio; never lose
     // a legitimate answer/capture reward solely because resume is asynchronous.
     unlockGameAudio();
-    void ctx.resume().then(()=>{if(ctx.state==='running')playGameSound(cue,opts)}).catch(()=>{});
+    void ctx.resume().then(()=>{if(ctx.state==='running')playGameSound(cue,opts,delaySeconds)}).catch(()=>{});
     return;
   }
   const volume = Math.min(1, Math.max(0, opts.volume));
@@ -92,7 +108,7 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
     marker(ctx, volume);
     return;
   }
-  const t = ctx.currentTime + 0.005;
+  const t = ctx.currentTime + 0.005 + Math.max(0,Math.min(2,delaySeconds));
   const note = (freq: number, offset: number, dur: number, level: number, wave: OscillatorType = 'sine') =>
     tone(ctx, freq, t + offset, dur, level * volume, wave);
 
