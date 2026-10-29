@@ -1188,7 +1188,7 @@ export default function TriviaGame() {
           {tutorialPage===1 && <><path d='M55 22 L139 22' stroke='#FFD867' strokeWidth='9' strokeLinecap='round'/><text x='140' y='94' textAnchor='middle' fill='#FFFFFF' fontSize='18' fontWeight='900'>{tr("מהי התשובה הנכונה?")}</text></>}
           {tutorialPage===2 && <><rect x='61' y='28' width='72' height='36' rx='8' fill={color}/><text x='97' y='54' textAnchor='middle' fontSize='25'>{avatar}</text><path d='M55 22 H139 V70 H55 Z' fill='none' stroke='#FFE48A' strokeWidth='8' strokeLinecap='round'/></>}
         </svg>
-        <p style={{color:'#ECF4FF',fontSize:15,lineHeight:1.7}}>{[
+        <p style={{color:'#ECF4FF',fontSize:15,lineHeight:1.7}}>{tr([
           'נוגעים בנקודה, גוררים באצבע או בעכבר אל נקודה סמוכה ומשחררים. לא לוחצים על הקו.',
           'לכל קו תופיע שאלה עם ארבע אפשרויות. תשובה שגויה תשאיר את הקו פתוח.',
           'הריבוע יתמלא בצבע ובאוואטר שלך. סגירה מעניקה נקודה ותור נוסף. אחרי רצף תשובות מחכה שאלת זהב!'
