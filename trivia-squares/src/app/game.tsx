@@ -12,6 +12,7 @@ import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
+import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
 import CaptureTile, {type CaptureStyle} from '../components/CaptureTile';
@@ -96,6 +97,11 @@ export default function TriviaGame() {
   const [remote, setRemote] = useState<RemoteMatch | null>(null);
   const [question, setQuestion] = useState<Question | null>(null);
   const [wrongAnswerFeedback,setWrongAnswerFeedback]=useState<WrongAnswerFeedback|null>(null);
+  const [selectedTopics,setSelectedTopics]=useState<QuestionTopic[]>([...ALL_QUESTION_TOPICS]);
+  const toggleTopic=(id:QuestionTopic)=>setSelectedTopics(previous=>{
+    const next=previous.includes(id)?previous.filter(t=>t!==id):[...previous,id];
+    return next.length?next:previous;
+  });
   const [edge, setEdge] = useState<string | null>(null);
   const usedLocalQuestionIds=useRef<Set<number>>(new Set());
   const lastQuestionCategory=useRef<string|null>(null);
@@ -232,7 +238,7 @@ export default function TriviaGame() {
   const questionBank = (locale==='he'||locale==='en')
     ? [
       ...(locale === 'en' ? englishQuestions : offlineQuestions),
-      ...freshLocalQuestions(locale,localPoolRelease[locale])
+      ...freshLocalQuestions(locale,countLocalReserve(locale))
     ]
     : internationalQuestions.filter(q=>q.locale===locale);
   const completed = Object.keys(state.owners).length;
@@ -289,6 +295,7 @@ export default function TriviaGame() {
        if(hasActualOpponent(savedCapture.guestName,localStorage.getItem('trivia-player-name')||''))setGuestName(savedCapture.guestName!.trim().slice(0,32));
        if(palettes.includes(savedCapture.guestColor||''))setGuestColor(savedCapture.guestColor!);
        if(avatars.includes(savedCapture.guestAvatar||''))setGuestAvatar(savedCapture.guestAvatar!);
+       setSelectedTopics(parseTopicPreferences(JSON.parse(localStorage.getItem('trivia-question-topics-v1')||'null')));
        const seen=JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]') as string[];
       if(Array.isArray(seen))seenQuestionTexts.current=new Set(seen.filter(x=>typeof x==='string'));
       const storedPool=JSON.parse(localStorage.getItem('trivia-local-pool-release-v1')||'{}') as {he?:number;en?:number};
@@ -391,6 +398,10 @@ export default function TriviaGame() {
     if(!localReady)return;
     try{localStorage.setItem('trivia-capture-settings-v1',JSON.stringify({style:captureStyle,ownerMode,guestName,guestColor,guestAvatar}));}catch{}
   },[localReady,captureStyle,ownerMode,guestName,guestColor,guestAvatar]);
+  useEffect(()=>{
+    if(!localReady)return;
+    try{localStorage.setItem('trivia-question-topics-v1',JSON.stringify(selectedTopics));}catch{}
+  },[localReady,selectedTopics]);
   useEffect(() => {
     if(!localReady) return;
     try { localStorage.setItem('trivia-sound-muted', String(muted));localStorage.setItem('trivia-sound-volume', String(volume)); } catch {}
@@ -629,6 +640,7 @@ export default function TriviaGame() {
     } else {
       setEdge(key);
       const remaining=questionBank.filter(q=>
+        selectedTopics.includes(topicForQuestion(q.category,q.text)) &&
         !usedLocalQuestionIds.current.has(q.id) && !seenQuestionTexts.current.has(canonicalQuestion(q.text)));
       // Rotate categories fairly: movies, music and TV are accessible from the first stage.
       // Never sacrifice the ban on repeating a previously seen question.
@@ -640,7 +652,11 @@ export default function TriviaGame() {
       const q=usedLocalQuestionIds.current.size===0 && locale==='he'
         ? remaining.find(v=>v.text.includes('בירת אוסטרליה')) || inCategory[0]
         : inCategory[Math.floor(Math.random()*inCategory.length)];
-      if(!q){setEdge(null);setMessage('כל השאלות נוצלו. לא נחזור על שאלה שכבר נשאלה.');return;}
+      if(!q){
+        setEdge(null);
+        setMessage(locale==='en'?'No unused questions remain in your selected topics. Choose additional topics to continue the same stage.':'אין כרגע שאלות חדשות בנושאים שנבחרו. אפשר לסמן נושאים נוספים ולהמשיך באותו השלב בלי לאפס את הלוח.');
+        return;
+      }
       if(user&&client&&navigator.onLine){
         // Register the question globally before showing it on an authenticated device.
         setBusy(true);
@@ -1353,6 +1369,17 @@ export default function TriviaGame() {
                  if(value!=='local'&&value!=='solo'&&stageId>serverStageCompleted+1){setStageId(serverStageCompleted+1);setSize(stageFor(Math.min(STAGE_COUNT,serverStageCompleted+1)).size)} }}>
                 {locale==='en'?en:he}</button>)}
           </div>
+          <details className='question-topic-panel' open={!stageStarted}>
+            <summary>☑️ {tr('נושאי השאלות שלי')} <span className='question-topic-count'>({selectedTopics.length}/{questionTopics.length})</span></summary>
+            <p className='smalltxt'>{tr('בחרו נושאים לפני המשחק או בכל שלב. הבחירה נשמרת גם לאחר יציאה. נדרש נושא אחד לפחות.')}</p>
+            <div className='question-topic-options' role='group' aria-label={tr('נושאי השאלות')}>
+              {questionTopics.map(t=><label className='question-topic-option' key={t.id}>
+                <input type='checkbox' checked={selectedTopics.includes(t.id)} onChange={()=>toggleTopic(t.id)} />
+                <span>{t[locale]}</span>
+              </label>)}
+            </div>
+            <button type='button' className='glass-button topic-select-all' onClick={()=>setSelectedTopics([...ALL_QUESTION_TOPICS])}>{tr('בחר את כל הנושאים')}</button>
+          </details>
           <div className='form-field'>{tr('גודל לוח')}</div>
           <output id='board-size' className='form-input stage-board-size' aria-label={locale==='en'?'Current board size':'גודל הלוח הנוכחי'}>
             {selectedStage.size} × {selectedStage.size} · {locale==='en'?'Determined by stage':'נקבע לפי שלב'}
