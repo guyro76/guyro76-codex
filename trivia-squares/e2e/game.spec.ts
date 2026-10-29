@@ -285,3 +285,37 @@ test('first-run tutorial changes its instructional language without dismissing t
   await expect(he).toBeVisible();
   await expect(he.getByTestId('tutorial-preview')).toHaveAttribute('data-locale','he');
 });
+
+test('30 campaign stages exist and later stages cannot be opened before completing the current board',async({page})=>{
+ await ready(page);
+ const cards=page.locator('.campaign-stage-card');
+ await expect(cards).toHaveCount(30);
+ await expect(page.locator('[data-stage="1"]')).toHaveAttribute('aria-current','step');
+ await expect(page.locator('[data-stage="2"]')).toBeDisabled();
+ await expect(page.locator('[data-stage="30"]')).toBeDisabled();
+ await expect(page.getByText(/כל שלב נפתח רק אחרי שסוגרים/)).toBeVisible();
+ await draw(page,[1,1],[1,2]);
+ await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toBeVisible();
+ await expect(page.locator('[data-stage="2"]')).toBeDisabled();
+ await expect(page.locator('output#board-size')).toContainText('3 × 3');
+});
+
+test('live clock shows Hebrew date only in Hebrew and copyright switches with locale',async({page})=>{
+ await ready(page);
+ const bar=page.locator('.game-timebar');
+ await expect(bar.locator('.game-live-clock time')).toContainText(/^\d\d:\d\d:\d\d$/);
+ await expect(bar.locator('.game-live-clock small')).toHaveCount(1);
+ await expect(page.locator('.game-last-update')).toContainText('עדכון משחק אחרון');
+ await expect(page.locator('.game-author-credit')).toContainText('גיא רוזנברג');
+ await expect(page.locator('.game-author-credit')).toContainText('© 2026');
+ await page.locator('.locale-switch').getByRole('button',{name:'English'}).click();
+ await expect(bar.locator('.game-live-clock small')).toHaveCount(0);
+ await expect(page.locator('.game-author-credit')).toContainText('Designed and developed by Guy Rosenberg');
+ await expect(page.locator('.game-last-update')).toContainText('Last game update');
+ await expect(page.getByRole('heading',{name:'Game room'})).toBeVisible();
+ await expect(page.getByRole('button',{name:/Computer/})).toBeVisible();
+ await expect(page.getByRole('button',{name:/Online friend/})).toBeVisible();
+ await expect(page.getByRole('button',{name:/Local/})).toBeVisible();
+ await expect(page.getByText(/Registration is only needed for connected play/)).toBeVisible();
+ await expect(page.locator('.campaign-stage-card')).toHaveCount(30);
+});
