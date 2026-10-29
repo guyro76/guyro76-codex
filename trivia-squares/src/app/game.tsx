@@ -96,6 +96,8 @@ export default function TriviaGame() {
   const [mode, setMode] = useState<Mode>('local');
   const [size, setSize] = useState(3);
   const [local, setLocal] = useState<GameState>(() => empty(3));
+  const [localReady, setLocalReady] = useState(false);
+  const [online, setOnline] = useState(true);
   const [remote, setRemote] = useState<RemoteMatch | null>(null);
   const [question, setQuestion] = useState<Question | null>(null);
   const [edge, setEdge] = useState<string | null>(null);
@@ -162,6 +164,30 @@ export default function TriviaGame() {
     });
     return () => data.subscription.unsubscribe();
   }, [client]);
+  useEffect(() => {
+    try {
+      const stored=localStorage.getItem('trivia-local-game-v1');
+      if(stored){
+        const value=JSON.parse(stored) as GameState;
+        if(value && Number.isInteger(value.rows) && value.rows>=3 && value.rows<=6
+          && value.cols===value.rows && value.edges && value.owners && value.scores){
+          setLocal(value);
+          setSize(value.rows);
+        }
+      }
+    } catch { /* invalid save is ignored */ }
+    setLocalReady(true);
+    setOnline(navigator.onLine);
+    const up=()=>setOnline(true);
+    const down=()=>setOnline(false);
+    window.addEventListener('online',up); window.addEventListener('offline',down);
+    return ()=>{window.removeEventListener('online',up);window.removeEventListener('offline',down)};
+  },[]);
+  useEffect(()=>{
+    if(!localReady) return;
+    try{localStorage.setItem('trivia-local-game-v1',JSON.stringify(local))}catch{}
+  },[local,localReady]);
+
   useEffect(() => {
     if (!client || !user) return;
     void (async () => {
@@ -469,6 +495,9 @@ export default function TriviaGame() {
       .level-progress{background:#0C1F43;border:1px solid #6F97DB78;border-radius:99px;height:9px;overflow:hidden;margin-top:14px}
       .level-progress-fill{height:100%;background:linear-gradient(90deg,#FED466,var(--accent));border-radius:99px;transition:width .35s}
       .status-line{min-height:45px;display:flex;align-items:center;justify-content:center;text-align:center;color:#FFE889;font-size:14px;font-weight:900}
+      .victory-panel{margin:16px auto 8px;text-align:center;background:linear-gradient(130deg,#3E5192,#27406D);border:2px solid #FFDC7B;border-radius:21px;padding:18px;box-shadow:0 15px 38px #0005,inset 0 1px 0 #FFFFFF44}
+      .victory-symbol{font-size:45px;filter:drop-shadow(0 3px 9px #FFDE8188)}
+
       .control-row{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
       .gold-button{background:linear-gradient(140deg,#FFF0A7,#FFD063)!important;color:#142144!important;border:0;border-radius:12px;box-shadow:inset 0 2px 0 #FFFFFF92,0 5px 15px #0C142A7F;font-weight:900;padding:13px 20px;cursor:pointer}
       .glass-button{background:#38538A;color:#FFFFFF;border:1px solid #B1C8FC70;border-radius:12px;padding:12px 15px;font-weight:900;cursor:pointer}
@@ -611,6 +640,25 @@ export default function TriviaGame() {
         <div className='gesture-hint'><span className='draw-icon'>✍️</span>{bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'גע בנקודה וצייר אל הנקודה הסמוכה כמו בטוש אמיתי'}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>שטחים שנכבשו</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
+        {!online && <div role='alert' style={{background:'#D94C37',color:'#FFFFFF',padding:10,borderRadius:12,textAlign:'center',marginTop:12}}>
+          📡 החיבור לרשת נותק. משחק מקומי עדיין זמין, ומשחק מחובר יתחדש עם חזרת החיבור.
+        </div>}
+        {finished && <section className='victory-panel' role='status' aria-label='תוצאות המשחק'>
+          <div className='victory-symbol' aria-hidden='true'>🏆</div>
+          <h2 style={{margin:'5px 0',fontSize:'clamp(22px,3.8vw,31px)'}}>
+            {state.scores.host === state.scores.guest+state.scores.bot
+              ? 'תיקו גדול!' : state.scores.host>state.scores.guest+state.scores.bot ? 'אליפות! כל הריבועים נסגרו' : 'היריב ניצח הפעם'}
+          </h2>
+          <div style={{fontSize:16,color:'#FFEAA6',marginBottom:12}}>
+            {'⭐'.repeat(state.scores.host>state.scores.guest+state.scores.bot?3:state.scores.host===state.scores.guest+state.scores.bot?2:1)}
+          </div>
+          <p style={{margin:'6px 0',color:'#FFFFFF'}}>שחקן 1: {state.scores.host} נקודות · יריב: {state.scores.guest+state.scores.bot} נקודות</p>
+          <p className='smalltxt'>🍎 במשחק מחובר צוברים פירות וקרדיטים, ובניצחון גם יהלומים והתקדמות.</p>
+          <div className='control-row' style={{marginTop:13}}>
+            <button className='gold-button' disabled={busy} onClick={()=>void start()}>🔄 משחק חוזר</button>
+            {size<6 && <button className='glass-button' onClick={()=>chooseWorld(size+1)}>🌍 העולם הבא</button>}
+          </div>
+        </section>}
         <div className='status-line' aria-live='polite'>
           {finished ? '🏆 ' + (state.scores.host === state.scores.guest + state.scores.bot ? 'המשחק הסתיים בתיקו!' : state.scores.host > state.scores.guest + state.scores.bot ? 'ניצחת! כל הכבוד!' : 'היריב ניצח. משחק חוזר?') : message}
         </div>
@@ -639,7 +687,12 @@ export default function TriviaGame() {
           </select>
           {inviteLink && <div style={{ marginTop: 13 }}>
             <div className='smalltxt'>קישור לחדר הפרטי</div>
-            <button className='glass-button' style={{ marginTop: 7 }} onClick={async () => { await navigator.clipboard.writeText(inviteLink); setMessage('הקישור הועתק'); }}>העתק קישור להזמנת חבר</button>
+            <button className='glass-button' style={{ marginTop: 7 }} onClick={async () => {
+              try {
+                if (navigator.share) await navigator.share({title:'טריוויה ריבועים',text:'בוא לשחק איתי בטריוויה ריבועים!',url:inviteLink});
+                else { await navigator.clipboard.writeText(inviteLink); setMessage('קישור ההזמנה הועתק'); }
+              } catch { setMessage('אפשר להעתיק את ההזמנה ולשלוח לחבר'); }
+            }}>📤 שתף הזמנה לחבר</button>
           </div>}
           {invite && client && user && <button className='gold-button' style={{ marginTop: 12 }} disabled={busy} onClick={() => void join()}>הצטרף לחדר שהוזמנת אליו</button>}
         </section>
@@ -713,7 +766,7 @@ export default function TriviaGame() {
       </section>
     </div>}
 
-    <footer className='footer'><a href='/privacy'>פרטיות</a><a href='/terms'>תנאי שימוש</a><a href='/accessibility'>נגישות</a></footer>
+    <footer className='footer'><a href='/privacy'>פרטיות</a><a href='/terms'>תנאי שימוש</a><a href='/accessibility'>נגישות</a><a href='/account/privacy'>המידע שלי</a></footer>
     <p className='smalltxt' style={{ textAlign: 'center' }}>פרסים וירטואליים בלבד · ללא רכישות בכסף אמיתי</p>
   </main>;
 }
