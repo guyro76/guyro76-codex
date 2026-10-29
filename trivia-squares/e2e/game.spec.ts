@@ -198,3 +198,50 @@ test('new game reloads reviewed questions without repeating any previously displ
   await page.reload();
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]').length)).toBe(2);
 });
+
+test('tutorial is an animated real rule demo with correct Hebrew and English captions',async({page})=>{
+  await page.goto('/');
+  const he=page.getByRole('dialog',{name:'הסבר משחק'});
+  await expect(he).toBeVisible();
+  await expect(he.getByTestId('tutorial-preview')).toHaveAttribute('data-locale','he');
+  await expect(he.getByRole('img',{name:/הדגמה: הטוש מחבר/})).toBeVisible();
+  await expect(he.getByText(/גררו אצבע או עכבר/)).toBeVisible();
+  await he.getByRole('button',{name:'הבא ←'}).click();
+  await expect(he.getByRole('img',{name:/מופיעות ארבע תשובות/})).toBeVisible();
+  await he.getByRole('button',{name:'הבא ←'}).click();
+  await expect(he.getByRole('img',{name:/ריבוע שהושלם/})).toBeVisible();
+  await he.getByRole('button',{name:'דלג או סיים'}).click();
+  await page.getByRole('button',{name:'English',exact:true}).click();
+  const open=page.getByRole('button',{name:/How to play/});
+  await open.click();
+  const en=page.getByRole('dialog',{name:'How to play'});
+  await expect(en.getByTestId('tutorial-preview')).toHaveAttribute('data-locale','en');
+  await expect(en.getByText(/Slide a finger or mouse/)).toBeVisible();
+  await expect(en.getByRole('img',{name:/marker draws horizontally/})).toBeVisible();
+  await en.getByRole('button',{name:'Next →'}).click();
+  await expect(en.getByRole('img',{name:/four answers appear/})).toBeVisible();
+  await expect(en.getByText(/Every valid new line opens/)).toBeVisible();
+  await en.getByRole('button',{name:'Next →'}).click();
+  await expect(en.getByRole('img',{name:/completed square fills/})).toBeVisible();
+  await en.getByRole('button',{name:'Back'}).click();
+  await expect(en.getByRole('img',{name:/four answers appear/})).toBeVisible();
+  await en.press('Escape');
+  await expect(en).toHaveCount(0);
+  await expect(page.locator('main.trivia-app')).toHaveAttribute('dir','ltr');
+  await page.getByRole('button',{name:'עברית',exact:true}).click();
+  await expect(page.locator('main.trivia-app')).toHaveAttribute('dir','rtl');
+});
+
+test('dragging keeps marker path responsive without continuous React board renders',async({page})=>{
+  await ready(page);
+  const start=await dotPoint(page,1,1);
+  const end=await dotPoint(page,1,2);
+  await page.mouse.move(start.x,start.y);
+  await page.mouse.down();
+  await page.mouse.move((start.x+end.x)/2,start.y,{steps:20});
+  const ink=page.locator('svg.board path[stroke-width="10"][stroke-linecap="round"]');
+  await expect.poll(async()=>ink.count()).toBeGreaterThan(0);
+  await page.mouse.move(end.x,end.y,{steps:12});
+  await page.mouse.up();
+  await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toBeVisible();
+});
