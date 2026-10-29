@@ -110,7 +110,7 @@ export default function TriviaGame() {
   const botBusy = useRef(false);
   const boardRef = useRef<SVGSVGElement>(null);
   const gesture = useRef<{ pointerId: number; start: Dot } | null>(null);
-  const [trace, setTrace] = useState<{ start: Dot; target: BoardPoint; end: Dot | null } | null>(null);
+  const [trace, setTrace] = useState<{ start: Dot; target: BoardPoint; end: Dot | null; ink: BoardPoint[] } | null>(null);
   const [keyboardStart, setKeyboardStart] = useState<Dot | null>(null);
   const state = remote?.state || local;
   const player = user?.id && remote?.guest_id === user.id ? 'guest' : 'host';
@@ -287,7 +287,7 @@ export default function TriviaGame() {
     event.preventDefault();
     gesture.current = { pointerId: event.pointerId, start };
     event.currentTarget.setPointerCapture(event.pointerId);
-    setTrace({ start, target: dotXY(start, state.rows, state.cols), end: null });
+    setTrace({ start, target: dotXY(start, state.rows, state.cols), end: null, ink: [dotXY(start, state.rows, state.cols)] });
   }
 
   function onBoardPointerMove(event: ReactPointerEvent<SVGSVGElement>) {
@@ -297,10 +297,12 @@ export default function TriviaGame() {
     const target = boardPoint(event);
     const end = nearestDot(target, state.rows, state.cols);
     const valid = end && edgeBetween(active.start, end, state.rows, state.cols);
-    setTrace({
-      start: active.start,
-      target: valid ? dotXY(end, state.rows, state.cols) : target,
-      end: valid && !state.edges[valid] ? end : null
+    setTrace(prev => {
+      if (!prev) return null;
+      const snapped = valid && !state.edges[valid] ? dotXY(end, state.rows, state.cols) : target;
+      const last = prev.ink[prev.ink.length - 1];
+      const moved = Math.hypot(snapped.x - last.x, snapped.y - last.y) > 2;
+      return { ...prev, target: snapped, end: valid && !state.edges[valid] ? end : null, ink: moved ? [...prev.ink.slice(-160), snapped] : prev.ink };
     });
   }
 
@@ -337,9 +339,10 @@ export default function TriviaGame() {
   const drawLine = (key: string, x1: number, y1: number, x2: number, y2: number) => {
     const owner = state.edges[key];
     return <g key={key} pointerEvents='none'>
-      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={colors[owner]} strokeWidth='15' strokeOpacity='.23' strokeLinecap='round' filter='url(#lineGlow)' />}
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? colors[owner] : '#B7D1F6'} strokeOpacity={owner ? 1 : .2} strokeWidth={owner ? 9 : 3} strokeLinecap='round' strokeDasharray={owner ? undefined : '1 11'} />
-      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke='#FFFFFF' strokeOpacity='.45' strokeWidth='2' strokeLinecap='round' />}
+      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={colors[owner]} strokeWidth='17' strokeOpacity='.26' strokeLinecap='round' filter='url(#lineGlow)' />}
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? colors[owner] : '#B7D1F6'} strokeOpacity={owner ? .95 : .2} strokeWidth={owner ? 10 : 3} strokeLinecap='round' strokeDasharray={owner ? undefined : '1 11'} filter={owner ? 'url(#markerTexture)' : undefined}/>
+      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={colors[owner]} strokeOpacity='.42' strokeWidth='4' strokeLinecap='round' />}
+      {owner && <line x1={x1+1} y1={y1+1} x2={x2+1} y2={y2+1} stroke='#FFFFFF' strokeOpacity='.12' strokeWidth='1.5' strokeLinecap='round' />}
     </g>;
   };
   const step = 288 / state.cols;
@@ -493,6 +496,10 @@ export default function TriviaGame() {
             >
               <defs>
                 <filter id='lineGlow' x='-50%' y='-50%' width='200%' height='200%'><feGaussianBlur stdDeviation='4' /></filter>
+                <filter id='markerTexture' x='-10%' y='-10%' width='120%' height='120%'>
+                  <feTurbulence baseFrequency='.062' numOctaves='2' type='fractalNoise' seed='17' result='grain'/>
+                  <feDisplacementMap in='SourceGraphic' in2='grain' scale='1.8' xChannelSelector='R' yChannelSelector='G'/>
+                </filter>
                 <radialGradient id='dotGlow'><stop offset='0%' stopColor='#FFFFFF'/><stop offset='58%' stopColor='#D7EAFF'/><stop offset='100%' stopColor='#7BA9ED'/></radialGradient>
                 <linearGradient id='cellTint' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stopColor='#FFFFFF' stopOpacity='.12'/><stop offset='100%' stopColor='#FFFFFF' stopOpacity='.015'/></linearGradient>
               </defs>
@@ -513,8 +520,9 @@ export default function TriviaGame() {
               {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols }, (_, c) => drawLine('h-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + (c + 1) * step, 20 + r * step)))}
               {Array.from({ length: state.rows }, (_, r) => Array.from({ length: state.cols + 1 }, (_, c) => drawLine('v-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + c * step, 20 + (r + 1) * step)))}
               {trace && <g pointerEvents='none'>
-                <line x1={dotXY(trace.start, state.rows, state.cols).x} y1={dotXY(trace.start, state.rows, state.cols).y} x2={trace.target.x} y2={trace.target.y} stroke='#FFD875' strokeOpacity='.35' strokeWidth='15' strokeLinecap='round' filter='url(#lineGlow)' />
-                <line x1={dotXY(trace.start, state.rows, state.cols).x} y1={dotXY(trace.start, state.rows, state.cols).y} x2={trace.target.x} y2={trace.target.y} stroke={trace.end ? '#FFE386' : '#DDEAFF'} strokeWidth={trace.end ? 8 : 5} strokeLinecap='round' strokeDasharray={trace.end ? undefined : '4 6'} />
+<path d={trace.ink.map((p,i) => (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ') + ' L' + trace.target.x.toFixed(1) + ' ' + trace.target.y.toFixed(1)} fill='none' stroke={trace.end ? '#FFDF70' : '#D5F3FF'} strokeOpacity='.35' strokeWidth='19' strokeLinecap='round' strokeLinejoin='round' filter='url(#lineGlow)'/>
+                <path d={trace.ink.map((p,i) => (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ') + ' L' + trace.target.x.toFixed(1) + ' ' + trace.target.y.toFixed(1)} fill='none' stroke={trace.end ? '#FFDE74' : '#CDE9FB'} strokeWidth='10' strokeLinecap='round' strokeLinejoin='round' filter='url(#markerTexture)'/>
+                <circle cx={trace.target.x} cy={trace.target.y} r='6' fill='#FFF1BE' fillOpacity='.6'/>
               </g>}
               {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols + 1 }, (_, c) => {
                 const dot: Dot = { row: r, col: c };
@@ -529,7 +537,7 @@ export default function TriviaGame() {
             </svg>
           </div>
         </div>
-        <div className='gesture-hint'><span className='draw-icon'>✍️</span> גע בנקודה, גרור לנקודה סמוכה ושחרר</div>
+        <div className='gesture-hint'><span className='draw-icon'>✍️</span> גע בנקודה וצייר אל הנקודה הסמוכה כמו בטוש אמיתי</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>שטחים שנכבשו</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
         <div className='status-line' aria-live='polite'>
