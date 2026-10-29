@@ -122,7 +122,7 @@ export default function TriviaGame() {
   const state = remote?.state || local;
   const player = user?.id && remote?.guest_id === user.id ? 'guest' : 'host';
   const onlineTurn = remote?.state.mode === 'local' || player === state.turn;
-  const canPlay = remote ? remote.status === 'playing' && onlineTurn && !busy : !busy;
+  const canPlay = remote ? Boolean(user) && remote.status === 'playing' && onlineTurn && !busy : !busy;
   const finished = Object.keys(state.owners).length === state.rows * state.cols;
   const earnedBonus = Boolean(remote?.state.bonus_ready?.[state.turn]);
   const availableBonus = Number(remote?.state.bonus_tokens?.[state.turn] || 0);
@@ -138,6 +138,7 @@ export default function TriviaGame() {
       const m = data as RemoteMatch;
       setRemote(prev => prev && prev.version > m.version ? prev : m);
       setQuestion(m.question || null);
+      setEdge(m.question?.edge || null);
       if (m.status === 'completed') setMessage('המשחק הסתיים, כל הכבוד!');
     } else if (error) setMessage('שגיאת טעינת משחק: ' + error.message);
   }, [client]);
@@ -155,7 +156,10 @@ export default function TriviaGame() {
     if (!localStorage.getItem('trivia-tutorial-seen-v1')) setShowTutorial(true);
     if (!client) return;
     void client.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data } = client.auth.onAuthStateChange((_event, session) => setUser(session?.user || null));
+    const { data } = client.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      if (!session) { setRemote(null); setQuestion(null); setEdge(null); setBonusSelect(false); }
+    });
     return () => data.subscription.unsubscribe();
   }, [client]);
   useEffect(() => {
@@ -166,7 +170,7 @@ export default function TriviaGame() {
         const p = data.profile as Profile;
         setName(p.display_name);
         if (p.remember_color) { setColor(p.color); setAvatar(p.avatar); setRemember(true); }
-        setProgress(data.progress as Progress);
+        if (data.progress) setProgress(data.progress as Progress);
       }
       const id = localStorage.getItem('trivia-match-' + user.id);
       if (id) await refresh(id);
