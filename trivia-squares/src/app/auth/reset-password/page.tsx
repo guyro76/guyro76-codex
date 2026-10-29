@@ -1,12 +1,11 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
 import {createClient} from '@supabase/supabase-js';
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../../../lib/supabasePublicConfig';
 
 export default function ResetPasswordPage(){
   const client=useMemo(()=>{
-    const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-    return url&&key?createClient(url,key):null;
+    return createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
   },[]);
   const[password,setPassword]=useState('');
   const[repeat,setRepeat]=useState('');
