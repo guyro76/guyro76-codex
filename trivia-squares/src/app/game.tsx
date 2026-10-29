@@ -8,6 +8,8 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawi
 import { applyLocalAnswer } from '../lib/engine';
 import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
+import StageReward from '../components/StageReward';
+import './premium.css';
 
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local';
@@ -64,6 +66,8 @@ export default function TriviaGame() {
   const [mode, setMode] = useState<Mode>('local');
   const [size, setSize] = useState(3);
   const [local, setLocal] = useState<GameState>(() => empty(3));
+  const [stageRunId,setStageRunId] = useState('local-first');
+  const rewardSound=useCallback((cue:'bonus'|'win')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
   const [localReady, setLocalReady] = useState(false);
   const [online, setOnline] = useState(true);
   const [remote, setRemote] = useState<RemoteMatch | null>(null);
@@ -147,6 +151,8 @@ export default function TriviaGame() {
       }
       const ids=JSON.parse(localStorage.getItem('trivia-used-question-ids')||'[]') as number[];
       if(Array.isArray(ids)) usedLocalQuestionIds.current=new Set(ids.filter(x=>Number.isInteger(x)));
+      const savedRun=localStorage.getItem('trivia-stage-run-id');
+      if(savedRun && /^local-[a-zA-Z0-9_-]{1,72}$/.test(savedRun))setStageRunId(savedRun);
       const storedName=localStorage.getItem('trivia-player-name');
       if(storedName && storedName.trim().length>=2 && storedName.trim()!=='שחקן') setName(storedName.slice(0,32));
     } catch { /* storage may be disabled */ }
@@ -325,7 +331,10 @@ export default function TriviaGame() {
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
     setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false);
     if (mode === 'local') {
-      setRemote(null); setLocal(empty(size)); setLocalFreeze({host:false,guest:false}); setMessage('משחק מקומי לכל שני שחקנים, עם יתרות זמן נפרדות לכל אחד.');
+      const nextRun='local-'+crypto.randomUUID();
+      setStageRunId(nextRun);
+      try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
+      setRemote(null); setLocal(empty(size); setLocalFreeze({host:false,guest:false}); setMessage('משחק מקומי לכל שני שחקנים, עם יתרות זמן נפרדות לכל אחד.');
     } else if (client && user && legalAccepted) {
       const {error:profileError}=await client.rpc('trivia_save_appearance',{
         p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
@@ -523,6 +532,9 @@ export default function TriviaGame() {
 
   function chooseWorld(nextSize: number) {
     if (busy) return;
+    const nextRun='local-'+crypto.randomUUID();
+    setStageRunId(nextRun);
+    try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
     setSize(nextSize);
     setRemote(null);
     setLocal(empty(nextSize));
@@ -632,6 +644,24 @@ export default function TriviaGame() {
   };
   const step = 288 / state.cols;
   const inviteLink = remote?.state.mode === 'online' ? typeof window !== 'undefined' ? window.location.origin + '/?room=' + remote.id : '' : '';
+  const stageLocalReward=useCallback((prize:string)=>{
+    if(prize.includes('קרדיטים')){
+      const amount=Number.parseInt(prize,10)||0;
+      setLocalCredits(prev=>({...prev,host:prev.host+amount}));
+    }else if(prize.includes('קמע')){
+      setLocalCharms(prev=>({...prev,host:prev.host+1}));
+    }
+    setMessage('קיבלת את הפרס: '+prize);
+  },[]);
+  const stageRemoteReward=useCallback(()=>{
+    if(client)void client.rpc('trivia_my_profile').then(({data})=>{
+      if(data?.progress)setProgress(data.progress as Progress);
+    });
+  },[client]);
+  const advanceStage=useCallback(()=>{
+    const nextSize=state.rows<6?state.rows+1:3;
+    chooseWorld(nextSize);
+  },[state.rows,chooseWorld]);
   const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
   return <main className={'trivia-app theme-' + world.slug} style={css.main}>
@@ -785,7 +815,7 @@ export default function TriviaGame() {
         className='world-choice'
         data-selected={w.size === state.rows}
         onClick={() => chooseWorld(w.size)}
-        style={{ background: ['linear-gradient(125deg,#277856,#133E56)','linear-gradient(125deg,#7059B8,#333774)','linear-gradient(125deg,#3C9EC0,#565BBA)','linear-gradient(125deg,#7842AC,#333F86)'][i] }}
+        data-world={w.slug}
       >
         <span className='wc-icon' aria-hidden='true'>{w.icon}</span>
         <span className='wc-badge'>{w.badge}</span>
@@ -917,6 +947,16 @@ export default function TriviaGame() {
             ✨ {bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס'} ({availableBonus})</button>}
           {finished && size < 6 && <button className='glass-button' onClick={() => chooseWorld(size + 1)}>העולם הבא ←</button>}
         </div>
+        {finished && <StageReward
+          stageKey={remote?.id||stageRunId}
+          remoteMatchId={remote?.id}
+          worldSize={state.rows}
+          client={remote?client:null}
+          onAdvance={advanceStage}
+          onLocalPrize={stageLocalReward}
+          onRemotePrize={stageRemoteReward}
+          onSound={rewardSound}
+        />}
       </section>
 
       <aside className='side-stack'>
