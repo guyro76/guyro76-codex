@@ -324,8 +324,8 @@ export default function TriviaGame() {
     if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
     setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false);
-    if (mode === 'local' && (!user || !legalAccepted)) {
-      setRemote(null); setLocal(empty(size)); setMessage('משחק מקומי ללא הרשמה וללא שמירה בשרת.');
+    if (mode === 'local') {
+      setRemote(null); setLocal(empty(size)); setLocalFreeze({host:false,guest:false}); setMessage('משחק מקומי לכל שני שחקנים, עם יתרות זמן נפרדות לכל אחד.');
     } else if (client && user && legalAccepted) {
       const {error:profileError}=await client.rpc('trivia_save_appearance',{
         p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
