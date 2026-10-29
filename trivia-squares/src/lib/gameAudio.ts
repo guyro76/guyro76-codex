@@ -3,19 +3,35 @@
  * No audio downloads, copyrighted samples, user tracking or microphone permission.
  * The Web Audio context is created only after a player interaction.
  */
-export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock';
+export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond';
 let audio: AudioContext | null = null;
-let lastStrokeAt = 0;
+let lastStrokeAt = -1;
+let pendingResume = false;
 
+// An AudioContext must be unlocked from a synchronous touch or click on mobile.
 function context(): AudioContext | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    if (!audio || audio.state === 'closed') audio = new AudioContext();
-    if (audio.state === 'suspended') void audio.resume().catch(() => {});
+  if(typeof window==='undefined')return null;
+  try{
+    const ctor=window.AudioContext || (window as Window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
+    if(!ctor)return null;
+    if(!audio || audio.state==='closed')audio=new ctor();
     return audio;
-  } catch {
-    return null; // Browser restrictions never interrupt a game move.
-  }
+  }catch{return null;}
+}
+export function unlockGameAudio():void {
+  const ctx=context();
+  if(!ctx || ctx.state==='running' || pendingResume)return;
+  pendingResume=true;
+  void ctx.resume().then(()=>{
+    // Touch input on some WebViews requires a source to be connected after resume.
+    if(ctx.state==='running'){
+      const oscillator=ctx.createOscillator();
+      const gain=ctx.createGain();
+      gain.gain.value=0;
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start();oscillator.stop(ctx.currentTime+.005);
+    }
+  }).catch(()=>{}).finally(()=>{pendingResume=false;});
 }
 
 function tone(ctx: AudioContext, hz: number, at: number, duration: number, gain: number, wave: OscillatorType = 'sine') {
@@ -64,6 +80,13 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
   if (opts.muted || opts.volume <= 0) return;
   const ctx = context();
   if (!ctx) return;
+  if (ctx.state !== 'running') {
+    // The cue is scheduled once the mobile device unlocks audio; never lose
+    // a legitimate answer/capture reward solely because resume is asynchronous.
+    unlockGameAudio();
+    void ctx.resume().then(()=>{if(ctx.state==='running')playGameSound(cue,opts)}).catch(()=>{});
+    return;
+  }
   const volume = Math.min(1, Math.max(0, opts.volume));
   if (cue === 'marker') {
     marker(ctx, volume);
@@ -74,6 +97,28 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
     tone(ctx, freq, t + offset, dur, level * volume, wave);
 
   switch (cue) {
+    case 'coin':
+      // Two crisp metallic bounces, like coins dropping into a bank.
+      note(1244.51,0,.075,.16,'triangle');
+      note(1864.66,.045,.13,.10,'sine');
+      note(932.33,.13,.15,.075,'triangle');
+      break;
+    case 'fruit':
+      // Warm, playful three-note pluck.
+      note(392,0,.095,.13,'sine');
+      note(523.25,.075,.12,.13,'triangle');
+      note(659.25,.15,.17,.12,'sine');
+      break;
+    case 'star':
+      // A sparkling upward glissando/chime.
+      note(784,0,.12,.10,'sine');
+      note(1174.66,.06,.15,.095,'sine');
+      note(1567.98,.12,.25,.09,'triangle');
+      break;
+    case 'diamond':
+      // Light crystalline shimmer.
+      [1046.5,1318.5,1567.98,2093].forEach((hz,i)=>note(hz,i*.065,.27,.11,'sine'));
+      break;
     case 'draw':
       note(330, 0, 0.10, 0.07, 'triangle');
       note(440, 0.045, 0.12, 0.05, 'sine');
