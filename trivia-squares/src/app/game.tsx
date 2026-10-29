@@ -6,6 +6,8 @@ import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicCon
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawing';
 import { applyLocalAnswer } from '../lib/engine';
+import { playGameSound, type SoundCue } from '../lib/gameAudio';
+import { offlineQuestions } from '../lib/offlineQuestions';
 
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local';
@@ -49,27 +51,6 @@ const css = {
   secondary: { padding: '12px 16px', background: '#334F91', color: '#FFFFFF', border: '1px solid #6A87C4', borderRadius: 11, fontWeight: 900, cursor: 'pointer' } as React.CSSProperties,
   input: { display: 'block', width: '100%', padding: 11, borderRadius: 9, border: '2px solid #B7C7F6', background: '#FFFFFF', color: '#102048', fontWeight: 800, marginTop: 5 } as React.CSSProperties
 };
-function sound(gained: number) {
-  if (typeof window === 'undefined') return;
-  try {
-    const AC = window.AudioContext;
-    const ctx = new AC();
-    const tones = gained > 1 ? [523, 659, 784, 1047] : [523, 659, 784];
-    tones.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const amp = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      amp.gain.setValueAtTime(0.0001, ctx.currentTime + i * .095);
-      amp.gain.exponentialRampToValueAtTime(.18, ctx.currentTime + i * .095 + .015);
-      amp.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + i * .095 + .28);
-      osc.connect(amp).connect(ctx.destination);
-      osc.start(ctx.currentTime + i * .095);
-      osc.stop(ctx.currentTime + i * .095 + .3);
-    });
-    void window.setTimeout(() => { void ctx.close(); }, 1300);
-  } catch { /* sound is optional */ }
-}
 export default function TriviaGame() {
   const client = useMemo<SupabaseClient | null>(() => {
     return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
@@ -98,6 +79,8 @@ export default function TriviaGame() {
   const [message, setMessage] = useState('בחר מצב משחק והתחל');
   const [busy, setBusy] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(65);
+  const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
   const [invite, setInvite] = useState<string | null>(null);
   const botBusy = useRef(false);
   const boardRef = useRef<SVGSVGElement>(null);
@@ -141,6 +124,11 @@ export default function TriviaGame() {
         setRemember(true);
       }
     } catch { /* storage may be disabled */ }
+    try {
+      setMuted(localStorage.getItem('trivia-sound-muted') === 'true');
+      const v=localStorage.getItem('trivia-sound-volume');
+      if (v !== null && Number.isFinite(Number(v))) setVolume(Math.max(0,Math.min(100,Number(v))));
+    } catch {}
     if (!localStorage.getItem('trivia-tutorial-seen-v1')) setShowTutorial(true);
     if (!client) return;
     void client.auth.getUser().then(({ data }) => setUser(data.user));
@@ -169,6 +157,10 @@ export default function TriviaGame() {
     window.addEventListener('online',up); window.addEventListener('offline',down);
     return ()=>{window.removeEventListener('online',up);window.removeEventListener('offline',down)};
   },[]);
+  useEffect(() => {
+    if(!localReady) return;
+    try { localStorage.setItem('trivia-sound-muted', String(muted));localStorage.setItem('trivia-sound-volume', String(volume)); } catch {}
+  }, [muted,volume,localReady]);
   useEffect(()=>{
     if(!localReady) return;
     try{localStorage.setItem('trivia-local-game-v1',JSON.stringify(local))}catch{}
@@ -212,12 +204,14 @@ export default function TriviaGame() {
     void client.rpc('trivia_bot_step', { p_match: remote.id }).then(async ({ data, error }) => {
       if (error) setMessage(error.message);
       else if (data) {
-        if ((data.gained || 0) > 0 && !muted) sound(data.gained);
+        if (data.finished) play('win');
+        else if (Number(data.gained || 0) > 0) play('capture');
+        else if (data.correct) play('turn');
         await refresh(remote.id);
       }
       botBusy.current = false;
     });
-  }, [client, remote?.id, remote?.version, remote?.state.turn, remote?.status, refresh, muted]);
+  }, [client, remote?.id, remote?.version, remote?.state.turn, remote?.status, refresh, play]);
 
   function hasPreRegistrationAcknowledgement() {
     if (adultConfirmed && policiesAcknowledged) return true;
@@ -281,7 +275,10 @@ export default function TriviaGame() {
       if (error) setMessage(error.message);
       else {
         const gained = Number(data.gained || 0);
-        if (gained > 0 && !muted) sound(gained);
+        if (data.finished) play('win');
+        else if (data.bonus && data.correct) play('bonus');
+        else if (gained) play('capture');
+        else play(data.correct ? 'correct' : 'wrong');
         setMessage(data.bonus
           ? data.correct ? 'שאלת הזהב הצליחה! הרווחת שני אסימוני סגירה ✨' : 'שאלת הזהב הוחמצה. אפשר לנסות שוב אחרי רצף חדש.'
           : data.correct ? gained ? 'מצוין! כבשת ' + gained + ' ריבועים!' : 'תשובה נכונה, הקו שלך!' : 'תשובה שגויה, התור עובר.');
@@ -297,7 +294,9 @@ export default function TriviaGame() {
       const next = applyLocalAnswer(local, edge, correct);
       setLocal(next);
       const gained = Object.keys(next.owners).length - Object.keys(local.owners).length;
-      if (gained && !muted) sound(gained);
+      if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
+      else if (gained) play('capture');
+      else play(correct ? 'correct' : 'wrong');
       setMessage(correct ? gained ? 'סגרת ' + gained + ' ריבועים!' : 'תשובה נכונה!' : 'תשובה שגויה!');
       setQuestion(null); setEdge(null); setPracticeIndex(v => v + 1);
     }
@@ -326,7 +325,7 @@ export default function TriviaGame() {
     else {
       setBonusSelect(false);
       setMessage('כיבוש זהב! הרווחת '+data.gained+' ריבועים. נשארו '+data.remaining+' אסימונים.');
-      if (!muted) sound(Number(data.gained||1));
+      if (data.finished) play('win'); else play('bonus');
       await refresh(remote.id);
       const {data: update}=await client.rpc('trivia_my_profile');
       if(update?.progress) setProgress(update.progress as Progress);
@@ -383,6 +382,7 @@ export default function TriviaGame() {
     if (!start) return;
     event.preventDefault();
     gesture.current = { pointerId: event.pointerId, start };
+    play('marker');
     event.currentTarget.setPointerCapture(event.pointerId);
     setTrace({ start, target: dotXY(start, state.rows, state.cols), end: null, ink: [dotXY(start, state.rows, state.cols)] });
   }
@@ -411,7 +411,7 @@ export default function TriviaGame() {
     gesture.current = null;
     setTrace(null);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
-    if (chosen && !state.edges[chosen]) void pick(chosen);
+    if (chosen && !state.edges[chosen]) { play('draw'); void pick(chosen); }
     else setMessage('חבר שתי נקודות סמוכות בגרירה אחת כדי לקבל שאלה.');
   }
 
@@ -428,7 +428,7 @@ export default function TriviaGame() {
     if (!keyboardStart) { setKeyboardStart(dot); setMessage('בחר כעת נקודה סמוכה כדי להשלים קו'); return; }
     const chosen = edgeBetween(keyboardStart, dot, state.rows, state.cols);
     setKeyboardStart(null);
-    if (chosen && !state.edges[chosen]) void pick(chosen);
+    if (chosen && !state.edges[chosen]) { play('draw'); void pick(chosen); }
     else setMessage('יש לבחור רק שתי נקודות סמוכות עם קו פנוי.');
   }
 
@@ -678,7 +678,17 @@ export default function TriviaGame() {
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>ממתינים שהחבר ייכנס לחדר...</p>}
         <div className='control-row'>
           <button className='gold-button' disabled={busy} onClick={() => void start()}>🎮 {remote ? 'משחק חדש' : 'התחל משחק'}</button>
-          <button className='glass-button' onClick={() => setMuted(m => !m)} aria-pressed={muted}>{muted ? '🔇 צלילים כבויים' : '🔊 צלילים פועלים'}</button>
+          <button className='glass-button' onClick={() => {
+            if (muted) playGameSound('correct',{muted:false,volume:volume/100});
+            setMuted(v=>!v);
+          }} aria-pressed={muted} aria-label={muted ? 'הפעל צלילים' : 'השתק צלילים'}>
+            {muted ? '🔇 הפעל צלילים' : '🔊 השתק צלילים'}
+          </button>
+          <label className='glass-button' style={{display:'inline-flex',gap:7,alignItems:'center'}} htmlFor='game-volume'>
+            עוצמה <input id='game-volume' type='range' min='0' max='100' step='5'
+              aria-label='עוצמת הצלילים במשחק' value={volume} onChange={e=>setVolume(Number(e.target.value))}
+              style={{width:80,accentColor:'#FFE38F'}} /> {volume}%
+          </label>
           <button className='glass-button' onClick={()=>{setTutorialPage(0);setShowTutorial(true)}}>❓ איך משחקים</button>
           {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>⭐ שאלת זהב!</button>}
           {availableBonus>0 && state.mode!=='online' && <button className='gold-button' disabled={busy||!!question} onClick={()=>setBonusSelect(v=>!v)}>
