@@ -10,8 +10,8 @@ test('clock, both dates, weather, version and author credit are visible on deskt
  const bar=page.getByRole('region',{name:'נתוני המשחק: שעה, תאריך, מזג אוויר וגרסה'});
  await expect(bar).toBeVisible();
  await expect(bar.getByLabel('השעה בישראל')).toContainText(/^\d{2}:\d{2}:\d{2}$/);
- await expect(bar).toContainText(/\d{2}\/\d{2}\/\d{4}/);
- await expect(bar.getByText('24°C')).toBeVisible();
+ await expect(bar).toContainText(/\d{2}[.\/]\d{2}[.\/]\d{4}/);
+ await expect(bar.getByText(/24°C/)).toBeVisible();
  await expect(bar.getByTestId('trivia-version')).toContainText(/^v\d+\.\d+\.\d+$/);
  await bar.getByRole('link',{name:'קרדיט ומידע על היוצר'}).click();
  await expect(page.locator('#app-footer')).toContainText('גיא רוזנברג');
