@@ -111,6 +111,14 @@ export default function TriviaGame() {
   const earnedBonus = Boolean(remote?.state.bonus_ready?.[state.turn]);
   const availableBonus = Number(remote?.state.bonus_tokens?.[state.turn] || 0);
   const streak = Number(remote?.state.streak?.[state.turn] || 0);
+  const currentLocalSide: 'host'|'guest' = state.turn === 'guest' ? 'guest' : 'host';
+  const currentCredits = remote ? progress.credits : localCredits[currentLocalSide];
+  const currentCharms = remote ? (progress.time_charms || 0) : localCharms[currentLocalSide];
+  const timeFreezeActive = remote
+    ? Boolean(remote.state.time_freeze?.[player])
+    : localFreeze[currentLocalSide];
+  const showTimer = Boolean(question) && question?.deadline_at !== null && !timeFreezeActive;
+  const timerText = secondsLeft === null ? '01:00' : String(Math.floor(secondsLeft/60)).padStart(2,'0')+':'+String(secondsLeft%60).padStart(2,'0');
   const world = worlds.find(w => w.size === state.rows) || worlds[0];
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
@@ -403,6 +411,52 @@ export default function TriviaGame() {
     setBusy(false);
   }
 
+  async function extendQuestionTime() {
+    if(!question || question.deadline_at===null || !question.deadline_at || (secondsLeft??0)<=0) return;
+    if((question.extensions||0)>=1){setMessage('אפשר להאריך כל שאלה פעם אחת בלבד.');return;}
+    if(currentCredits<25){setMessage('להארכת זמן דרושים 25 קרדיטים שנצברו במשחק.');return;}
+    if(remote&&client){
+      setBusy(true);
+      const {data,error}=await client.rpc('trivia_extend_question',{p_match:remote.id});
+      if(error)setMessage(error.message);
+      else{
+        setQuestion(prev=>prev?{...prev,deadline_at:String(data.deadline_at),extensions:1}:prev);
+        setProgress(prev=>({...prev,credits:Math.max(0,prev.credits-25)}));
+        setMessage('רכשת 30 שניות נוספות!');
+        play('bonus');
+        await refresh(remote.id);
+      }
+      setBusy(false);
+    }else{
+      setLocalCredits(prev=>({...prev,[currentLocalSide]:prev[currentLocalSide]-25}));
+      setQuestion(prev=>prev?{...prev,deadline_at:new Date(new Date(prev.deadline_at!).getTime()+30_000).toISOString(),extensions:1}:prev);
+      play('bonus');
+      setMessage('נוספו 30 שניות תמורת 25 קרדיטים.');
+    }
+  }
+
+  async function activateTimeCharm(){
+    if(!validName || finished || timeFreezeActive || currentCharms<1){setMessage('אין קמע זמן פנוי, או שהוא כבר פעיל בשלב הזה.');return;}
+    if(remote&&client){
+      setBusy(true);
+      const{error}=await client.rpc('trivia_activate_time_charm',{p_match:remote.id});
+      if(error)setMessage(error.message);
+      else{
+        setProgress(prev=>({...prev,time_charms:Math.max(0,(prev.time_charms||0)-1)}));
+        await refresh(remote.id);
+        play('bonus');
+        setMessage('קמע הזמן הופעל! לא יהיה טיימר לשאלות שלך עד סוף השלב.');
+      }
+      setBusy(false);
+    }else{
+      setLocalCharms(prev=>({...prev,[currentLocalSide]:prev[currentLocalSide]-1}));
+      setLocalFreeze(prev=>({...prev,[currentLocalSide]:true}));
+      if(question)setQuestion(prev=>prev?{...prev,deadline_at:null}:prev);
+      play('bonus');
+      setMessage('קמע הזמן פעיל בשבילך עד תום השלב.');
+    }
+  }
+
   async function startGoldQuestion() {
     if (!client || !remote || !canPlay || !earnedBonus || question) return;
     setBusy(true);
@@ -666,6 +720,11 @@ export default function TriviaGame() {
       .wallet-item span{font-size:11px;font-weight:900;color:#EAF2FF}
       .quiz-overlay{position:fixed;inset:0;z-index:30;background:#08132DDF;backdrop-filter:blur(9px);display:grid;place-items:center;padding:14px}
       .quiz-card{width:min(100%,530px);background:linear-gradient(145deg,#304C94,#192E61);border:2px solid #FFD979;border-radius:25px;padding:25px;box-shadow:0 25px 100px #0009,inset 0 2px 0 #FFFFFF40}
+      .hourglass-spin{display:inline-block;animation:timeglass-turn 3s ease-in-out infinite;transform-origin:center center}
+      .question-timer{display:flex;justify-content:center;align-items:center;gap:10px;background:rgba(8,20,52,.42);border:1px solid #FFF3B380;border-radius:14px;padding:12px;margin:15px 0;color:#FFE6A0;font-size:23px;font-weight:900;font-variant-numeric:tabular-nums}
+      .question-timer.urgent{color:#FFE1E1;border-color:#F97F7F;background:#732F45AA}
+      .question-timer .clock-label{font-size:12px;font-weight:900}
+      @keyframes timeglass-turn{0%,30%{transform:rotate(0deg)}55%,95%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}
       .quiz-badge{display:inline-flex;padding:7px 11px;border-radius:99px;background:#FFE58E;color:#1A2D55;font-weight:900;font-size:12px}
       .quiz-card h2{font-size:clamp(20px,4vw,29px);font-weight:900;line-height:1.4;color:#FFFFFF}
       .answer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:18px}
@@ -788,7 +847,7 @@ export default function TriviaGame() {
             </svg>
           </div>
         </div>
-        <div className='gesture-hint'><span className='draw-icon'>✍️</span>{bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'גע בנקודה וצייר אל הנקודה הסמוכה כמו בטוש אמיתי'}</div>
+        <div className='gesture-hint'><span className='draw-icon'>✍️</span>{bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח'}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>שטחים שנכבשו</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
         {!online && <div role='alert' style={{background:'#D94C37',color:'#FFFFFF',padding:10,borderRadius:12,textAlign:'center',marginTop:12}}>
@@ -883,6 +942,10 @@ export default function TriviaGame() {
             {([['🍎','פירות',progress.fruits],['💎','יהלומים',progress.diamonds],['🪙','קרדיטים',progress.credits],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
               <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{label}</span></div>)}
           </div>
+          <p className='smalltxt' style={{margin:'10px 0 5px'}}>⏳ כל שאלה: דקה. אפשר לקנות עוד 30 שניות ב־25 קרדיטים, פעם אחת לשאלה.</p>
+          <p className='smalltxt' style={{margin:'0 0 9px'}}>♾️ קמע זמן מבטל את הטיימר עבורך עד סוף השלב. זוכים בקמע עם ניצחון במשחק מחובר או מקומי.</p>
+          <p className='smalltxt' style={{margin:'0 0 8px'}}>קרדיטים זמינים: {currentCredits} | קמעות זמן: {currentCharms} {timeFreezeActive?'· ללא שעון כרגע':''}</p>
+          {!timeFreezeActive && currentCharms>0 && <button className='glass-button' disabled={busy} onClick={()=>void activateTimeCharm()}>הפעל קמע זמן עד סוף השלב</button>}
           <p className='smalltxt' style={{marginBottom:0}}>🔥 רצף תשובות: {streak} | ⭐ כיבושי בונוס: {availableBonus}</p>
           <p className='smalltxt' style={{marginBottom:0}}>אחרי שלוש תשובות נכונות תקבל שאלת זהב. הצלחה מעניקה שני אסימוני כיבוש. המשחק התחרותי נשאר ללא בונוסים משני ניקוד.</p>
         </section>
@@ -969,7 +1032,19 @@ export default function TriviaGame() {
     {question && <div className='quiz-overlay' role='presentation'>
       <section className='quiz-card' role='dialog' aria-modal='true' aria-label='שאלת טריוויה'>
         <span className='quiz-badge'>{question.kind==='bonus'?'✨ שאלת זהב: הזדמנות לשני כיבושים ✨':'⭐ רק תשובה נכונה תסגור את הקו ⭐'}</span>
+        <div className={'question-timer '+((secondsLeft??60)<=10?'urgent':'')} role='timer' aria-live='off'>
+          <span className='hourglass-spin' aria-hidden='true'>⌛</span>
+          {question.deadline_at===null || timeFreezeActive
+            ? <span>∞ <span className='clock-label'>קמע זמן פעיל עד סוף השלב</span></span>
+            : <span>{timerText} <span className='clock-label'>נותרו לענות</span></span>}
+        </div>
         <h2>{question.text}</h2>
+        <div className='control-row' style={{marginBottom:13}}>
+          {showTimer && <button className='glass-button' disabled={busy || currentCredits<25 || (question.extensions||0)>=1 || (secondsLeft??0)<=0}
+            onClick={()=>void extendQuestionTime()}>⏳ +30 שניות · 25 קרדיטים ({currentCredits})</button>}
+          {!timeFreezeActive && currentCharms>0 && <button className='gold-button' disabled={busy}
+            onClick={()=>void activateTimeCharm()}>♾️ הפעל קמע זמן ({currentCharms})</button>}
+        </div>
         <div className='answer-grid'>
           {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{['א','ב','ג','ד'][i]}</span>{a}</button>)}
         </div>
