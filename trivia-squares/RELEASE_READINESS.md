@@ -31,3 +31,18 @@ Do not claim product is fully launched when a Vercel deployment shows READY. REA
 
 ## Next action
 Owner action required: grant Vercel integration permission to edit environment variables or configure both public values in the Vercel UI. No workaround involving unauthorized secrets. After that, run authenticated tests and re-deploy.
+
+
+## 2026-10-29 follow-up repair and CI audit
+
+- Reviewed recent Vercel failure notification emails in Gmail for trivia-squares; the failed commits `888303c`, `248ad75`, `d80a3ef`, `a753d8c`, `c537325` are older than the latest confirmed successful builds.
+- GitHub Actions run `40845129067` for commit `3fc269cb834a9f2ff8f058c2e044074d098b992c`: SUCCESS, including strict TypeScript, gameplay/drawing unit tests and Next.js production build.
+- Latest Vercel preview deployment inspected for that commit: `dpl_y5442d2R35egWdhfSTmRQ4g9iXbV`, status READY. The preview is SSO-protected, and the project reports `live:false`; this is NOT a public production release.
+- Fixed a genuine online multiplayer startup bug: the host now polls the waiting room and notices when invited guest joins; before, only `playing` rooms were polled.
+- Expanded vetted-format trivia pool to 104 active entries (0 invalid four-answer rows); new selection logic avoids previously served questions in a match until the bank is exhausted.
+- Added DB privacy_requests with RLS, user export and deletion-request RPC; total 5 Trivia schema tables are RLS-enabled.
+- 12 narrowly authenticated public RPC functions exist now; anonymous callers are denied. The functions intentionally use SECURITY DEFINER and assert `auth.uid()` and ownership/participants. Security advisors warn about intentional auth-executable SECURITY DEFINER RPC; document and review before release.
+- Old bullet references to 4 tables, 8 RPCs, and 32 questions are historical and superseded by this audit.
+- Environment-variable API still gives 403 for the connected Vercel integration. Do NOT claim Google/email sign-in was tested or enabled: operator must configure the `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values in Vercel Settings > Environment Variables, redeploy, configure Google OAuth provider and allowed redirect URLs in the shared Supabase Auth service (append Trivia URL without removing social-hub settings).
+- Additional release gates: real two-user E2E testing, email Google login, iPhone Safari testing, question-content review, operator legal contact and accessibility audit.
+- Avoid manually creating deployments on every commit: GitHub integration already auto-builds previews; review notifications against commit SHAs to avoid treating obsolete failing deploys as new errors.
