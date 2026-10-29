@@ -591,7 +591,7 @@ export default function TriviaGame() {
           <h2 className='panel-title'>🔐 מועדון השחקנים</h2>
           {user ? <><p className='smalltxt'>מחובר: {user.email}</p><button className='glass-button' onClick={() => void client?.auth.signOut()}>התנתק</button></>
             : client ? <>
-              <button className='gold-button' onClick={() => void client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/auth/callback' } })}>התחבר באמצעות Google</button>
+              <button className='gold-button' onClick={() => void client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/' } })}>התחבר באמצעות Google</button>
               <label htmlFor='login-email' className='form-field'>דואר אלקטרוני</label>
               <input id='login-email' className='form-input' type='email' autoComplete='email' value={email} onChange={e => setEmail(e.target.value)} />
               <label htmlFor='login-password' className='form-field'>סיסמה</label>
