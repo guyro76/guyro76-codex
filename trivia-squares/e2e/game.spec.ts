@@ -177,3 +177,24 @@ test('required player name persists after reload and notebook grid remains trans
   const rgb=await grid.evaluate(e=>getComputedStyle(e).backgroundColor);
   expect(rgb).toMatch(/rgba\(/);
 });
+
+test('new game reloads reviewed questions without repeating any previously displayed question',async({page})=>{
+  await ready(page);
+  await draw(page,[1,1],[1,2]);
+  const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
+  await expect(quiz).toBeVisible();
+  const first=await quiz.locator('h2').innerText();
+  const answer=quiz.getByRole('button',{name:/סידני/});
+  await answer.click();
+  await page.getByRole('button',{name:/התחל משחק/}).click();
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-pool-release-v1')||'{}').he)).toBe(3);
+  await draw(page,[1,1],[1,2]);
+  const next=page.getByRole('dialog',{name:'שאלת טריוויה'});
+  await expect(next).toBeVisible();
+  const second=await next.locator('h2').innerText();
+  expect(second).not.toBe(first);
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
+  expect(new Set(saved).size).toBe(2);
+  await page.reload();
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]').length)).toBe(2);
+});
