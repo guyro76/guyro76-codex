@@ -35,6 +35,7 @@ function canonicalQuestion(text:string):string {
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local' | 'solo';
 type Question = { text: string; answers: string[]; edge?: string; id?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus'; deadline_at?: string | null; extensions?: number };
+type WrongAnswerFeedback = { text:string; answers:string[]; selectedIndex:number; correctIndex:number | null };
 type GameState = {
   rows: number;
   cols: number;
@@ -94,6 +95,7 @@ export default function TriviaGame() {
   const [online, setOnline] = useState(true);
   const [remote, setRemote] = useState<RemoteMatch | null>(null);
   const [question, setQuestion] = useState<Question | null>(null);
+  const [wrongAnswerFeedback,setWrongAnswerFeedback]=useState<WrongAnswerFeedback|null>(null);
   const [edge, setEdge] = useState<string | null>(null);
   const usedLocalQuestionIds=useRef<Set<number>>(new Set());
   const lastQuestionCategory=useRef<string|null>(null);
@@ -209,7 +211,7 @@ export default function TriviaGame() {
   const googleName = providerGoogle ? String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim().slice(0,70) : '';
   const googlePhotoRaw = providerGoogle ? String(user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '') : '';
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
-  const canPlay = validName && localReady && !showTutorial && !capturePending && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
+  const canPlay = validName && localReady && !showTutorial && !capturePending && !wrongAnswerFeedback && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
   const finished = !capturePending && Object.keys(state.owners).length === state.rows * state.cols;
   const completedStage = mode==='local'||mode==='solo' ? localStageCompleted : serverStageCompleted;
   const stageUnlocked = Math.min(STAGE_COUNT,completedStage+1);
@@ -552,7 +554,7 @@ export default function TriviaGame() {
     if(stageId>stageUnlocked){setMessage(locale==='en'?'Finish the earlier stages to unlock this one.':'יש לסיים את השלבים הקודמים כדי לפתוח את השלב הזה.');return;}
     if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
-    setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false); setCapturePending(null);
+    setBusy(true); setQuestion(null); setWrongAnswerFeedback(null); setEdge(null); setBonusSelect(false); setCapturePending(null);
     if(mode==='local' && !hasActualOpponent(guestName,name)){
       setMessage('כדי לשחק בשניים יש להקליד שם אמיתי של משתתף נוסף. למשחק לבד בחרו משחק עצמאי.');
       document.getElementById('local-guest-name')?.focus();setBusy(false);return;
@@ -669,6 +671,11 @@ export default function TriviaGame() {
       if (error) setMessage(error.message);
       else {
         const gained = Number(data.gained || 0);
+        if(data.correct===false){
+          const idx=Number(data.correct_index);
+          setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,
+            correctIndex:Number.isInteger(idx)&&idx>=0&&idx<question.answers.length?idx:null});
+        }
         if (data.finished) play('win');
         else if (data.bonus && data.correct) play('bonus');
         else if (gained) play('capture');
@@ -690,6 +697,9 @@ export default function TriviaGame() {
       const q=[...englishQuestions,...offlineQuestions,...freshLocalQuestionReserve,...internationalQuestions].find(v=>v.id===question.id);
       if(!q){setMessage('לא נמצאה השאלה המקורית.');setBusy(false);return;}
       const correct = i === q.correct;
+      if(!correct){
+        setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,correctIndex:q.correct});
+      }
       const next = applyLocalAnswer(local, edge, correct, local.mode==='solo');
       setLocal(next);
       const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
@@ -1531,6 +1541,25 @@ export default function TriviaGame() {
           {tutorialPage>0 && <button className='glass-button' onClick={()=>setTutorialPage(p=>Math.max(0,p-1))}>{locale==='en'?'Back':'הקודם'}</button>}
           {tutorialPage<2 && <button className='gold-button' onClick={()=>setTutorialPage(v=>v+1)}>{tr("הבא ←")}</button>}
         </div>
+      </section>
+    </div>}
+    {wrongAnswerFeedback && <div className='quiz-overlay answer-feedback-overlay' role='presentation'>
+      <section className='quiz-card answer-feedback-card' role='dialog' aria-modal='true' aria-labelledby='wrong-answer-title'
+        aria-describedby='wrong-answer-description' tabIndex={-1}>
+        <span className='quiz-badge'>{tr('אפשר ללמוד גם מטעויות')}</span>
+        <h2 id='wrong-answer-title'>{tr('התשובה הנכונה היא:')}</h2>
+        <p id='wrong-answer-description' className='feedback-original-question'>{wrongAnswerFeedback.text}</p>
+        <div className='answer-grid feedback-answers'>
+          {wrongAnswerFeedback.answers.map((answer,index)=><div key={index}
+            className={'answer-option feedback-answer'+(index===wrongAnswerFeedback.correctIndex?' feedback-correct':index===wrongAnswerFeedback.selectedIndex?' feedback-wrong':'')}
+            aria-label={(index===wrongAnswerFeedback.correctIndex?tr('התשובה הנכונה')+': ':index===wrongAnswerFeedback.selectedIndex?tr('התשובה שבחרת')+': ':'')+answer}>
+            <span className='answer-letter' aria-hidden='true'>{index===wrongAnswerFeedback.correctIndex?'✓':index===wrongAnswerFeedback.selectedIndex?'✕':String(index+1)}</span>
+            <span>{answer}</span>
+          </div>)}
+        </div>
+        {wrongAnswerFeedback.correctIndex===null&&<p className='smalltxt' role='status'>{tr('לא ניתן לאמת כרגע את התשובה הנכונה. אפשר להמשיך במשחק.')}</p>}
+        <button className='gold-button answer-feedback-continue' type='button' autoFocus
+          onClick={()=>setWrongAnswerFeedback(null)}>{tr('המשך למשחק')}</button>
       </section>
     </div>}
     {question && <div className='quiz-overlay' role='presentation'>
