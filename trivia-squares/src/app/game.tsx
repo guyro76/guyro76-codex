@@ -157,6 +157,13 @@ export default function TriviaGame() {
   const [bonusSelect, setBonusSelect] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialPage, setTutorialPage] = useState(0);
+  useEffect(()=>{
+    if(!showTutorial)return;
+    const previous=document.activeElement as HTMLElement|null;
+    const dialog=document.getElementById('tutorial-modal');
+    dialog?.focus({preventScroll:true});
+    return ()=>{if(previous?.isConnected)previous.focus({preventScroll:true});};
+  },[showTutorial]);
   const state = remote?.state || local;
   const player = user?.id && remote?.guest_id === user.id ? 'guest' : 'host';
   const onlineTurn = remote?.state.mode === 'local' || player === state.turn;
@@ -1238,7 +1245,7 @@ export default function TriviaGame() {
     </div>
 
     {showTutorial && <div className='quiz-overlay' role='presentation'>
-      <section className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('הסבר משחק')}
+      <section id='tutorial-modal' tabIndex={-1} className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('הסבר משחק')}
         onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();dismissTutorial()}}}
         style={{textAlign:'center'}}>
         <div className='tutorial-language-picker' role='group' aria-label={locale==='he'?'שפת ההדרכה':'Tutorial language'}>
