@@ -22,3 +22,18 @@
  .lumen-tutorial-pen{animation:none;transform:translate(170px,49px)}
  .lumen-tutorial-answer-correct,.lumen-tutorial-captured,.lumen-tutorial-avatar,.lumen-tutorial-star{animation:none;opacity:1;transform:none}
 }
+
+
+.tutorial-language-picker{display:flex;justify-content:center;gap:8px;margin:0 auto 14px;}
+.tutorial-language-picker button{padding:7px 17px;color:#EDF6FF;background:rgba(220,239,255,.12);border:1px solid rgba(224,239,255,.36);border-radius:999px;cursor:pointer;font-weight:800;min-height:38px}
+.tutorial-language-picker button[aria-pressed=true]{background:linear-gradient(135deg,#FFF4C2,#FFCE76);color:#173358;border-color:#FFDE90}
+.tutorial-language-picker button:focus-visible{outline:3px solid #A7E8FF;outline-offset:3px}
+.quiz-overlay .quiz-card[aria-label='הסבר משחק'],.quiz-overlay .quiz-card[aria-label='How to play']{max-height:calc(100dvh - 22px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+@media(max-width:600px){
+ .lumen-tutorial-visual{max-height:190px}
+ .lumen-tutorial-preview{margin:2px auto 4px}
+ .lumen-tutorial-step-caption{font-size:12px!important}
+ main.trivia-app .glass-panel,main.trivia-app .hero-name,main.trivia-app button.world-choice,main.trivia-app .arena-inner,main.trivia-app .quiz-card{
+  backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;
+ }
+}
