@@ -4,7 +4,8 @@ async function ready(page: Page) {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'טריוויה ריבועים' })).toBeVisible();
   const tutorial = page.getByRole('dialog', { name: 'הסבר משחק' });
-  if (await tutorial.isVisible()) await tutorial.getByRole('button', { name: 'דלג או סיים' }).click();
+  await expect(tutorial).toBeVisible();
+  await tutorial.getByRole('button', { name: 'דלג או סיים' }).click();
   await expect(page.locator('svg.board')).toBeVisible();
   await page.getByLabel('שם שחקן (חובה)').fill('טסטר');
   await page.locator('svg.board').scrollIntoViewIfNeeded();
@@ -166,7 +167,8 @@ test('each subsequent question is new and never repeats the previous question',a
 test('required player name persists after reload and notebook grid remains translucent',async({page})=>{
   await page.goto('/');
   const guide=page.getByRole('dialog',{name:'הסבר משחק'});
-  if(await guide.isVisible()) await guide.getByRole('button',{name:'דלג או סיים'}).click();
+  await expect(guide).toBeVisible();
+  await guide.getByRole('button',{name:'דלג או סיים'}).click();
   await expect(page.getByRole('button',{name:/התחל משחק/})).toBeDisabled();
   await page.getByLabel('כינוי שחקן').fill('שחקנית הבודקת');
   await page.getByRole('button',{name:/שמור שם, צבע טוש/}).click();
