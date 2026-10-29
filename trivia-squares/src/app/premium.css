@@ -690,3 +690,81 @@ main.trivia-app #app-footer .game-author-credit-copy{
  }
  main.trivia-app #app-footer .game-author-credit-copy{color:#24052C!important}
 }
+
+/* Luminous liquid-vessel capture. The fill rises once for a newly claimed cell.
+   No JS timers, DOM scans, external assets or network requests. */
+main.trivia-app .capture-tile .capture-liquid-rise{
+ transform-box:fill-box;transform-origin:center bottom;
+ animation:captureVesselFill .64s cubic-bezier(.23,.86,.32,1) both;
+}
+main.trivia-app .capture-tile .capture-liquid-wave{
+ transform-box:fill-box;transform-origin:center center;
+ animation:captureWaveTilt .50s ease-in-out .10s both;
+}
+main.trivia-app .capture-tile .capture-bubble{
+ animation:captureBubbleUp .76s cubic-bezier(.22,.83,.44,1) .19s both;
+}
+main.trivia-app .capture-tile .capture-bubble:nth-of-type(2){animation-delay:.29s}
+main.trivia-app .capture-tile .capture-bubble:nth-of-type(3){animation-delay:.36s}
+main.trivia-app .capture-tile .capture-medallion{
+ animation:captureSymbolMedal .48s cubic-bezier(.18,1.55,.39,1) .52s both;
+}
+main.trivia-app .capture-tile .capture-mark{
+ animation:captureSymbolReveal .39s cubic-bezier(.2,1.24,.42,1) .61s both;
+ transform-box:fill-box;transform-origin:center center;
+}
+main.trivia-app .capture-tile .capture-firework-spark{
+ animation:captureSparkBurst .45s ease-out both;
+ transform-box:fill-box;transform-origin:center center;
+}
+main.trivia-app .capture-tile .capture-face{
+ animation:captureVesselFlash .47s ease-out both;
+}
+@keyframes captureVesselFill{
+ from{transform:translateY(109%)} 
+ 72%{transform:translateY(-4%)} 
+ to{transform:translateY(0)}
+}
+@keyframes captureWaveTilt{
+ 0%{transform:translateX(-11%) rotate(-4deg);opacity:.27}
+ 65%{transform:translateX(5%) rotate(2deg);opacity:.8}
+ 100%{transform:translateX(0) rotate(0deg);opacity:1}
+}
+@keyframes captureBubbleUp{
+ from{transform:translateY(12px) scale(.6);opacity:0}
+ 45%{opacity:.75}
+ to{transform:translateY(-12px) scale(1.05);opacity:.25}
+}
+@keyframes captureSymbolMedal{
+ from{opacity:0;transform:scale(.3) rotate(-19deg)}
+ 67%{opacity:1;transform:scale(1.18) rotate(6deg)}
+ to{opacity:1;transform:scale(1) rotate(0)}
+}
+@keyframes captureSymbolReveal{
+ from{opacity:0;transform:scale(.4)}
+ 72%{opacity:1;transform:scale(1.16)}
+ to{opacity:1;transform:scale(1)}
+}
+@keyframes captureSparkBurst{
+ from{opacity:0;transform:scale(.15)}
+ 45%{opacity:1;transform:scale(1.6)}
+ to{opacity:0;transform:scale(.9)}
+}
+@keyframes captureVesselFlash{
+ from{opacity:0;filter:brightness(2)}
+ 60%{opacity:1;filter:brightness(1.35)}
+ to{opacity:1;filter:brightness(1)}
+}
+/* A reduced-motion setting still displays a completely filled, labelled tile. */
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app .capture-tile .capture-liquid-rise,
+ main.trivia-app .capture-tile .capture-liquid-wave,
+ main.trivia-app .capture-tile .capture-bubble,
+ main.trivia-app .capture-tile .capture-medallion,
+ main.trivia-app .capture-tile .capture-mark,
+ main.trivia-app .capture-tile .capture-firework-spark,
+ main.trivia-app .capture-tile .capture-face{
+  animation:none!important;transition:none!important;opacity:1!important;transform:none!important;
+ }
+ main.trivia-app .capture-tile .capture-firework{display:none!important}
+}
