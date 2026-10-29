@@ -66,3 +66,27 @@ test('account and legal routes are rendered', async ({page})=>{
     expect((await page.locator('h1').first().innerText()).trim().length).toBeGreaterThan(4);
   }
 });
+
+test('online registration requires explicit adult and policy acknowledgements', async ({page})=>{
+  await ready(page);
+  const google=page.getByRole('button',{name:'התחבר באמצעות Google'});
+  await expect(google).toBeDisabled();
+  await page.getByRole('checkbox',{name:/אני בן\/בת 18/}).check();
+  await expect(google).toBeDisabled();
+  await page.getByRole('checkbox',{name:/קראתי את/}).check();
+  await expect(google).toBeEnabled();
+  // No OAuth request is made by this test.
+});
+
+test('local storage deletion actually removes the game preference keys',async({page})=>{
+  await page.goto('/cookies');
+  await page.evaluate(()=>{
+    localStorage.setItem('trivia-local-game-v1','test');
+    localStorage.setItem('trivia-personal-choice','test');
+    localStorage.setItem('trivia-tutorial-seen-v1','1');
+  });
+  await page.getByRole('button',{name:'מחק נתוני משחק מקומיים'}).click();
+  const saved=await page.evaluate(()=>['trivia-local-game-v1','trivia-personal-choice','trivia-tutorial-seen-v1'].map(k=>localStorage.getItem(k)));
+  expect(saved).toEqual([null,null,null]);
+  await expect(page.getByRole('status')).toContainText('נמחקו');
+});
