@@ -985,6 +985,7 @@ export default function TriviaGame() {
           {finished && size < 6 && <button className='glass-button' onClick={() => chooseWorld(size + 1)}>{tr("העולם הבא ←")}</button>}
         </div>
         {finished && <StageReward
+          locale={locale}
           stageKey={remote?.id||stageRunId}
           remoteMatchId={remote?.id}
           worldSize={state.rows}
@@ -1148,7 +1149,7 @@ export default function TriviaGame() {
             onClick={()=>void activateTimeCharm()}>♾️ הפעל קמע זמן ({currentCharms})</button>}
         </div>
         <div className='answer-grid'>
-          {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{['א','ב','ג','ד'][i]}</span>{a}</button>)}
+          {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{(locale==='en'?['A','B','C','D']:['א','ב','ג','ד'])[i]}</span>{a}</button>)}
         </div>
         <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>{question.kind==='bonus'?'תשובה נכונה מעניקה שני אסימוני כיבוש זהב':'תשובה שגויה משאירה את הקו פתוח ומעבירה את התור'}</p>
       </section>
