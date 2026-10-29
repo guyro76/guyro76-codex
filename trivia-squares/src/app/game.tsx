@@ -9,10 +9,14 @@ import { applyLocalAnswer } from '../lib/engine';
 import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
+import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
 import './premium.css';
 
+function canonicalQuestion(text:string):string {
+  return text.normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+}
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local';
 type Question = { text: string; answers: string[]; edge?: string; id?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus'; deadline_at?: string | null; extensions?: number };
@@ -78,6 +82,25 @@ export default function TriviaGame() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [edge, setEdge] = useState<string | null>(null);
   const usedLocalQuestionIds=useRef<Set<number>>(new Set());
+  const seenQuestionTexts=useRef<Set<string>>(new Set());
+  const [localPoolRelease,setLocalPoolRelease]=useState<{he:number;en:number}>({he:0,en:0});
+  const localPoolRef=useRef<{he:number;en:number}>({he:0,en:0});
+  const rememberShownQuestion=useCallback((text:string)=>{
+    const fingerprint=canonicalQuestion(text);
+    if(!fingerprint)return;
+    seenQuestionTexts.current.add(fingerprint);
+    try{localStorage.setItem('trivia-question-text-history-v1',JSON.stringify([...seenQuestionTexts.current]))}catch{}
+  },[]);
+  const expandLocalPool=useCallback((preferred:'he'|'en')=>{
+    const current=localPoolRef.current;
+    const nextIndex=Math.min(countLocalReserve(preferred),current[preferred]+LOCAL_QUESTION_RELEASE_BATCH);
+    const grown=nextIndex-current[preferred];
+    const next={...current,[preferred]:nextIndex};
+    localPoolRef.current=next;
+    setLocalPoolRelease(next);
+    try{localStorage.setItem('trivia-local-pool-release-v1',JSON.stringify(next))}catch{}
+    return grown;
+  },[]);
   const [secondsLeft,setSecondsLeft]=useState<number | null>(null);
   const timeoutBusy=useRef(false);
   const lastTickRef=useRef<number | null>(null);
@@ -129,7 +152,10 @@ export default function TriviaGame() {
   const showTimer = Boolean(question) && question?.deadline_at !== null && !timeFreezeActive;
   const timerText = secondsLeft === null ? '01:00' : String(Math.floor(secondsLeft/60)).padStart(2,'0')+':'+String(secondsLeft%60).padStart(2,'0');
   const world = worlds.find(w => w.size === state.rows) || worlds[0];
-  const questionBank = locale === 'en' ? englishQuestions : offlineQuestions;
+  const questionBank = [
+    ...(locale === 'en' ? englishQuestions : offlineQuestions),
+    ...freshLocalQuestions(locale,localPoolRelease[locale])
+  ];
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
 
@@ -140,10 +166,11 @@ export default function TriviaGame() {
       const m = data as RemoteMatch;
       setRemote(prev => prev && prev.version > m.version ? prev : m);
       setQuestion(m.question || null);
+      if(m.question?.text)rememberShownQuestion(m.question.text);
       setEdge(m.question?.edge || null);
       if (m.status === 'completed') setMessage('המשחק הסתיים, כל הכבוד!');
     } else if (error) setMessage('שגיאת טעינת משחק: ' + error.message);
-  }, [client]);
+  }, [client,rememberShownQuestion]);
 
   useEffect(() => {
     try {
@@ -171,6 +198,12 @@ export default function TriviaGame() {
         if (avatars.includes(v.avatar)) setAvatar(v.avatar);
         setRemember(true);
       }
+      const seen=JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]') as string[];
+      if(Array.isArray(seen))seenQuestionTexts.current=new Set(seen.filter(x=>typeof x==='string'));
+      const storedPool=JSON.parse(localStorage.getItem('trivia-local-pool-release-v1')||'{}') as {he?:number;en?:number};
+      const available={he:Math.max(0,Math.min(countLocalReserve('he'),Math.trunc(Number(storedPool.he)||0))),
+        en:Math.max(0,Math.min(countLocalReserve('en'),Math.trunc(Number(storedPool.en)||0)))};
+      localPoolRef.current=available;setLocalPoolRelease(available);
       const ids=JSON.parse(localStorage.getItem('trivia-used-question-ids')||'[]') as number[];
       if(Array.isArray(ids)) usedLocalQuestionIds.current=new Set(ids.filter(x=>Number.isInteger(x)));
       const savedRun=localStorage.getItem('trivia-stage-run-id');
@@ -211,7 +244,7 @@ export default function TriviaGame() {
     }catch{}
     try{
       const pending=JSON.parse(localStorage.getItem('trivia-local-question')||'null') as Question|null;
-      if(pending?.id && pending?.edge && [...offlineQuestions,...englishQuestions].some(q=>q.id===pending.id)){
+      if(pending?.id && pending?.edge && [...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve].some(q=>q.id===pending.id)){
         setQuestion(pending);
         setEdge(pending.edge);
       }
@@ -354,10 +387,14 @@ export default function TriviaGame() {
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
     setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false);
     if (mode === 'local') {
+      const added=expandLocalPool(locale);
       const nextRun='local-'+crypto.randomUUID();
       setStageRunId(nextRun);
       try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
-      setRemote(null); setLocal(empty(size)); setLocalFreeze({host:false,guest:false}); setMessage('משחק מקומי לכל שני שחקנים, עם יתרות זמן נפרדות לכל אחד.');
+      setRemote(null); setLocal(empty(size)); setLocalFreeze({host:false,guest:false});
+      setMessage(added>0
+       ? (locale==='en'?added+' fresh reviewed questions added to your practice bank.':'נוספו '+added+' שאלות חדשות ממאגר מאושר.')
+       : (locale==='en'?'Local game ready. Your previous questions will not repeat.':'משחק מקומי מוכן. שאלות שכבר הוצגו לא יחזרו.'));
     } else if (client && user && legalAccepted) {
       const {error:localeError}=await client.rpc('trivia_set_locale',{p_locale:locale});
       if(localeError){setMessage(localeError.message);setBusy(false);return;}
@@ -397,16 +434,18 @@ export default function TriviaGame() {
       setBusy(true);
       const { data, error } = await client.rpc('trivia_choose_edge', { p_match: remote.id, p_edge: key });
       if (error) setMessage(error.message);
-      else { setEdge(key); setQuestion(data as Question); await refresh(remote.id); }
+      else { setEdge(key); setQuestion(data as Question); if(data?.text)rememberShownQuestion(String(data.text));await refresh(remote.id); }
       setBusy(false);
     } else {
       setEdge(key);
-      const remaining=questionBank.filter(q=>!usedLocalQuestionIds.current.has(q.id));
+      const remaining=questionBank.filter(q=>
+        !usedLocalQuestionIds.current.has(q.id) && !seenQuestionTexts.current.has(canonicalQuestion(q.text)));
       const q=usedLocalQuestionIds.current.size===0 && locale==='he'
         ? remaining.find(v=>v.text.includes('בירת אוסטרליה')) || remaining[0]
         : remaining[0];
       if(!q){setEdge(null);setMessage('כל השאלות נוצלו. לא נחזור על שאלה שכבר נשאלה.');return;}
       usedLocalQuestionIds.current.add(q.id);
+      rememberShownQuestion(q.text);
       try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
       setQuestion({id:q.id,text:q.text,answers:q.answers,locale,edge:key,deadline_at:new Date(Date.now()+60_000).toISOString(),extensions:0});
     }
@@ -441,7 +480,7 @@ export default function TriviaGame() {
       }
     } else {
       if (!edge) { setBusy(false); return; }
-      const q=[...englishQuestions,...offlineQuestions].find(v=>v.id===question.id);
+      const q=[...englishQuestions,...offlineQuestions,...freshLocalQuestionReserve].find(v=>v.id===question.id);
       if(!q){setMessage('לא נמצאה השאלה המקורית.');setBusy(false);return;}
       const correct = i === q.correct;
       const next = applyLocalAnswer(local, edge, correct);
@@ -565,6 +604,7 @@ export default function TriviaGame() {
 
   function chooseWorld(nextSize: number) {
     if (busy) return;
+    expandLocalPool(locale);
     const nextRun='local-'+crypto.randomUUID();
     setStageRunId(nextRun);
     try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
