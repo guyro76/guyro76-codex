@@ -1,0 +1,136 @@
+name: Trivia Squares - Verified Vercel Release
+
+on:
+  workflow_run:
+    workflows: ["Trivia Squares - Quality Gate"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "Exact verified feature/trivia-squares commit SHA"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: trivia-squares-vercel-production
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'feature/trivia-squares' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: trivia-squares-release
+    env:
+      VERCEL_ORG_ID: team_1rUcH5ZlcvHwQ9s0ibhNfZy9
+      VERCEL_PROJECT_ID: prj_SmQQVjSCstHAxeHQdqLpAOnpcWBT
+      VERCEL_SCOPE: guy-rosenberg-s-projects
+      VERCEL_CLI_VERSION: 65.7.0
+    steps:
+      - name: Resolve exact requested commit
+        id: sha
+        env:
+          DISPATCH_SHA: ${{ inputs.commit }}
+          VERIFIED_SHA: ${{ github.event.workflow_run.head_sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            sha="$DISPATCH_SHA"
+          else
+            sha="$VERIFIED_SHA"
+          fi
+          if ! [[ "$sha" =~ ^[a-fA-F0-9]{40}$ ]]; then
+            echo "::error::An exact 40-character SHA is required"
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the exact candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ steps.sha.outputs.sha }}
+          persist-credentials: false
+
+      - name: Require intended branch commit
+        env:
+          COMMIT: ${{ steps.sha.outputs.sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=100 origin feature/trivia-squares
+          git merge-base --is-ancestor "$COMMIT" origin/feature/trivia-squares ||
+            { echo "::error::Commit not on authorized feature/trivia-squares branch"; exit 1; }
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+
+      - name: Verify game without secrets
+        working-directory: trivia-squares
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          node --test tests/*.test.mjs
+          npm run build
+
+      - name: Check existing Vercel release authorization
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::Repository release secret VERCEL_TOKEN is not configured; public alias is unchanged"
+            exit 1
+          fi
+
+      - name: Install pinned Vercel CLI
+        run: npm install --global "vercel@$VERCEL_CLI_VERSION" --no-audit --no-fund
+
+      - name: Prepare project linkage
+        working-directory: trivia-squares
+        run: |
+          set -euo pipefail
+          mkdir -p .vercel
+          printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
+
+      - name: Fetch authorized production environment
+        working-directory: trivia-squares
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production --scope "$VERCEL_SCOPE"
+
+      - name: Build exact source for Vercel Production
+        working-directory: trivia-squares
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod --scope "$VERCEL_SCOPE"
+
+      - name: Deploy tested build to existing Vercel project
+        id: deploy
+        working-directory: trivia-squares
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          url="$(vercel deploy --prebuilt --prod --yes --scope "$VERCEL_SCOPE")"
+          echo "deployment=$url" >> "$GITHUB_OUTPUT"
+          echo "New verified deployment: $url"
+
+      - name: Connect permanent public alias to new verified deployment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment }}
+        run: |
+          set -euo pipefail
+          vercel alias set "$DEPLOYMENT_URL" trivia-squares.vercel.app --scope "$VERCEL_SCOPE"
+          echo "trivia-squares.vercel.app now maps to $DEPLOYMENT_URL"
