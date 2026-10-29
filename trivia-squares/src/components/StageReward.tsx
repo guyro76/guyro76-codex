@@ -2,11 +2,13 @@
 
 import {useCallback,useEffect,useState} from 'react';
 import type {SupabaseClient} from '@supabase/supabase-js';
+import type {ActiveLocale} from '../lib/i18n';
 import {cardById,localStageCard,readLocalAlbum,saveLocalAlbum,stageWords,type StageCard,type LocalEarned} from '../lib/stageRewards';
 
 type RewardProps={
   stageKey:string;
   worldSize:number;
+  locale:ActiveLocale;
   remoteMatchId?:string;
   client:SupabaseClient|null;
   onAdvance:()=>void;
@@ -51,7 +53,7 @@ function Illustration({card}:{card:StageCard}){
   </svg>;
 }
 
-export default function StageReward({stageKey,worldSize,remoteMatchId,client,onAdvance,onLocalPrize,onRemotePrize,onSound}:RewardProps){
+export default function StageReward({stageKey,worldSize,locale,remoteMatchId,client,onAdvance,onLocalPrize,onRemotePrize,onSound}:RewardProps){
   const [card,setCard]=useState<StageCard|null>(null);
   const [playing,setPlaying]=useState(false);
   const [played,setPlayed]=useState(false);
@@ -90,7 +92,43 @@ export default function StageReward({stageKey,worldSize,remoteMatchId,client,onA
     }
     return()=>{alive=false};
   },[stageKey,worldSize,remoteMatchId,client,onSound]);
-  const word=stageWords[worldSize]||stageWords[3];
+  const translate=(he:string,en:string)=>locale==='en'?en:he;
+  const wordsEnglish:Record<number,{answer:string;hint:string}>={
+    3:{answer:'apple',hint:'A fruit from an orchard tree'},
+    4:{answer:'diamond',hint:'A sparkling precious stone'},
+    5:{answer:'clouds',hint:'They float in the sky and bring rain'},
+    6:{answer:'galaxy',hint:'A vast collection of stars'}
+  };
+  const word=locale==='en'?(wordsEnglish[worldSize]||wordsEnglish[3]):(stageWords[worldSize]||stageWords[3]);
+  const cardTranslations:Record<string,[string,string]>={
+   'world-3-portrait':['Leonardo da Vinci','Renaissance artist and inventor'],
+   'world-4-portrait':['Marie Curie','Pioneering researcher of radioactivity'],
+   'world-5-portrait':['Amelia Earhart','Aviation pioneer'],
+   'world-6-portrait':['Galileo Galilei','Astronomer and natural philosopher'],
+   'world-3-song':['Orchard Song','Original music card'],
+   'world-4-song':['Crystal Melody','Original music card'],
+   'world-5-song':['Cloud Song','Original music card'],
+   'world-6-song':['Orchestra of Stars','Original music card'],
+   'world-3-letter':['Treasure Letter: T','An alphabet clue for the word puzzle'],
+   'world-4-letter':['Treasure Letter: D','An alphabet clue for the word puzzle'],
+   'world-5-letter':['Treasure Letter: C','An alphabet clue for the word puzzle'],
+   'world-6-letter':['Treasure Letter: G','An alphabet clue for the word puzzle']
+  };
+  const displayCard=(c:StageCard):StageCard=>{
+    const texts=cardTranslations[c.id];
+    if(locale!=='en'||!texts)return c;
+    return {...c,title:texts[0],subtitle:texts[1],glyph:c.kind==='letter'?texts[0].slice(-1):c.glyph,
+      rarity:c.rarity,artistCredit:'Original artwork created for Trivia Squares'};
+  };
+  const shownCard=card?displayCard(card):null;
+  const showPrize=(value:string)=>{
+    if(locale!=='en')return value;
+    const translations:Record<string,string>={
+      '10 קרדיטים':'10 credits','15 קרדיטים':'15 credits','5 פירות':'5 fruit',
+      '2 פירות':'2 fruit','יהלום אחד':'1 gem','קמע זמן אחד':'1 time charm'
+    };
+    return translations[value]||value;
+  };
   const finish=useCallback(async(selected:'wheel'|'word')=>{
     if(!card||played||playing)return;
     setPlaying(true);setNotice('');setGame(selected);
@@ -111,46 +149,46 @@ export default function StageReward({stageKey,worldSize,remoteMatchId,client,onA
     onSound('bonus');
     setPlaying(false);
   },[card,played,playing,remoteMatchId,client,guess,word.answer,onRemotePrize,onLocalPrize,onSound,stageKey]);
-  if(!card)return <section className='lumen-stage-reveal' role='status' aria-live='polite'><h2>✨ אוסף הסודות נפתח</h2><p>{notice||'מכינים את קלף הבונוס...'}</p></section>;
+  if(!card)return <section className='lumen-stage-reveal' role='status' aria-live='polite'><h2>{translate('✨ אוסף הסודות נפתח','✨ Secret collection unlocked')}</h2><p>{notice||translate('מכינים את קלף הבונוס...','Preparing your collectible card...')}</p></section>;
   return <section className='lumen-stage-reveal' aria-labelledby='stage-reward-title'>
-    <div className='lumen-stage-topline'><span>STAGE COMPLETE</span><span>✦ קלף אספנות חדש ✦</span></div>
-    <h2 id='stage-reward-title'>פתחת את כל הריבועים. גילית אוצר!</h2>
-    <p className='lumen-stage-subtitle'>הרווחת קלף ייחודי לשלב הזה. הוא נכנס לאלבום שלך ואינו נעלם.</p>
+    <div className='lumen-stage-topline'><span>STAGE COMPLETE</span><span>{translate('✦ קלף אספנות חדש ✦','✦ New collectible card ✦')}</span></div>
+    <h2 id='stage-reward-title'>{translate('פתחת את כל הריבועים. גילית אוצר!','You closed every square. A treasure is yours!')}</h2>
+    <p className='lumen-stage-subtitle'>{translate('הרווחת קלף ייחודי לשלב הזה. הוא נכנס לאלבום שלך ואינו נעלם.','You earned a unique card for this stage. It stays in your collection.')}</p>
     <div className='lumen-reveal-layout'>
       <article className={'lumen-collectible-card kind-'+card.kind}>
-        <div className='lumen-card-top'><span>✦ {card.rarity}</span><span>WORLD {String(worldSize-2).padStart(2,'0')}</span></div>
-        <Illustration card={card}/>
-        <div className='lumen-card-copy'><h3>{card.title}</h3><p>{card.subtitle}</p></div>
+        <div className='lumen-card-top'><span>✦ {locale==='en'?card.rarity==='אגדי'?'Legendary':card.rarity==='נדיר'?'Rare':'Special':card.rarity}</span><span>WORLD {String(worldSize-2).padStart(2,'0')}</span></div>
+        <Illustration card={shownCard||card}/>
+        <div className='lumen-card-copy'><h3>{shownCard?.title||card.title}</h3><p>{shownCard?.subtitle||card.subtitle}</p></div>
         <div className='lumen-card-bottom'>LUMEN COLLECTION · 01/01 <span>✦</span></div>
       </article>
       <div className='lumen-reward-options'>
-        <span className='lumen-kicker'>האתגר שבין העולמות</span>
-        <h3>מה בא לך לעשות עם האוצר?</h3>
-        <p>לבחירתך אתגר אחד לכל שלב. אפשר גם לדלג ולהתקדם.</p>
+        <span className='lumen-kicker'>{translate('האתגר שבין העולמות','Between-world challenge')}</span>
+        <h3>{translate('מה בא לך לעשות עם האוצר?','What will you do with your treasure?')}</h3>
+        <p>{translate('לבחירתך אתגר אחד לכל שלב. אפשר גם לדלג ולהתקדם.','Choose one optional challenge per stage, or skip ahead.')}</p>
         {!played && !game && <div className='lumen-intermission-choices'>
-          <button type='button' onClick={()=>setGame('word')}><strong>🔠 נחש את המילה</strong><span>רמז ואותיות לאוצר הבא</span></button>
-          <button type='button' onClick={()=>setGame('wheel')}><strong>🎡 גלגל ההפתעות</strong><span>פרס וירטואלי, ללא תשלום</span></button>
+          <button type='button' onClick={()=>setGame('word')}><strong>{translate('🔠 נחש את המילה','🔠 Guess the word')}</strong><span>{translate('רמז ואותיות לאוצר הבא','A clue to your next treasure')}</span></button>
+          <button type='button' onClick={()=>setGame('wheel')}><strong>{translate('🎡 גלגל ההפתעות','🎡 Prize wheel')}</strong><span>{translate('פרס וירטואלי, ללא תשלום','A free virtual prize')}</span></button>
         </div>}
         {game==='word'&&!played&&<div className='lumen-word-game'>
-          <p><strong>רמז:</strong> {word.hint}</p>
-          <p className='lumen-letter-slots' aria-label={'למילה '+word.answer.length+' אותיות'}>{Array.from({length:word.answer.length},(_,i)=><span key={i}>{guess[i]||'_'}</span>)}</p>
-          <label htmlFor='lumen-word-guess'>מה המילה?</label>
-          <input id='lumen-word-guess' type='text' dir='rtl' maxLength={word.answer.length+2} value={guess} onChange={e=>setGuess(e.target.value)} autoComplete='off'/>
-          <button className='lumen-cta' type='button' onClick={()=>void finish('word')} disabled={playing||guess.trim().length===0}>בדוק מילה ✨</button>
+          <p><strong>{translate('רמז:','Hint:')}</strong> {word.hint}</p>
+          <p className='lumen-letter-slots' aria-label={locale==='en'?'Word with '+word.answer.length+' letters':'למילה '+word.answer.length+' אותיות'}>{Array.from({length:word.answer.length},(_,i)=><span key={i}>{guess[i]||'_'}</span>)}</p>
+          <label htmlFor='lumen-word-guess'>{translate('מה המילה?','What is the word?')}</label>
+          <input id='lumen-word-guess' type='text' dir={locale==='en'?'ltr':'rtl'} maxLength={word.answer.length+2} value={guess} onChange={e=>setGuess(e.target.value)} autoComplete='off'/>
+          <button className='lumen-cta' type='button' onClick={()=>void finish('word')} disabled={playing||guess.trim().length===0}>{translate('בדוק מילה ✨','Check word ✨')}</button>
         </div>}
         {game==='wheel'&&!played&&<div className='lumen-wheel-game'>
           <div className='lumen-wheel-frame'><div className='lumen-wheel' style={{transform:'rotate('+wheelTurns*360+'deg)'}}>
             <span>🪙</span><span>🍎</span><span>💎</span><span>⏳</span>
           </div></div>
-          <button className='lumen-cta' type='button' onClick={()=>void finish('wheel')} disabled={playing}>סובב את הגלגל ✨</button>
+          <button className='lumen-cta' type='button' onClick={()=>void finish('wheel')} disabled={playing}>{translate('סובב את הגלגל ✨','Spin the wheel ✨')}</button>
         </div>}
-        {played && <div className='lumen-prize-won' role='status' aria-live='polite'><strong>🎉 הפרס שלך: {prize}</strong><span>נשמר באוסף המשחק שלך.</span></div>}
+        {played && <div className='lumen-prize-won' role='status' aria-live='polite'><strong>{translate('🎉 הפרס שלך:','🎉 Your prize:')} {showPrize(prize)}</strong><span>{translate('נשמר באוסף המשחק שלך.','Saved to your game collection.')}</span></div>}
         {notice&&<p role='alert'>{notice}</p>}
-        <button type='button' className='lumen-next-button' onClick={onAdvance}>{worldSize<6?'המשך לעולם הבא ←':'שחק שוב וגלֵה קלפים נוספים ↻'}</button>
-        <button type='button' className='lumen-album-trigger' onClick={()=>setAlbumExpanded(v=>!v)} aria-expanded={albumExpanded}>📚 האלבום שלי · {album.length} קלפים</button>
+        <button type='button' className='lumen-next-button' onClick={onAdvance}>{worldSize<6?translate('המשך לעולם הבא ←','Continue to next world →'):translate('שחק שוב וגלֵה קלפים נוספים ↻','Play again for more cards ↻')}</button>
+        <button type='button' className='lumen-album-trigger' onClick={()=>setAlbumExpanded(v=>!v)} aria-expanded={albumExpanded}>{translate('📚 האלבום שלי ·','📚 My album ·')} {album.length} {translate('קלפים','cards')}</button>
         {albumExpanded&&<div className='lumen-album-grid'>{[...album].reverse().slice(0,12).map(item=>{
           const found=cardById(item.cardId);
-          return found?<div key={item.matchId} title={found.subtitle}><span>{found.glyph}</span><strong>{found.title}</strong><small>{item.played?'★ אתגר הושלם':'קלף נאסף'}</small></div>:null;
+          return found?<div key={item.matchId} title={found.subtitle}><span>{found.glyph}</span><strong>{displayCard(found).title}</strong><small>{item.played?translate('★ אתגר הושלם','★ Challenge completed'):translate('קלף נאסף','Card collected')}</small></div>:null;
         })}</div>}
       </div>
     </div>
