@@ -5,15 +5,34 @@ async function ready(page:Page){
  if(await intro.isVisible())await intro.getByRole('button',{name:'דלג או סיים'}).click();
 }
 async function drawFirstLine(page:Page){
+ await page.locator('svg.board').scrollIntoViewIfNeeded();
  const dot=page.locator('svg.board circle[aria-label="Dot row 1, column 1"]');
  const neighbor=page.locator('svg.board circle[aria-label="Dot row 1, column 2"]');
  // Dot accessibility labels follow the active locale.
  const d=await dot.boundingBox();const n=await neighbor.boundingBox();
  if(!d||!n)throw Error('Board dots missing');
- await page.mouse.move(d.x+d.width/2,d.y+d.height/2);
- await page.mouse.down();
- await page.mouse.move(n.x+n.width/2,n.y+n.height/2,{steps:12});
- await page.mouse.up();
+ const start={x:d.x+d.width/2,y:d.y+d.height/2};
+ const end={x:n.x+n.width/2,y:n.y+n.height/2};
+ const isTouch=await page.evaluate(()=>navigator.maxTouchPoints>0 && matchMedia('(pointer: coarse)').matches);
+ if(isTouch){
+  const cdp=await page.context().newCDPSession(page);
+  const point=(x:number,y:number)=>({x,y,radiusX:2,radiusY:2,force:0.8,id:1});
+  try{
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point(start.x,start.y)]});
+   await page.waitForTimeout(45);
+   for(let step=1;step<=16;step++){
+    const x=start.x+(end.x-start.x)*step/16,y=start.y+(end.y-start.y)*step/16;
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[point(x,y)]});
+    await page.waitForTimeout(22);
+   }
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  }finally{await cdp.detach();}
+ }else{
+  await page.mouse.move(start.x,start.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x,end.y,{steps:12});
+  await page.mouse.up();
+ }
 }
 
 test('QA specialist 4: live switch to English updates screen and direction',async({page})=>{
