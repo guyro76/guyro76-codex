@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawing';
 
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local';
@@ -21,6 +23,12 @@ type Progress = { level: number; fruits: number; diamonds: number; credits: numb
 
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
 const avatars = ['🦊', '🦁', '🐼', '🐲', '🦄', '👑', '🚀', '⭐'];
+const worlds = [
+  { size: 3, name: 'גן הפירות', subtitle: 'ההרפתקה מתחילה כאן', icon: '🍎', slug: 'orchard', badge: 'עולם 01', reward: 'פירות' },
+  { size: 4, name: 'מכרות היהלומים', subtitle: 'גלו אוצרות מנצנצים', icon: '💎', slug: 'crystal', badge: 'עולם 02', reward: 'יהלומים' },
+  { size: 5, name: 'ממלכת העננים', subtitle: 'הדרך עוברת בין הכוכבים', icon: '☁️', slug: 'clouds', badge: 'עולם 03', reward: 'בונוסים' },
+  { size: 6, name: 'גלקסיית הכוכבים', subtitle: 'אתגר המאסטרים הגדול', icon: '🪐', slug: 'galaxy', badge: 'עולם 04', reward: 'גביעים' }
+] as const;
 const practiceQuestions = [
   { text: 'מהי בירת אוסטרליה?', answers: ['סידני', 'מלבורן', 'קנברה', 'פרת'], correct: 2 },
   { text: 'איזה יסוד מסומן באות O?', answers: ['חמצן', 'ברזל', 'מימן', 'זהב'], correct: 0 },
@@ -100,11 +108,18 @@ export default function TriviaGame() {
   const [muted, setMuted] = useState(false);
   const [invite, setInvite] = useState<string | null>(null);
   const botBusy = useRef(false);
+  const boardRef = useRef<SVGSVGElement>(null);
+  const gesture = useRef<{ pointerId: number; start: Dot } | null>(null);
+  const [trace, setTrace] = useState<{ start: Dot; target: BoardPoint; end: Dot | null } | null>(null);
+  const [keyboardStart, setKeyboardStart] = useState<Dot | null>(null);
   const state = remote?.state || local;
   const player = user?.id && remote?.guest_id === user.id ? 'guest' : 'host';
   const onlineTurn = remote?.state.mode === 'local' || player === state.turn;
   const canPlay = remote ? remote.status === 'playing' && onlineTurn && !busy : !busy;
   const finished = Object.keys(state.owners).length === state.rows * state.cols;
+  const world = worlds.find(w => w.size === state.rows) || worlds[0];
+  const completed = Object.keys(state.owners).length;
+  const percent = Math.round(completed / (state.rows * state.cols) * 100);
 
   const refresh = useCallback(async (id: string) => {
     if (!client) return;
@@ -237,122 +252,363 @@ export default function TriviaGame() {
       setMessage(error ? error.message : 'הפרופיל נשמר!');
     } else setMessage('העדפות נשמרו במכשיר בלבד');
   }
+
+  function chooseWorld(nextSize: number) {
+    if (busy) return;
+    setSize(nextSize);
+    setRemote(null);
+    setLocal(empty(nextSize));
+    setQuestion(null);
+    setEdge(null);
+    setTrace(null);
+    gesture.current = null;
+    setKeyboardStart(null);
+    setMessage('העולם התחלף! גרור קו מנקודה לנקודה סמוכה.');
+  }
+
+  function boardPoint(event: ReactPointerEvent<SVGSVGElement>): BoardPoint {
+    const svg = event.currentTarget;
+    const matrix = svg.getScreenCTM();
+    if (matrix) {
+      const point = svg.createSVGPoint();
+      point.x = event.clientX;
+      point.y = event.clientY;
+      const localPoint = point.matrixTransform(matrix.inverse());
+      return { x: localPoint.x, y: localPoint.y };
+    }
+    const rect = svg.getBoundingClientRect();
+    return { x: (event.clientX - rect.left) * 328 / rect.width, y: (event.clientY - rect.top) * 328 / rect.height };
+  }
+
+  function onBoardPointerDown(event: ReactPointerEvent<SVGSVGElement>) {
+    if (!canPlay || finished || !!question || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    const start = nearestDot(boardPoint(event), state.rows, state.cols);
+    if (!start) return;
+    event.preventDefault();
+    gesture.current = { pointerId: event.pointerId, start };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setTrace({ start, target: dotXY(start, state.rows, state.cols), end: null });
+  }
+
+  function onBoardPointerMove(event: ReactPointerEvent<SVGSVGElement>) {
+    const active = gesture.current;
+    if (!active || event.pointerId !== active.pointerId) return;
+    event.preventDefault();
+    const target = boardPoint(event);
+    const end = nearestDot(target, state.rows, state.cols);
+    const valid = end && edgeBetween(active.start, end, state.rows, state.cols);
+    setTrace({
+      start: active.start,
+      target: valid ? dotXY(end, state.rows, state.cols) : target,
+      end: valid && !state.edges[valid] ? end : null
+    });
+  }
+
+  function onBoardPointerUp(event: ReactPointerEvent<SVGSVGElement>) {
+    const active = gesture.current;
+    if (!active || event.pointerId !== active.pointerId) return;
+    const end = nearestDot(boardPoint(event), state.rows, state.cols);
+    const chosen = end ? edgeBetween(active.start, end, state.rows, state.cols) : null;
+    gesture.current = null;
+    setTrace(null);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (chosen && !state.edges[chosen]) void pick(chosen);
+    else setMessage('חבר שתי נקודות סמוכות בגרירה אחת כדי לקבל שאלה.');
+  }
+
+  function onBoardPointerCancel(event: ReactPointerEvent<SVGSVGElement>) {
+    if (gesture.current?.pointerId !== event.pointerId) return;
+    gesture.current = null;
+    setTrace(null);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+
+  function onDotKeyDown(event: ReactKeyboardEvent<SVGCircleElement>, dot: Dot) {
+    if (!canPlay || question || finished || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    if (!keyboardStart) { setKeyboardStart(dot); setMessage('בחר כעת נקודה סמוכה כדי להשלים קו'); return; }
+    const chosen = edgeBetween(keyboardStart, dot, state.rows, state.cols);
+    setKeyboardStart(null);
+    if (chosen && !state.edges[chosen]) void pick(chosen);
+    else setMessage('יש לבחור רק שתי נקודות סמוכות עם קו פנוי.');
+  }
+
   const colors: Record<Side, string> = { host: color, guest: '#FA9143', bot: '#FA9143' };
   const drawLine = (key: string, x1: number, y1: number, x2: number, y2: number) => {
     const owner = state.edges[key];
-    return <g key={key}>
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? colors[owner] : '#7D96C4'} strokeWidth={owner ? 9 : 5} strokeLinecap='round' />
-      {!owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke='transparent' strokeWidth='26' tabIndex={canPlay ? 0 : -1} role='button' aria-label={'בחר קו ' + key} onClick={() => void pick(key)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); void pick(key); } }} style={{ cursor: canPlay ? 'pointer' : 'default' }} />}
+    return <g key={key} pointerEvents='none'>
+      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={colors[owner]} strokeWidth='15' strokeOpacity='.23' strokeLinecap='round' filter='url(#lineGlow)' />}
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? colors[owner] : '#B7D1F6'} strokeOpacity={owner ? 1 : .2} strokeWidth={owner ? 9 : 3} strokeLinecap='round' strokeDasharray={owner ? undefined : '1 11'} />
+      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke='#FFFFFF' strokeOpacity='.45' strokeWidth='2' strokeLinecap='round' />}
     </g>;
   };
   const step = 288 / state.cols;
   const inviteLink = remote?.state.mode === 'online' ? typeof window !== 'undefined' ? window.location.origin + '/?room=' + remote.id : '' : '';
-  return <main style={css.main}>
+  const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
+  const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
+  return <main className={'trivia-app theme-' + world.slug} style={css.main}>
     <style>{`
-      *{box-sizing:border-box} body{background:radial-gradient(circle at 15% 0%,#344995 0%,#172857 45%,#0C1536 100%);color:white;font-weight:800}
-      button,input,select{font:inherit} button:focus-visible,input:focus-visible,select:focus-visible,[role=button]:focus-visible{outline:3px solid #FFE479;outline-offset:3px}
-      .game-grid{display:grid;grid-template-columns:minmax(300px,1.55fr) minmax(290px,1fr);gap:18px}
-      .answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-      .smalltxt{color:#DFE8FF;font-size:13px;font-weight:800}
-      .choice{padding:8px 16px;background:#344E91;border:2px solid #6D8AD4;border-radius:10px;color:white;font-weight:900;cursor:pointer}
-      .choice[aria-pressed=true]{border-color:#FFDF5C;box-shadow:0 0 0 2px #FFDF5C}
-      .board{width:100%;max-width:550px;margin:0 auto;display:block;touch-action:manipulation}
-      .footer{display:flex;gap:24px;justify-content:center;margin:30px 0 6px}
-      .footer a{color:#E5ECFF;font-weight:900}
-      @media(max-width:790px){.game-grid{grid-template-columns:1fr}.answer-grid{grid-template-columns:1fr 1fr}}
-      @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+      *{box-sizing:border-box} body{background:#111C48;color:white;font-family:Arial,'Noto Sans Hebrew',sans-serif;font-weight:800;margin:0}
+      .trivia-app{--accent:#8CE8FF;min-height:100vh;position:relative;isolation:isolate}
+      .theme-orchard{--accent:#A7F57C;--tone:#1F684E;--glow:#90F59B;--backdrop:radial-gradient(ellipse at 15% 4%,#327B65 0%,transparent 42%),radial-gradient(ellipse at 88% 93%,#2C536C 0%,transparent 39%),linear-gradient(160deg,#142E46,#101A3F)}
+      .theme-crystal{--accent:#C8B6FF;--tone:#5644A8;--glow:#9C7BFF;--backdrop:radial-gradient(ellipse at 14% 5%,#593D99 0%,transparent 45%),radial-gradient(ellipse at 85% 85%,#244E84 0%,transparent 43%),linear-gradient(160deg,#1C1B55,#0C183D)}
+      .theme-clouds{--accent:#A0EDFF;--tone:#267CA6;--glow:#97E8FF;--backdrop:radial-gradient(ellipse at 10% 7%,#2F7898 0%,transparent 48%),radial-gradient(ellipse at 86% 92%,#7973BD 0%,transparent 48%),linear-gradient(160deg,#224D78,#14214A)}
+      .theme-galaxy{--accent:#F5B4FF;--tone:#8945B0;--glow:#D77CFF;--backdrop:radial-gradient(ellipse at 15% 8%,#5F338D 0%,transparent 48%),radial-gradient(ellipse at 90% 90%,#2A568F 0%,transparent 42%),linear-gradient(155deg,#201C58,#111337)}
+      .trivia-app:before{content:'';position:absolute;inset:0;z-index:-1;background:var(--backdrop);border-radius:0 0 38px 38px;pointer-events:none}
+      .trivia-app button,.trivia-app input,.trivia-app select{font:inherit}
+      .trivia-app button:focus-visible,.trivia-app input:focus-visible,.trivia-app select:focus-visible,.trivia-app [role=button]:focus-visible{outline:3px solid #FFE78C;outline-offset:3px}
+      .trivia-app button{transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+      .trivia-app button:not(:disabled):hover{transform:translateY(-2px)}
+      .trivia-app button:disabled{opacity:.55;cursor:not-allowed}
+      .hero{text-align:center;padding:8px 0 21px}
+      .eyebrow{color:#FFE68C;font-size:12px;letter-spacing:2.2px;font-weight:900}
+      .hero h1{font-size:clamp(37px,5vw,65px);letter-spacing:-1.4px;margin:4px;color:#FFFFFF;text-shadow:0 4px 26px #AAB4FF60}
+      .hero p{font-size:15px;color:#EBF2FF;margin:6px}
+      .adventure-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:0 0 20px}
+      .world-choice{position:relative;overflow:hidden;isolation:isolate;border:1px solid #FFFFFF55!important;border-radius:18px;padding:14px 15px;min-height:105px;color:#FFFFFF;text-align:right;box-shadow:inset 0 1px 0 #FFFFFF30,0 7px 19px #0A133350;cursor:pointer}
+      .world-choice:before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,#FFFFFF27,transparent 60%);z-index:-1}
+      .world-choice[data-selected=true]{outline:3px solid #FFE38F;outline-offset:1px;box-shadow:0 0 0 2px #FFE38F35,0 12px 34px #151B4650}
+      .wc-badge{font-size:10px;color:#FFFFFF;opacity:.95;font-weight:900;letter-spacing:1px}
+      .wc-name{display:block;font-size:18px;line-height:1.3;font-weight:900;text-shadow:0 2px 9px #0008}
+      .wc-icon{font-size:29px;float:left;filter:drop-shadow(0 2px 5px #1118)}
+      .wc-level{font-size:11px;color:#FFFFFF;font-weight:900;margin-top:5px}
+      .game-grid{display:grid;grid-template-columns:minmax(0,1.52fr) minmax(300px,1fr);gap:18px}
+      .glass-panel{background:linear-gradient(150deg,#1E3263EF,#17244BEF);border:1px solid #A7C5FF51;border-radius:25px;padding:20px;box-shadow:inset 0 1px 0 #FFFFFF1E,0 15px 37px #040B26A6}
+      .arena-panel{background:linear-gradient(165deg,#223C6FCF,#122448F5);padding:17px}
+      .arena-title{display:flex;align-items:center;justify-content:space-between;gap:9px;margin:3px 1px 13px}
+      .arena-title h2{font-size:21px;margin:0;font-weight:900}
+      .arena-title p{margin:5px 0 0;color:#E4F3FF;font-size:12px;font-weight:900}
+      .level-pill{border:1px solid #B0C6FF70;border-radius:99px;background:#FFFFFF16;padding:8px 12px;color:#FFFFFF;font-size:11px;font-weight:900}
+      .scoreboard{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:14px}
+      .player-tile{display:flex;gap:10px;align-items:center;background:#0A1735A8;border:1px solid #A9CBFF42;border-radius:15px;padding:9px}
+      .player-tile.left-side{direction:ltr;text-align:left}
+      .player-tile.right-side{direction:rtl}
+      .player-tile .portrait{display:grid;place-items:center;flex-shrink:0;width:42px;height:42px;border:2px solid var(--accent);border-radius:14px;background:#274985;font-size:23px}
+      .player-tile.other .portrait{border-color:#FFB069;background:#704329}
+      .score-name{font-size:11px;color:#E7F0FF}
+      .score-num{font-size:26px;line-height:1.1;font-weight:900;color:#FFFFFF;font-variant-numeric:tabular-nums}
+      .versus{font-size:11px;color:#FFE783;text-align:center;font-weight:900}
+      .arena{position:relative;overflow:hidden;border-radius:23px;padding:15px 10px 9px;border:1px solid #E5F5FF60;box-shadow:inset 0 3px 12px #FFFFFF14,0 14px 27px #0006}
+      .arena.orchard{background:radial-gradient(circle at 18% 15%,#7EDD9B73,transparent 44%),radial-gradient(circle at 80% 80%,#B6DD6861,transparent 44%),linear-gradient(155deg,#164B46,#12384E)}
+      .arena.crystal{background:radial-gradient(circle at 18% 15%,#E3AFFF80,transparent 42%),radial-gradient(circle at 80% 80%,#95A6FF65,transparent 44%),linear-gradient(145deg,#30245E,#263B78)}
+      .arena.clouds{background:radial-gradient(circle at 25% 15%,#D0FCFF9C,transparent 45%),radial-gradient(circle at 85% 80%,#B1BDFF82,transparent 47%),linear-gradient(145deg,#4079A4,#435C9F)}
+      .arena.galaxy{background:radial-gradient(circle at 15% 10%,#BD74FF9C,transparent 43%),radial-gradient(circle at 85% 75%,#3D9AFF6B,transparent 41%),linear-gradient(140deg,#1C225D,#473075)}
+      .arena:before{content:'✧ ✦ · ✧ · ✦ · ✧';position:absolute;top:9px;left:8px;right:8px;color:#FFFFFF35;font-size:17px;letter-spacing:18px;text-align:center;pointer-events:none}
+      .arena:after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.18;background-image:radial-gradient(#FFFFFF 1px,transparent 1px);background-size:25px 25px;mask-image:linear-gradient(130deg,#000 10%,transparent 85%)}
+      .arena-inner{position:relative;z-index:1;border-radius:19px;background:linear-gradient(140deg,#07193494,#0C1A37AE);border:1px solid #E2F0FF3B;box-shadow:0 13px 22px #07122975,inset 0 0 32px #1EA7F417}
+      .board{display:block;width:100%;max-width:600px;aspect-ratio:1;margin:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+      .gesture-hint{text-align:center;display:flex;justify-content:center;gap:8px;align-items:center;margin:12px auto;color:#FFFFFF;font-size:13px;font-weight:900}
+      .draw-icon{display:grid;place-items:center;border-radius:10px;background:#FFE586;color:#20325D;width:29px;height:29px;font-size:17px}
+      .level-progress{background:#0C1F43;border:1px solid #6F97DB78;border-radius:99px;height:9px;overflow:hidden;margin-top:14px}
+      .level-progress-fill{height:100%;background:linear-gradient(90deg,#FED466,var(--accent));border-radius:99px;transition:width .35s}
+      .status-line{min-height:45px;display:flex;align-items:center;justify-content:center;text-align:center;color:#FFE889;font-size:14px;font-weight:900}
+      .control-row{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+      .gold-button{background:linear-gradient(140deg,#FFF0A7,#FFD063)!important;color:#142144!important;border:0;border-radius:12px;box-shadow:inset 0 2px 0 #FFFFFF92,0 5px 15px #0C142A7F;font-weight:900;padding:13px 20px;cursor:pointer}
+      .glass-button{background:#38538A;color:#FFFFFF;border:1px solid #B1C8FC70;border-radius:12px;padding:12px 15px;font-weight:900;cursor:pointer}
+      .smalltxt{color:#E7EFFB;font-size:12px;font-weight:900}
+      .panel-title{font-size:20px;margin:0 0 13px;display:flex;align-items:center;gap:9px;font-weight:900}
+      .side-stack{display:grid;gap:15px;align-content:start}
+      .mode-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+      .choice{font-weight:900;padding:12px 6px;border-radius:11px;background:#334C82;color:#FFFFFF;border:1px solid #8AB1EF99;cursor:pointer;font-size:12px}
+      .choice[aria-pressed=true]{background:#FFE48E;color:#13244A;border-color:#FFECBD}
+      .form-field{margin-top:13px;display:block;font-size:13px;color:#E7F0FF}
+      .form-input{width:100%;background:#F7FAFF;border:2px solid #AEC7EF;color:#192953;border-radius:11px;padding:11px;font-weight:900;margin-top:6px}
+      .swatches{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+      .swatch{height:31px;width:31px;border-radius:50%;border:2px solid #FFFFFFAB;cursor:pointer}
+      .swatch[aria-pressed=true]{outline:3px solid #FFE18E;outline-offset:2px}
+      .avatar-row{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0}
+      .avatar-choice{display:grid;place-items:center;border-radius:10px;border:1px solid #8CABE4;background:#2E457B;width:40px;height:40px;font-size:21px;cursor:pointer}
+      .avatar-choice[aria-pressed=true]{border:2px solid #FFE18C;background:#506CAC}
+      .wallet{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+      .wallet-item{display:flex;align-items:center;flex-direction:column;gap:5px;background:#2B4678;border:1px solid #739BD366;border-radius:12px;padding:9px 2px;text-align:center}
+      .wallet-item strong{font-size:20px;font-weight:900;color:#FFFFFF}
+      .wallet-item span{font-size:11px;font-weight:900;color:#EAF2FF}
+      .quiz-overlay{position:fixed;inset:0;z-index:30;background:#08132DDF;backdrop-filter:blur(9px);display:grid;place-items:center;padding:14px}
+      .quiz-card{width:min(100%,530px);background:linear-gradient(145deg,#304C94,#192E61);border:2px solid #FFD979;border-radius:25px;padding:25px;box-shadow:0 25px 100px #0009,inset 0 2px 0 #FFFFFF40}
+      .quiz-badge{display:inline-flex;padding:7px 11px;border-radius:99px;background:#FFE58E;color:#1A2D55;font-weight:900;font-size:12px}
+      .quiz-card h2{font-size:clamp(20px,4vw,29px);font-weight:900;line-height:1.4;color:#FFFFFF}
+      .answer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:18px}
+      .answer-option{padding:16px;min-height:66px;text-align:right;background:#F3F7FF;color:#1B2E59;border:2px solid #DCE6FC;border-radius:13px;font-weight:900;cursor:pointer}
+      .answer-option:not(:disabled):hover{background:#FFE8A4;border-color:#F7C852}
+      .answer-letter{display:inline-grid;place-items:center;border-radius:9px;background:#DFE9FF;color:#1E3978;width:28px;height:28px;margin-left:10px}
+      .footer{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;margin:27px auto 8px;font-size:13px}
+      .footer a{color:#EDF4FF;font-weight:900}
+      @media(max-width:850px){.game-grid{grid-template-columns:1fr}.adventure-track{grid-template-columns:repeat(2,minmax(0,1fr))}.glass-panel{padding:14px}.arena{padding:12px 7px 7px}}
+      @media(max-width:440px){.player-tile .portrait{width:36px;height:36px}.player-tile{padding:6px}.score-num{font-size:22px}.scoreboard{gap:5px}.world-choice{min-height:89px;padding:9px}.wc-name{font-size:15px}.answer-grid{grid-template-columns:1fr}.wallet{grid-template-columns:repeat(4,minmax(0,1fr))}.quiz-card{padding:16px}}
+      @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+      @keyframes tileClaim{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+      .claimed-tile{animation:tileClaim .36s cubic-bezier(.2,1.3,.4,1);transform-origin:center}
     `}</style>
-    <header style={{ textAlign: 'center', padding: '12px 0 20px' }}>
-      <div style={{ color: '#FFE174', fontWeight: 900, letterSpacing: 1, fontSize: 12 }}>TRIVIA SQUARES • ADVENTURE</div>
-      <h1 style={{ fontSize: 'clamp(30px,5vw,56px)', margin: 7, color: '#FFFFFF' }}>טריוויה ריבועים</h1>
-      <p style={{ color: '#E5EBFF', margin: 5 }}>סוגרים ריבועים רק עם תשובה נכונה. מי שכובש יותר - מנצח!</p>
+    <header className='hero'>
+      <div className='eyebrow'>✦ TRIVIA SQUARES · ADVENTURE ✦</div>
+      <h1>טריוויה ריבועים</h1>
+      <p>חברו נקודות, ענו נכון, כבשו ריבועים והפכו לאלופי הטריוויה!</p>
     </header>
+
+    <nav className='adventure-track' aria-label='בחירת עולם'>
+      {worlds.map((w, i) => <button
+        key={w.slug}
+        type='button'
+        className='world-choice'
+        data-selected={w.size === state.rows}
+        onClick={() => chooseWorld(w.size)}
+        style={{ background: ['linear-gradient(125deg,#277856,#133E56)','linear-gradient(125deg,#7059B8,#333774)','linear-gradient(125deg,#3C9EC0,#565BBA)','linear-gradient(125deg,#7842AC,#333F86)'][i] }}
+      >
+        <span className='wc-icon' aria-hidden='true'>{w.icon}</span>
+        <span className='wc-badge'>{w.badge}</span>
+        <strong className='wc-name'>{w.name}</strong>
+        <div className='wc-level'>{w.size}×{w.size} · {w.reward}</div>
+      </button>)}
+    </nav>
+
     <div className='game-grid'>
-      <section style={css.panel}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, paddingBottom: 14, alignItems: 'center' }}>
-          <div style={{ padding: 10, background: '#304883', borderRadius: 12 }}>🔵 {state.scores.host} <span className='smalltxt'>שחקן 1</span></div>
-          <div style={{ textAlign: 'center' }}><div className='smalltxt'>התור של</div><strong style={{ color: '#FFE174' }}>{state.turn === 'host' ? 'שחקן 1' : state.turn === 'bot' ? 'המחשב' : 'שחקן 2'}</strong></div>
-          <div style={{ padding: 10, background: '#304883', borderRadius: 12 }}>🟠 {state.scores.bot + state.scores.guest} <span className='smalltxt'>יריב</span></div>
+      <section className='glass-panel arena-panel'>
+        <div className='arena-title'>
+          <div><h2>{world.icon} {world.name}</h2><p>{world.subtitle} • {state.rows * state.cols} ריבועים</p></div>
+          <div className='level-pill'>שלב {themeIndex + 1} / 4</div>
         </div>
-        <svg viewBox='0 0 328 328' className='board' aria-label={'לוח המשחק עם ' + state.rows * state.cols + ' ריבועים'}>
-          {Array.from({ length: state.rows }, (_, r) => Array.from({ length: state.cols }, (_, c) => {
-            const owner = state.owners[r + '-' + c];
-            return owner ? <g key={'cell-' + r + '-' + c}>
-              <rect x={20 + c * step + 4} y={20 + r * step + 4} width={step - 8} height={step - 8} rx='9' fill={colors[owner]} opacity='.84' />
-              <text x={20 + (c + .5) * step} y={28 + (r + .63) * step} textAnchor='middle' fontSize={step * .36} aria-hidden='true'>{owner === 'host' ? avatar : '🐲'}</text>
-            </g> : null;
-          }))}
-          {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols }, (_, c) => drawLine('h-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + (c + 1) * step, 20 + r * step)))}
-          {Array.from({ length: state.rows }, (_, r) => Array.from({ length: state.cols + 1 }, (_, c) => drawLine('v-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + c * step, 20 + (r + 1) * step)))}
-          {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols + 1 }, (_, c) => <circle key={'dot-' + r + '-' + c} cx={20 + c * step} cy={20 + r * step} r='5' fill='#FFF' />))}
-        </svg>
-        <p aria-live='polite' style={{ minHeight: 30, textAlign: 'center', color: '#FFE479' }}>
-          {finished ? 'נגמר המשחק! ' + (state.scores.host === state.scores.guest + state.scores.bot ? 'תיקו!' : state.scores.host > state.scores.guest + state.scores.bot ? 'שחקן 1 ניצח!' : 'היריב ניצח!') : message}
-        </p>
-        {remote?.status === 'waiting' && <p style={{ color: '#FFE479', textAlign: 'center' }}>ממתינים להצטרפות חבר למשחק...</p>}
-        {question && <section style={{ background: '#314887', padding: 15, border: '2px solid #FFE174', borderRadius: 16, marginBottom: 12 }}>
-          <div className='smalltxt'>שאלת טריוויה • ארבע תשובות</div>
-          <h2 style={{ fontSize: 20, margin: '12px 0' }}>{question.text}</h2>
-          <div className='answer-grid'>{question.answers.map((a, i) => <button key={i} disabled={busy} onClick={() => void answer(i)} style={css.button}>{a}</button>)}</div>
-        </section>}
-        <div style={{ display: 'flex', gap: 9, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button style={css.button} disabled={busy} onClick={() => void start()}>התחל משחק חדש</button>
-          <button style={css.secondary} onClick={() => setMuted(m => !m)} aria-pressed={muted}>{muted ? '🔇 הפעל צלילים' : '🔊 השתק צלילים'}</button>
+        <div className='scoreboard'>
+          <div className='player-tile right-side'>
+            <div className='portrait'>{avatar}</div>
+            <div><div className='score-name'>{name || 'שחקן 1'}</div><div className='score-num'>{state.scores.host}</div></div>
+          </div>
+          <div className='versus'>{state.turn === 'host' ? 'התור שלך' : 'תור היריב'}<div style={{ fontSize: 17 }}>⚔️</div></div>
+          <div className='player-tile left-side other'>
+            <div className='portrait'>{state.mode === 'bot' ? '🤖' : '🐲'}</div>
+            <div><div className='score-name'>{state.mode === 'bot' ? 'המחשב' : 'שחקן 2'}</div><div className='score-num'>{state.scores.guest + state.scores.bot}</div></div>
+          </div>
+        </div>
+        <div className={'arena ' + world.slug}>
+          <div className='arena-inner'>
+            <svg
+              ref={boardRef}
+              className='board'
+              viewBox='0 0 328 328'
+              role='group'
+              aria-label={'לוח ' + world.name + ': גרור מנקודה לנקודה סמוכה. ניווט מקלדת באמצעות Tab ו-Enter על הנקודות.'}
+              onPointerDown={onBoardPointerDown}
+              onPointerMove={onBoardPointerMove}
+              onPointerUp={onBoardPointerUp}
+              onPointerCancel={onBoardPointerCancel}
+            >
+              <defs>
+                <filter id='lineGlow' x='-50%' y='-50%' width='200%' height='200%'><feGaussianBlur stdDeviation='4' /></filter>
+                <radialGradient id='dotGlow'><stop offset='0%' stopColor='#FFFFFF'/><stop offset='58%' stopColor='#D7EAFF'/><stop offset='100%' stopColor='#7BA9ED'/></radialGradient>
+                <linearGradient id='cellTint' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stopColor='#FFFFFF' stopOpacity='.12'/><stop offset='100%' stopColor='#FFFFFF' stopOpacity='.015'/></linearGradient>
+              </defs>
+              {Array.from({ length: state.rows }, (_, r) => Array.from({ length: state.cols }, (_, c) => {
+                const owner = state.owners[r + '-' + c];
+                const w = 288 / state.cols;
+                const h = 288 / state.rows;
+                const x = 20 + c * w + 5;
+                const y = 20 + r * h + 5;
+                return <g key={'cell-' + r + '-' + c} pointerEvents='none'>
+                  <rect x={x} y={y} width={w - 10} height={h - 10} rx='10' fill={owner ? colors[owner] : 'url(#cellTint)'} fillOpacity={owner ? '.82' : '1'} className={owner ? 'claimed-tile' : ''} />
+                  {owner ? <>
+                    <rect x={x + 3} y={y + 3} width={w - 16} height={h - 16} rx='8' fill='none' stroke='#FFFFFF' strokeOpacity='.4' strokeWidth='1.5' />
+                    <text x={x + (w - 10) / 2} y={y + h * .63} textAnchor='middle' fontSize={Math.min(37, w * .42)} aria-hidden='true'>{owner === 'host' ? avatar : '🐲'}</text>
+                  </> : <text x={x + (w - 10) / 2} y={y + h * .62} textAnchor='middle' fontSize={Math.min(24, w * .3)} opacity='.26' aria-hidden='true'>{decorative}</text>}
+                </g>;
+              }))}
+              {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols }, (_, c) => drawLine('h-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + (c + 1) * step, 20 + r * step)))}
+              {Array.from({ length: state.rows }, (_, r) => Array.from({ length: state.cols + 1 }, (_, c) => drawLine('v-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + c * step, 20 + (r + 1) * step)))}
+              {trace && <g pointerEvents='none'>
+                <line x1={dotXY(trace.start, state.rows, state.cols).x} y1={dotXY(trace.start, state.rows, state.cols).y} x2={trace.target.x} y2={trace.target.y} stroke='#FFD875' strokeOpacity='.35' strokeWidth='15' strokeLinecap='round' filter='url(#lineGlow)' />
+                <line x1={dotXY(trace.start, state.rows, state.cols).x} y1={dotXY(trace.start, state.rows, state.cols).y} x2={trace.target.x} y2={trace.target.y} stroke={trace.end ? '#FFE386' : '#DDEAFF'} strokeWidth={trace.end ? 8 : 5} strokeLinecap='round' strokeDasharray={trace.end ? undefined : '4 6'} />
+              </g>}
+              {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols + 1 }, (_, c) => {
+                const dot: Dot = { row: r, col: c };
+                const selected = trace?.start.row === r && trace?.start.col === c || trace?.end?.row === r && trace?.end?.col === c || keyboardStart?.row === r && keyboardStart?.col === c;
+                const px = dotXY(dot, state.rows, state.cols);
+                return <g key={'dot-' + r + '-' + c}>
+                  <circle cx={px.x} cy={px.y} r={selected ? 13 : 10} fill='#BBD9FF' fillOpacity={selected ? '.35' : '.16'} pointerEvents='none' />
+                  <circle cx={px.x} cy={px.y} r={selected ? 7.3 : 5.5} fill={selected ? '#FFE48A' : 'url(#dotGlow)'} stroke={selected ? '#FFFFFF' : '#D9EAFF'} strokeWidth='1.5' pointerEvents='none' />
+                  <circle cx={px.x} cy={px.y} r='13' fill='transparent' role='button' tabIndex={canPlay ? 0 : -1} aria-label={'נקודה ' + (r + 1) + ', ' + (c + 1)} onKeyDown={event => onDotKeyDown(event, dot)} />
+                </g>;
+              }))}
+            </svg>
+          </div>
+        </div>
+        <div className='gesture-hint'><span className='draw-icon'>✍️</span> גע בנקודה, גרור לנקודה סמוכה ושחרר</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>שטחים שנכבשו</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
+        <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
+        <div className='status-line' aria-live='polite'>
+          {finished ? '🏆 ' + (state.scores.host === state.scores.guest + state.scores.bot ? 'המשחק הסתיים בתיקו!' : state.scores.host > state.scores.guest + state.scores.bot ? 'ניצחת! כל הכבוד!' : 'היריב ניצח. משחק חוזר?') : message}
+        </div>
+        {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>ממתינים שהחבר ייכנס לחדר...</p>}
+        <div className='control-row'>
+          <button className='gold-button' disabled={busy} onClick={() => void start()}>🎮 {remote ? 'משחק חדש' : 'התחל משחק'}</button>
+          <button className='glass-button' onClick={() => setMuted(m => !m)} aria-pressed={muted}>{muted ? '🔇 צלילים כבויים' : '🔊 צלילים פועלים'}</button>
+          {finished && size < 6 && <button className='glass-button' onClick={() => chooseWorld(size + 1)}>העולם הבא ←</button>}
         </div>
       </section>
-      <aside style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
-        <section style={css.panel}>
-          <h2 style={{ margin: '0 0 12px' }}>🎮 בחר מצב משחק</h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {([['bot', 'נגד מחשב'], ['online', 'נגד חבר'], ['local', 'על מכשיר אחד']] as const).map(([value, label]) => <button className='choice' key={value} aria-pressed={mode === value} onClick={() => setMode(value)}>{label}</button>)}
+
+      <aside className='side-stack'>
+        <section className='glass-panel'>
+          <h2 className='panel-title'>🎯 חדר המשחק</h2>
+          <div className='mode-row'>
+            {([['bot','🤖 מחשב'],['online','🌐 חבר'],['local','👥 מקומי']] as const).map(([value, label]) =>
+              <button key={value} className='choice' aria-pressed={mode === value} onClick={() => setMode(value)}>{label}</button>)}
           </div>
-          <div style={{ display: 'flex', gap: 9, alignItems: 'center', marginTop: 16 }}>
-            <label htmlFor='board-size'>גודל לוח</label>
-            <select id='board-size' value={size} onChange={e => setSize(Number(e.target.value))} style={css.input}>
-              {[3, 4, 5, 6].map(s => <option value={s} key={s}>{s}×{s}</option>)}
-            </select>
-          </div>
-          {inviteLink && <div style={{ marginTop: 12 }}>
-            <div className='smalltxt'>קישור הזמנה לחבר</div>
-            <button style={css.secondary} onClick={async () => { await navigator.clipboard.writeText(inviteLink); setMessage('קישור ההזמנה הועתק'); }}>העתק קישור לחדר</button>
+          <label className='form-field' htmlFor='board-size'>גודל לוח</label>
+          <select id='board-size' className='form-input' value={size} onChange={e => chooseWorld(Number(e.target.value))}>
+            {worlds.map(w => <option key={w.size} value={w.size}>{w.icon} {w.name} ({w.size}×{w.size})</option>)}
+          </select>
+          {inviteLink && <div style={{ marginTop: 13 }}>
+            <div className='smalltxt'>קישור לחדר הפרטי</div>
+            <button className='glass-button' style={{ marginTop: 7 }} onClick={async () => { await navigator.clipboard.writeText(inviteLink); setMessage('הקישור הועתק'); }}>העתק קישור להזמנת חבר</button>
           </div>}
-          {invite && client && user && <button style={{ ...css.button, marginTop: 12 }} disabled={busy} onClick={() => void join()}>הצטרף לחדר שהוזמנת אליו</button>}
+          {invite && client && user && <button className='gold-button' style={{ marginTop: 12 }} disabled={busy} onClick={() => void join()}>הצטרף לחדר שהוזמנת אליו</button>}
         </section>
-        <section style={css.panel}>
-          <h2 style={{ margin: '0 0 12px' }}>🎨 זהות השחקן</h2>
-          <label htmlFor='player-name'>כינוי</label>
-          <input id='player-name' value={name} onChange={e => setName(e.target.value)} maxLength={32} style={css.input} />
-          <div style={{ marginTop: 13 }} className='smalltxt'>הצבע שלך</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 7 }}>
-            {palettes.map(c => <button key={c} aria-label={'בחר צבע ' + c} aria-pressed={color === c} onClick={() => setColor(c)} style={{ width: 32, height: 32, background: c, border: color === c ? '3px solid white' : '2px solid #9BB1E4', borderRadius: '50%', cursor: 'pointer' }} />)}
+        <section className='glass-panel'>
+          <h2 className='panel-title'>👑 השחקן שלי</h2>
+          <label className='form-field' htmlFor='player-name'>כינוי שחקן</label>
+          <input id='player-name' className='form-input' value={name} onChange={e => setName(e.target.value)} maxLength={32}/>
+          <div className='form-field'>צבע הכיבוש שלי</div>
+          <div className='swatches'>{palettes.map(c => <button key={c} className='swatch' style={{ background: c }} aria-label={'בחר צבע ' + c} aria-pressed={color === c} onClick={() => setColor(c)} />)}</div>
+          <div className='form-field'>סמל שיופיע בכל ריבוע</div>
+          <div className='avatar-row'>{avatars.map(a => <button className='avatar-choice' key={a} aria-label={'בחר אוואטר ' + a} aria-pressed={avatar === a} onClick={() => setAvatar(a)}>{a}</button>)}</div>
+          <label className='form-field' style={{ display: 'flex', gap: 10, alignItems: 'center' }}><input type='checkbox' style={{ width: 18, height: 18, accentColor: '#FFDE85' }} checked={remember} onChange={e => setRemember(e.target.checked)} /> זכור את הבחירות שלי תמיד</label>
+          <button className='glass-button' style={{ marginTop: 13 }} onClick={() => void saveProfile()}>שמור עיצוב אישי</button>
+        </section>
+        <section className='glass-panel'>
+          <h2 className='panel-title'>💎 אוצרות והישגים</h2>
+          <div className='wallet'>
+            {([['🍎','פירות',progress.fruits],['💎','יהלומים',progress.diamonds],['🪙','קרדיטים',progress.credits],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
+              <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{label}</span></div>)}
           </div>
-          <div style={{ marginTop: 13 }} className='smalltxt'>אוואטר על הריבועים שלך</div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>{avatars.map(a => <button key={a} aria-label={'בחר אוואטר ' + a} aria-pressed={avatar === a} onClick={() => setAvatar(a)} style={{ background: avatar === a ? '#4766AB' : '#293E7E', border: avatar === a ? '2px solid #FFDF5C' : '1px solid #7891C8', padding: 6, fontSize: 22, borderRadius: 9, cursor: 'pointer' }}>{a}</button>)}</div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 9, margin: '12px 0' }}><input style={{ width: 18, height: 18 }} type='checkbox' checked={remember} onChange={e => setRemember(e.target.checked)} /> זכור את הצבע והאוואטר שלי</label>
-          <button style={css.secondary} onClick={() => void saveProfile()}>שמור פרופיל</button>
+          <p className='smalltxt' style={{ marginBottom: 0 }}>הפרסים הווירטואליים נשמרים לחשבון מחובר. מנגנוני הבונוס המתקדמים בפיתוח.</p>
         </section>
-        <section style={css.panel}>
-          <h2 style={{ margin: '0 0 10px' }}>💎 האוצר שלי</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {([['🍎', 'פירות', progress.fruits], ['💎', 'יהלומים', progress.diamonds], ['🪙', 'קרדיטים', progress.credits], ['❤️', 'לבבות', progress.hearts]] as const).map(([a, label, count]) => <div key={label} style={{ background: '#2E457F', borderRadius: 11, padding: 10 }}>{a} {label}: {count}</div>)}
-          </div>
-        </section>
-        <section style={css.panel}>
-          <h2 style={{ margin: '0 0 10px' }}>🔐 חשבון שחקן</h2>
-          {user ? <><div className='smalltxt'>מחובר: {user.email}</div><button style={{ ...css.secondary, marginTop: 10 }} onClick={() => void client?.auth.signOut()}>התנתק</button></>
+        <section className='glass-panel'>
+          <h2 className='panel-title'>🔐 מועדון השחקנים</h2>
+          {user ? <><p className='smalltxt'>מחובר: {user.email}</p><button className='glass-button' onClick={() => void client?.auth.signOut()}>התנתק</button></>
             : client ? <>
-              <button style={css.button} onClick={() => void client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/auth/callback' } })}>התחבר עם Google</button>
-              <label htmlFor='login-email' style={{ display: 'block', marginTop: 12 }}>כתובת מייל</label><input id='login-email' type='email' style={css.input} autoComplete='email' value={email} onChange={e => setEmail(e.target.value)} />
-              <label htmlFor='login-password' style={{ display: 'block', marginTop: 10 }}>סיסמה</label><input id='login-password' type='password' style={css.input} autoComplete='current-password' value={password} onChange={e => setPassword(e.target.value)} />
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <button style={css.secondary} onClick={async () => { const { error } = await client.auth.signInWithPassword({ email, password }); setMessage(error?.message || 'התחברת בהצלחה'); }}>התחברות</button>
-                <button style={css.secondary} onClick={async () => { const { error } = await client.auth.signUp({ email, password }); setMessage(error?.message || 'בדוק את המייל לאישור החשבון'); }}>הרשמה</button>
+              <button className='gold-button' onClick={() => void client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/auth/callback' } })}>התחבר באמצעות Google</button>
+              <label htmlFor='login-email' className='form-field'>דואר אלקטרוני</label>
+              <input id='login-email' className='form-input' type='email' autoComplete='email' value={email} onChange={e => setEmail(e.target.value)} />
+              <label htmlFor='login-password' className='form-field'>סיסמה</label>
+              <input id='login-password' className='form-input' type='password' autoComplete='current-password' value={password} onChange={e => setPassword(e.target.value)} />
+              <div className='control-row' style={{ marginTop: 12 }}>
+                <button className='glass-button' onClick={async () => { const { error } = await client.auth.signInWithPassword({ email, password }); setMessage(error?.message || 'התחברת בהצלחה'); }}>כניסה</button>
+                <button className='glass-button' onClick={async () => { const { error } = await client.auth.signUp({ email, password }); setMessage(error?.message || 'נשלח מייל לאימות החשבון'); }}>הרשמה</button>
               </div>
-            </> : <p className='smalltxt'>התחברות תופעל לאחר הגדרת משתני Supabase ב-Vercel.</p>}
+            </> : <p className='smalltxt'>משחק מקומי זמין כעת. התחברות מחייבת הגדרת Supabase במערכת הפריסה.</p>}
         </section>
       </aside>
     </div>
-    <footer className='footer'><a href='/privacy'>מדיניות פרטיות</a><a href='/terms'>תנאי שימוש</a><a href='/accessibility'>הצהרת נגישות</a></footer>
-    <div className='smalltxt' style={{ textAlign: 'center', marginBottom: 15 }}>הפרסים הם וירטואליים בלבד. אין רכישות בכסף אמיתי.</div>
+
+    {question && <div className='quiz-overlay' role='presentation'>
+      <section className='quiz-card' role='dialog' aria-modal='true' aria-label='שאלת טריוויה'>
+        <span className='quiz-badge'>⭐ רק תשובה נכונה תסגור את הקו ⭐</span>
+        <h2>{question.text}</h2>
+        <div className='answer-grid'>
+          {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{['א','ב','ג','ד'][i]}</span>{a}</button>)}
+        </div>
+        <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>תשובה שגויה משאירה את הקו פתוח ומעבירה את התור</p>
+      </section>
+    </div>}
+
+    <footer className='footer'><a href='/privacy'>פרטיות</a><a href='/terms'>תנאי שימוש</a><a href='/accessibility'>נגישות</a></footer>
+    <p className='smalltxt' style={{ textAlign: 'center' }}>פרסים וירטואליים בלבד · ללא רכישות בכסף אמיתי</p>
   </main>;
 }
