@@ -1196,6 +1196,7 @@ export default function TriviaGame() {
         </div>
         {finished && <StageReward
           locale={locale}
+          stageNumber={stageId}
           stageKey={remote?.id||stageRunId}
           remoteMatchId={remote?.id}
           worldSize={state.rows}
