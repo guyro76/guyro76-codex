@@ -5,7 +5,7 @@ import type {ActiveLocale} from '../lib/i18n';
 export default function TutorialPreview({locale,page,color,avatar}:{locale:ActiveLocale;page:number;color:string;avatar:string}) {
  const en=locale==='en';
  return <div className='lumen-tutorial-preview' data-testid='tutorial-preview' data-locale={locale} data-step={page} key={page}>
-  <div className='lumen-tutorial-step-indicator' aria-label={en?'Tutorial step '+(page+1)+' of 3':'שלב הדרכה '+(page+1)+' מתוך 3'}>
+  <div className='lumen-tutorial-step-indicator' role='group' aria-label={en?'Tutorial step '+(page+1)+' of 3':'שלב הדרכה '+(page+1)+' מתוך 3'}>
    {[0,1,2].map(i=><span key={i} className={i===page?'active':''} aria-hidden='true'/>)}
   </div>
   <svg viewBox='0 0 340 225' className='lumen-tutorial-visual' role='img' aria-label={
