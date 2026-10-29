@@ -109,3 +109,33 @@ test('marker ink color is independent from territory color',async({page})=>{
   await page.getByRole('dialog',{name:'שאלת טריוויה'}).getByRole('button',{name:/קנברה/}).click();
   await expect(page.locator('svg.board line[stroke="#EF4444"][stroke-width="10"]')).toHaveCount(1);
 });
+
+test('each subsequent question is new and never repeats the previous question',async({page})=>{
+  await ready(page);
+  await draw(page,[1,1],[1,2]);
+  const first=page.getByRole('dialog',{name:'שאלת טריוויה'});
+  const firstText=await first.locator('h2').innerText();
+  await first.getByRole('button',{name:/סידני/}).click();
+  await draw(page,[1,2],[1,3]);
+  const second=page.getByRole('dialog',{name:'שאלת טריוויה'});
+  await expect(second).toBeVisible();
+  const secondText=await second.locator('h2').innerText();
+  expect(secondText).not.toBe(firstText);
+  const history=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-used-question-ids')||'[]'));
+  expect(new Set(history).size).toBe(2);
+});
+
+test('required player name persists after reload and notebook grid remains translucent',async({page})=>{
+  await page.goto('/');
+  const guide=page.getByRole('dialog',{name:'הסבר משחק'});
+  if(await guide.isVisible()) await guide.getByRole('button',{name:'דלג או סיים'}).click();
+  await expect(page.getByRole('button',{name:/התחל משחק/})).toBeDisabled();
+  await page.getByLabel('כינוי שחקן').fill('שחקנית הבודקת');
+  await page.getByRole('button',{name:/שמור שם, צבע טוש/}).click();
+  await page.reload();
+  await expect(page.getByLabel('כינוי שחקן')).toHaveValue('שחקנית הבודקת');
+  const grid=page.locator('.arena-inner');
+  await expect(grid).toHaveCSS('background-size', '24px 24px');
+  const rgb=await grid.evaluate(e=>getComputedStyle(e).backgroundColor);
+  expect(rgb).toMatch(/rgba\(/);
+});
