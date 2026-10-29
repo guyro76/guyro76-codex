@@ -354,7 +354,7 @@ export default function TriviaGame() {
       setBusy(true);
       const { data, error } = await client.rpc('trivia_choose_edge', { p_match: remote.id, p_edge: key });
       if (error) setMessage(error.message);
-      else { setEdge(key); setQuestion(data as Question); }
+      else { setEdge(key); setQuestion(data as Question); await refresh(remote.id); }
       setBusy(false);
     } else {
       setEdge(key);
@@ -370,6 +370,10 @@ export default function TriviaGame() {
   }
   async function answer(i: number) {
     if (!question || (question.kind !== 'bonus' && !edge) || busy) return;
+    if (question.deadline_at && Date.now() >= new Date(question.deadline_at).getTime()) {
+      setMessage('הזמן הסתיים — אין אפשרות לשלוח תשובה מאוחרת.');
+      return;
+    }
     setBusy(true);
     if (remote && client) {
       const { data, error } = await client.rpc('trivia_answer', { p_match: remote.id, p_answer: i });
@@ -402,8 +406,9 @@ export default function TriviaGame() {
       setMessage(correct ? gained ? 'סגרת ' + gained + ' ריבועים!' : 'תשובה נכונה!' : 'תשובה שגויה!');
       if(gained>0){
         setLocalCredits(prev=>({...prev,[local.turn]:prev[local.turn]+10*gained}));
-        if(Object.keys(next.owners).length===next.rows*next.cols && next.scores[local.turn]>next.scores[local.turn==='host'?'guest':'host']){
-          setLocalCharms(prev=>({...prev,[local.turn]:prev[local.turn]+1}));
+        if(Object.keys(next.owners).length===next.rows*next.cols){
+          const winner=next.scores.host>next.scores.guest?'host':next.scores.guest>next.scores.host?'guest':null;
+          if(winner)setLocalCharms(prev=>({...prev,[winner]:prev[winner]+1}));
         }
       }
       setQuestion(null); setEdge(null);
@@ -465,6 +470,7 @@ export default function TriviaGame() {
     else if (data) {
       setQuestion(data as Question);
       setEdge(null);
+      await refresh(remote.id);
       setMessage('שאלת זהב! תשובה נכונה תעניק שתי סגירות בונוס.');
     }
     setBusy(false);
@@ -830,8 +836,8 @@ export default function TriviaGame() {
               {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols }, (_, c) => drawLine('h-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + (c + 1) * step, 20 + r * step)))}
               {Array.from({ length: state.rows }, (_, r) => Array.from({ length: state.cols + 1 }, (_, c) => drawLine('v-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + c * step, 20 + (r + 1) * step)))}
               {trace && <g pointerEvents='none'>
-<path d={trace.ink.map((p,i) => (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ') + ' L' + trace.target.x.toFixed(1) + ' ' + trace.target.y.toFixed(1)} fill='none' stroke={trace.end ? '#FFDF70' : '#D5F3FF'} strokeOpacity='.35' strokeWidth='19' strokeLinecap='round' strokeLinejoin='round' filter='url(#lineGlow)'/>
-                <path d={trace.ink.map((p,i) => (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ') + ' L' + trace.target.x.toFixed(1) + ' ' + trace.target.y.toFixed(1)} fill='none' stroke={trace.end ? '#FFDE74' : '#CDE9FB'} strokeWidth='10' strokeLinecap='round' strokeLinejoin='round' filter='url(#markerTexture)'/>
+<path d={trace.ink.map((p,i) => (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ') + ' L' + trace.target.x.toFixed(1) + ' ' + trace.target.y.toFixed(1)} fill='none' stroke={lineColor} strokeOpacity='.35' strokeWidth='19' strokeLinecap='round' strokeLinejoin='round' filter='url(#lineGlow)'/>
+                <path d={trace.ink.map((p,i) => (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ') + ' L' + trace.target.x.toFixed(1) + ' ' + trace.target.y.toFixed(1)} fill='none' stroke={lineColor} strokeWidth='10' strokeLinecap='round' strokeLinejoin='round' filter='url(#markerTexture)'/>
                 <circle cx={trace.target.x} cy={trace.target.y} r='6' fill='#FFF1BE' fillOpacity='.6'/>
               </g>}
               {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols + 1 }, (_, c) => {
