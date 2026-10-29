@@ -18,9 +18,11 @@ import {reassignCapture,type LocalOwner,type LocalOwnerMode} from '../lib/captur
 import TutorialPreview from '../components/TutorialPreview';
 import LocalQuestionBackup from '../components/LocalQuestionBackup';
 import GameTimeBar from '../components/GameTimeBar';
+import SkinPicker, {isSkinId,type SkinId} from '../components/SkinPicker';
 import {CAMPAIGN_STAGES,STAGE_COUNT,stageFor,canOpenStage} from '../lib/campaignStages';
 import './tutorial.css';
 import './premium.css';
+import './skins.css';
 
 function canonicalQuestion(text:string):string {
   return text.normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
@@ -76,6 +78,7 @@ export default function TriviaGame() {
   const [policiesAcknowledged, setPoliciesAcknowledged] = useState(false);
   const [legalBusy, setLegalBusy] = useState(false);
   const [mode, setMode] = useState<Mode>('local');
+  const [skin,setSkin]=useState<SkinId>('classic');
   const [size, setSize] = useState(3);
   const [stageId,setStageId]=useState(1);
   const [localStageCompleted,setLocalStageCompleted]=useState(0);
@@ -264,6 +267,8 @@ export default function TriviaGame() {
   },[locale,languageLoaded,client,user?.id]);
   useEffect(() => {
     try {
+      const savedSkin=localStorage.getItem('trivia-selected-skin-v1');
+      if(isSkinId(savedSkin))setSkin(savedSkin);
       const saved = localStorage.getItem('trivia-personal-choice');
       if (saved) {
         const v = JSON.parse(saved) as { color: string; lineColor?: string; avatar: string };
@@ -965,7 +970,7 @@ export default function TriviaGame() {
     subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
-  return <main className={'trivia-app theme-' + world.slug} style={css.main} dir={localeDirection(locale)} lang={locale}>
+  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin} style={css.main} dir={localeDirection(locale)} lang={locale}>
     <style>{`
       *{box-sizing:border-box} body{background:#111C48;color:white;font-family:Arial,'Noto Sans Hebrew',sans-serif;font-weight:800;margin:0}
       .trivia-app{--accent:#8CE8FF;min-height:100vh;position:relative;isolation:isolate}
@@ -1092,6 +1097,7 @@ export default function TriviaGame() {
       .claimed-tile{animation:tileClaim .36s cubic-bezier(.2,1.3,.4,1);transform-origin:center}
     `}</style>
     <GameTimeBar locale={locale}/>
+    <SkinPicker locale={locale} value={skin} onChange={next=>{setSkin(next);try{localStorage.setItem('trivia-selected-skin-v1',next)}catch{}}}/>
     <header className='hero'>
       {user && <div className='google-player-header' aria-label={tr('החשבון המחובר')}>
         {googlePhoto ? <img src={googlePhoto} referrerPolicy='no-referrer' alt={tr('תמונת הפרופיל שלך מ-Google')}

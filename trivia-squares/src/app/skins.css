@@ -1,0 +1,49 @@
+/* Six independent, user-selectable skins. World themes and capture-tile styles remain independent. */
+main.trivia-app .skin-picker{position:relative;z-index:22;width:min(100%,570px);margin:0 auto 16px;display:flex;justify-content:center;direction:inherit;font-weight:900}
+main.trivia-app .skin-toggle{display:inline-flex;gap:11px;align-items:center;justify-content:center;min-height:50px;padding:11px 19px;border:2px solid #C2DFFF!important;border-radius:17px;background:#153761!important;color:#FFFFFF!important;cursor:pointer;font-size:15px;font-weight:950;box-shadow:0 8px 22px #07163270!important}
+main.trivia-app .skin-toggle:hover{background:#215185!important;transform:translateY(-2px)}
+main.trivia-app .skin-toggle-chevron{margin-inline-start:3px}
+main.trivia-app .skin-menu{position:absolute;z-index:50;top:calc(100% + 9px);left:0;right:0;max-width:570px;padding:19px;background:#162B55;color:#FFFFFF;border:2px solid #A9CAFF;border-radius:23px;box-shadow:0 20px 60px #06122CCE;text-align:start}
+main.trivia-app .skin-menu h2{margin:0 0 3px;font-size:21px;font-weight:950;color:#FFFFFF}
+main.trivia-app .skin-menu p{margin:0 0 14px;font-size:13px;color:#DAE9FF;font-weight:850}
+main.trivia-app .skin-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+main.trivia-app .skin-option{position:relative;display:flex;align-items:center;justify-content:center;gap:7px;min-height:92px;flex-direction:column;padding:12px 6px;border-radius:16px;border:2px solid #FFFFFF80;color:#FFFFFF;background:#1A4172;cursor:pointer;font-weight:950;text-align:center}
+main.trivia-app .skin-option[aria-pressed=true]{outline:3px solid #FFE5A2;outline-offset:1px;border-color:#FFFFFF;box-shadow:0 0 18px #FFE5A255}
+main.trivia-app .skin-option strong{font-size:13px;font-weight:950;line-height:1.35}
+main.trivia-app .skin-option-symbol{font-size:26px;line-height:1}
+main.trivia-app .skin-active{position:absolute;top:5px;inset-inline-end:9px;color:#FFFFFF;font-size:17px}
+main.trivia-app .skin-sample-classic{background:linear-gradient(135deg,#324F8C,#7347B5)}
+main.trivia-app .skin-sample-urban{background:linear-gradient(135deg,#293F50,#497986)}
+main.trivia-app .skin-sample-vintage{background:linear-gradient(135deg,#795037,#A67747)}
+main.trivia-app .skin-sample-retro{background:linear-gradient(135deg,#6B208E,#E04F80)}
+main.trivia-app .skin-sample-pop{background:linear-gradient(135deg,#F15C31,#DA2F89)}
+main.trivia-app .skin-sample-future{background:linear-gradient(135deg,#6832C9,#F47F2A)}
+@media(max-width:480px){main.trivia-app .skin-options{grid-template-columns:repeat(2,minmax(0,1fr))}main.trivia-app .skin-menu{padding:12px}}
+/* Skin palettes override world lighting while preserving contrast. Backgrounds are never black. */
+main.trivia-app.skin-urban{--lumen-accent:#B7E6E9;--ambient-a:#648F9C88;--ambient-b:#7FB2BA55;--backdrop:radial-gradient(circle at 80% 8%,#426A7B,transparent 48%),linear-gradient(150deg,#203B4A,#244A5D 50%,#263A53)}
+main.trivia-app.skin-vintage{--lumen-accent:#FFDC9A;--ambient-a:#B9846388;--ambient-b:#E9B16B55;--backdrop:radial-gradient(circle at 16% 6%,#866044,transparent 50%),linear-gradient(145deg,#513C3B,#6E473B 48%,#3C3446)}
+main.trivia-app.skin-retro{--lumen-accent:#FF98D8;--ambient-a:#F165B988;--ambient-b:#48D5D777;--backdrop:radial-gradient(circle at 15% 20%,#A62A83,transparent 43%),radial-gradient(circle at 90% 85%,#168AA0,transparent 40%),linear-gradient(150deg,#482C83,#2C3476)}
+main.trivia-app.skin-pop{--lumen-accent:#FFD56A;--ambient-a:#FFAC5570;--ambient-b:#F74B9E88;--backdrop:radial-gradient(circle at 15% 15%,#EF6246,transparent 46%),radial-gradient(circle at 90% 80%,#D840A4,transparent 48%),linear-gradient(135deg,#B13276,#6E3A9A)}
+main.trivia-app.skin-future{--lumen-accent:#FFAB6A;--ambient-a:#AB6BFF99;--ambient-b:#FF963D99;--backdrop:radial-gradient(circle at 22% 10%,#8E39DC,transparent 43%),radial-gradient(circle at 90% 70%,#C85A2B,transparent 46%),linear-gradient(145deg,#302267,#5B278F 55%,#472A74)}
+main.trivia-app.skin-urban .glass-panel,main.trivia-app.skin-urban .arena-panel{background:linear-gradient(145deg,#26485E,#203547)!important;border-color:#A0D9DF!important}
+main.trivia-app.skin-vintage .glass-panel,main.trivia-app.skin-vintage .arena-panel{background:linear-gradient(145deg,#654632,#483742)!important;border-color:#E8C28F!important}
+main.trivia-app.skin-retro .glass-panel,main.trivia-app.skin-retro .arena-panel{background:linear-gradient(145deg,#512578,#253E76)!important;border-color:#FF8AD4!important}
+main.trivia-app.skin-pop .glass-panel,main.trivia-app.skin-pop .arena-panel{background:linear-gradient(145deg,#AD327D,#6B438D)!important;border-color:#FFCC85!important}
+main.trivia-app.skin-future .glass-panel,main.trivia-app.skin-future .arena-panel{background:linear-gradient(145deg,#47267C,#49337C)!important;border-color:#FFB370!important}
+main.trivia-app.skin-urban .arena{background:linear-gradient(140deg,#486B78,#2F536C)!important}
+main.trivia-app.skin-vintage .arena{background:linear-gradient(140deg,#7C644C,#5A4851)!important}
+main.trivia-app.skin-retro .arena{background:linear-gradient(140deg,#A94095,#3A67A0)!important}
+main.trivia-app.skin-pop .arena{background:linear-gradient(140deg,#E45A7C,#9557AE)!important}
+main.trivia-app.skin-future .arena{background:radial-gradient(circle at 85% 10%,#F4913C55,transparent 35%),linear-gradient(145deg,#753DC3,#402B88)!important}
+main.trivia-app.skin-urban .gold-button{background:#B7E7E5!important;color:#153949!important}
+main.trivia-app.skin-vintage .gold-button{background:#FFE2A4!important;color:#53362C!important}
+main.trivia-app.skin-retro .gold-button{background:#FF9AD6!important;color:#482154!important}
+main.trivia-app.skin-pop .gold-button{background:#FFE18F!important;color:#683065!important}
+main.trivia-app.skin-future .gold-button{background:#FFB576!important;color:#452265!important}
+main.trivia-app.skin-urban .skin-toggle{background:#2B5368!important;border-color:#C0E5E8!important}
+main.trivia-app.skin-vintage .skin-toggle{background:#704D3A!important;border-color:#F0D19A!important}
+main.trivia-app.skin-retro .skin-toggle{background:#743C9D!important;border-color:#FFA8D8!important}
+main.trivia-app.skin-pop .skin-toggle{background:#B74179!important;border-color:#FFE3A4!important}
+main.trivia-app.skin-future .skin-toggle{background:#6333A9!important;border-color:#FFB983!important}
+main.trivia-app.skin-future .hero h1{background:linear-gradient(130deg,#FFFFFF,#FCD4FF 42%,#FFBD8D 90%)!important;-webkit-background-clip:text!important;background-clip:text!important}
+@media(prefers-reduced-motion:reduce){main.trivia-app .skin-toggle,main.trivia-app .skin-option{transition:none!important}}
