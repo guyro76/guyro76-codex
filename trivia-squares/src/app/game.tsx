@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicConfig';
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawing';
 import { applyLocalAnswer } from '../lib/engine';
@@ -71,9 +72,7 @@ function sound(gained: number) {
 }
 export default function TriviaGame() {
   const client = useMemo<SupabaseClient | null>(() => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-    return url && key ? createClient(url, key) : null;
+    return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   }, []);
   const [user, setUser] = useState<User | null>(null);
   const [mode, setMode] = useState<Mode>('local');
