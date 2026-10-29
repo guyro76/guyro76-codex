@@ -1,10 +1,12 @@
 'use client';
 import type {ActiveLocale} from '../lib/i18n';
+import CaptureTile from './CaptureTile';
 
 /** An illustration of real moves, not a second playable board or a stock video. */
 export default function TutorialPreview({locale,page,color,avatar}:{locale:ActiveLocale;page:number;color:string;avatar:string}) {
  const en=locale==='en';
  return <div className='lumen-tutorial-preview' data-testid='tutorial-preview' data-locale={locale} data-step={page} key={page}>
+  <p className='tutorial-demo-label'>{en?'Demonstration only. The playable board is behind this guide.':'הדגמה בלבד. הלוח שעליו מציירים נמצא מאחורי חלון ההדרכה.'}</p>
   <div className='lumen-tutorial-step-indicator' role='group' aria-label={en?'Tutorial step '+(page+1)+' of 3':'שלב הדרכה '+(page+1)+' מתוך 3'}>
    {[0,1,2].map(i=><span key={i} className={i===page?'active':''} aria-hidden='true'/>)}
   </div>
@@ -45,8 +47,8 @@ export default function TutorialPreview({locale,page,color,avatar}:{locale:Activ
    </g>}
    {page===2&&<g>
      <path d='M80 49H170V114H80Z' stroke={color} strokeWidth='10' fill='none' strokeLinejoin='round' strokeLinecap='round'/>
-     <rect className='lumen-tutorial-captured' x='90' y='59' width='70' height='45' rx='9' fill={color}/>
-     <text className='lumen-tutorial-avatar' x='125' y='92' textAnchor='middle' fontSize='29'>{avatar}</text>
+     <CaptureTile row={0} col={0} x={90} y={59} width={70} height={45} color={color}
+       name={en?'Player':'שחקן'} icon={avatar} style='lumen' locale={locale}/>
      <g className='lumen-tutorial-star' fill='#FFE8A0'><path d='M217 66l7 14 15 3-11 11 3 16-14-8-14 8 3-16-11-11 15-3z'/><circle cx='270' cy='151' r='4'/><circle cx='51' cy='155' r='3'/></g>
      <text x='226' y='130' fill='#FFE9B3' textAnchor='middle' fontFamily='Arial,sans-serif' fontWeight='900' fontSize='18'>+1</text>
    </g>}
