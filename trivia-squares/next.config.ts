@@ -2,6 +2,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  env: { NEXT_PUBLIC_TRIVIA_BUILD_AT: process.env.NEXT_PUBLIC_TRIVIA_BUILD_AT || new Date().toISOString() },
   async headers() {
     return [{
       source: '/:path*',
