@@ -24,9 +24,9 @@ type GameState = {
   bonus_ready?: Partial<Record<Side,boolean>>;
   bonus_tokens?: Partial<Record<Side,number>>;
 };
-type PlayerIdentity = { name: string; color: string; avatar: string };
+type PlayerIdentity = { name: string; color: string; line_color?: string; avatar: string };
 type RemoteMatch = { id: string; status: string; host_id: string; guest_id: string | null; version: number; state: GameState; question?: Question; players?: { host?: PlayerIdentity; guest?: PlayerIdentity } };
-type Profile = { display_name: string; color: string; avatar: string; remember_color: boolean };
+type Profile = { display_name: string; color: string; line_color?: string; avatar: string; remember_color: boolean };
 type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number };
 
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
@@ -69,8 +69,9 @@ export default function TriviaGame() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [edge, setEdge] = useState<string | null>(null);
   const [practiceIndex, setPracticeIndex] = useState(0);
-  const [name, setName] = useState('שחקן');
+  const [name, setName] = useState('');
   const [color, setColor] = useState('#358CFF');
+  const [lineColor, setLineColor] = useState('#358CFF');
   const [avatar, setAvatar] = useState('🦊');
   const [remember, setRemember] = useState(false);
   const [progress, setProgress] = useState<Progress>({ level: 1, fruits: 0, diamonds: 0, credits: 0, hearts: 3 });
@@ -93,7 +94,12 @@ export default function TriviaGame() {
   const state = remote?.state || local;
   const player = user?.id && remote?.guest_id === user.id ? 'guest' : 'host';
   const onlineTurn = remote?.state.mode === 'local' || player === state.turn;
-  const canPlay = remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy;
+  const validName = name.trim().length >= 2 && name.trim().length <= 32 && name.trim() !== 'שחקן';
+  const providerGoogle = Boolean(user?.app_metadata?.provider === 'google' || user?.app_metadata?.providers?.includes('google'));
+  const googleName = providerGoogle ? String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim().slice(0,70) : '';
+  const googlePhotoRaw = providerGoogle ? String(user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '') : '';
+  const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
+  const canPlay = validName && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
   const finished = Object.keys(state.owners).length === state.rows * state.cols;
   const earnedBonus = Boolean(remote?.state.bonus_ready?.[state.turn]);
   const availableBonus = Number(remote?.state.bonus_tokens?.[state.turn] || 0);
@@ -118,11 +124,14 @@ export default function TriviaGame() {
     try {
       const saved = localStorage.getItem('trivia-personal-choice');
       if (saved) {
-        const v = JSON.parse(saved) as { color: string; avatar: string };
+        const v = JSON.parse(saved) as { color: string; lineColor?: string; avatar: string };
         if (palettes.includes(v.color)) setColor(v.color);
+        if (v.lineColor && /^#[0-9a-fA-F]{6}$/.test(v.lineColor)) setLineColor(v.lineColor);
         if (avatars.includes(v.avatar)) setAvatar(v.avatar);
         setRemember(true);
       }
+      const storedName=localStorage.getItem('trivia-player-name');
+      if(storedName && storedName.trim().length>=2 && storedName.trim()!=='שחקן') setName(storedName.slice(0,32));
     } catch { /* storage may be disabled */ }
     try {
       setMuted(localStorage.getItem('trivia-sound-muted') === 'true');
@@ -184,8 +193,13 @@ export default function TriviaGame() {
       if (!active) return;
       if (data?.profile) {
         const p = data.profile as Profile;
-        setName(p.display_name);
-        if (p.remember_color) { setColor(p.color); setAvatar(p.avatar); setRemember(true); }
+        if (p.display_name && p.display_name.trim() !== 'שחקן' && p.display_name.trim().length>=2) setName(p.display_name);
+        else if(user?.user_metadata?.full_name || user?.user_metadata?.name)
+          setName(String(user.user_metadata.full_name || user.user_metadata.name).trim().slice(0,32));
+        if (p.remember_color) {
+          setColor(p.color);setAvatar(p.avatar);setRemember(true);
+          if(p.line_color) setLineColor(p.line_color);
+        }
         if (data.progress) setProgress(data.progress as Progress);
       }
       const id = localStorage.getItem('trivia-match-' + user.id);
@@ -230,10 +244,16 @@ export default function TriviaGame() {
     setLegalBusy(false);
   }
   async function start() {
+    if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
+    try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
     setBusy(true); setQuestion(null); setEdge(null); setBonusSelect(false);
     if (mode === 'local' && (!user || !legalAccepted)) {
       setRemote(null); setLocal(empty(size)); setMessage('משחק מקומי ללא הרשמה וללא שמירה בשרת.');
     } else if (client && user && legalAccepted) {
+      const {error:profileError}=await client.rpc('trivia_save_appearance',{
+        p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
+      });
+      if(profileError){setMessage('שמירת שם השחקן נכשלה: '+profileError.message);setBusy(false);return;}
       const { data, error } = await client.rpc('trivia_create_match', { p_mode: mode, p_size: size });
       if (error) setMessage(error.message);
       else if (data) {
@@ -340,10 +360,16 @@ export default function TriviaGame() {
   }
 
   async function saveProfile() {
-    if (remember) localStorage.setItem('trivia-personal-choice', JSON.stringify({ color, avatar }));
-    else localStorage.removeItem('trivia-personal-choice');
+    if (!validName) {setMessage('שם שחקן חייב להכיל לפחות שני תווים.');return;}
+    try {
+      localStorage.setItem('trivia-player-name',name.trim());
+      if(remember) localStorage.setItem('trivia-personal-choice',JSON.stringify({color,lineColor,avatar}));
+      else localStorage.removeItem('trivia-personal-choice');
+    } catch {}
     if (client && user && legalAccepted) {
-      const { error } = await client.rpc('trivia_save_profile', { p_name: name, p_color: color, p_avatar: avatar, p_remember: remember });
+      const { error } = await client.rpc('trivia_save_appearance', {
+        p_name:name.trim(),p_color:color,p_line_color:lineColor,p_avatar:avatar,p_remember:remember
+      });
       setMessage(error ? error.message : 'הפרופיל נשמר!');
     } else setMessage('העדפות נשמרו במכשיר בלבד');
   }
@@ -437,14 +463,19 @@ export default function TriviaGame() {
     guest: player === 'guest' && remote?.state.mode === 'online' ? color : remote?.players?.guest?.color || '#FA9143',
     bot: '#FA9143'
   };
+  const lineColors: Record<Side,string> = {
+    host: player === 'host' ? lineColor : remote?.players?.host?.line_color || '#358CFF',
+    guest: player === 'guest' && remote?.state.mode === 'online' ? lineColor : remote?.players?.guest?.line_color || '#F97316',
+    bot: '#FB923C'
+  };
   const opponentIcon = remote?.players?.[player === 'host'?'guest':'host']?.avatar || '🐲';
   const opponentName = remote?.state.mode === 'bot' ? 'המחשב' : remote?.players?.[player === 'host'?'guest':'host']?.name || 'שחקן 2';
   const drawLine = (key: string, x1: number, y1: number, x2: number, y2: number) => {
     const owner = state.edges[key];
     return <g key={key} pointerEvents='none'>
-      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={colors[owner]} strokeWidth='17' strokeOpacity='.26' strokeLinecap='round' filter='url(#lineGlow)' />}
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? colors[owner] : '#B7D1F6'} strokeOpacity={owner ? .95 : .2} strokeWidth={owner ? 10 : 3} strokeLinecap='round' strokeDasharray={owner ? undefined : '1 11'} filter={owner ? 'url(#markerTexture)' : undefined}/>
-      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={colors[owner]} strokeOpacity='.42' strokeWidth='4' strokeLinecap='round' />}
+      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={lineColors[owner]} strokeWidth='17' strokeOpacity='.26' strokeLinecap='round' filter='url(#lineGlow)' />}
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? lineColors[owner] : '#B7D1F6'} strokeOpacity={owner ? .95 : .2} strokeWidth={owner ? 10 : 3} strokeLinecap='round' strokeDasharray={owner ? undefined : '1 11'} filter={owner ? 'url(#markerTexture)' : undefined}/>
+      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={lineColors[owner]} strokeOpacity='.42' strokeWidth='4' strokeLinecap='round' />}
       {owner && <line x1={x1+1} y1={y1+1} x2={x2+1} y2={y2+1} stroke='#FFFFFF' strokeOpacity='.12' strokeWidth='1.5' strokeLinecap='round' />}
     </g>;
   };
@@ -467,6 +498,7 @@ export default function TriviaGame() {
       .trivia-app button:not(:disabled):hover{transform:translateY(-2px)}
       .trivia-app button:disabled{opacity:.55;cursor:not-allowed}
       .hero{text-align:center;padding:8px 0 21px}
+      .google-player-header{display:inline-flex;align-items:center;gap:12px;direction:rtl;background:#132857BB;border:1px solid #E4EFFF66;border-radius:99px;padding:6px 14px;margin-bottom:11px;max-width:100%;text-align:right;box-shadow:0 5px 20px #08143260}
       .eyebrow{color:#FFE68C;font-size:12px;letter-spacing:2.2px;font-weight:900}
       .hero h1{font-size:clamp(37px,5vw,65px);letter-spacing:-1.4px;margin:4px;color:#FFFFFF;text-shadow:0 4px 26px #AAB4FF60}
       .hero p{font-size:15px;color:#EBF2FF;margin:6px}
@@ -501,7 +533,26 @@ export default function TriviaGame() {
       .arena.galaxy{background:radial-gradient(circle at 15% 10%,#BD74FF9C,transparent 43%),radial-gradient(circle at 85% 75%,#3D9AFF6B,transparent 41%),linear-gradient(140deg,#1C225D,#473075)}
       .arena:before{content:'✧ ✦ · ✧ · ✦ · ✧';position:absolute;top:9px;left:8px;right:8px;color:#FFFFFF35;font-size:17px;letter-spacing:18px;text-align:center;pointer-events:none}
       .arena:after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.18;background-image:radial-gradient(#FFFFFF 1px,transparent 1px);background-size:25px 25px;mask-image:linear-gradient(130deg,#000 10%,transparent 85%)}
-      .arena-inner{position:relative;z-index:1;border-radius:19px;background:linear-gradient(140deg,#07193494,#0C1A37AE);border:1px solid #E2F0FF3B;box-shadow:0 13px 22px #07122975,inset 0 0 32px #1EA7F417}
+      .arena-inner{
+        position:relative;z-index:1;border-radius:19px;overflow:hidden;
+        background-color:rgba(244,250,255,.105);
+        background-image:linear-gradient(rgba(214,235,255,.25) 1px,transparent 1px),
+          linear-gradient(90deg,rgba(214,235,255,.25) 1px,transparent 1px);
+        background-size:24px 24px;
+        border:1px solid rgba(237,246,255,.65);
+        box-shadow:0 13px 22px #07122965,inset 0 0 26px rgba(255,255,255,.08);
+      }
+      .arena-inner:before{
+        content:'';position:absolute;left:4px;top:14px;bottom:14px;width:9px;
+        background:radial-gradient(circle,rgba(236,247,255,.83) 2.5px,transparent 3.4px) center top/9px 23px repeat-y;
+        pointer-events:none;opacity:.8;
+      }
+      .arena-inner:after{
+        content:'';position:absolute;inset:0;pointer-events:none;
+        background:linear-gradient(90deg,rgba(255,115,141,.28) 1px,transparent 1px);
+        background-size:100% 100%;background-position:24px 0;background-repeat:no-repeat;
+        opacity:.45;
+      }
       .board{display:block;width:100%;max-width:600px;aspect-ratio:1;margin:auto;touch-action:none;user-select:none;-webkit-user-select:none}
       .gesture-hint{text-align:center;display:flex;justify-content:center;gap:8px;align-items:center;margin:12px auto;color:#FFFFFF;font-size:13px;font-weight:900}
       .draw-icon{display:grid;place-items:center;border-radius:10px;background:#FFE586;color:#20325D;width:29px;height:29px;font-size:17px}
@@ -551,6 +602,12 @@ export default function TriviaGame() {
       .claimed-tile{animation:tileClaim .36s cubic-bezier(.2,1.3,.4,1);transform-origin:center}
     `}</style>
     <header className='hero'>
+      {user && <div className='google-player-header' aria-label='החשבון המחובר'>
+        {googlePhoto ? <img src={googlePhoto} referrerPolicy='no-referrer' alt='תמונת הפרופיל שלך מ-Google'
+           style={{width:44,height:44,objectFit:'cover',borderRadius:'50%',border:'2px solid #FFE08A'}} />
+          : <span aria-hidden='true' style={{fontSize:28}}>{avatar}</span>}
+        <span><strong>{googleName || name || 'שחקן מחובר'}</strong><small style={{display:'block',fontSize:11,color:'#DAE9FF'}}>{providerGoogle ? 'מחובר באמצעות Google' : 'מחובר לחשבון המשחק'}</small></span>
+      </div>}
       <div className='eyebrow'>✦ TRIVIA SQUARES · ADVENTURE ✦</div>
       <h1>טריוויה ריבועים</h1>
       <p>חברו נקודות, ענו נכון, כבשו ריבועים והפכו לאלופי הטריוויה!</p>
@@ -677,7 +734,7 @@ export default function TriviaGame() {
         </div>
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>ממתינים שהחבר ייכנס לחדר...</p>}
         <div className='control-row'>
-          <button className='gold-button' disabled={busy} onClick={() => void start()}>🎮 {remote ? 'משחק חדש' : 'התחל משחק'}</button>
+          <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {remote ? 'משחק חדש' : 'התחל משחק'}</button>
           <button className='glass-button' onClick={() => {
             if (muted) playGameSound('correct',{muted:false,volume:volume/100});
             setMuted(v=>!v);
@@ -722,13 +779,22 @@ export default function TriviaGame() {
         <section className='glass-panel'>
           <h2 className='panel-title'>👑 השחקן שלי</h2>
           <label className='form-field' htmlFor='player-name'>כינוי שחקן</label>
-          <input id='player-name' className='form-input' value={name} onChange={e => setName(e.target.value)} maxLength={32}/>
+          <input id='player-name' className='form-input' value={name} onChange={e => setName(e.target.value)} maxLength={32} minLength={2} required placeholder='הקלד שם שחקן (חובה)' aria-required='true'/>
+          {!validName && <p className='smalltxt' role='status' style={{color:'#FFE7A1'}}>יש למלא שם שחקן לפני ציור הקו הראשון.</p>}
           <div className='form-field'>צבע הכיבוש שלי</div>
           <div className='swatches'>{palettes.map(c => <button key={c} className='swatch' style={{ background: c }} aria-label={'בחר צבע ' + c} aria-pressed={color === c} onClick={() => setColor(c)} />)}</div>
+          <div className='form-field'>🖍️ צבע הטוש לקווים</div>
+          <div className='swatches' role='group' aria-label='בחר את צבע הקו'>
+            {palettes.map(c => <button key={'line-'+c} className='swatch' style={{background:c}}
+              aria-label={'בחר צבע קו '+c} aria-pressed={lineColor===c} onClick={()=>setLineColor(c)}/>)}
+            <input type='color' aria-label='צבע קו מותאם אישית' value={lineColor}
+              onChange={e=>setLineColor(e.target.value)} style={{width:42,height:35,border:0,background:'none'}}/>
+          </div>
+          <div style={{margin:'4px 0 9px',fontSize:12,color:'#E6F3FF'}}>תצוגת הטוש: <span style={{display:'inline-block',width:80,borderTop:'8px solid '+lineColor,borderRadius:9,verticalAlign:'middle'}}/></div>
           <div className='form-field'>סמל שיופיע בכל ריבוע</div>
           <div className='avatar-row'>{avatars.map(a => <button className='avatar-choice' key={a} aria-label={'בחר אוואטר ' + a} aria-pressed={avatar === a} onClick={() => setAvatar(a)}>{a}</button>)}</div>
           <label className='form-field' style={{ display: 'flex', gap: 10, alignItems: 'center' }}><input type='checkbox' style={{ width: 18, height: 18, accentColor: '#FFDE85' }} checked={remember} onChange={e => setRemember(e.target.checked)} /> זכור את הבחירות שלי תמיד</label>
-          <button className='glass-button' style={{ marginTop: 13 }} onClick={() => void saveProfile()}>שמור עיצוב אישי</button>
+          <button className='glass-button' style={{ marginTop: 13 }} disabled={!validName} onClick={() => void saveProfile()}>שמור שם, צבע טוש ועיצוב אישי</button>
         </section>
         <section className='glass-panel'>
           <h2 className='panel-title'>💎 אוצרות והישגים</h2>
