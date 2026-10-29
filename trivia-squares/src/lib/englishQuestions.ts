@@ -1,6 +1,6 @@
 // English-first trivia. Locally relevant global knowledge, not a translation of Hebrew data.
 // No arithmetic, no Israeli-artist category. Editorial media facts are curated separately.
-import {englishMediaQuestions} from './mediaQuestions';
+import {englishMediaQuestions} from './mediaQuestions.ts';
 export type EnglishQuestion={id:number;category:string;text:string;answers:string[];correct:number;difficulty:number};
 export const englishCuratedQuestions:EnglishQuestion[]=[
   {
