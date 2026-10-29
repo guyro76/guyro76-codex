@@ -1,0 +1,44 @@
+name: Trivia Squares - Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - 'trivia-squares/**'
+      - '.github/workflows/trivia-squares-ci.yml'
+
+concurrency:
+  group: trivia-squares-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: trivia-squares
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+      - name: Install reviewed pinned project dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: TypeScript check
+        run: npm run typecheck
+      - name: Gameplay and drawing unit tests
+        run: node --test tests/*.test.mjs
+      - name: Next.js production build
+        run: npm run build
+      - name: Check Supabase Auth provider availability
+        run: node scripts/check-auth-status.mjs
+      - name: Install Chromium browser for E2E
+        run: npx playwright install --with-deps chromium
+      - name: Browser tests - drawing, local persistence, mobile and legal routes
+        run: npm run test:e2e
+
