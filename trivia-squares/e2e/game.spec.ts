@@ -155,6 +155,9 @@ test('each subsequent question is new and never repeats the previous question',a
   const first=page.getByRole('dialog',{name:'שאלת טריוויה'});
   const firstText=await first.locator('h2').innerText();
   await first.getByRole('button',{name:/סידני/}).click();
+  const feedback=page.getByRole('dialog',{name:'התשובה הנכונה היא:'});
+  await expect(feedback).toBeVisible();
+  await feedback.getByRole('button',{name:'המשך למשחק'}).click();
   await draw(page,[1,2],[1,3]);
   const second=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(second).toBeVisible();
@@ -188,6 +191,7 @@ test('new game reloads reviewed questions without repeating any previously displ
   const first=await quiz.locator('h2').innerText();
   const answer=quiz.getByRole('button',{name:/סידני/});
   await answer.click();
+  await page.getByRole('dialog',{name:'התשובה הנכונה היא:'}).getByRole('button',{name:'המשך למשחק'}).click();
   await page.getByRole('button',{name:/התחל משחק/}).click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-pool-release-v1')||'{}').he)).toBe(3);
   await draw(page,[1,1],[1,2]);
@@ -346,4 +350,35 @@ test('invalid nickname cannot start the game until a usable name is entered',asy
   await page.getByLabel('כדי לצייר קו ראשון, הכנס שם שחקן').fill('אורח משחק');
   await expect(page.getByRole('button',{name:/התחל משחק/})).toBeEnabled();
   await expect.poll(()=>page.evaluate(()=>localStorage.getItem('trivia-player-name'))).toBe('אורח משחק');
+});
+
+test('a wrong answer reveals the correct option in a modal and blocks board progress until Continue',async({page})=>{
+  await ready(page);
+  await draw(page,[1,1],[1,2]);
+  const question=page.getByRole('dialog',{name:'שאלת טריוויה'});
+  await question.getByRole('button',{name:/סידני/}).click();
+  await expect(question).toHaveCount(0);
+  const feedback=page.getByRole('dialog',{name:'התשובה הנכונה היא:'});
+  await expect(feedback).toBeVisible();
+  await expect(feedback.locator('.feedback-correct')).toContainText('קנברה');
+  await expect(feedback.locator('.feedback-wrong')).toContainText('סידני');
+  await expect(page.locator('svg.board')).toBeVisible();
+  await expect(page.getByRole('button',{name:/התחל משחק/})).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}').edges?.['h-0-0'])).toBeUndefined();
+  await feedback.getByRole('button',{name:'המשך למשחק'}).click();
+  await expect(feedback).toHaveCount(0);
+  await draw(page,[1,1],[1,2]);
+  await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toBeVisible();
+});
+
+test('previously exhausted topic preferences switch to unused other topics without repeating',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('trivia-tutorial-seen-v1','true');
+    localStorage.setItem('trivia-player-name','עדי');
+    localStorage.setItem('trivia-question-topics-v1',JSON.stringify(['cars']));
+  });
+  await page.goto('/');
+  await draw(page,[1,1],[1,2]);
+  await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toBeVisible();
+  await expect(page.locator('.scoreboard .player-tile.other')).toHaveCount(0);
 });
