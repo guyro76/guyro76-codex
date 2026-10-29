@@ -2,7 +2,8 @@ import {test,expect,type Page} from '@playwright/test';
 async function ready(page:Page){
  await page.goto('/');
  const intro=page.getByRole('dialog',{name:'הסבר משחק'});
- if(await intro.isVisible())await intro.getByRole('button',{name:'דלג או סיים'}).click();
+ await expect(intro).toBeVisible();
+ await intro.getByRole('button',{name:'דלג או סיים'}).click();
 }
 async function drawFirstLine(page:Page){
  await page.locator('svg.board').scrollIntoViewIfNeeded();
@@ -37,28 +38,28 @@ async function drawFirstLine(page:Page){
 
 test('QA specialist 4: live switch to English updates screen and direction',async({page})=>{
  await ready(page);
- await page.getByRole('button',{name:'English'}).click();
+ await page.locator('.locale-switch').getByRole('button',{name:'English'}).click();
  await expect(page.locator('main.trivia-app')).toHaveAttribute('lang','en');
  await expect(page.locator('main.trivia-app')).toHaveAttribute('dir','ltr');
  await expect(page.getByRole('heading',{name:'Trivia Squares'})).toBeVisible();
  await expect(page.getByText('Game room',{exact:false}).first()).toBeVisible();
  await expect(page.getByText('Orchard of Wonders').first()).toBeVisible();
- await expect(page.getByRole('button',{name:'English'})).toHaveAttribute('aria-pressed','true');
+ await expect(page.locator('.locale-switch').getByRole('button',{name:'English'})).toHaveAttribute('aria-pressed','true');
 });
 test('QA specialist 4: English language preference persists across reload',async({page})=>{
  await ready(page);
- await page.getByRole('button',{name:'English'}).click();
+ await page.locator('.locale-switch').getByRole('button',{name:'English'}).click();
  await expect(page.locator('html')).toHaveAttribute('lang','en');
  await page.reload();
  await expect(page.locator('main.trivia-app')).toHaveAttribute('dir','ltr');
  await expect(page.getByRole('heading',{name:'Trivia Squares'})).toBeVisible();
- await page.getByRole('button',{name:'עברית'}).click();
+ await page.locator('.locale-switch').getByRole('button',{name:'עברית'}).click();
  await expect(page.locator('main.trivia-app')).toHaveAttribute('dir','rtl');
  await expect(page.getByRole('heading',{name:'טריוויה ריבועים'})).toBeVisible();
 });
 test('QA specialist 4: English play yields native-English film, science or culture question with A-D answers',async({page})=>{
  await ready(page);
- await page.getByRole('button',{name:'English'}).click();
+ await page.locator('.locale-switch').getByRole('button',{name:'English'}).click();
  await page.getByRole('textbox',{name:/Player name/i}).first().fill('International QA');
  await drawFirstLine(page);
  const quiz=page.getByRole('dialog',{name:/שאלת טריוויה|Trivia question/});
