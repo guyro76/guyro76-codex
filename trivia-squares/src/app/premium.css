@@ -970,3 +970,131 @@ main.trivia-app .answer-feedback-continue{
 @media(prefers-reduced-motion:reduce){
  main.trivia-app .answer-feedback-card,main.trivia-app .feedback-answer{animation:none!important;transition:none!important}
 }
+
+/* Five premium, user-controlled skins. Theme colors are cosmetic only: the
+   current board, ownership and question history never change on skin switch.
+   World scenes are kept as a textured inner layer for each campaign chapter. */
+main.trivia-app.skin-royal{
+ --skin-border:#DDBCEB;--skin-contrast:#F7DAA2;
+ --skin-surface:#261D53;--skin-panel:#403167;--skin-secondary:#9B70D9;
+ --backdrop:radial-gradient(ellipse at 14% 8%,#7E4C9C88,transparent 49%),
+ radial-gradient(ellipse at 85% 89%,#9F773E55,transparent 50%),
+ linear-gradient(160deg,#302452,#130F31);
+}
+main.trivia-app.skin-ocean{
+ --skin-border:#A9F5F2;--skin-contrast:#A6F7EB;
+ --skin-surface:#07374B;--skin-panel:#125973;--skin-secondary:#247A9E;
+ --backdrop:radial-gradient(ellipse at 7% 6%,#26ADB588,transparent 49%),
+ radial-gradient(ellipse at 87% 85%,#74DDE26B,transparent 55%),
+ linear-gradient(165deg,#0C5670,#06213B);
+}
+main.trivia-app.skin-neon{
+ --skin-border:#F9B6F6;--skin-contrast:#7DFFED;
+ --skin-surface:#111334;--skin-panel:#30225A;--skin-secondary:#B34DCA;
+ --backdrop:radial-gradient(circle at 11% 10%,#CF4DE170,transparent 43%),
+ radial-gradient(circle at 88% 80%,#00DDBD5E,transparent 50%),
+ linear-gradient(135deg,#111235,#0C0C26);
+}
+main.trivia-app.skin-stone{
+ --skin-border:#F6DCC0;--skin-contrast:#FFE4BB;
+ --skin-surface:#513849;--skin-panel:#74516B;--skin-secondary:#BD8E9B;
+ --backdrop:radial-gradient(ellipse at 16% 13%,#CAA48B99,transparent 48%),
+ radial-gradient(ellipse at 89% 81%,#E2BEA266,transparent 52%),
+ linear-gradient(150deg,#66485C,#332A48);
+}
+main.trivia-app.skin-forest{
+ --skin-border:#A8E6C4;--skin-contrast:#FFE4A2;
+ --skin-surface:#173E37;--skin-panel:#296459;--skin-secondary:#4F9A73;
+ --backdrop:radial-gradient(ellipse at 18% 11%,#71BF8F70,transparent 48%),
+ radial-gradient(ellipse at 90% 86%,#B69D4966,transparent 47%),
+ linear-gradient(145deg,#174837,#0A2928);
+}
+main.trivia-app[class*='skin-'] .hero,
+main.trivia-app[class*='skin-'] .glass-panel,
+main.trivia-app[class*='skin-'] .quiz-card:not(.answer-feedback-card){
+ background:linear-gradient(145deg,var(--skin-panel),var(--skin-surface))!important;
+ border-color:var(--skin-border)!important;
+ box-shadow:0 16px 43px #03071670,inset 0 1px 0 #FFFFFF29!important;
+}
+main.trivia-app[class*='skin-'] .player-tile,
+main.trivia-app[class*='skin-'] .wallet-item,
+main.trivia-app[class*='skin-'] .capture-personalization{
+ background:linear-gradient(140deg,var(--skin-panel),var(--skin-surface))!important;
+ border-color:var(--skin-border)!important;
+}
+main.trivia-app[class*='skin-'] .gold-button{
+ background:linear-gradient(140deg,var(--skin-contrast),#FFD179)!important;
+ color:#17213A!important;
+ box-shadow:0 5px 17px #071D2973!important;
+}
+main.trivia-app[class*='skin-'] .choice[aria-pressed=true],
+main.trivia-app[class*='skin-'] .locale-option[aria-pressed=true]{
+ outline:2px solid var(--skin-contrast);outline-offset:1px
+}
+main.trivia-app[class*='skin-'] .level-pill{
+ background:var(--skin-surface)!important;
+ border-color:var(--skin-border)!important;
+ color:#FFFFFF!important
+}
+main.trivia-app[class*='skin-'] .arena-inner{
+ border:2px solid var(--skin-border)!important;
+ box-shadow:0 3px 28px #070D2655,inset 0 0 30px #FFFFFF22!important
+}
+main.trivia-app .skin-picker-bar{
+ display:flex;flex-direction:column;gap:7px;
+ align-items:flex-start;margin:7px 0 16px;position:relative;z-index:11
+}
+main.trivia-app .skin-palette-trigger{
+ display:flex;align-items:center;gap:9px;
+ border:2px solid var(--skin-border);border-radius:15px;padding:9px 14px;
+ background:var(--skin-surface);color:#FFFFFF;font-weight:900;font-size:15px;
+ box-shadow:0 5px 15px #05071780;cursor:pointer
+}
+main.trivia-app .skin-palette-icon{font-size:23px;line-height:1}
+main.trivia-app .skin-picker-panel{
+ width:min(100%,620px);background:var(--skin-surface);border:2px solid var(--skin-border);
+ border-radius:20px;padding:15px;box-shadow:0 14px 34px #02071891
+}
+main.trivia-app .skin-picker-title{font-weight:900;color:#FFFFFF;margin-bottom:11px}
+main.trivia-app .skin-picker-options{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px
+}
+main.trivia-app .skin-picker-item{
+ display:flex;align-items:center;gap:10px;border-radius:12px;
+ padding:10px 12px;color:#FFFFFF;background:var(--skin-panel);
+ border:2px solid #C8D7E28F;cursor:pointer;font-weight:900;
+ text-align:start;min-height:60px
+}
+main.trivia-app .skin-picker-item[aria-pressed=true]{border-color:#FFE6B9;box-shadow:inset 0 0 0 2px #FFE6B950}
+main.trivia-app .skin-picker-swatch{width:38px;height:38px;border:2px solid #FFF8;border-radius:11px;flex:none}
+main.trivia-app .skin-picker-selected{margin-inline-start:auto;color:#FFF8B1;font-size:21px}
+main.trivia-app .question-topic-panel{
+ margin:16px 0;padding:11px;border:1px solid var(--skin-border,#7B9CCF);
+ border-radius:15px;background:#17284E55
+}
+main.trivia-app .question-topic-panel summary{
+ cursor:pointer;font-size:16px;font-weight:900;color:#FFFFFF;padding:5px
+}
+main.trivia-app .question-topic-count{color:#FFE6A9}
+main.trivia-app .question-topic-options{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0
+}
+main.trivia-app .question-topic-option{
+ display:flex;gap:9px;align-items:center;min-width:0;
+ background:#FFFFFF17;border:1px solid #FFFFFF44;border-radius:11px;
+ padding:10px;color:#FFFFFF;font-weight:900;cursor:pointer;
+ font-size:14px;line-height:1.4
+}
+main.trivia-app .question-topic-option input{
+ width:21px;height:21px;flex:none;accent-color:#FCD386
+}
+main.trivia-app .topic-select-all{margin-top:5px}
+@media(max-width:490px){
+ main.trivia-app .skin-picker-options,main.trivia-app .question-topic-options{
+  grid-template-columns:minmax(0,1fr)
+ }
+ main.trivia-app .skin-picker-bar{margin-top:4px}
+}
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app .skin-picker-item,main.trivia-app .skin-palette-trigger{transition:none!important}
+}
