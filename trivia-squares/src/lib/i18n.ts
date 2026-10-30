@@ -1,7 +1,6 @@
 /**
- * Supported locales: Hebrew and English.
- * Russian, French and Arabic are registered as future locale adapters only.
- * Strings are authored by editors, never machine-translated at runtime.
+ * Five active UI locales: Hebrew, English, Russian, French, and Arabic.
+ * Strings are editorial translations, never machine-translated at runtime.
  */
 import {extraDictionaries} from './i18nExtra.ts';
 export type ActiveLocale='he'|'en'|'ru'|'fr'|'ar';
@@ -16,6 +15,22 @@ export const localeCatalog={
  ar:{nativeName:'العربية',direction:'rtl',enabled:true}
 } as const;
 export const englishDictionary:Readonly<Record<string,string>>={
+    "עיצוב המשחק": "Game appearance",
+    "בחר סקין למשחק": "Choose a game theme",
+    "6 סקינים לבחירה · ההתקדמות נשמרת": "6 themes to choose from · Your progress is saved",
+    "ערכות עיצוב": "Visual themes",
+    "נושאי השאלות שלי": "My question topics",
+    "בחרו נושאים לפני המשחק או בכל שלב. הבחירה נשמרת גם לאחר יציאה. נדרש נושא אחד לפחות.": "Choose topics before the game or at any stage. Your selection is saved when you leave. At least one topic is required.",
+    "נושאי השאלות": "Question topics",
+    "בחר את כל הנושאים": "Select all topics",
+    "אפשר ללמוד גם מטעויות": "You can learn from mistakes too",
+    "התשובה הנכונה היא:": "The correct answer is:",
+    "התשובה הנכונה": "Correct answer",
+    "התשובה שבחרת": "Your answer",
+    "לא ניתן לאמת כרגע את התשובה הנכונה. אפשר להמשיך במשחק.": "We can't verify the correct answer right now. You can continue playing.",
+    "המשך למשחק": "Continue playing",
+    "שאלת פרימיום · ניקוד ופרסים כפולים": "Premium question · Double points and rewards",
+    "שאלת פרימיום · תשובה נכונה תפתח בונוס": "Premium question · A correct answer unlocks a bonus",
   "טריוויה ריבועים": "TRIVIA SQUARES",
   "TRIVIA SQUARES": "TRIVIA SQUARES",
   "משחק מקומי לכל שני שחקנים, עם יתרות זמן נפרדות לכל אחד.": "Local two-player match, with separate time balances.",
