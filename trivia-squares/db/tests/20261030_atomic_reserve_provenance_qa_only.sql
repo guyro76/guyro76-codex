@@ -48,15 +48,19 @@ BEGIN
     RAISE EXCEPTION 'Atomic question + provenance publication failed';
   END IF;
 
-  -- Exact duplicate must not be published or rewarded twice.
-  INSERT INTO trivia_squares.question_reserve
-    (locale, category, difficulty, question, answers, correct_index,
-     approved, fact_source_url, fact_verified_on)
-  VALUES
-    ('en','QA-only',1,label,
-     '["A","B","C","D"]'::jsonb,0,true,
-     'https://example.org/qa',CURRENT_DATE)
-  RETURNING id INTO new_id;
+  -- The reserve table has UNIQUE(locale, question), so a second INSERT
+  -- of the same question would fail before reaching the publisher.
+  -- Re-queue the QA-only reserve row inside this rolled-back transaction
+  -- to verify the publisher rejects an already-live question.
+  SELECT id INTO new_id
+  FROM trivia_squares.question_reserve
+  WHERE locale='en' AND question=label AND released_at IS NOT NULL;
+  IF new_id IS NULL THEN
+    RAISE EXCEPTION 'QA reserve row was not released';
+  END IF;
+  UPDATE trivia_squares.question_reserve
+  SET approved=true, released_at=NULL
+  WHERE id=new_id;
   inserted_count := trivia_squares.publish_reviewed_questions(1);
   IF inserted_count <> 0 OR
      (SELECT approved FROM trivia_squares.question_reserve WHERE id=new_id) OR
