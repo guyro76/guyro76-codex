@@ -16,6 +16,7 @@ import { spanishQuestions } from '../lib/spanishQuestions';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
+import {selectBalancedQuestion,historyEntry,type TopicHistoryEntry} from '../lib/questionDiversity';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
 import TriviaMark from '../components/TriviaMark';
@@ -148,6 +149,7 @@ export default function TriviaGame() {
   const [edge, setEdge] = useState<string | null>(null);
   const usedLocalQuestionIds=useRef<Set<number>>(new Set());
   const lastQuestionCategory=useRef<string|null>(null);
+  const stageTopicHistory=useRef<Record<string,TopicHistoryEntry[]>>({});
   const seenQuestionTexts=useRef<Set<string>>(new Set());
   const remoteQuestionCache=useRef<Record<ActiveLocale,LocalSourceQuestion[]>>(blankQuestionCache());
   const remoteQuestionCursor=useRef<Record<ActiveLocale,number>>(blankCursorCache());
@@ -397,6 +399,21 @@ export default function TriviaGame() {
     });
     return () => data.subscription.unsubscribe();
   }, [client]);
+  useEffect(()=>{
+    try{
+      const saved=JSON.parse(localStorage.getItem('trivia-stage-topic-history-v1')||'{}');
+      if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
+        const recovered:Record<string,TopicHistoryEntry[]>={};
+        for(const [key,value] of Object.entries(saved)){
+          if(!/^(he|en|ru|fr|ar|es):\\d{1,3}$/.test(key)||!Array.isArray(value))continue;
+          recovered[key]=value.filter((v):v is TopicHistoryEntry=>
+            Boolean(v&&typeof v==='object'&&typeof v.category==='string'&&typeof v.pattern==='string'&&typeof v.topic==='string')
+          ).slice(-60);
+        }
+        stageTopicHistory.current=recovered;
+      }
+    }catch{}
+  },[]);
   useEffect(() => {
     try {
       const savedLevel=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
@@ -808,16 +825,12 @@ export default function TriviaGame() {
       }
       const preferred=unseen.filter(q=>selectedTopics.includes(topicForQuestion(q.category,q.text)));
       const remaining=preferred.length?preferred:unseen;
-      const alternatives=remaining.filter(v=>v.category!==lastQuestionCategory.current);
-      const pool=alternatives.length?alternatives:remaining;
-      const categories=[...new Set(pool.map(v=>v.category))];
-      const category=categories[Math.floor(Math.random()*categories.length)];
-      const inCategory=pool.filter(v=>v.category===category);
-      // Preserve the established first-turn tutorial and its regression tests;
-      // subsequent turns use the full balanced topic/category lottery.
-      const q=usedLocalQuestionIds.current.size===0&&locale==='he'
-        ? remaining.find(v=>v.text.includes('בירת אוסטרליה'))||inCategory[0]
-        : inCategory[Math.floor(Math.random()*inCategory.length)];
+      // Match the stage and the player's chosen locale, not the globally huge geography pool.
+      // History is persisted so reloads do not start a new streak of city questions.
+      const topicHistoryKey=locale+':'+stageId;
+      const topicHistory=stageTopicHistory.current[topicHistoryKey]||[];
+      const q=selectBalancedQuestion(remaining,topicHistory,selectedTopics);
+      if(!q){setEdge(null);return;}
       if(preferred.length===0){
         setMessage(locale==='he'
           ? 'השאלות בנושאים שבחרת אזלו. מצאנו עבורך שאלה חדשה בנושא אחר, בלי למחוק את ההתקדמות.'
@@ -835,6 +848,9 @@ export default function TriviaGame() {
         setBusy(false);
       }
       lastQuestionCategory.current=q.category;
+      const topicKey=locale+':'+stageId;
+      stageTopicHistory.current[topicKey]=[...(stageTopicHistory.current[topicKey]||[]),historyEntry(q)].slice(-60);
+      try{localStorage.setItem('trivia-stage-topic-history-v1',JSON.stringify(stageTopicHistory.current))}catch{}
       usedLocalQuestionIds.current.add(q.id);
       rememberShownQuestion(q.text);
       try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
