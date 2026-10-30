@@ -5,6 +5,17 @@ import type {StageCard} from './stageRewards';
 type GameCopy = Record<string,string>;
 const copy: Record<'ru'|'fr'|'ar'|'es',GameCopy> = {
  ru:{
+  "השלב הושלם":"ЭТАП ПРОЙДЕН",
+  "חגיגת סיום השלב":"Праздник завершения этапа",
+  "🎇 חגיגת הניצחון!":"🎇 Победа!",
+  "המתנות נוספו לאוסף ולארנק שלך":"Подарки добавлены в вашу коллекцию и кошелёк.",
+  "בכל שלב מוגרל אתגר ביניים. אפשר לבחור אתגר אחר או להמשיך לשלב הבא.":"Между этапами автоматически выбирается испытание. Можно сменить его или продолжить.",
+  "שאלת בונוס":"Бонусный вопрос",
+  "שאלה נוספת ופרס גדול":"Ещё один вопрос за крупный приз",
+  "האתגר שלך:":"Ваше испытание:",
+  "🧠 שאלת בונוס":"🧠 Бонусный вопрос",
+  "תשובה נכונה מעניקה 30 קרדיטים. כל תשובה מקבלת פרס.":"Правильный ответ даёт 30 монет. Каждый ответ приносит награду.",
+  "30 קרדיטים":"30 монет",
   '✨ אוסף הסודות נפתח':'✨ Открыта коллекция секретов','מכינים את קלף הבונוס...':'Подготавливаем наградную карточку...',
   '✦ קלף אספנות חדש ✦':'✦ Новая коллекционная карточка ✦',
   'פתחת את כל הריבועים. גילית אוצר!':'Все квадраты закрыты. Сокровище найдено!',
@@ -23,6 +34,17 @@ const copy: Record<'ru'|'fr'|'ar'|'es',GameCopy> = {
   'יהלום אחד':'1 алмаз','קמע זמן אחד':'1 талисман времени','אותיות':'букв'
  },
  fr:{
+  "השלב הושלם":"NIVEAU TERMINÉ",
+  "חגיגת סיום השלב":"Célébration de fin de niveau",
+  "🎇 חגיגת הניצחון!":"🎇 Victoire !",
+  "המתנות נוספו לאוסף ולארנק שלך":"Les cadeaux ont été ajoutés à votre collection et à votre portefeuille.",
+  "בכל שלב מוגרל אתגר ביניים. אפשר לבחור אתגר אחר או להמשיך לשלב הבא.":"Un mini-défi est choisi automatiquement. Vous pouvez en changer ou continuer.",
+  "שאלת בונוס":"Question bonus",
+  "שאלה נוספת ופרס גדול":"Une question de plus pour un grand prix",
+  "האתגר שלך:":"Votre défi :",
+  "🧠 שאלת בונוס":"🧠 Question bonus",
+  "תשובה נכונה מעניקה 30 קרדיטים. כל תשובה מקבלת פרס.":"Une bonne réponse rapporte 30 crédits. Chaque essai reçoit un cadeau.",
+  "30 קרדיטים":"30 crédits",
   '✨ אוסף הסודות נפתח':'✨ Collection secrète débloquée','מכינים את קלף הבונוס...':'Préparation de votre carte bonus...',
   '✦ קלף אספנות חדש ✦':'✦ Nouvelle carte à collectionner ✦',
   'פתחת את כל הריבועים. גילית אוצר!':'Toutes les cases sont fermées. Trésor découvert !',
@@ -41,6 +63,17 @@ const copy: Record<'ru'|'fr'|'ar'|'es',GameCopy> = {
   'יהלום אחד':'1 diamant','קמע זמן אחד':'1 talisman temporel','אותיות':'lettres'
  },
  ar:{
+  "השלב הושלם":"اكتمل المستوى",
+  "חגיגת סיום השלב":"احتفال إكمال المستوى",
+  "🎇 חגיגת הניצחון!":"🎇 احتفال النصر!",
+  "המתנות נוספו לאוסף ולארנק שלך":"أضيفت الهدايا إلى مجموعتك ومحفظتك.",
+  "בכל שלב מוגרל אתגר ביניים. אפשר לבחור אתגר אחר או להמשיך לשלב הבא.":"يتم اختيار تحدٍّ بين المراحل تلقائيًا. يمكنك تغييره أو المتابعة.",
+  "שאלת בונוס":"سؤال مكافأة",
+  "שאלה נוספת ופרס גדול":"سؤال إضافي من أجل جائزة أكبر",
+  "האתגר שלך:":"تحديك:",
+  "🧠 שאלת בונוס":"🧠 سؤال مكافأة",
+  "תשובה נכונה מעניקה 30 קרדיטים. כל תשובה מקבלת פרס.":"الإجابة الصحيحة تمنح 30 عملة. كل محاولة تحصل على هدية.",
+  "30 קרדיטים":"30 عملة",
   '✨ אוסף הסודות נפתח':'✨ تم فتح مجموعة الأسرار','מכינים את קלף הבונוס...':'يجري تجهيز بطاقة المكافأة...',
   '✦ קלף אספנות חדש ✦':'✦ بطاقة جديدة للمجموعة ✦',
   'פתחת את כל הריבועים. גילית אוצר!':'أغلقت جميع المربعات واكتشفت كنزًا!',
@@ -59,6 +92,17 @@ const copy: Record<'ru'|'fr'|'ar'|'es',GameCopy> = {
   'יהלום אחד':'ماسة واحدة','קמע זמן אחד':'تعويذة وقت واحدة','אותיות':'حروف'
  },
  es:{
+  "השלב הושלם":"NIVEL COMPLETADO",
+  "חגיגת סיום השלב":"Celebración de nivel completado",
+  "🎇 חגיגת הניצחון!":"🎇 ¡Celebración de victoria!",
+  "המתנות נוספו לאוסף ולארנק שלך":"Los regalos se añadieron a tu colección y cartera.",
+  "בכל שלב מוגרל אתגר ביניים. אפשר לבחור אתגר אחר או להמשיך לשלב הבא.":"Se selecciona automáticamente un desafío entre niveles. Puedes cambiarlo o continuar.",
+  "שאלת בונוס":"Pregunta de bonificación",
+  "שאלה נוספת ופרס גדול":"Una pregunta extra para un gran premio",
+  "האתגר שלך:":"Tu desafío:",
+  "🧠 שאלת בונוס":"🧠 Pregunta extra",
+  "תשובה נכונה מעניקה 30 קרדיטים. כל תשובה מקבלת פרס.":"Una respuesta correcta da 30 créditos. Cada intento recibe un regalo.",
+  "30 קרדיטים":"30 créditos",
  "✨ אוסף הסודות נפתח": "✨ Colección secreta desbloqueada",
  "מכינים את קלף הבונוס...": "Preparando tu carta de bonificación...",
  "✦ קלף אספנות חדש ✦": "✦ Nueva carta coleccionable ✦",
@@ -121,7 +165,7 @@ export function intermissionWord(locale:ActiveLocale,worldSize:number){
 }
 export function intermissionPrize(locale:ActiveLocale,prize:string):string{
  if(locale==='he')return prize;
- const english:Record<string,string>={'10 קרדיטים':'10 credits','15 קרדיטים':'15 credits','5 פירות':'5 fruit','2 פירות':'2 fruit','יהלום אחד':'1 gem','קמע זמן אחד':'1 time charm'};
+ const english:Record<string,string>={'10 קרדיטים':'10 credits','15 קרדיטים':'15 credits','30 קרדיטים':'30 credits','5 פירות':'5 fruit','2 פירות':'2 fruit','יהלום אחד':'1 gem','קמע זמן אחד':'1 time charm'};
  if(locale==='en')return english[prize]||prize;
  return copy[locale][prize]||english[prize]||prize;
 }
