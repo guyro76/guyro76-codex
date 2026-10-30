@@ -1,7 +1,7 @@
 /* Premium gameplay feedback. CSS-only motion, accessible high contrast,
    no external graphics/audio, bold labels, respects reduced motion. */
 main.trivia-app .capture-win-toast{
-  position:absolute;top:-53px;inset-inline-end:0;z-index:15;
+  position:absolute;top:39px;inset-inline-end:0;z-index:15;
   display:flex;align-items:center;justify-content:center;gap:10px;
   background:linear-gradient(120deg,#3B226E,#692AA1 58%,#A34791);
   border:2px solid #FFDA93;border-radius:16px;padding:10px 14px;
@@ -135,7 +135,7 @@ main.trivia-app .stage-bonus-options button.selected{
   background:#FFE2A6;border:3px solid #F8A359
 }
 @media(max-width:620px){
-  main.trivia-app .capture-win-toast{top:-49px;font-size:12px;padding:7px 9px;gap:5px}
+  main.trivia-app .capture-win-toast{top:33px;font-size:12px;padding:7px 9px;gap:5px}
   main.trivia-app .stage-bonus-options{grid-template-columns:1fr}
   main.trivia-app .stage-celebration{padding:13px 8px;margin-bottom:10px}
   main.trivia-app .stage-gift-tray span{min-width:66px;padding:6px 8px}
