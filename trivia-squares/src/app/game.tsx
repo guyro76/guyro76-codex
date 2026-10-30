@@ -9,7 +9,7 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween, edgeFromSwipe } from '
 import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
-import { playGameSound, unlockGameAudio, type SoundCue } from '../lib/gameAudio';
+import { playGameSound, unlockGameAudio, gameAudioState, type SoundCue } from '../lib/gameAudio';
 import {answerFeedback} from '../lib/answerFeedback';
 import {gameplayGuidance} from '../lib/gameplayGuidance';
 import {viewportModeLabel,viewportPreviewLabel} from '../lib/viewportPreviewLabels';
@@ -879,7 +879,14 @@ export default function TriviaGame() {
       const preferred=unseen.filter(q=>selectedTopics.includes(topicForQuestion(q.category,q.text)));
       const remaining=preferred.length?preferred:unseen;
       // Enforce rotating broad topics rather than only raw category labels.
-      const chosen=selectVariedQuestion(remaining,recentQuestionTopics.current);
+      // Fresh entropy per draw. A new game must not replay a fixed deck order.
+      const chosen=selectVariedQuestion(remaining,recentQuestionTopics.current,()=>{
+        try{
+          const value=new Uint32Array(1);
+          crypto.getRandomValues(value);
+          return value[0]/4294967296;
+        }catch{return Math.random();}
+      });
       if(!chosen){setEdge(null);return;}
       // Respect the player's selected topics from the first question onwards.
       // Never override balanced rotation with a hard-coded geography question.
@@ -1466,7 +1473,11 @@ export default function TriviaGame() {
           if(muted)setMuted(false);
           if(volume<65)setVolume(85);
           playGameSound('fireworks',{muted:false,volume:Math.max(.85,volume/100)});
-          setMessage(locale==='he'?'בדיקת צליל: אמור להישמע צליל זיקוקים. בדוק עוצמת מכשיר ומצב שקט.':
+          // Explicit status helps diagnose silent iPhone / Safari devices.
+          const state=gameAudioState();
+          setMessage(state==='unsupported'?
+            (locale==='he'?'המכשיר אינו תומך בהשמעת צליל בדפדפן.':'This browser does not support Web Audio.'):
+            locale==='he'?'בדיקת צליל: אמור להישמע צליל זיקוקים. בדוק עוצמת מכשיר ומצב שקט.':
             locale==='es'?'Prueba de sonido: escucha los fuegos artificiales. Comprueba el volumen del teléfono.':
             locale==='fr'?'Test sonore : écoutez les feux d’artifice et vérifiez le volume.':
             locale==='ru'?'Проверка звука: послушайте фейерверк и проверьте громкость.':
