@@ -27,16 +27,19 @@ export function topicForQuestion(category:string,text:string):QuestionTopic{
  if(/מכונ|רכב|יצרנית|רכבי|automobile|car brand|automo|автомоб|سيار/.test(both))return 'cars';
  if(/כנסת|ממשלה|פוליטיק|ראש ממשלה|נשיא ישראל|בחירות|politic|knesset|политик|السياس/.test(both))return 'israel_politics';
  if(/בירת|עיר הבירה|capital|столиц|capitale|عاصم/.test(q))return 'capitals';
+ // Geography has many labels across languages. These all belong to ONE topic.
+ if(/גאוגרפ|גיאוגרפ|בירות העולם|geograph|geograf[ií]a|géograph|world capitals|географ|столиц|الجغرافيا|جغرافيا|عواصم العالم|cities|ciudades/.test(c))return 'capitals';
+ if(/באיזו עיר|באיזה עיר|באיזו מדינה|איפה נמצאת|which city|where is|in what city|dans quelle ville|в каком городе|в какой стране|en qué ciudad|en qué país|أي مدينة|في أي دولة/.test(q))return 'capitals';
  if(/ספורט|כדורגל|כדורסל|אולימפ|טניס|sport|football|basketball|tennis|спор|رياض/.test(both))return 'sports';
- if(/סדרות|סדרה|טלוויז|קולנוע|סרט|film|movie|television|series|cinéma|кино|сериал|مسلسل|أفلام/.test(both))return 'tv_film';
- if(/אירוויזיון|eurovision|евровидени|يوروفيجن|يوروفيزيون/.test(both))return 'eurovision';
- if(/מוזיק|שיר|זמר|להקה|אלבום|music|song|singer|band|музык|chanson|musique|موسيقى|أغنية/.test(both))return 'music';
+ if(/סדרות|סדרה|טלוויז|קולנוע|סרט|film|movie|television|series|cinéma|кино|сериал|مسلسل|أفلام|pel[ií]cula|cine|serie|ديزني|disney|дисне/.test(both))return 'tv_film';
+ if(/אירוויזיון|eurovision|eurovisi[oó]n|евровидени|يوروفيجن|يوروفيزيون/.test(both))return 'eurovision';
+ if(/מוזיק|שיר|זמר|להקה|אלבום|music|song|singer|band|музык|chanson|musique|m[uú]sica|canci[oó]n|موسيقى|أغنية/.test(both))return 'music';
  if(/מדע|חלל|טכנולוג|פיזיק|כימ|מחשב|science|technology|space|computer|наук|технолог|sciences|informatique|العلوم|التكنولوجيا/.test(both))return 'science';
  if(/טבע|בעל חיים|חיה|ציפור|עץ|צמח|nature|animal|wildlife|природ|nature|حيوان|الطبيعة/.test(both))return 'nature';
- if(/היסטור|תרבות|מלחמ|עתיק|history|culture|historic|истори|история|histoire|culture|تاريخ|الثقافة/.test(both))return 'history';
- if(/אוכל|מאכל|בישול|פירות|מטבח|food|cooking|fruit|gastronomie|cuisine|еда|кухн|الطعام/.test(both))return 'food';
+ if(/היסטור|תרבות|מלחמ|עתיק|history|culture|historic|historia|истори|история|histoire|culture|تاريخ|الثقافة/.test(both))return 'history';
+ if(/אוכל|מאכל|בישול|פירות|מטבח|food|cooking|fruit|gastronomie|cuisine|comida|cocina|еда|кухн|الطعام/.test(both))return 'food';
  if(/ספרות|אמנות|ציור|ספר|משחקי|literature|art|book|games|искусств|littérature|الفنون|الكتب/.test(both))return 'arts';
- if(/גאוגרפ|מדינ|עיר|נהר|אוקיינוס|geograph|country|countries|continent|географ|géographie|الجغرافيا/.test(both))return 'capitals';
+ if(/גאוגרפ|מדינ|עיר|נהר|אוקיינוס|geograph|geograf[ií]a|country|countries|continent|географ|géographie|الجغرافيا/.test(both))return 'capitals';
  if(/ישראל|israel|израил|إسرائيل/.test(both))return 'israel_politics';
  return 'general';
 }
