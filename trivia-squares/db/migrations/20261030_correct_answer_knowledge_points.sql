@@ -98,3 +98,58 @@ end $function$
 
 comment on column trivia_squares.progress.knowledge_points is
 'Non-transferable quiz mastery score: +10 for each correct authenticated answer. Territory scores remain separate.';
+
+-- Stage claim gift is idempotent per (user_id, match_id), including old saves.
+-- The existing row-level user/participant and completed-match checks remain intact.
+alter table trivia_squares.progress add column if not exists stars integer not null default 0;
+alter table trivia_squares.stage_collectibles add column if not exists clear_rewarded boolean not null default false;
+CREATE OR REPLACE FUNCTION public.trivia_stage_claim(p_match uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare uid uuid := (select auth.uid());
+declare m trivia_squares.matches%rowtype;
+declare item trivia_squares.stage_collectibles%rowtype;
+declare suffix text;
+declare picked text;
+declare stage_size integer;
+declare award_stage boolean := false;
+begin
+ if uid is null then raise exception 'Sign in required' using errcode='28000'; end if;
+ select * into m from trivia_squares.matches where id=p_match;
+ if not found or m.status<>'completed' then
+  raise exception 'Finish the entire board before claiming a collectible';
+ end if;
+ if uid<>m.host_id and uid is distinct from m.guest_id then
+  raise exception 'Only participants can claim stage reward';
+ end if;
+ stage_size := (m.state->>'rows')::int;
+ if stage_size not between 3 and 6 then raise exception 'Unknown world'; end if;
+ suffix := (ARRAY['portrait','song','letter'])[1+floor(random()*3)::integer];
+ picked := 'world-'||stage_size||'-'||suffix;
+ insert into trivia_squares.stage_collectibles(user_id,match_id,card_id)
+ values(uid,p_match,picked)
+ on conflict (user_id,match_id) do nothing;
+ select * into item from trivia_squares.stage_collectibles
+ where user_id=uid and match_id=p_match for update;
+ if not item.clear_rewarded then
+   update trivia_squares.stage_collectibles set clear_rewarded=true
+     where user_id=uid and match_id=p_match;
+   insert into trivia_squares.progress(user_id,credits,fruits,diamonds,stars)
+     values(uid,25,2,1,3)
+   on conflict (user_id) do update set
+     credits=trivia_squares.progress.credits+excluded.credits,
+     fruits=trivia_squares.progress.fruits+excluded.fruits,
+     diamonds=trivia_squares.progress.diamonds+excluded.diamonds,
+     stars=trivia_squares.progress.stars+excluded.stars,
+     updated_at=pg_catalog.now();
+   award_stage:=true;
+ end if;
+ return jsonb_build_object('gift_awarded',award_stage,'card_id',item.card_id,'match_id',item.match_id,
+  'earned_at',item.earned_at,'minigame',item.minigame,
+  'prize',item.minigame_prize,
+  'played',item.minigame_completed_at is not null);
+end $function$
+
