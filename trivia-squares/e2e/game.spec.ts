@@ -383,7 +383,7 @@ test('previously exhausted topic preferences switch to unused other topics witho
   await expect(page.locator('.scoreboard .player-tile.other')).toHaveCount(0);
 });
 
-test('exhausted complete Hebrew question bank allows continued drawing without resets or repeats',async({page})=>{
+test('exhausted offline question bank never gives free strokes and preserves stage seven',async({page})=>{
   await page.addInitScript(()=>{
     // Hebrew authored IDs are below 100,000; simulate an experienced player's
     // permanent history across many sessions. This must never brick stage 7.
@@ -400,16 +400,19 @@ test('exhausted complete Hebrew question bank allows continued drawing without r
   });
   await page.goto('/');
   await expect(page.locator('.level-pill')).toContainText('7');
+  // Offline mode can never silently bypass a trivia question.
+  await page.context().setOffline(true);
   await draw(page,[1,2],[1,3]);
   await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toHaveCount(0);
-  await expect(page.locator('.status-line')).toContainText('הקו הושלם ללא שאלה');
+  await expect(page.locator('.status-line')).toContainText('התחברו לאינטרנט');
   await expect.poll(async()=>page.evaluate(()=>{
-    const s=JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}');
-    return s.edges['h-0-1'];
-  })).toBe('host');
+    const board=JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}');
+    return board.edges?.['h-0-1'];
+  })).toBeUndefined();
+  await page.context().setOffline(false);
   await page.reload();
   await expect(page.locator('.level-pill')).toContainText('7');
-  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}').edges?.['h-0-1'])).toBe('host');
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}').edges?.['h-0-1'])).toBeUndefined();
 });
 
 
