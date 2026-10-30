@@ -1629,15 +1629,15 @@ export default function TriviaGame() {
         </div>
         {finished && !stageRewardOpen && <button className='stage-reward-reopen'
           type='button' onClick={()=>setStageRewardOpen(true)}>
-          {locale==='he'?'🎁 פתח שוב את משחק הביניים והפרסים':'🎁 Open stage rewards and minigame'}
+          {locale==='he'?'🎁 פתח שוב את משחק הביניים והפרסים':locale==='es'?'🎁 Abrir premios y minijuego':locale==='fr'?'🎁 Ouvrir les récompenses et le mini-jeu':locale==='ru'?'🎁 Открыть награды и мини-игру':locale==='ar'?'🎁 فتح المكافآت واللعبة المصغرة':'🎁 Open stage rewards and minigame'}
         </button>}
         {finished && stageRewardReady && stageRewardOpen && <div className='stage-reward-modal-layer'
-          role='dialog' aria-modal='true' aria-label={locale==='he'?'משחק הביניים ופרסי השלב':'Stage minigame and rewards'}
+          role='dialog' aria-modal='true' aria-label={locale==='he'?'משחק הביניים ופרסי השלב':locale==='es'?'Minijuego y recompensas del nivel':locale==='fr'?'Mini-jeu et récompenses du niveau':locale==='ru'?'Мини-игра и награды этапа':locale==='ar'?'اللعبة المصغرة ومكافآت المرحلة':'Stage minigame and rewards'}
           onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();setStageRewardOpen(false);}}}>
           <div className='stage-reward-modal-inner'>
             <button id='stage-reward-dismiss' className='stage-reward-dismiss' type='button'
               onClick={()=>setStageRewardOpen(false)}>
-              {locale==='he'?'✕ סגור וחזור ללוח':'✕ Close and return to board'}
+              {locale==='he'?'✕ סגור וחזור ללוח':locale==='es'?'✕ Cerrar y volver al tablero':locale==='fr'?'✕ Fermer et revenir au plateau':locale==='ru'?'✕ Закрыть и вернуться к полю':locale==='ar'?'✕ إغلاق والعودة إلى اللوحة':'✕ Close and return to board'}
             </button>
             <StageReward
           locale={locale}
@@ -1935,6 +1935,7 @@ export default function TriviaGame() {
           <button type='button' lang='ru' aria-pressed={locale==='ru'} onClick={()=>setLocale('ru')}>Русский</button>
           <button type='button' lang='fr' aria-pressed={locale==='fr'} onClick={()=>setLocale('fr')}>Français</button>
           <button type='button' lang='ar' aria-pressed={locale==='ar'} onClick={()=>setLocale('ar')}>العربية</button>
+           <button type='button' lang='es' aria-pressed={locale==='es'} onClick={()=>setLocale('es')}>Español</button>
         </div>
         <span className='quiz-badge'>{tr("🧭 הדרך לכיבוש מתחילה כאן")}</span>
         <h2>{tr(['צייר קו כמו בטוש','ענה נכון על שאלת טריוויה','סגור ריבוע וזכה בנקודות'][tutorialPage])}</h2>

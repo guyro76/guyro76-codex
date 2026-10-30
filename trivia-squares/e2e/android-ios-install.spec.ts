@@ -5,6 +5,9 @@ test('Android and iOS have a consistent Hebrew installation name and icon',async
   await page.goto('/');
   await expect(page).toHaveTitle('טריוויה ריבועים');
   await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+  // The PWA must retain Spanish in the first-run tutorial's live language picker.
+  const tutor=page.getByRole('dialog',{name:'הסבר משחק'});
+  if(await tutor.isVisible())await expect(tutor.getByRole('button',{name:'Español'})).toBeVisible();
   await expect(page.locator('meta[name="application-name"]')).toHaveAttribute('content','טריוויה ריבועים');
   await expect(page.locator('meta[name="apple-mobile-web-app-title"]')).toHaveAttribute('content','טריוויה ריבועים');
   const link=page.locator('link[rel="manifest"]');
