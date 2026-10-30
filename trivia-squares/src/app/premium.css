@@ -1242,3 +1242,25 @@ main.trivia-app .skin-picker-item{min-width:0}
  main.trivia-app .locale-switch{justify-content:center;gap:5px;padding:7px}
  main.trivia-app .locale-option{flex:1 1 auto;font-size:clamp(12px,2.7vw,14px);padding:8px 10px}
 }
+
+/* Campaign chapter carousel: only five stage cards rendered at once, never 100. */
+main.trivia-app .campaign-chapter-nav{
+ display:flex;align-items:center;justify-content:center;gap:10px;max-width:100%;margin:14px 0 10px;flex-wrap:wrap;
+}
+main.trivia-app .campaign-chapter-nav label{font-weight:900;color:#F4F8FF}
+main.trivia-app .campaign-chapter-nav select{
+ min-width:150px;max-width:220px;padding:10px 14px;border-radius:13px;
+ background:#19345A;color:#FFF;font-size:15px;font-weight:900;border:1px solid #A7D8F0;
+}
+main.trivia-app .campaign-chapter-nav button{
+ font-weight:900;font-size:23px;min-width:42px;min-height:42px;border-radius:13px;
+ background:#254A70;color:#FFF;border:1px solid #9FDCEF;cursor:pointer;
+}
+main.trivia-app .campaign-chapter-nav button:disabled{opacity:.4;cursor:not-allowed}
+main.trivia-app .campaign-track{max-width:100%;min-width:0;overflow-x:auto}
+main.trivia-app .campaign-section{max-width:100%;min-width:0;overflow-x:clip}
+
+/* Avoid document-level horizontal overflow from translated footer links and stage titles.
+   Keep horizontal scrolling contained inside the five-card chapter carousel. */
+main.trivia-app{max-width:100%;overflow-x:clip}
+main.trivia-app .campaign-chapter-nav{min-width:0;max-width:100%}
