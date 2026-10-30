@@ -1326,3 +1326,20 @@ main.trivia-app .lumen-cake-target.cut .lumen-cake-plate{transform:rotate(9deg) 
  main.trivia-app .lumen-balloon-target.burst .lumen-balloon-shape,
  main.trivia-app .lumen-cake-target.cut .lumen-cake-slice{animation:none!important;transition:none!important}
 }
+
+main.trivia-app .trivia-sound-toggle{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:43px;padding:6px 12px;flex:0 0 auto;
+  border-radius:13px;border:2px solid #B7D7F7;
+  background:linear-gradient(135deg,#254B79,#3B5A87);
+  color:#FFFFFF;cursor:pointer;font-weight:900
+}
+main.trivia-app .trivia-sound-toggle strong{font-size:13px;font-weight:900}
+main.trivia-app .trivia-sound-toggle:focus-visible{outline:3px solid #FFE9A4;outline-offset:3px}
+main.trivia-app .trivia-sound-toggle[aria-pressed=false]{
+  border-color:#FFD5A6;background:linear-gradient(135deg,#71395B,#5E3965)
+}
+@media(max-width:440px){
+ main.trivia-app .trivia-sound-toggle{padding:6px 9px;min-height:40px}
+ main.trivia-app .trivia-sound-toggle strong{font-size:12px}
+}
