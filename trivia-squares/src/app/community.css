@@ -1,0 +1,47 @@
+.community-contribution{display:block;min-width:0}
+.community-contribution .panel-title{font-size:19px;font-weight:900;margin:0 0 10px}
+.community-prize{padding:13px;border:1px solid #F5D68B;border-radius:14px;background:linear-gradient(125deg,#3B427A,#55466F);color:#FFF3CA;font-weight:900;line-height:1.65}
+.community-auth-notice{margin:16px 0;padding:14px;border:1px solid rgba(239,245,255,.4);border-radius:14px}
+.community-question-form{display:grid;gap:9px;margin:15px 0}
+.community-question-form>label{display:block;margin-top:8px;font-size:13px;font-weight:900;color:#EAF2FF}
+.community-question-form textarea{resize:vertical;min-height:95px}
+.community-answers{padding:11px;border:1px solid #BACCEB;border-radius:13px;margin:0;min-width:0}
+.community-answers legend{padding:0 9px;font-weight:900}
+.community-answer-row{display:flex;align-items:center;gap:8px;margin:7px 0}
+.community-answer-row input[type=radio]{accent-color:#FFDE8B;width:19px;height:19px;flex:none}
+.community-answer-index{width:19px;text-align:center;color:#F5D98B;font-weight:900}
+.community-answer-row .form-input{flex:1;min-width:0;margin:0!important}
+.community-error{color:#FFBABA;background:#793044;border-radius:10px;padding:9px;font-weight:900}
+.community-success{color:#C3FFE6;background:#205846;border-radius:10px;padding:9px;font-weight:900}
+.community-wallet{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 0;margin-top:16px;border-top:1px solid #AEC9F566}
+.community-wallet strong{color:#FFE4A0}
+.community-history-title{font-size:16px;font-weight:900;margin:12px 0}
+.community-history{padding:0;margin:5px 0;list-style:none;display:grid;gap:7px}
+.community-history li{display:flex;align-items:flex-start;flex-direction:column;gap:4px;border:1px solid #BDDAFC66;border-radius:11px;padding:10px;background:#FFFFFF12}
+.community-history li span{font-size:13px}
+.community-history li strong{font-size:12px;color:#F7E7B4}
+.community-history li strong[data-status=approved]{color:#ABFFC9}
+.community-history li strong[data-status=rejected]{color:#FFB8BD}
+.community-history li small{color:#DAE6FF;font-size:12px}
+
+
+.community-page{box-sizing:border-box;min-height:100dvh;max-width:960px;margin:auto;padding:clamp(15px,3vw,30px);color:#F9FBFF;background:radial-gradient(ellipse at 0 0,#4B4580 0,transparent 47%),linear-gradient(155deg,#132A53,#0B1632)}
+.community-page *{box-sizing:border-box}
+.community-page button,.community-page select,.community-page input,.community-page textarea{font:inherit}
+.community-page button{cursor:pointer}
+.community-page-header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.community-page-brand{display:flex;align-items:center;gap:12px;font-size:clamp(21px,3vw,29px)}
+.community-back{font-weight:900;color:#FFF3B7;text-decoration:none;padding:9px 12px;border:1px solid #E8EDFF7A;border-radius:11px}
+.community-page-languages{display:flex;gap:5px;flex-wrap:wrap;margin:15px 0}
+.community-page-languages button{padding:8px 12px;background:#2B4476;color:#E3EFFF;border:1px solid #B8D8F090;border-radius:10px}
+.community-page-languages button[aria-pressed=true]{background:#FFE6A1;color:#21335D}
+.community-page-inner{padding:clamp(15px,3vw,26px);border:1px solid #CFDFFD78;border-radius:22px;background:rgba(22,44,82,.74);box-shadow:0 20px 48px #09102378}
+.community-account-help{font-size:12px;color:#E2EDFF;margin-top:20px}
+.community-page-footer{display:flex;gap:18px;margin-top:18px;font-size:12px;justify-content:center}
+.community-page-footer a{color:#D3E7FF}
+.community-page .form-input{padding:10px 11px;background:#F4F8FF;color:#1B3057;border:1px solid #ABC7F2;border-radius:10px;width:100%;min-height:41px}
+.community-page .gold-button{padding:10px 16px;background:#FFE1A0;color:#15264E;border:0;border-radius:11px;font-weight:900}
+.community-page .glass-button{padding:9px 12px;background:#284E81;color:#FFFFFF;border:1px solid #ACD1FF;border-radius:10px}
+.community-page .smalltxt{font-size:12px;color:#E2EDFF}
+.community-page .community-answers{border-color:#D9E6FA66}
+.community-page button:focus-visible,.community-page a:focus-visible,.community-page input:focus-visible{outline:3px solid #FFE19C;outline-offset:3px}
