@@ -245,7 +245,7 @@ export default function TriviaGame() {
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(65);
   const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
-  const rewardSound=useCallback((cue:'bonus'|'win')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
+  const rewardSound=useCallback((cue:'bonus'|'win'|'pop'|'slice')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
   const [invite, setInvite] = useState<string | null>(null);
   const botBusy = useRef(false);
   const boardRef = useRef<SVGSVGElement>(null);
