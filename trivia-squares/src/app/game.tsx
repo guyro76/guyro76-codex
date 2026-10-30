@@ -8,7 +8,7 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawi
 import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
-import { playGameSound, type SoundCue } from '../lib/gameAudio';
+import { playGameSound, unlockGameAudio, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
@@ -66,6 +66,12 @@ type RemoteMatch = { id: string; status: string; host_id: string; guest_id: stri
 type Profile = { display_name: string; color: string; line_color?: string; avatar: string; remember_color: boolean; locale?: ActiveLocale };
 type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number; time_charms?: number };
 type SkinId='regular'|'urban'|'vintage'|'retro'|'pop'|'future';
+const modeLabels={
+ solo:{he:'👤 משחק עצמאי',en:'👤 Solo',ru:'👤 Соло',fr:'👤 Solo',ar:'👤 لعب فردي',es:'👤 Solo'},
+ bot:{he:'🤖 נגד מחשב',en:'🤖 Computer',ru:'🤖 Против компьютера',fr:'🤖 Contre l’ordinateur',ar:'🤖 ضد الكمبيوتر',es:'🤖 Contra la computadora'},
+ online:{he:'🌐 נגד חבר',en:'🌐 Online friend',ru:'🌐 Играть с другом',fr:'🌐 Ami en ligne',ar:'🌐 ضد صديق',es:'🌐 Contra un amigo'},
+ local:{he:'👥 שניים במכשיר',en:'👥 Local two players',ru:'👥 Два игрока',fr:'👥 Deux joueurs',ar:'👥 لاعبان على الجهاز',es:'👥 Dos jugadores'}
+} as const;
 const skins:{id:SkinId;he:string;en:string;colors:[string,string,string]}[]=[
  {id:'regular',he:'רגיל · מקורי',en:'Original',colors:['#1F3265','#688FD8','#F9DA90']},
  {id:'urban',he:'אורבני · מטרופולין',en:'Urban Metro',colors:['#172935','#5A8C9C','#F4BD70']},
@@ -1251,7 +1257,7 @@ export default function TriviaGame() {
     subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
-  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin + (stageStarted?' playing-layout':' setup-layout')} style={css.main} dir={localeDirection(locale)} lang={locale}>
+  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin + (stageStarted?' playing-layout':' setup-layout')} style={css.main} dir={localeDirection(locale)} lang={locale} onPointerDownCapture={()=>unlockGameAudio()} onKeyDownCapture={event=>{if(event.key==='Enter'||event.key===' ')unlockGameAudio()}}>
     <style>{`
       *{box-sizing:border-box} body{background:#111C48;color:white;font-family:Arial,'Noto Sans Hebrew',sans-serif;font-weight:800;margin:0}
       .trivia-app{--accent:#8CE8FF;min-height:100vh;position:relative;isolation:isolate}
@@ -1582,6 +1588,7 @@ export default function TriviaGame() {
         <div className='control-row'>
           <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>
           <button className='glass-button' onClick={() => {
+            unlockGameAudio();
             if (muted) playGameSound('correct',{muted:false,volume:volume/100});
             setMuted(v=>!v);
           }} aria-pressed={muted} aria-label={tr(muted ? 'הפעל צלילים' : 'השתק צלילים')}>
@@ -1696,7 +1703,7 @@ export default function TriviaGame() {
                  if(value==='solo'&&!remote){setLocal(prev=>({...repairSoloBoard(prev),mode:'solo'}));setCapturePending(null)}
                  if(value==='local'&&!remote){setLocal(prev=>({...prev,mode:'local'}))}
                  if(value!=='local'&&value!=='solo'&&stageId>serverStageCompleted+1){setStageId(serverStageCompleted+1);setSize(stageFor(Math.min(STAGE_COUNT,serverStageCompleted+1)).size)} }}>
-                {locale==='en'?en:he}</button>)}
+                {modeLabels[value][locale]}</button>)}
           </div>
           <details className='question-topic-panel' open={!stageStarted}>
             <summary>☑️ {tr('נושאי השאלות שלי')} <span className='question-topic-count'>({selectedTopics.length}/{questionTopics.length})</span></summary>
