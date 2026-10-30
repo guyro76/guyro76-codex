@@ -134,3 +134,18 @@ export function intermissionCard(locale:ActiveLocale,card:StageCard):StageCard{
  if(card.kind==='letter')return {...card,title:(locale==='ru'?'Буква сокровища: ':locale==='fr'?'Lettre du trésor : ':locale==='ar'?'حرف الكنز: ':locale==='es'?'Letra del tesoro: ':'Treasure letter: ')+letter,subtitle:locale==='ru'?'Подсказка к игре со словами':locale==='fr'?'Indice pour le jeu de mots':locale==='ar'?'تلميح للعبة الكلمات':locale==='es'?'Una pista para el juego de palabras':'A clue for the word puzzle',glyph:letter};
  return {...card,title:locale==='ru'?'Мелодия '+intermissionWord(locale,card.world).answer:locale==='fr'?'Mélodie '+intermissionWord(locale,card.world).answer:locale==='ar'?'لحن '+intermissionWord(locale,card.world).answer:locale==='es'?'Melodía de '+intermissionWord(locale,card.world).answer:'Original '+intermissionWord(locale,card.world).answer+' song',subtitle:locale==='ru'?'Оригинальная музыкальная карточка':locale==='fr'?'Carte musicale originale':locale==='ar'?'بطاقة موسيقية أصلية':locale==='es'?'Carta musical original':'Original music card'};
 }
+
+
+/** Every intermission control is localized; never fall back to another language. */
+export type MiniGameTextKey='balloonsTitle'|'cakeTitle'|'balloonsSubtitle'|'cakeSubtitle'|'balloonsHelp'|'cakeHelp'|'popBalloon'|'sliceCake';
+const miniGameDictionary:Record<ActiveLocale,Record<MiniGameTextKey,string>>={
+ he:{balloonsTitle:'בלוני ההפתעה',cakeTitle:'עוגת ההפתעה',balloonsSubtitle:'מפוצצים בלון וחושפים פרס',cakeSubtitle:'חותכים פרוסה ומגלים אוצר',balloonsHelp:'בחר בלון לפיצוץ. בתוך אחד מהם מחכה הפרס שלך!',cakeHelp:'העבר אצבע על העוגה או הקש כדי לחתוך פרוסת פרס.',popBalloon:'פוצץ בלון',sliceCake:'חתוך פרוסת פרס'},
+ en:{balloonsTitle:'Surprise Balloons',cakeTitle:'Mystery Cake',balloonsSubtitle:'Pop a balloon to reveal a prize',cakeSubtitle:'Slice a cake to uncover treasure',balloonsHelp:'Choose a balloon to pop. Your reward is inside!',cakeHelp:'Swipe across the cake or tap to slice a reward.',popBalloon:'Pop balloon',sliceCake:'Slice the prize cake'},
+ ru:{balloonsTitle:'Шары с сюрпризом',cakeTitle:'Торт с сюрпризом',balloonsSubtitle:'Лопните шар и откройте приз',cakeSubtitle:'Отрежьте кусочек и найдите награду',balloonsHelp:'Выберите шар и лопните его, чтобы получить награду!',cakeHelp:'Проведите пальцем по торту или нажмите, чтобы отрезать кусочек.',popBalloon:'Лопнуть шар',sliceCake:'Отрезать кусочек'},
+ fr:{balloonsTitle:'Ballons surprises',cakeTitle:'Gâteau mystère',balloonsSubtitle:'Éclatez un ballon et découvrez un prix',cakeSubtitle:'Coupez une part et découvrez un trésor',balloonsHelp:'Choisissez un ballon à éclater pour révéler votre récompense !',cakeHelp:'Glissez le doigt sur le gâteau ou touchez-le pour couper une part.',popBalloon:'Éclater le ballon',sliceCake:'Couper une part'},
+ ar:{balloonsTitle:'بالونات المفاجآت',cakeTitle:'كعكة المفاجآت',balloonsSubtitle:'افقع بالونًا واكشف عن جائزتك',cakeSubtitle:'اقطع قطعة واكتشف كنزًا',balloonsHelp:'اختر بالونًا لتفقعه وتحصل على جائزتك!',cakeHelp:'مرر إصبعك فوق الكعكة أو اضغط لقطع قطعة.',popBalloon:'افقع البالون',sliceCake:'اقطع قطعة من الكعكة'},
+ es:{balloonsTitle:'Globos sorpresa',cakeTitle:'Pastel misterioso',balloonsSubtitle:'Explota un globo y descubre un premio',cakeSubtitle:'Corta una porción y encuentra un tesoro',balloonsHelp:'¡Elige un globo y explótalo para revelar tu premio!',cakeHelp:'Desliza el dedo por el pastel o tócalo para cortar una porción.',popBalloon:'Explotar globo',sliceCake:'Cortar una porción'}
+};
+export function intermissionMiniText(locale:ActiveLocale,key:MiniGameTextKey):string{
+ return miniGameDictionary[locale][key];
+}
