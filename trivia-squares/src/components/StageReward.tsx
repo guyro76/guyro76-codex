@@ -86,6 +86,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
         const selected=cardById(String(data.card_id));
         if(!selected){setNotice('קלף הבונוס לא נמצא באוסף.');return;}
         setCard(selected);setPlayed(Boolean(data.played));setPrize(String(data.prize||''));
+        onRemotePrize();
         const {data:cards}=await client.rpc('trivia_stage_album');
         if(alive && Array.isArray(cards))setAlbum(cards.map((c:Record<string,string>)=>({
           matchId:String(c.match_id),cardId:String(c.card_id),earnedAt:String(c.earned_at),played:Boolean(c.minigame),game:c.minigame as 'wheel'|'word'|'balloons'|'cake'|'quiz',prize:c.minigame_prize
@@ -107,7 +108,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
       if(alive){setAlbum(next);setCard(cardById(item.cardId)||found);setPlayed(item.played);setPrize(item.prize||'');onSound('win');}
     }
     return()=>{alive=false};
-  },[stageKey,worldSize,remoteMatchId,client,onSound,onStageClear]);
+  },[stageKey,worldSize,remoteMatchId,client,onSound,onStageClear,onRemotePrize]);
   useEffect(()=>{
     if(!card)return;
     const t=window.setTimeout(()=>{
@@ -161,10 +162,10 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     <div className='stage-celebration' data-testid='stage-celebration' aria-label={translate('חגיגת סיום השלב','Stage completion celebration')}>
       <div className='stage-gift-sparks' aria-hidden='true'>{Array.from({length:18},(_,i)=><span key={i} style={{'--spark-index':i} as CSSProperties}>{i%3===0?'✦':i%3===1?'★':'✧'}</span>)}</div>
       <strong>{translate('🎇 חגיגת הניצחון!','🎇 Victory celebration!')}</strong>
-      {!remoteMatchId && <div className='stage-gift-tray' data-testid='stage-guaranteed-gifts'>
+      <div className='stage-gift-tray' data-testid='stage-guaranteed-gifts'>
         <span>🪙 +25</span><span>⭐ +3</span><span>💎 +1</span><span>🍎 +2</span>
-      </div>}
-      <small>{remoteMatchId?translate('הקלף שלך נשמר באוסף','Your collectible was saved'):translate('המתנות נוספו לאוסף ולארנק שלך','The gifts were added to your collection and wallet')}</small>
+      </div>
+      <small>{translate('המתנות נוספו לאוסף ולארנק שלך','The gifts were added to your collection and wallet')}</small>
     </div>
     <h2 id='stage-reward-title'>{translate('פתחת את כל הריבועים. גילית אוצר!','You closed every square. A treasure is yours!')}</h2>
     <p className='lumen-stage-subtitle'>{translate('הרווחת קלף ייחודי לשלב הזה. הוא נכנס לאלבום שלך ואינו נעלם.','You earned a unique card for this stage. It stays in your collection.')}</p>
