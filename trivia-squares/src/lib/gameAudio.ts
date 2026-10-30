@@ -3,7 +3,7 @@
  * No audio downloads, copyrighted samples, user tracking or microphone permission.
  * The Web Audio context is created only after a player interaction.
  */
-export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond';
+export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond' | 'pop' | 'slice';
 let audio: AudioContext | null = null;
 let lastStrokeAt = -1;
 let pendingResume = false;
@@ -134,6 +134,18 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
     case 'diamond':
       // Light crystalline shimmer.
       [1046.5,1318.5,1567.98,2093].forEach((hz,i)=>note(hz,i*.065,.27,.11,'sine'));
+      break;
+    case 'pop':
+      // An original airy, springy balloon burst.
+      note(1174.66,0,.045,.10,'triangle');
+      note(587.33,.028,.085,.07,'sine');
+      note(880,.054,.09,.045,'triangle');
+      break;
+    case 'slice':
+      // Bright paper-cutter sweep, followed by a playful cake reveal.
+      note(720,0,.09,.07,'triangle');
+      note(1046.5,.08,.16,.095,'sine');
+      note(1318.5,.16,.16,.07,'sine');
       break;
     case 'draw':
       note(330, 0, 0.10, 0.07, 'triangle');
