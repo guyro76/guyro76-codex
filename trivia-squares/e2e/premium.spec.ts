@@ -39,7 +39,7 @@ test('six painter-palette skins save chosen AI future theme across reload',async
    localStorage.setItem('trivia-player-name','עדי');
  });
  await page.goto('/');
- const button=page.getByRole('button',{name:'בחר סקין למשחק'});
+ const button=page.getByRole('button',{name:'עיצוב המשחק'});
  await button.click();
  const group=page.getByRole('group',{name:'ערכות עיצוב'});
  await expect(group.locator('button')).toHaveCount(6);
