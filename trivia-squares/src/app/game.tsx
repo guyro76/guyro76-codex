@@ -114,6 +114,8 @@ export default function TriviaGame() {
   const [mode, setMode] = useState<Mode>('solo');
   const [size, setSize] = useState(3);
   const [stageId,setStageId]=useState(1);
+  const [stageViewChapter,setStageViewChapter]=useState(1);
+  useEffect(()=>setStageViewChapter(Math.ceil(stageId/10)),[stageId]);
   const [localStageCompleted,setLocalStageCompleted]=useState(0);
   const [serverStageCompleted,setServerStageCompleted]=useState(0);
   const [stageStarted,setStageStarted]=useState(false);
@@ -1413,8 +1415,15 @@ export default function TriviaGame() {
            aria-label={locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
         <span style={{width:(completedStage/STAGE_COUNT*100)+'%'}}/>
       </div>
+      <div className='campaign-chapter-navigation' role='group' aria-label={locale==='he'?'ניווט בין קבוצות שלבים':'Campaign chapter navigation'}>
+        <button type='button' className='glass-button' disabled={stageViewChapter===1}
+          onClick={()=>setStageViewChapter(n=>Math.max(1,n-1))}>{locale==='he'?'10 השלבים הקודמים':locale==='ru'?'10 предыдущих уровней':locale==='fr'?'10 niveaux précédents':locale==='ar'?'المراحل العشر السابقة':'Previous 10 stages'}</button>
+        <strong aria-live='polite'>{stageViewChapter*10-9} - {Math.min(STAGE_COUNT,stageViewChapter*10)} / {STAGE_COUNT}</strong>
+        <button type='button' className='glass-button' disabled={stageViewChapter===Math.ceil(STAGE_COUNT/10)}
+          onClick={()=>setStageViewChapter(n=>Math.min(Math.ceil(STAGE_COUNT/10),n+1))}>{locale==='he'?'10 השלבים הבאים':locale==='ru'?'10 следующих уровней':locale==='fr'?'10 niveaux suivants':locale==='ar'?'المراحل العشر التالية':'Next 10 stages'}</button>
+      </div>
       <div className='campaign-track' aria-label={locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
-        {CAMPAIGN_STAGES.map(stage=>{
+        {CAMPAIGN_STAGES.filter(stage=>Math.ceil(stage.id/10)===stageViewChapter).map(stage=>{
           const unlocked=stage.id<=stageUnlocked;
           const isSelected=stage.id===stageId;
           const enabled=unlocked&&(isSelected||!stageBusy)&&(!stageStarted||finished||isSelected);
