@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {useOfflineQuestionFixtures,answerDisplayedLocalQuestion} from './localQuestionFixture';
+import {drawAdjacentForQA} from './gestureQA';
 
 for(const viewport of [
  {width:1280,height:800,name:'compact desktop'},
@@ -17,10 +18,7 @@ for(const viewport of [
   await page.goto('/');
   const board=page.locator('svg.board');
   await expect(board).toBeVisible();
-  const a=page.locator('svg.board circle[aria-label="נקודה 1, 1"]');
-  const b=page.locator('svg.board circle[aria-label="נקודה 1, 2"]');
-  const pa=await a.boundingBox(),pb=await b.boundingBox();
-  if(!pa||!pb)throw new Error('Desktop board dots missing');
+  await board.scrollIntoViewIfNeeded();
   const metrics=await page.evaluate(()=>{
     const bb=document.querySelector('svg.board')!.getBoundingClientRect();
     return {boardLeft:bb.left,boardRight:bb.right,boardWidth:bb.width,scroll:document.documentElement.scrollWidth,screen:innerWidth};
@@ -29,12 +27,7 @@ for(const viewport of [
   expect(metrics.boardLeft).toBeGreaterThanOrEqual(-2);
   expect(metrics.boardRight).toBeLessThanOrEqual(metrics.screen+2);
   expect(metrics.scroll).toBeLessThanOrEqual(metrics.screen+2);
-  const point=(box:typeof pa)=>({x:box.x+box.width/2,y:box.y+box.height/2});
-  const from=point(pa),to=point(pb);
-  await page.mouse.move(from.x,from.y);
-  await page.mouse.down();
-  await page.mouse.move(to.x,to.y,{steps:16});
-  await page.mouse.up();
+  await drawAdjacentForQA(page,[1,1],[1,2]);
   const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(quiz).toBeVisible();
   await answerDisplayedLocalQuestion(quiz,true);
