@@ -92,11 +92,26 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
     <rect className='capture-name-backplate' x={cx-textWidth/2-4} y={cy-textSize*.9}
       width={textWidth+8} height={textSize*1.8} rx={Math.min(8,textSize*.55)}
       fill='#101B3B' fillOpacity='.95' stroke={color} strokeOpacity='.85' strokeWidth='1' aria-hidden='true'/>
-    <text className='capture-mark capture-player-name' x={cx} y={cy+textSize*.34}
-      fontSize={textSize} textAnchor='middle' fontWeight='900' fill='#FFFFFF'
-      direction={locale==='he'||locale==='ar'?'rtl':'ltr'}
-      textLength={Array.from(label).length*textSize*.7>width-14?width-14:undefined}
-      lengthAdjust='spacingAndGlyphs' aria-hidden='true'>{label}</text>
+    {/*
+      Safari on iPhone can reorder Hebrew glyphs inside SVG <text>, especially
+      with textLength/spacingAndGlyphs. An isolated HTML text run avoids that
+      browser-specific bidi reversal without touching the persisted player name.
+    */}
+    <foreignObject className='capture-player-name-object'
+      x={x+4} y={cy-textSize*.94} width={width-8} height={textSize*1.88}
+      pointerEvents='none' aria-hidden='true'>
+      <div
+        dir={/[\u0590-\u08FF]/u.test(label)?'rtl':'ltr'}
+        style={{boxSizing:'border-box',display:'flex',width:'100%',height:'100%',
+          alignItems:'center',justifyContent:'center',overflow:'hidden',
+          padding:'0 2px',color:'#FFFFFF',fontSize:textSize,
+          lineHeight:1.1,fontWeight:900,whiteSpace:'nowrap',textOverflow:'ellipsis',
+          unicodeBidi:'isolate',fontFamily:'Arial, sans-serif',
+          textShadow:'0 1px 2px rgba(0,0,0,.7)'}}>
+        <span style={{display:'block',maxWidth:'100%',overflow:'hidden',
+          textOverflow:'ellipsis',unicodeBidi:'isolate'}}>{label}</span>
+      </div>
+    </foreignObject>
     <g className='capture-firework' aria-hidden='true' pointerEvents='none'>
       {sparkles.map((spark,i)=><circle key={i} className='capture-firework-spark' cx={spark.x} cy={spark.y} r={spark.r}
         fill={i%2===0?'#FFF5B1':'#FFFFFF'} style={{animationDelay:(.67+i*.037)+'s'}}/>)}

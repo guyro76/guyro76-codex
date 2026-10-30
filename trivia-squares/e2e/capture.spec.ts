@@ -98,3 +98,27 @@ test('every chapter changes the board material palette without changing captures
   await expect.poll(()=>arena.evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('gradient');
   await expect.poll(()=>arena.evaluate(el=>getComputedStyle(el).getPropertyValue('--world-edge').trim())).toContain('rgba');
 });
+
+test('iPhone RTL captured name stays in logical Hebrew order inside an isolated HTML run',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('trivia-tutorial-seen-v1','true');
+    localStorage.setItem('trivia-player-name','עדי');
+    localStorage.setItem('trivia-mode-v2','solo');
+    localStorage.setItem('trivia-stage-id-v1','1');
+    localStorage.setItem('trivia-local-game-v1',JSON.stringify({
+      rows:3,cols:3,mode:'solo',turn:'host',
+      edges:{'h-0-0':'host','h-1-0':'host','v-0-0':'host','v-0-1':'host'},
+      owners:{'0-0':'host'},scores:{host:1,guest:0,bot:0}
+    }));
+  });
+  await page.goto('/');
+  const tile=page.locator('svg.board .capture-tile[data-square="0-0"]');
+  await expect(tile).toHaveAttribute('data-owner','עדי');
+  const name=tile.locator('foreignObject.capture-player-name-object div > span');
+  await expect(name).toHaveText('עדי');
+  await expect(tile.locator('foreignObject.capture-player-name-object div')).toHaveAttribute('dir','rtl');
+  await expect(tile.locator('text.capture-player-name')).toHaveCount(0);
+  await expect.poll(()=>name.evaluate(element=>getComputedStyle(element).unicodeBidi)).toBe('isolate');
+  await page.reload();
+  await expect(page.locator('svg.board .capture-tile[data-square="0-0"] foreignObject span')).toHaveText('עדי');
+});
