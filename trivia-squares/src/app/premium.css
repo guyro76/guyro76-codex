@@ -478,7 +478,12 @@ main.trivia-app :is(h1,h2,h3,.campaign-stage-title,.campaign-stage-number,.game-
 .campaign-heading span{font-size:13px;color:#BDF8E7;}
 .campaign-progress{height:7px;border-radius:99px;overflow:hidden;background:rgba(238,243,255,.15);margin:7px 0 16px;}
 .campaign-progress>span{display:block;height:100%;background:linear-gradient(90deg,#A4F4E2,#E7B5FF);border-radius:inherit;transition:width .4s ease;}
+/* Keep the stage carousel as the only horizontally scrollable region.
+   In long-text locales, its 30 children must not widen the document viewport. */
+main.trivia-app{overflow-x:clip}
+main.trivia-app .campaign-section{min-width:0;max-width:100%;overflow-x:clip}
 .campaign-track{display:flex;gap:9px;overflow-x:auto;overscroll-behavior-inline:contain;padding:4px 2px 14px;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:#A4F6E0 rgba(220,235,255,.12);}
+main.trivia-app .campaign-track{box-sizing:border-box;width:100%;min-width:0;max-width:100%;}
 .campaign-stage-card{scroll-snap-align:center;flex:0 0 clamp(115px,13vw,151px);min-height:134px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
  color:#F7F8FF;border-radius:17px;border:1px solid rgba(221,241,255,.43);
  background:linear-gradient(144deg,rgba(107,111,179,.47),rgba(18,36,84,.5));box-shadow:inset 0 1px rgba(255,255,255,.15);

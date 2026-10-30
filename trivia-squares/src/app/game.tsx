@@ -5,8 +5,8 @@ import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicConfig';
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawing';
-import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
-import {awardPremiumSquares} from '../lib/premiumCaptures';
+import { applyLocalAnswer, boardIsFilled, repairSoloBoard } from '../lib/engine';
+import {awardPremiumSquares,shouldOfferPremiumFollowUp} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
 import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
@@ -250,8 +250,9 @@ export default function TriviaGame() {
   const googleName = providerGoogle ? String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim().slice(0,70) : '';
   const googlePhotoRaw = providerGoogle ? String(user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '') : '';
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
-  const canPlay = validName && localReady && !showTutorial && !capturePending && !wrongAnswerFeedback && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
-  const finished = !capturePending && !question && !wrongAnswerFeedback && Object.keys(state.owners).length === state.rows * state.cols;
+  const boardFullyCaptured = boardIsFilled(state);
+  const canPlay = !boardFullyCaptured && validName && localReady && !showTutorial && !capturePending && !wrongAnswerFeedback && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
+  const finished = boardFullyCaptured && !capturePending && !question && !wrongAnswerFeedback;
   const completedStage = mode==='local'||mode==='solo' ? localStageCompleted : serverStageCompleted;
   const stageUnlocked = Math.min(STAGE_COUNT,completedStage+1);
   const selectedStage = stageFor(stageId);
@@ -463,6 +464,13 @@ export default function TriviaGame() {
     window.addEventListener('online',up); window.addEventListener('offline',down);
     return ()=>{window.removeEventListener('online',up);window.removeEventListener('offline',down)};
   },[]);
+  // A saved premium prompt from an older build must not reopen a completed board.
+  useEffect(()=>{
+    if(!localReady||remote||!question||!boardIsFilled(local))return;
+    setQuestion(null);
+    setEdge(null);
+    setMessage('כל הריבועים נסגרו! השלב הושלם. אפשר לעבור לשלב הבא.');
+  },[localReady,remote?.id,question?.id,local]);
   useEffect(()=>{
     if(!localReady)return;
     try{localStorage.setItem('trivia-capture-settings-v1',JSON.stringify({style:captureStyle,ownerMode,guestName,guestColor,guestAvatar}));}catch{}
@@ -561,7 +569,7 @@ export default function TriviaGame() {
       const synced=await syncAccountQuestionHistory();
       if(!active)return;
       if(!synced && navigator.onLine)
-        setMessage(locale==='en'?'Unable to sync your question history. Try again online.':'לא ניתן לסנכרן היסטוריית שאלות. נסה שוב כשיש חיבור תקין.');
+        setMessage(tr("לא ניתן לסנכרן היסטוריית שאלות. נסה שוב כשיש חיבור תקין."));
       const {data:campProgress,error:campError}=await client.rpc('trivia_get_campaign_progress');
       if(!campError&&typeof campProgress==='number')setServerStageCompleted(campProgress);
       const { data: allowed, error } = await client.rpc('trivia_get_my_legal_acceptance');
@@ -635,7 +643,7 @@ export default function TriviaGame() {
   }
   async function start() {
     // Restarting this same stage is allowed, but unlocking another stage requires completion.
-    if(stageId>stageUnlocked){setMessage(locale==='en'?'Finish the earlier stages to unlock this one.':'יש לסיים את השלבים הקודמים כדי לפתוח את השלב הזה.');return;}
+    if(stageId>stageUnlocked){setMessage(tr("יש לסיים את השלבים הקודמים כדי לפתוח את השלב הזה."));return;}
     if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
     setBusy(true); setQuestion(null); setWrongAnswerFeedback(null); setEdge(null); setBonusSelect(false); setCapturePending(null);
@@ -645,7 +653,7 @@ export default function TriviaGame() {
     }
     if (mode === 'local'||mode === 'solo') {
       if(user&&client&&navigator.onLine&&!await syncAccountQuestionHistory()){
-        setMessage(locale==='en'?'Unable to sync your question history. Please retry.':'אי אפשר להתחיל משחק מחובר לפני סנכרון היסטוריית השאלות.');
+        setMessage(tr("אי אפשר להתחיל משחק מחובר לפני סנכרון היסטוריית השאלות."));
         setBusy(false);return;
       }
       const added=(locale==='he'||locale==='en')?expandLocalPool(locale):0;
@@ -656,7 +664,7 @@ export default function TriviaGame() {
       setStageStarted(true);
       setMessage(added>0
        ? (locale==='en'?added+' fresh reviewed questions added to your practice bank.':'נוספו '+added+' שאלות חדשות ממאגר מאושר.')
-       : (locale==='en'?'Local game ready. Your previous questions will not repeat.':'משחק מקומי מוכן. שאלות שכבר הוצגו לא יחזרו.'));
+       : (tr("משחק מקומי מוכן. שאלות שכבר הוצגו לא יחזרו.")));
     } else if (client && user && legalAccepted) {
       const {error:localeError}=await client.rpc('trivia_set_locale',{p_locale:locale});
       if(localeError){setMessage(localeError.message);setBusy(false);return;}
@@ -703,7 +711,7 @@ export default function TriviaGame() {
   }
   async function pick(key: string) {
     if(!stageStarted)setStageStarted(true);
-    if (!canPlay || finished || state.edges[key] || question || bonusSelect) return;
+    if (!canPlay || boardFullyCaptured || finished || state.edges[key] || question || bonusSelect) return;
     if (remote && client) {
       setBusy(true);
       const { data, error } = await client.rpc('trivia_choose_edge', { p_match: remote.id, p_edge: key });
@@ -815,7 +823,7 @@ export default function TriviaGame() {
         const {error}=await client.rpc('trivia_import_local_history',{p_question_texts:[q.text]});
         if(error){
           setEdge(null);setBusy(false);
-          setMessage(locale==='en'?'Could not secure your question history. Please retry.':'שמירת היסטוריית השאלות נכשלה. נסה שוב.');
+          setMessage(tr("שמירת היסטוריית השאלות נכשלה. נסה שוב."));
           return;
         }
         setBusy(false);
@@ -897,7 +905,7 @@ export default function TriviaGame() {
       const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
       const gained = newSquares.length;
       if(gained && local.mode==='local' && ownerMode==='manual')setCapturePending({keys:newSquares,from:'new'});
-      if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
+      if (boardIsFilled(next)) play('win');
       else if (gained) play('capture');
       else play(correct ? 'correct' : 'wrong');
       setMessage(locale==='en'?
@@ -910,12 +918,12 @@ export default function TriviaGame() {
       }
       if(gained>0){
         setLocalCredits(prev=>({...prev,[local.mode==='solo'?'host':local.turn==='guest'?'guest':'host']:prev[local.mode==='solo'?'host':local.turn==='guest'?'guest':'host']+10*gained}));
-        if(Object.keys(next.owners).length===next.rows*next.cols && ownerMode!=='manual'){
+        if(boardIsFilled(next) && ownerMode!=='manual'){
           const winner=next.scores.host>next.scores.guest?'host':next.scores.guest>next.scores.host?'guest':null;
           if(winner)setLocalCharms(prev=>({...prev,[winner]:prev[winner]+1}));
         }
       }
-      if(correct && question.premium){
+      if(shouldOfferPremiumFollowUp(next,correct,Boolean(question.premium))){
         const unused=effectiveQuestionBank.filter(item=>item.id!==q.id &&
           selectedTopics.includes(topicForQuestion(item.category,item.text)) &&
           !usedLocalQuestionIds.current.has(item.id) &&
@@ -984,7 +992,7 @@ export default function TriviaGame() {
   }
 
   async function startGoldQuestion() {
-    if (!client || !remote || !canPlay || !earnedBonus || question) return;
+    if (!client || !remote || !canPlay || boardFullyCaptured || !earnedBonus || question) return;
     setBusy(true);
     const { data, error } = await client.rpc('trivia_bonus_question',{p_match:remote.id});
     if (error) setMessage(error.message);
@@ -1069,7 +1077,7 @@ export default function TriviaGame() {
   }
   function chooseStage(nextId:number) {
     if(!canOpenStage(nextId,completedStage,stageId,finished) || stageBusy){
-      setMessage(locale==='en'?'Finish the current stage before opening another.':'יש לסיים את השלב הנוכחי לפני שעוברים לשלב אחר.');
+      setMessage(tr("יש לסיים את השלב הנוכחי לפני שעוברים לשלב אחר."));
       return;
     }
     if(nextId===stageId)return;
@@ -1103,8 +1111,8 @@ export default function TriviaGame() {
   }
 
   function onBoardPointerDown(event: ReactPointerEvent<SVGSVGElement>) {
-    if (!canPlay || finished || !!question || bonusSelect || (event.pointerType === 'mouse' && event.button !== 0)) {
-      if(!validName && !showTutorial){setMessage(locale==='en'?'Enter a player name to draw your first line.':'כדי לצייר קו, הזן קודם שם שחקן.');document.getElementById('quick-player-name')?.focus();}
+    if (!canPlay || boardFullyCaptured || finished || !!question || bonusSelect || (event.pointerType === 'mouse' && event.button !== 0)) {
+      if(!validName && !showTutorial){setMessage(tr("כדי לצייר קו, הזן קודם שם שחקן."));document.getElementById('quick-player-name')?.focus();}
       return;
     }
     const start = nearestDot(boardPoint(event), state.rows, state.cols);
@@ -1163,7 +1171,7 @@ export default function TriviaGame() {
   }
 
   function onDotKeyDown(event: ReactKeyboardEvent<SVGCircleElement>, dot: Dot) {
-    if (!canPlay || question || bonusSelect || finished || (event.key !== 'Enter' && event.key !== ' ')) return;
+    if (!canPlay || boardFullyCaptured || question || bonusSelect || finished || (event.key !== 'Enter' && event.key !== ' ')) return;
     event.preventDefault();
     if (!keyboardStart) { setKeyboardStart(dot); setMessage('בחר כעת נקודה סמוכה כדי להשלים קו'); return; }
     const chosen = edgeBetween(keyboardStart, dot, state.rows, state.cols);
@@ -1222,8 +1230,8 @@ export default function TriviaGame() {
   };
   const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
   const displayWorld={
-    name:locale==='en'?selectedStage.nameEn:selectedStage.nameHe,
-    subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
+    name:tr(selectedStage.nameHe),
+    subtitle:tr(selectedStage.subtitleHe)
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
   return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin} style={css.main} dir={localeDirection(locale)} lang={locale}>
@@ -1404,16 +1412,16 @@ export default function TriviaGame() {
       </div>
     </header>
 
-    <section className='campaign-section' aria-label={locale==='en'?'Thirty sequential stages':'שלושים שלבים לפי סדר'}>
+    <section className='campaign-section' aria-label={tr("שלושים שלבים לפי סדר")}>
       <div className='campaign-heading'>
-        <h2>{locale==='en'?'Adventure: 30 stages':'הרפתקה: 30 שלבים'}</h2>
-        <span>{locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
+        <h2>{tr("הרפתקה: 30 שלבים")}</h2>
+        <span>{tr("הושלמו: ")}{completedStage} / {STAGE_COUNT}</span>
       </div>
       <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={30} aria-valuenow={completedStage}
-           aria-label={locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
+           aria-label={tr("שלבים שהושלמו")}>
         <span style={{width:(completedStage/STAGE_COUNT*100)+'%'}}/>
       </div>
-      <div className='campaign-track' aria-label={locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
+      <div className='campaign-track' aria-label={tr("בחירת שלב פתוח")}>
         {CAMPAIGN_STAGES.map(stage=>{
           const unlocked=stage.id<=stageUnlocked;
           const isSelected=stage.id===stageId;
@@ -1424,8 +1432,8 @@ export default function TriviaGame() {
              onClick={()=>chooseStage(stage.id)}>
             <span className='campaign-stage-number'>{isSelected?'✦ ':unlocked?'': '🔒 '}{String(stage.id).padStart(2,'0')}</span>
             <strong className='campaign-stage-icon' aria-hidden='true'>{stage.icon}</strong>
-            <span className='campaign-stage-title'>{locale==='en'?stage.nameEn:stage.nameHe}</span>
-            <small>{unlocked?(locale==='en'?'Board':'לוח')+' '+stage.size+'×'+stage.size:(locale==='en'?'Locked':'נעול')}</small>
+            <span className='campaign-stage-title'>{tr(stage.nameHe)}</span>
+            <small>{unlocked?(tr("לוח"))+' '+stage.size+'×'+stage.size:(tr("נעול"))}</small>
           </button>
         })}
       </div>
@@ -1438,7 +1446,7 @@ export default function TriviaGame() {
       <section className='glass-panel arena-panel'>
         <div className='arena-title'>
           <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
-          <div className='level-pill'>{locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
+          <div className='level-pill'>{tr("שלב ")}{stageId} / {STAGE_COUNT}</div>
         </div>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
@@ -1516,18 +1524,18 @@ export default function TriviaGame() {
           </div>
         </div>
         {!validName && <div className='board-start-hint' role='status'>
-          <label htmlFor='board-start-name'>{locale==='en'?'Enter your name to unlock marker drawing':'כדי לצייר קו ראשון, הכנס שם שחקן'}</label>
+          <label htmlFor='board-start-name'>{tr("כדי לצייר קו ראשון, הכנס שם שחקן")}</label>
           <input id='board-start-name' type='text' minLength={2} maxLength={32} value={name}
-            placeholder={locale==='en'?'Player name':'שם השחקן'} onChange={e=>updatePlayerName(e.target.value)} />
+            placeholder={tr("שם השחקן")} onChange={e=>updatePlayerName(e.target.value)} />
         </div>}
-        {!remote && state.mode==='local' && ownerMode!=='auto' && <p className='capture-tip'>{locale==='en'?'Tap any captured square to correct its owner.':'ניתן ללחוץ על ריבוע שנכבש כדי לשנות למי הוא שייך.'}</p>}
+        {!remote && state.mode==='local' && ownerMode!=='auto' && <p className='capture-tip'>{tr("ניתן ללחוץ על ריבוע שנכבש כדי לשנות למי הוא שייך.")}</p>}
         <div className='gesture-hint'><span className='draw-icon'>✍️</span>{tr(bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח')}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>{tr("שטחים שנכבשו")}</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
         {!online && <div role='alert' style={{background:'#D94C37',color:'#FFFFFF',padding:10,borderRadius:12,textAlign:'center',marginTop:12}}>
           {tr("📡 החיבור לרשת נותק. משחק מקומי עדיין זמין, ומשחק מחובר יתחדש עם חזרת החיבור.")}
         </div>}
-        {finished && <section className='victory-panel' role='status' aria-label={locale==='en'?'Match result':'תוצאות המשחק'}>
+        {finished && <section className='victory-panel' role='status' aria-label={tr("תוצאות המשחק")}>
           <div className='victory-symbol' aria-hidden='true'>🏆</div>
           <h2 style={{margin:'5px 0',fontSize:'clamp(22px,3.8vw,31px)'}}>
             {state.mode==='solo' ? tr('אליפות! כל הריבועים נסגרו') : state.scores.host === state.scores.guest+state.scores.bot
@@ -1540,7 +1548,7 @@ export default function TriviaGame() {
           <p className='smalltxt'>{tr("🍎 במשחק מחובר צוברים פירות וקרדיטים, ובניצחון גם יהלומים והתקדמות.")}</p>
           <div className='control-row' style={{marginTop:13}}>
             <button className='gold-button' disabled={busy} onClick={()=>void start()}>{tr("🔄 משחק חוזר")}</button>
-            {stageId<STAGE_COUNT && <button className='glass-button' disabled={stageId>completedStage} onClick={advanceStage}>{locale==='en'?'Next stage':'השלב הבא'}</button>}
+            {stageId<STAGE_COUNT && <button className='glass-button' disabled={stageId>completedStage} onClick={advanceStage}>{tr("השלב הבא")}</button>}
           </div>
         </section>}
         <div className='status-line' aria-live='polite'>
@@ -1548,7 +1556,7 @@ export default function TriviaGame() {
         </div>
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>{tr("ממתינים שהחבר ייכנס לחדר...")}</p>}
         <div className='control-row'>
-          <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>
+          {!finished && <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>}
           <button className='glass-button' onClick={() => {
             if (muted) playGameSound('correct',{muted:false,volume:volume/100});
             setMuted(v=>!v);
@@ -1564,7 +1572,7 @@ export default function TriviaGame() {
           {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>{tr("⭐ שאלת זהב!")}</button>}
           {availableBonus>0 && state.mode!=='online' && <button className='gold-button' disabled={busy||!!question} onClick={()=>setBonusSelect(v=>!v)}>
             ✨ {tr(bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס')} ({availableBonus})</button>}
-          {finished && stageId<STAGE_COUNT && <button className='glass-button' disabled={stageId>completedStage} onClick={advanceStage}>{locale==='en'?'Next stage →':'השלב הבא ←'}</button>}
+          {finished && stageId<STAGE_COUNT && <button className='glass-button' disabled={stageId>completedStage} onClick={advanceStage}>{tr("השלב הבא ←")}</button>}
         </div>
         {finished && <StageReward
           locale={locale}
@@ -1590,7 +1598,7 @@ export default function TriviaGame() {
                  if(value==='solo'&&!remote){setLocal(prev=>({...repairSoloBoard(prev),mode:'solo'}));setCapturePending(null)}
                  if(value==='local'&&!remote){setLocal(prev=>({...prev,mode:'local'}))}
                  if(value!=='local'&&value!=='solo'&&stageId>serverStageCompleted+1){setStageId(serverStageCompleted+1);setSize(stageFor(Math.min(STAGE_COUNT,serverStageCompleted+1)).size)} }}>
-                {locale==='en'?en:he}</button>)}
+                {tr(he)}</button>)}
           </div>
           <details className='question-topic-panel' open={!stageStarted}>
             <summary>☑️ {tr('נושאי השאלות שלי')} <span className='question-topic-count'>({selectedTopics.length}/{questionTopics.length})</span></summary>
@@ -1604,8 +1612,8 @@ export default function TriviaGame() {
             <button type='button' className='glass-button topic-select-all' onClick={()=>setSelectedTopics([...ALL_QUESTION_TOPICS])}>{tr('בחר את כל הנושאים')}</button>
           </details>
           <div className='form-field'>{tr('גודל לוח')}</div>
-          <output id='board-size' className='form-input stage-board-size' aria-label={locale==='en'?'Current board size':'גודל הלוח הנוכחי'}>
-            {selectedStage.size} × {selectedStage.size} · {locale==='en'?'Determined by stage':'נקבע לפי שלב'}
+          <output id='board-size' className='form-input stage-board-size' aria-label={tr("גודל הלוח הנוכחי")}>
+            {selectedStage.size} × {selectedStage.size} · {tr("נקבע לפי שלב")}
           </output>
           {inviteLink && <div style={{ marginTop: 13 }}>
             <div className='smalltxt'>{tr("קישור לחדר הפרטי")}</div>
@@ -1635,39 +1643,39 @@ export default function TriviaGame() {
           <div style={{margin:'4px 0 9px',fontSize:12,color:'#E6F3FF'}}>{tr("תצוגת הטוש:")} <span style={{display:'inline-block',width:80,borderTop:'8px solid '+lineColor,borderRadius:9,verticalAlign:'middle'}}/></div>
           <div className='form-field'>{tr("סמל שיופיע בכל ריבוע")}</div>
           <div className='avatar-row'>{avatars.map(a => <button className='avatar-choice' key={a} aria-label={tr('בחר אוואטר ')+a} aria-pressed={avatar === a} onClick={() => setAvatar(a)}>{a}</button>)}</div>
-          <section className='capture-personalization' aria-label={locale==='en'?'Square capture customization':'התאמה אישית לכיבוש הריבועים'}>
-             <h3>{locale==='en'?'Captured square design':'עיצוב הריבוע שנכבש'}</h3>
-             <div className='capture-style-options' role='group' aria-label={locale==='en'?'Capture visual style':'סגנון כיבוש'}>
+          <section className='capture-personalization' aria-label={tr("התאמה אישית לכיבוש הריבועים")}>
+             <h3>{tr("עיצוב הריבוע שנכבש")}</h3>
+             <div className='capture-style-options' role='group' aria-label={tr("סגנון כיבוש")}>
                {([['lumen','אור יוקרתי','Lumen glow'],['neon','ניאון','Neon'],['seal','חותמת מתכת','Metal seal'],['prism','קריסטל','Prism'],['token','סמל שחקן','Player token']] as const).map(([key,he,en])=><button key={key}
                  type='button' className='capture-style-option' aria-pressed={captureStyle===key} onClick={()=>setCaptureStyle(key)}>
-                 <span className={'capture-style-preview preview-'+key} aria-hidden='true'>✦</span><strong>{locale==='en'?en:he}</strong>
+                 <span className={'capture-style-preview preview-'+key} aria-hidden='true'>✦</span><strong>{tr(he)}</strong>
                </button>)}
              </div>
              {mode==='local' && <>
-               <h3>{locale==='en'?'Who gets a captured square?':'מי מקבל ריבוע שנסגר?'}</h3>
-               <select className='form-input capture-owner-mode' aria-label={locale==='en'?'Captured square ownership mode':'אופן שיוך ריבוע'}
+               <h3>{tr("מי מקבל ריבוע שנסגר?")}</h3>
+               <select className='form-input capture-owner-mode' aria-label={tr("אופן שיוך ריבוע")}
                  value={ownerMode} onChange={e=>setOwnerMode(e.target.value as LocalOwnerMode)}>
-                 <option value='auto_with_override'>{locale==='en'?'Automatic + tap to correct':'אוטומטי עם אפשרות לשינוי ידני'}</option>
-                 <option value='manual'>{locale==='en'?'Ask me after each capture':'בחירה ידנית לאחר כל סגירה'}</option>
-                 <option value='auto'>{locale==='en'?'Automatic only':'אוטומטי בלבד'}</option>
+                 <option value='auto_with_override'>{tr("אוטומטי עם אפשרות לשינוי ידני")}</option>
+                 <option value='manual'>{tr("בחירה ידנית לאחר כל סגירה")}</option>
+                 <option value='auto'>{tr("אוטומטי בלבד")}</option>
                </select>
-               <h3>{locale==='en'?'Second player — required name':'משתתף נוסף — חובה להזין שם'}</h3>
-               <label className='form-field' htmlFor='local-guest-name'>{locale==='en'?'Real second player name':'שם המשתתף הנוסף'}</label>
-               <input className='form-input' id='local-guest-name' maxLength={32} value={guestName} placeholder={locale==='en'?'A real player name':'לדוגמה: עדי'}
+               <h3>{tr("משתתף נוסף — חובה להזין שם")}</h3>
+               <label className='form-field' htmlFor='local-guest-name'>{tr("שם המשתתף הנוסף")}</label>
+               <input className='form-input' id='local-guest-name' maxLength={32} value={guestName} placeholder={tr("לדוגמה: עדי")}
                   onChange={e=>setGuestName(e.target.value.slice(0,32))}/>
                 {!hasActualOpponent(guestName,name)&&<p className='smalltxt'>ללא שם של משתתף אמיתי, בחרו ״משחק עצמאי״. לא יוקצה יותר ניקוד לשחקן 2 אוטומטי.</p>}
-               <div className='form-field'>{locale==='en'?'Player 2 capture color':'צבע הכיבוש של שחקן 2'}</div>
-               <div className='swatches' role='group' aria-label={locale==='en'?'Player 2 color':'צבע שחקן 2'}>
+               <div className='form-field'>{tr("צבע הכיבוש של שחקן 2")}</div>
+               <div className='swatches' role='group' aria-label={tr("צבע שחקן 2")}>
                  {palettes.map(c=><button key={'guest-'+c} type='button' className='swatch'
                     style={{background:c}} aria-label={c} aria-pressed={guestColor===c} onClick={()=>setGuestColor(c)}/>) }
                </div>
-               <div className='form-field'>{locale==='en'?'Player 2 icon':'סמל שחקן 2'}</div>
-               <div className='avatar-row' role='group' aria-label={locale==='en'?'Player 2 avatar':'סמל שחקן 2'}>
+               <div className='form-field'>{tr("סמל שחקן 2")}</div>
+               <div className='avatar-row' role='group' aria-label={tr("סמל שחקן 2")}>
                  {avatars.map(a=><button type='button' key={'guest-icon-'+a} className='avatar-choice'
                    aria-label={a} aria-pressed={guestAvatar===a} onClick={()=>setGuestAvatar(a)}>{a}</button>)}
                </div>
              </>}
-             {mode!=='local' && <p className='smalltxt'>{locale==='en'?'Online and bot ownership is verified by the game engine to keep scores fair.':'במשחק מחובר או מול המחשב הבעלות נקבעת לפי מנוע המשחק כדי לשמור על ניקוד הוגן.'}</p>}
+             {mode!=='local' && <p className='smalltxt'>{tr("במשחק מחובר או מול המחשב הבעלות נקבעת לפי מנוע המשחק כדי לשמור על ניקוד הוגן.")}</p>}
            </section>
            <label className='form-field' style={{ display: 'flex', gap: 10, alignItems: 'center' }}><input type='checkbox' style={{ width: 18, height: 18, accentColor: '#FFDE85' }} checked={remember} onChange={e => setRemember(e.target.checked)} /> {tr("זכור את הבחירות שלי תמיד")}</label>
           <button className='glass-button' style={{ marginTop: 13 }} disabled={!validName} onClick={() => void saveProfile()}>{tr("שמור שם, צבע טוש ועיצוב אישי")}</button>
@@ -1746,24 +1754,24 @@ export default function TriviaGame() {
 
     {capturePending && !remote && <div className='quiz-overlay' role='presentation'>
       <section className='capture-owner-dialog' role='dialog' aria-modal='true'
-        aria-label={locale==='en'?'Who captured this square?':'מי סגר את הריבוע?'}>
-        <span className='capture-owner-eyebrow'>{locale==='en'?'CAPTURE COMPLETE':'כיבוש הריבוע'}</span>
-        <h2>{locale==='en'?'Who captured this square?':'מי סגר את הריבוע?'}</h2>
-        <p>{locale==='en'?'Choose the player who gets the point.':'בחר למי לשייך את הריבוע והנקודה.'}</p>
+        aria-label={tr("מי סגר את הריבוע?")}>
+        <span className='capture-owner-eyebrow'>{tr("כיבוש הריבוע")}</span>
+        <h2>{tr("מי סגר את הריבוע?")}</h2>
+        <p>{tr("בחר למי לשייך את הריבוע והנקודה.")}</p>
         <div className='capture-owner-buttons'>
           <button type='button' className='capture-owner-choice' autoFocus onClick={()=>chooseCaptureOwner('host')}>
             <span className='capture-owner-symbol' style={{borderColor:color}}>{avatar}</span>
-            <strong>{name || (locale==='en'?'Player 1':'שחקן 1')}</strong>
-            <span className='capture-owner-caption'>{locale==='en'?'Player 1':'שחקן 1'}</span>
+            <strong>{name || (tr("שחקן 1"))}</strong>
+            <span className='capture-owner-caption'>{tr("שחקן 1")}</span>
           </button>
           <button type='button' className='capture-owner-choice' onClick={()=>chooseCaptureOwner('guest')}>
             <span className='capture-owner-symbol' style={{borderColor:guestColor}}>{guestAvatar}</span>
-            <strong>{guestName || (locale==='en'?'Player 2':'שחקן 2')}</strong>
-            <span className='capture-owner-caption'>{locale==='en'?'Player 2':'שחקן 2'}</span>
+            <strong>{guestName || (tr("שחקן 2"))}</strong>
+            <span className='capture-owner-caption'>{tr("שחקן 2")}</span>
           </button>
         </div>
         {capturePending.from==='edit' && <button type='button' className='glass-button capture-cancel'
-          onClick={()=>setCapturePending(null)}>{locale==='en'?'Cancel':'ביטול'}</button>}
+          onClick={()=>setCapturePending(null)}>{tr("ביטול")}</button>}
       </section>
     </div>}
     {showTutorial && <div className='quiz-overlay' role='presentation'>
@@ -1787,8 +1795,8 @@ export default function TriviaGame() {
         ][tutorialPage])}</p>
         <div className='control-row'>
           <button id='tutorial-dismiss' className='glass-button' onClick={dismissTutorial}>{tr("דלג או סיים")}</button>
-           <button type='button' className='gold-button' onClick={dismissTutorial}>{locale==='en'?'Go to game board':'עבור ללוח המשחק'}</button>
-          {tutorialPage>0 && <button className='glass-button' onClick={()=>setTutorialPage(p=>Math.max(0,p-1))}>{locale==='en'?'Back':'הקודם'}</button>}
+           <button type='button' className='gold-button' onClick={dismissTutorial}>{tr("עבור ללוח המשחק")}</button>
+          {tutorialPage>0 && <button className='glass-button' onClick={()=>setTutorialPage(p=>Math.max(0,p-1))}>{tr("הקודם")}</button>}
           {tutorialPage<2 && <button className='gold-button' onClick={()=>setTutorialPage(v=>v+1)}>{tr("הבא ←")}</button>}
         </div>
       </section>
