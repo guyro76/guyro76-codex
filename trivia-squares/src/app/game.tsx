@@ -1388,7 +1388,7 @@ export default function TriviaGame() {
       <button type='button' className='trivia-sound-toggle' data-testid='trivia-sound-toggle'
         aria-label={muted?(locale==='he'?'הפעל צלילים':locale==='en'?'Turn sound on':locale==='ru'?'Включить звук':locale==='fr'?'Activer le son':locale==='es'?'Activar sonido':'تشغيل الصوت'):
            (locale==='he'?'השתק צלילים':locale==='en'?'Mute sound':locale==='ru'?'Выключить звук':locale==='fr'?'Couper le son':locale==='es'?'Silenciar sonido':'كتم الصوت')}
-        aria-pressed={!muted} onClick={()=>{
+        aria-pressed={!muted&&volume>0} onClick={()=>{
           const enable=muted||volume===0;
           if(enable){
             unlockGameAudio();
