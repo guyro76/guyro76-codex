@@ -28,7 +28,7 @@ test('QA 03 - prior saved progress stage nine cannot jump ahead',()=>{
  assert.equal(canOpenStage(11,9,9,true),false);
 });
 test('QA 04 - six languages include complete topic taxonomy',()=>{
- assert.equal(questionTopics.length,14);
+ assert.equal(questionTopics.length,15);
  assert.deepEqual(ALL_QUESTION_TOPICS,questionTopics.map(t=>t.id));
  for(const t of questionTopics)for(const lang of languages)assert.ok(t[lang]?.length>1,lang+' '+t.id);
 });
