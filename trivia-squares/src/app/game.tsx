@@ -313,8 +313,8 @@ export default function TriviaGame() {
   const availableBonus = Number(remote?.state.bonus_tokens?.[state.turn] || 0);
   const streak = Number(remote?.state.streak?.[state.turn] || 0);
   const currentLocalSide: 'host'|'guest' = state.mode==='solo' ? 'host' : state.turn === 'guest' ? 'guest' : 'host';
-  const currentCredits = remote ? progress.credits : localCredits[currentLocalSide];
-  const currentCharms = remote ? (progress.time_charms || 0) : localCharms[currentLocalSide];
+  const currentCredits = remote ? progress.credits : (localReady ? localCredits[currentLocalSide] : 0);
+  const currentCharms = remote ? (progress.time_charms || 0) : (localReady ? localCharms[currentLocalSide] : 0);
   const timeFreezeActive = remote
     ? Boolean(remote.state.time_freeze?.[player])
     : localFreeze[currentLocalSide];
@@ -1860,7 +1860,7 @@ export default function TriviaGame() {
               locale==='es'?'🧠 Propón una pregunta y gana créditos':'🧠 اقترح سؤالاً واكسب رصيدًا'}
            </a>
           <div className='wallet'>
-            {([['🍎','פירות',remote?progress.fruits:localWallet.fruits],['💎','יהלומים',remote?progress.diamonds:localWallet.diamonds],['🪙','קרדיטים',currentCredits],['⭐','כוכבים',remote?0:localWallet.stars],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
+            {([['🍎','פירות',remote?progress.fruits:(localReady?localWallet.fruits:0)],['💎','יהלומים',remote?progress.diamonds:(localReady?localWallet.diamonds:0)],['🪙','קרדיטים',currentCredits],['⭐','כוכבים',remote?0:(localReady?localWallet.stars:0)],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
               <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{tr(label)}</span></div>)}
           </div>
           <p className='smalltxt' style={{margin:'10px 0 5px'}}>{tr("⏳ כל שאלה: דקה. אפשר לקנות עוד 30 שניות ב־25 קרדיטים, פעם אחת לשאלה.")}</p>
