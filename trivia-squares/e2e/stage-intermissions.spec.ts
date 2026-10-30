@@ -4,6 +4,10 @@ import {test,expect} from '@playwright/test';
 // No live account, payment, or mutation of Supabase production data is needed.
 test('stage completion automatically offers a minigame, earns credits and persists the prize',async({page})=>{
   await page.addInitScript(()=>{
+    // addInitScript runs again on reload: never reset a legitimately earned prize.
+    // sessionStorage survives reload within the same browser tab.
+    if(sessionStorage.getItem('trivia-intermission-seeded-v1'))return;
+    sessionStorage.setItem('trivia-intermission-seeded-v1','1');
     localStorage.setItem('trivia-tutorial-seen-v1','1');
     localStorage.setItem('trivia-player-name','גיא');
     localStorage.setItem('trivia-mode-v2','solo');
