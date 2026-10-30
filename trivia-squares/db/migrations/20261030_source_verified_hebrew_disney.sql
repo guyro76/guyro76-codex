@@ -18,13 +18,10 @@ with source as (
   select 1 from trivia_squares.questions q
   where q.locale='he' and lower(btrim(q.question))=lower(btrim(s.question))
  )
-), next_id as (
- select coalesce(max(id),0) as last_id from trivia_squares.questions
 ), added as (
- insert into trivia_squares.questions(id,category,difficulty,question,answers,correct_index,active,locale)
- select n.last_id+row_number() over (order by e.ord),e.category,e.difficulty,e.question,
-  e.answers,e.correct_index,true,'he'
- from eligible e cross join next_id n order by e.ord
+ insert into trivia_squares.questions(category,difficulty,question,answers,correct_index,active,locale)
+ select e.category,e.difficulty,e.question,e.answers,e.correct_index,true,'he'
+ from eligible e order by e.ord
  returning id,question
 ), audited as (
  insert into trivia_squares.question_provenance(question_id,locale,topic,source_key,source_url,verified_on,time_sensitive)
