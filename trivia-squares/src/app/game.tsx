@@ -16,6 +16,7 @@ import { spanishQuestions } from '../lib/spanishQuestions';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
+import {selectVariedQuestion,readRecentQuestionTopics} from '../lib/questionMix';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
 import TriviaMark from '../components/TriviaMark';
@@ -148,6 +149,7 @@ export default function TriviaGame() {
   const [edge, setEdge] = useState<string | null>(null);
   const usedLocalQuestionIds=useRef<Set<number>>(new Set());
   const lastQuestionCategory=useRef<string|null>(null);
+  const recentQuestionTopics=useRef<QuestionTopic[]>([]);
   const seenQuestionTexts=useRef<Set<string>>(new Set());
   const remoteQuestionCache=useRef<Record<ActiveLocale,LocalSourceQuestion[]>>(blankQuestionCache());
   const remoteQuestionCursor=useRef<Record<ActiveLocale,number>>(blankCursorCache());
@@ -344,6 +346,7 @@ export default function TriviaGame() {
        if(palettes.includes(savedCapture.guestColor||''))setGuestColor(savedCapture.guestColor!);
        if(avatars.includes(savedCapture.guestAvatar||''))setGuestAvatar(savedCapture.guestAvatar!);
        setSelectedTopics(parseTopicPreferences(JSON.parse(localStorage.getItem('trivia-question-topics-v1')||'null')));
+        recentQuestionTopics.current=readRecentQuestionTopics(JSON.parse(localStorage.getItem('trivia-recent-question-topics-v1')||'[]'));
        const storedSkin=localStorage.getItem('trivia-skin-v1');
        const migratedSkin:Record<string,SkinId>={royal:'regular',ocean:'urban',neon:'future',stone:'vintage',forest:'retro'};
        if(skins.some(item=>item.id===storedSkin))setSkin(storedSkin as SkinId);
@@ -808,16 +811,12 @@ export default function TriviaGame() {
       }
       const preferred=unseen.filter(q=>selectedTopics.includes(topicForQuestion(q.category,q.text)));
       const remaining=preferred.length?preferred:unseen;
-      const alternatives=remaining.filter(v=>v.category!==lastQuestionCategory.current);
-      const pool=alternatives.length?alternatives:remaining;
-      const categories=[...new Set(pool.map(v=>v.category))];
-      const category=categories[Math.floor(Math.random()*categories.length)];
-      const inCategory=pool.filter(v=>v.category===category);
-      // Preserve the established first-turn tutorial and its regression tests;
-      // subsequent turns use the full balanced topic/category lottery.
+      // Enforce rotating broad topics rather than only raw category labels.
+      const chosen=selectVariedQuestion(remaining,recentQuestionTopics.current);
+      if(!chosen){setEdge(null);return;}
       const q=usedLocalQuestionIds.current.size===0&&locale==='he'
-        ? remaining.find(v=>v.text.includes('בירת אוסטרליה'))||inCategory[0]
-        : inCategory[Math.floor(Math.random()*inCategory.length)];
+        ? remaining.find(v=>v.text.includes('בירת אוסטרליה'))||chosen.question
+        : chosen.question;
       if(preferred.length===0){
         setMessage(locale==='he'
           ? 'השאלות בנושאים שבחרת אזלו. מצאנו עבורך שאלה חדשה בנושא אחר, בלי למחוק את ההתקדמות.'
@@ -835,6 +834,8 @@ export default function TriviaGame() {
         setBusy(false);
       }
       lastQuestionCategory.current=q.category;
+      recentQuestionTopics.current=[...recentQuestionTopics.current,topicForQuestion(q.category,q.text)].slice(-8);
+      try{localStorage.setItem('trivia-recent-question-topics-v1',JSON.stringify(recentQuestionTopics.current))}catch{}
       usedLocalQuestionIds.current.add(q.id);
       rememberShownQuestion(q.text);
       try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
