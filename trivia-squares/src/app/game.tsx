@@ -39,6 +39,7 @@ import './responsive-layout.css';
 import './welcome-interior-theme.css';
 import './reward-ceremony.css';
 import './readable-play.css';
+import './capture-experience.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
@@ -276,21 +277,28 @@ export default function TriviaGame() {
   const [message, setMessage] = useState('בחר מצב משחק והתחל');
   const [busy, setBusy] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [volume, setVolume] = useState(65);
+  const [volume, setVolume] = useState(75);
+  const [audioTestStatus,setAudioTestStatus]=useState<'unknown'|'ready'|'locked'|'unsupported'>('unknown');
+  const [liquidPreviewRun,setLiquidPreviewRun]=useState(0);
   const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
   const rewardSound=useCallback((cue:'bonus'|'win'|'pop'|'slice')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
   const celebrateCapture=useCallback((count:number)=>{
     if(count<=0)return;
     playGameSound('liquid',{muted,volume:volume/100});
-    playGameSound('fireworks',{muted,volume:volume/100},.62);
-    playGameSound('coin',{muted,volume:volume/100},.95);
+    playGameSound('fireworks',{muted,volume:volume/100},1.28);
+    playGameSound('coin',{muted,volume:volume/100},1.65);
   },[muted,volume]);
   const [captureToast,setCaptureToast]=useState<{id:number;amount:number}|null>(null);
   useEffect(()=>{
     if(!captureToast)return;
-    const id=window.setTimeout(()=>setCaptureToast(null),1900);
+    const id=window.setTimeout(()=>setCaptureToast(null),2700);
     return()=>window.clearTimeout(id);
   },[captureToast]);
+  useEffect(()=>{
+    if(!liquidPreviewRun)return;
+    const id=window.setTimeout(()=>setLiquidPreviewRun(0),2700);
+    return()=>window.clearTimeout(id);
+  },[liquidPreviewRun]);
   const [invite, setInvite] = useState<string | null>(null);
   const botBusy = useRef(false);
   const boardRef = useRef<SVGSVGElement>(null);
@@ -1477,8 +1485,12 @@ export default function TriviaGame() {
         onClick={()=>{
           unlockGameAudio();
           if(muted)setMuted(false);
-          if(volume<65)setVolume(85);
-          playGameSound('fireworks',{muted:false,volume:Math.max(.85,volume/100)});
+          if(volume<85)setVolume(85);
+          const sampleVolume=Math.max(.85,volume/100);
+          playGameSound('liquid',{muted:false,volume:sampleVolume});
+          playGameSound('fireworks',{muted:false,volume:sampleVolume},1.13);
+          playGameSound('coin',{muted:false,volume:sampleVolume},1.64);
+          window.setTimeout(()=>setAudioTestStatus(gameAudioState()),300);
           // Explicit status helps diagnose silent iPhone / Safari devices.
           const state=gameAudioState();
           setMessage(state==='unsupported'?
@@ -1492,6 +1504,31 @@ export default function TriviaGame() {
         }}>
         <span aria-hidden='true'>🔉</span><strong>{locale==='he'?'בדוק':locale==='es'?'Probar':locale==='fr'?'Tester':locale==='ru'?'Проверить':locale==='ar'?'اختبار':'Test'}</strong>
       </button>
+      {audioTestStatus!=='unknown' && <span className='trivia-audio-state' data-testid='trivia-audio-state' role='status'>
+        {audioTestStatus==='ready'
+          ? (locale==='he'?'הצליל מופעל בדפדפן':locale==='es'?'Audio activo':locale==='fr'?'Son actif':locale==='ru'?'Звук активен':locale==='ar'?'الصوت نشط':'Audio engine active')
+          : (locale==='he'?'הצליל חסום - הקש שוב ובדוק השתקה':locale==='es'?'Audio bloqueado':locale==='fr'?'Son bloqué':locale==='ru'?'Звук заблокирован':locale==='ar'?'الصوت محظور':'Audio blocked - tap again')}
+      </span>}
+      <button type='button' className='capture-liquid-preview-button'
+        data-testid='trivia-liquid-preview'
+        onClick={()=>{
+          setLiquidPreviewRun(v=>v+1);
+          unlockGameAudio();
+          playGameSound('liquid',{muted,volume:volume/100});
+          playGameSound('fireworks',{muted,volume:volume/100},1.27);
+        }}>
+        <strong>{locale==='he'?'💧 הדגמת מילוי':locale==='es'?'💧 Ver llenado':locale==='fr'?'💧 Voir le remplissage':locale==='ru'?'💧 Показать заливку':locale==='ar'?'💧 عرض التعبئة':'💧 Preview liquid fill'}</strong>
+      </button>
+      {liquidPreviewRun>0 && <div className='capture-demo-overlay' role='status' aria-live='polite' data-testid='trivia-liquid-overlay'>
+        <div className='capture-demo-card'>
+          <strong>{locale==='he'?'הריבוע מתמלא בנוזל':locale==='es'?'La casilla se llena':locale==='fr'?'La case se remplit':locale==='ru'?'Клетка заполняется':locale==='ar'?'المربع يمتلئ':'Square filling with liquid'}</strong>
+          <svg key={liquidPreviewRun} className='capture-demo-svg' viewBox='0 0 120 120' aria-label={locale==='he'?'הדמיית מילוי ריבוע בנוזל':'Liquid fill demonstration'}>
+            <CaptureTile row={0} col={0} x={10} y={10} width={100} height={100}
+              color={color} name={name||'Player'} icon={avatar}
+              style={captureStyle} locale={locale} idPrefix={'liquid-demo-'+liquidPreviewRun}/>
+          </svg>
+        </div>
+      </div>}
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
         aria-label={tr('עיצוב המשחק')} title={tr('בחר סקין למשחק')}>
