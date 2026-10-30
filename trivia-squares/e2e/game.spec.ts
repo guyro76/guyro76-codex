@@ -494,7 +494,7 @@ test('iPhone Hebrew capture labels stay in logical letter order after reload',as
    localStorage.setItem('trivia-stage-id-v1','9');
    localStorage.setItem('trivia-stage-completed-v1','8');
    localStorage.setItem('trivia-local-game-v1',JSON.stringify({
-     rows:4,cols:4,mode:'solo',turn:'host',edges:{'h-0-0':'host'},
+     rows:5,cols:5,mode:'solo',turn:'host',edges:{'h-0-0':'host'},
      owners:{'0-0':'host'},scores:{host:1,guest:0,bot:0}
    }));
  });
