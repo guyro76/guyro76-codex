@@ -100,7 +100,7 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
     <foreignObject className='capture-player-name-object'
       x={x+4} y={cy-textSize*.94} width={width-8} height={textSize*1.88}
       pointerEvents='none' aria-hidden='true'>
-      <div xmlns='http://www.w3.org/1999/xhtml'
+      <div
         dir={/[\u0590-\u08FF]/u.test(label)?'rtl':'ltr'}
         style={{boxSizing:'border-box',display:'flex',width:'100%',height:'100%',
           alignItems:'center',justifyContent:'center',overflow:'hidden',
