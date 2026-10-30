@@ -220,6 +220,10 @@ test('new game reloads reviewed questions without repeating any previously displ
   await page.getByRole('dialog',{name:'התשובה הנכונה היא:'}).getByRole('button',{name:'המשך למשחק'}).click();
   await page.getByRole('button',{name:/התחל משחק/}).click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-pool-release-v1')||'{}').he)).toBe(3);
+  // Wait for the restarted stage's UI to commit before the next marker gesture.
+  // Storage updates are synchronous inside start(), React state rendering is not.
+  await expect(page.locator('.status-line')).toContainText('נוספו 3 שאלות חדשות ממאגר מאושר.');
+  await expect(page.locator('svg.board')).toBeVisible();
   await draw(page,[1,1],[1,2]);
   const next=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(next).toBeVisible();
