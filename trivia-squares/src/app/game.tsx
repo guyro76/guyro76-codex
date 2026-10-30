@@ -1583,9 +1583,9 @@ export default function TriviaGame() {
                <strong>🎆 {locale==='he'?'ריבוע נכבש!':locale==='es'?'¡Casilla conquistada!':locale==='fr'?'Case conquise !':locale==='ru'?'Клетка захвачена!':locale==='ar'?'تم الاستيلاء على المربع!':'Square captured!'}</strong>
                <span>🪙 +{captureToast.amount}</span>
              </div>}
-             <div className='arena-quick-wallet' aria-label={locale==='he'?'פרסים וקרדיטים זמינים':'Available game credits and charms'}>
-               <span title={locale==='he'?'קרדיטים זמינים':locale==='es'?'Créditos disponibles':'Available credits'}>🪙 {currentCredits}</span>
-               <span title={locale==='he'?'נקודות ידע':locale==='es'?'Puntos de conocimiento':'Knowledge points'}>🧠 {currentKnowledgePoints}</span>
+             <div className='arena-quick-wallet' aria-label={locale==='he'?'פרסים וקרדיטים זמינים':locale==='es'?'Premios, créditos y puntos':locale==='fr'?'Récompenses et crédits':locale==='ru'?'Награды и монеты':locale==='ar'?'المكافآت والعملات':'Available game credits and charms'}>
+               <span title={locale==='he'?'קרדיטים זמינים':locale==='es'?'Créditos disponibles':locale==='fr'?'Crédits disponibles':locale==='ru'?'Доступные монеты':locale==='ar'?'العملات المتاحة':'Available credits'}>🪙 {currentCredits}</span>
+               <span title={locale==='he'?'נקודות ידע':locale==='es'?'Puntos de conocimiento':locale==='fr'?'Points de connaissance':locale==='ru'?'Баллы знаний':locale==='ar'?'نقاط المعرفة':'Knowledge points'}>🧠 {currentKnowledgePoints}</span>
                <span title={locale==='he'?'קמעות זמן':'Time charms'}>⏳ {currentCharms}</span>
              </div>
              <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
