@@ -8,12 +8,13 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawi
 import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
-import { playGameSound, type SoundCue } from '../lib/gameAudio';
+import { playGameSound, unlockGameAudio, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
+import {selectVariedQuestion,readRecentQuestionTopics} from '../lib/questionMix';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
 import CaptureTile, {type CaptureStyle} from '../components/CaptureTile';
@@ -114,6 +115,8 @@ export default function TriviaGame() {
   const [mode, setMode] = useState<Mode>('solo');
   const [size, setSize] = useState(3);
   const [stageId,setStageId]=useState(1);
+  const [stageViewChapter,setStageViewChapter]=useState(1);
+  useEffect(()=>setStageViewChapter(Math.ceil(stageId/10)),[stageId]);
   const [localStageCompleted,setLocalStageCompleted]=useState(0);
   const [serverStageCompleted,setServerStageCompleted]=useState(0);
   const [stageStarted,setStageStarted]=useState(false);
@@ -134,6 +137,7 @@ export default function TriviaGame() {
   const [edge, setEdge] = useState<string | null>(null);
   const usedLocalQuestionIds=useRef<Set<number>>(new Set());
   const lastQuestionCategory=useRef<string|null>(null);
+  const recentQuestionTopics=useRef<QuestionTopic[]>([]);
   const seenQuestionTexts=useRef<Set<string>>(new Set());
   const remoteQuestionCache=useRef<Record<ActiveLocale,LocalSourceQuestion[]>>(blankQuestionCache());
   const remoteQuestionCursor=useRef<Record<ActiveLocale,number>>(blankCursorCache());
@@ -221,7 +225,7 @@ export default function TriviaGame() {
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(65);
   const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
-  const rewardSound=useCallback((cue:'bonus'|'win')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
+
   const [invite, setInvite] = useState<string | null>(null);
   const botBusy = useRef(false);
   const boardRef = useRef<SVGSVGElement>(null);
@@ -330,6 +334,7 @@ export default function TriviaGame() {
        if(palettes.includes(savedCapture.guestColor||''))setGuestColor(savedCapture.guestColor!);
        if(avatars.includes(savedCapture.guestAvatar||''))setGuestAvatar(savedCapture.guestAvatar!);
        setSelectedTopics(parseTopicPreferences(JSON.parse(localStorage.getItem('trivia-question-topics-v1')||'null')));
+        recentQuestionTopics.current=readRecentQuestionTopics(JSON.parse(localStorage.getItem('trivia-recent-question-topics-v1')||'[]'));
        const storedSkin=localStorage.getItem('trivia-skin-v1');
        const migratedSkin:Record<string,SkinId>={royal:'regular',ocean:'urban',neon:'future',stone:'vintage',forest:'retro'};
        if(skins.some(item=>item.id===storedSkin))setSkin(storedSkin as SkinId);
@@ -387,9 +392,9 @@ export default function TriviaGame() {
     try {
       const savedLevel=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
       const completed=Number(localStorage.getItem('trivia-stage-completed-v1')||'0');
-      const safeCompleted=Number.isInteger(completed)?Math.min(30,Math.max(0,completed)):0;
+      const safeCompleted=Number.isInteger(completed)?Math.min(STAGE_COUNT,Math.max(0,completed)):0;
       setLocalStageCompleted(safeCompleted);
-      if(Number.isInteger(savedLevel)&&savedLevel>=1&&savedLevel<=Math.min(30,safeCompleted+1)){
+      if(Number.isInteger(savedLevel)&&savedLevel>=1&&savedLevel<=Math.min(STAGE_COUNT,safeCompleted+1)){
         setStageId(savedLevel);setSize(stageFor(savedLevel).size);
       }
       setStageStarted(localStorage.getItem('trivia-stage-started-v1')==='true');
@@ -404,7 +409,7 @@ export default function TriviaGame() {
           && value.cols===value.rows && value.edges && value.owners && value.scores){
           // Restore only a board whose size matches the saved locked campaign stage.
           const savedStage=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
-          const validStage=Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=30?savedStage:1;
+          const validStage=Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=STAGE_COUNT?savedStage:1;
           if(stageFor(validStage).size===value.rows){
             const savedCapture=JSON.parse(localStorage.getItem('trivia-capture-settings-v1')||'{}') as {guestName?:string};
             const realGuest=hasActualOpponent(savedCapture.guestName,localStorage.getItem('trivia-player-name')||'');
@@ -794,16 +799,10 @@ export default function TriviaGame() {
       }
       const preferred=unseen.filter(q=>selectedTopics.includes(topicForQuestion(q.category,q.text)));
       const remaining=preferred.length?preferred:unseen;
-      const alternatives=remaining.filter(v=>v.category!==lastQuestionCategory.current);
-      const pool=alternatives.length?alternatives:remaining;
-      const categories=[...new Set(pool.map(v=>v.category))];
-      const category=categories[Math.floor(Math.random()*categories.length)];
-      const inCategory=pool.filter(v=>v.category===category);
-      // Preserve the established first-turn tutorial and its regression tests;
-      // subsequent turns use the full balanced topic/category lottery.
-      const q=usedLocalQuestionIds.current.size===0&&locale==='he'
-        ? remaining.find(v=>v.text.includes('בירת אוסטרליה'))||inCategory[0]
-        : inCategory[Math.floor(Math.random()*inCategory.length)];
+      // Rotate topic families and avoid city-question runs when other topics exist.
+      const chosen=selectVariedQuestion(remaining,recentQuestionTopics.current);
+      if(!chosen){setEdge(null);return;}
+      const q=chosen.question;
       if(preferred.length===0){
         setMessage(locale==='he'
           ? 'השאלות בנושאים שבחרת אזלו. מצאנו עבורך שאלה חדשה בנושא אחר, בלי למחוק את ההתקדמות.'
@@ -821,6 +820,8 @@ export default function TriviaGame() {
         setBusy(false);
       }
       lastQuestionCategory.current=q.category;
+      recentQuestionTopics.current=[...recentQuestionTopics.current,topicForQuestion(q.category,q.text)].slice(-8);
+      try{localStorage.setItem('trivia-recent-question-topics-v1',JSON.stringify(recentQuestionTopics.current))}catch{}
       usedLocalQuestionIds.current.add(q.id);
       rememberShownQuestion(q.text);
       try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
@@ -1226,7 +1227,7 @@ export default function TriviaGame() {
     subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
-  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin} style={css.main} dir={localeDirection(locale)} lang={locale}>
+  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin} style={css.main} dir={localeDirection(locale)} lang={locale} onPointerDownCapture={()=>{if(!muted && volume>0)unlockGameAudio()}}>
     <style>{`
       *{box-sizing:border-box} body{background:#111C48;color:white;font-family:Arial,'Noto Sans Hebrew',sans-serif;font-weight:800;margin:0}
       .trivia-app{--accent:#8CE8FF;min-height:100vh;position:relative;isolation:isolate}
@@ -1404,17 +1405,24 @@ export default function TriviaGame() {
       </div>
     </header>
 
-    <section className='campaign-section' aria-label={locale==='en'?'Thirty sequential stages':'שלושים שלבים לפי סדר'}>
+    <section className='campaign-section' aria-label={locale==='en'?'One hundred sequential stages':'מאה שלבים לפי סדר'}>
       <div className='campaign-heading'>
-        <h2>{locale==='en'?'Adventure: 30 stages':'הרפתקה: 30 שלבים'}</h2>
+        <h2>{locale==='en'?'Adventure: 100 stages':'הרפתקה: 100 שלבים'}</h2>
         <span>{locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
       </div>
-      <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={30} aria-valuenow={completedStage}
+      <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={STAGE_COUNT} aria-valuenow={completedStage}
            aria-label={locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
         <span style={{width:(completedStage/STAGE_COUNT*100)+'%'}}/>
       </div>
+      <div className='campaign-chapter-navigation' role='group' aria-label={locale==='he'?'ניווט בין קבוצות שלבים':'Campaign chapter navigation'}>
+        <button type='button' className='glass-button' disabled={stageViewChapter===1}
+          onClick={()=>setStageViewChapter(n=>Math.max(1,n-1))}>{locale==='he'?'10 השלבים הקודמים':locale==='ru'?'10 предыдущих уровней':locale==='fr'?'10 niveaux précédents':locale==='ar'?'المراحل العشر السابقة':'Previous 10 stages'}</button>
+        <strong aria-live='polite'>{stageViewChapter*10-9} - {Math.min(STAGE_COUNT,stageViewChapter*10)} / {STAGE_COUNT}</strong>
+        <button type='button' className='glass-button' disabled={stageViewChapter===Math.ceil(STAGE_COUNT/10)}
+          onClick={()=>setStageViewChapter(n=>Math.min(Math.ceil(STAGE_COUNT/10),n+1))}>{locale==='he'?'10 השלבים הבאים':locale==='ru'?'10 следующих уровней':locale==='fr'?'10 niveaux suivants':locale==='ar'?'المراحل العشر التالية':'Next 10 stages'}</button>
+      </div>
       <div className='campaign-track' aria-label={locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
-        {CAMPAIGN_STAGES.map(stage=>{
+        {CAMPAIGN_STAGES.filter(stage=>Math.ceil(stage.id/10)===stageViewChapter).map(stage=>{
           const unlocked=stage.id<=stageUnlocked;
           const isSelected=stage.id===stageId;
           const enabled=unlocked&&(isSelected||!stageBusy)&&(!stageStarted||finished||isSelected);
@@ -1576,7 +1584,7 @@ export default function TriviaGame() {
           onAdvance={advanceStage}
           onLocalPrize={stageLocalReward}
           onRemotePrize={stageRemoteReward}
-          onSound={rewardSound}
+          onSound={play}
         />}
       </section>
 

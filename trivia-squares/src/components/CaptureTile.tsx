@@ -51,6 +51,11 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
         <stop offset='64%' stopColor={color} stopOpacity='.83'/>
         <stop offset='100%' stopColor='#111A45' stopOpacity='.94'/>
       </linearGradient>
+      <linearGradient id={id+'-nameplate'} x1='0' y1='0' x2='1' y2='1'>
+        <stop offset='0%' stopColor='#FFF4CB'/>
+        <stop offset='52%' stopColor='#FFD69B'/>
+        <stop offset='100%' stopColor='#E7B8FD'/>
+      </linearGradient>
       <linearGradient id={id+'-metal'} x1='0' y1='0' x2='1' y2='1'>
         <stop offset='0%' stopColor='#FFFFFF' stopOpacity='.9'/>
         <stop offset='38%' stopColor={color} stopOpacity='.7'/>
@@ -89,11 +94,17 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
       : <circle className='capture-medallion' cx={cx} cy={cy} r={radius}
         fill='#101B3B' fillOpacity='.94' stroke={'url(#'+id+'-metal)'} strokeWidth={style==='token'?2.5:1.8}/>}
     <circle cx={cx} cy={cy} r={radius*.82} stroke={color} strokeOpacity='.56' fill='none' strokeWidth='.7'/>
+    {/* An engraved champion's ribbon, sized to fit even on small 6×6 boards. */}
+    <rect className='capture-name-shadow' x={cx-textWidth/2-4} y={cy-textSize*.9+1.8}
+      width={textWidth+8} height={textSize*1.8} rx={Math.min(8,textSize*.55)}
+      fill='#081B38' fillOpacity='.55' aria-hidden='true'/>
     <rect className='capture-name-backplate' x={cx-textWidth/2-4} y={cy-textSize*.9}
       width={textWidth+8} height={textSize*1.8} rx={Math.min(8,textSize*.55)}
-      fill='#101B3B' fillOpacity='.95' stroke={color} strokeOpacity='.85' strokeWidth='1' aria-hidden='true'/>
+      fill={'url(#'+id+'-nameplate)'} stroke='#FFF7DD' strokeWidth='1.15' aria-hidden='true'/>
+    <path d={'M'+(cx-textWidth/2)+' '+(cy-textSize*.72)+' H'+(cx+textWidth/2)}
+      stroke='#FFFFFF' strokeOpacity='.6' strokeWidth='.65' aria-hidden='true'/>
     <text className='capture-mark capture-player-name' x={cx} y={cy+textSize*.34}
-      fontSize={textSize} textAnchor='middle' fontWeight='900' fill='#FFFFFF'
+      fontSize={textSize} textAnchor='middle' fontWeight='950' fill='#172548'
       direction={locale==='he'||locale==='ar'?'rtl':'ltr'}
       textLength={Array.from(label).length*textSize*.7>width-14?width-14:undefined}
       lengthAdjust='spacingAndGlyphs' aria-hidden='true'>{label}</text>

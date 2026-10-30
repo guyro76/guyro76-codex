@@ -1242,3 +1242,32 @@ main.trivia-app .skin-picker-item{min-width:0}
  main.trivia-app .locale-switch{justify-content:center;gap:5px;padding:7px}
  main.trivia-app .locale-option{flex:1 1 auto;font-size:clamp(12px,2.7vw,14px);padding:8px 10px}
 }
+
+/* The 100-stage carousel scrolls inside its own rail; never widen the screen. */
+main.trivia-app{overflow-x:clip}
+main.trivia-app .campaign-section{min-width:0;max-width:100%;overflow-x:clip}
+main.trivia-app .campaign-track{box-sizing:border-box;width:100%;min-width:0;max-width:100%;}
+
+/* Compact chapter navigator: only ten cards are mounted at once. */
+main.trivia-app .campaign-chapter-navigation{
+ display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+ align-items:center;gap:10px;margin:12px 0 9px;max-width:100%;min-width:0;
+}
+main.trivia-app .campaign-chapter-navigation .glass-button{
+ width:100%;min-width:0;min-height:40px;padding:7px 11px;
+ border-radius:12px;background:#21396C;border:1px solid #A0C2FF;
+ color:#FFFFFF;font-size:13px;font-weight:900;white-space:normal;
+ overflow-wrap:anywhere;cursor:pointer;
+}
+main.trivia-app .campaign-chapter-navigation .glass-button:disabled{
+ opacity:.45;cursor:default;
+}
+main.trivia-app .campaign-chapter-navigation strong{
+ color:#FFFFFF;font-weight:950;font-size:14px;
+ font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+@media(max-width:560px){
+ main.trivia-app .campaign-chapter-navigation{gap:6px}
+ main.trivia-app .campaign-chapter-navigation .glass-button{font-size:11px;padding:8px 5px}
+ main.trivia-app .campaign-chapter-navigation strong{font-size:12px}
+}
