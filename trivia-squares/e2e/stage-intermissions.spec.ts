@@ -51,6 +51,6 @@ test('stage completion automatically offers a minigame, earns credits and persis
   expect(persisted.rewards.wallet.fruits).toBe(2);
   expect(Object.keys(persisted.board.owners)).toHaveLength(9);
   await page.reload();
-  await expect(page.locator('.arena-quick-wallet')).toContainText('15');
+  await expect(page.locator('.arena-quick-wallet')).toContainText('🪙 40');
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}').credits?.host)).toBe(40);
 });
