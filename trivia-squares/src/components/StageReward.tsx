@@ -1,10 +1,10 @@
 'use client';
 
-import {useCallback,useEffect,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import type {ActiveLocale} from '../lib/i18n';
 import {cardById,localStageCard,readLocalAlbum,saveLocalAlbum,type StageCard,type LocalEarned} from '../lib/stageRewards';
-import {intermissionText,intermissionWord,intermissionPrize,intermissionCard} from '../lib/intermissionLocales';
+import {intermissionText,intermissionWord,intermissionPrize,intermissionCard,intermissionMiniText} from '../lib/intermissionLocales';
 
 type RewardProps={
   stageKey:string;
@@ -16,7 +16,7 @@ type RewardProps={
   onAdvance:()=>void;
   onLocalPrize:(prize:string)=>void;
   onRemotePrize:()=>void;
-  onSound:(cue:'bonus'|'win')=>void;
+  onSound:(cue:'bonus'|'win'|'pop'|'slice')=>void;
 };
 
 function Illustration({card}:{card:StageCard}){
@@ -59,7 +59,11 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   const [card,setCard]=useState<StageCard|null>(null);
   const [playing,setPlaying]=useState(false);
   const [played,setPlayed]=useState(false);
-  const [game,setGame]=useState<'wheel'|'word'|null>(null);
+  const [game,setGame]=useState<'wheel'|'word'|'balloons'|'cake'|null>(null);
+  const [burstBalloon,setBurstBalloon]=useState<number|null>(null);
+  const [cakeCut,setCakeCut]=useState(false);
+  const cakeStartX=useRef<number|null>(null);
+  const cakeTriggered=useRef(false);
   const [guess,setGuess]=useState('');
   const [prize,setPrize]=useState('');
   const [notice,setNotice]=useState('');
@@ -68,7 +72,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   const [wheelTurns,setWheelTurns]=useState(0);
   useEffect(()=>{
     let alive=true;
-    setCard(null);setPlayed(false);setPrize('');setGame(null);setNotice('');
+    setCard(null);setPlayed(false);setPrize('');setGame(null);setNotice('');setBurstBalloon(null);setCakeCut(false);cakeTriggered.current=false;
     if(remoteMatchId && client){
       void (async()=>{
         const {data,error}=await client.rpc('trivia_stage_claim',{p_match:remoteMatchId});
@@ -79,7 +83,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
         setCard(selected);setPlayed(Boolean(data.played));setPrize(String(data.prize||''));
         const {data:cards}=await client.rpc('trivia_stage_album');
         if(alive && Array.isArray(cards))setAlbum(cards.map((c:Record<string,string>)=>({
-          matchId:String(c.match_id),cardId:String(c.card_id),earnedAt:String(c.earned_at),played:Boolean(c.minigame),game:c.minigame as 'wheel'|'word',prize:c.minigame_prize
+          matchId:String(c.match_id),cardId:String(c.card_id),earnedAt:String(c.earned_at),played:Boolean(c.minigame),game:c.minigame as 'wheel'|'word'|'balloons'|'cake',prize:c.minigame_prize
         })));
         onSound('win');
       })();
@@ -97,15 +101,16 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   const translate=(he:string,en:string)=>intermissionText(locale,he,en);
   const word=intermissionWord(locale,worldSize);
   const displayCard=(c:StageCard)=>intermissionCard(locale,c);
+  const mini=(key:Parameters<typeof intermissionMiniText>[1])=>intermissionMiniText(locale,key);
   const shownCard=card?displayCard(card):null;
   const showPrize=(value:string)=>intermissionPrize(locale,value);
-  const finish=useCallback(async(selected:'wheel'|'word')=>{
+  const finish=useCallback(async(selected:'wheel'|'word'|'balloons'|'cake')=>{
     if(!card||played||playing)return;
     setPlaying(true);setNotice('');setGame(selected);
     if(selected==='wheel')setWheelTurns(t=>t+5+Math.floor(Math.random()*3));
     if(remoteMatchId&&client){
       const {data,error}=await client.rpc('trivia_stage_play',{p_match:remoteMatchId,p_game:selected,p_guess:selected==='word'?guess.trim():null});
-      if(error){setNotice(translate('לא ניתן לקבל את הפרס: ','Unable to award prize: ')+error.message);setPlaying(false);return;}
+      if(error){setNotice(translate('לא ניתן לקבל את הפרס: ','Unable to award prize: ')+error.message);setPlaying(false);setBurstBalloon(null);setCakeCut(false);cakeTriggered.current=false;return;}
       const result=String(data.prize||'');
       setPrize(result);setPlayed(true);onRemotePrize();
     }else{
@@ -119,6 +124,10 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     onSound('bonus');
     setPlaying(false);
   },[card,played,playing,remoteMatchId,client,guess,word.answer,onRemotePrize,onLocalPrize,onSound,stageKey]);
+  const sliceCake=()=>{
+    if(played||playing||cakeTriggered.current)return;
+    cakeTriggered.current=true;setCakeCut(true);onSound('slice');void finish('cake');
+  };
   if(!card)return <section className='lumen-stage-reveal' role='status' aria-live='polite'><h2>{translate('✨ אוסף הסודות נפתח','✨ Secret collection unlocked')}</h2><p>{notice||translate('מכינים את קלף הבונוס...','Preparing your collectible card...')}</p></section>;
   return <section className='lumen-stage-reveal' aria-labelledby='stage-reward-title'>
     <div className='lumen-stage-topline'><span>STAGE COMPLETE</span><span>{translate('✦ קלף אספנות חדש ✦','✦ New collectible card ✦')}</span></div>
@@ -138,6 +147,8 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
         {!played && !game && <div className='lumen-intermission-choices'>
           <button type='button' onClick={()=>setGame('word')}><strong>{translate('🔠 נחש את המילה','🔠 Guess the word')}</strong><span>{translate('רמז ואותיות לאוצר הבא','A clue to your next treasure')}</span></button>
           <button type='button' onClick={()=>setGame('wheel')}><strong>{translate('🎡 גלגל ההפתעות','🎡 Prize wheel')}</strong><span>{translate('פרס וירטואלי, ללא תשלום','A free virtual prize')}</span></button>
+          <button type='button' onClick={()=>setGame('balloons')}><strong>🎈 {mini('balloonsTitle')}</strong><span>{mini('balloonsSubtitle')}</span></button>
+          <button type='button' onClick={()=>setGame('cake')}><strong>🎂 {mini('cakeTitle')}</strong><span>{mini('cakeSubtitle')}</span></button>
         </div>}
         {game==='word'&&!played&&<div className='lumen-word-game'>
           <p><strong>{translate('רמז:','Hint:')}</strong> {word.hint}</p>
@@ -151,6 +162,31 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
             <span>🪙</span><span>🍎</span><span>💎</span><span>⏳</span>
           </div></div>
           <button className='lumen-cta' type='button' onClick={()=>void finish('wheel')} disabled={playing}>{translate('סובב את הגלגל ✨','Spin the wheel ✨')}</button>
+        </div>}
+        {game==='balloons'&&<div className='lumen-balloons-game' aria-label={mini('balloonsTitle')}>
+          <p>{mini('balloonsHelp')}</p>
+          <div className='lumen-balloon-rack' role='group' aria-label={mini('balloonsTitle')}>
+            {Array.from({length:5},(_,i)=><button type='button' key={i}
+              className={'lumen-balloon-target'+(burstBalloon===i?' burst':'')}
+              aria-label={mini('popBalloon')+' '+(i+1)}
+              disabled={played||playing||burstBalloon!==null}
+              onClick={()=>{setBurstBalloon(i);onSound('pop');void finish('balloons');}}>
+              <span className='lumen-balloon-shape' aria-hidden='true'>{burstBalloon===i?'✦':'🎈'}</span>
+              <strong>{i+1}</strong>
+            </button>)}
+          </div>
+        </div>}
+        {game==='cake'&&<div className='lumen-cake-game'>
+          <p>{mini('cakeHelp')}</p>
+          <button type='button' className={'lumen-cake-target'+(cakeCut?' cut':'')}
+            aria-label={mini('sliceCake')} disabled={played||playing||cakeCut}
+            onPointerDown={e=>{cakeStartX.current=e.clientX;}}
+            onPointerUp={e=>{if(cakeStartX.current!==null && Math.abs(e.clientX-cakeStartX.current)>=25)sliceCake();cakeStartX.current=null;}}
+            onClick={()=>sliceCake()}>
+            <span className='lumen-cake-plate' aria-hidden='true'>🎂</span>
+            <span className='lumen-cake-slice' aria-hidden='true'>✦</span>
+            <strong>{mini('sliceCake')}</strong>
+          </button>
         </div>}
         {played && <div className='lumen-prize-won' role='status' aria-live='polite'><strong>{translate('🎉 הפרס שלך:','🎉 Your prize:')} {showPrize(prize)}</strong><span>{translate('נשמר באוסף המשחק שלך.','Saved to your game collection.')}</span></div>}
         {notice&&<p role='alert'>{notice}</p>}
