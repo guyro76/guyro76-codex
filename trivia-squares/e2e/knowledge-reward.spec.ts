@@ -4,7 +4,7 @@ test('an ordinary correct answer grants 5 credits and 10 knowledge points, inclu
   test.skip(info.project.name!=='chromium-desktop','Desktop mouse case; touch gesture covered by game.spec.ts');
   await page.addInitScript(()=>{
     localStorage.setItem('trivia-tutorial-seen-v1','true');
-    localStorage.setItem('trivia-welcome-dismissed-v1','true');
+    localStorage.setItem('trivia-welcome-dismissed-v1','1');
     localStorage.setItem('trivia-player-name','טסטר');
   });
   await page.goto('/');
@@ -36,7 +36,7 @@ test('an ordinary correct answer grants 5 credits and 10 knowledge points, inclu
 test('Spanish uses original translated stage title and points label',async({page})=>{
   await page.addInitScript(()=>{
     localStorage.setItem('trivia-tutorial-seen-v1','true');
-    localStorage.setItem('trivia-welcome-dismissed-v1','true');
+    localStorage.setItem('trivia-welcome-dismissed-v1','1');
     localStorage.setItem('trivia-player-name','Lucía');
     localStorage.setItem('trivia-language','es');
   });
