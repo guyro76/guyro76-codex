@@ -24,6 +24,12 @@ test('old player preferences are respected and newly created profiles see all to
  const selected=['tv_film','music','history'];
  assert.deepEqual(parseTopicPreferences(selected),selected);
  assert.ok(!parseTopicPreferences(selected).includes('disney'));
+ const previouslyAll=ALL_QUESTION_TOPICS.filter(id=>id!=='disney');
+ assert.deepEqual(parseTopicPreferences(previouslyAll),ALL_QUESTION_TOPICS,
+  'previously all-selected players receive the new Disney topic');
+ const previouslyAllBeforeEuro=previouslyAll.filter(id=>id!=='eurovision');
+ assert.deepEqual(parseTopicPreferences(previouslyAllBeforeEuro),ALL_QUESTION_TOPICS,
+  'pre-Eurovision all-selected players receive both added categories');
  assert.deepEqual(readRecentQuestionTopics(['disney','capitals','bogus']),['disney','capitals']);
 });
 test('variety engine rotates Disney and film questions separately',()=>{
