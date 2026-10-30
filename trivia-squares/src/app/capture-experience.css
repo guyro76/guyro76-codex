@@ -1,0 +1,107 @@
+/* Capture celebration: the liquid must be visible long enough on a phone.
+   Overrides the old 0.64-second animation without touching board geometry. */
+main.trivia-app .capture-tile .capture-liquid-rise{
+  transform-box:fill-box;
+  transform-origin:center bottom;
+  animation:captureLiquidSlowFill 1.55s cubic-bezier(.20,.70,.24,1) both!important;
+}
+@keyframes captureLiquidSlowFill{
+  0%{transform:translateY(114%)}
+  28%{transform:translateY(76%)}
+  58%{transform:translateY(37%)}
+  86%{transform:translateY(-3%)}
+  100%{transform:translateY(0)}
+}
+main.trivia-app .capture-tile .capture-liquid-wave{
+  animation:captureWaveTilt 1.05s ease-in-out .18s both!important;
+}
+main.trivia-app .capture-tile .capture-bubble{
+  animation-duration:1.38s!important;
+  animation-delay:.28s!important;
+}
+main.trivia-app .capture-tile .capture-name-backplate,
+main.trivia-app .capture-tile .capture-player-name-object{
+  animation-delay:1.08s!important;
+  animation-duration:.44s!important;
+}
+main.trivia-app .capture-tile .capture-player-icon-object{
+  animation-delay:1.17s!important;
+}
+main.trivia-app .capture-tile .capture-medallion{
+  animation-delay:1.05s!important;
+}
+main.trivia-app .capture-tile .capture-firework-ring{
+  animation-delay:1.48s!important;
+}
+main.trivia-app .capture-liquid-body{filter:saturate(1.38) brightness(1.13)}
+main.trivia-app .capture-liquid-wave{opacity:.95}
+main.trivia-app .capture-liquid-sheen{opacity:.72}
+main.trivia-app .capture-bubble{opacity:.82}
+
+main.trivia-app .capture-liquid-preview-button{
+  border:2px solid #FFF3BB!important;
+  color:#FFFFFF!important;
+  background:linear-gradient(130deg,#5345C5,#A340BF 65%,#D04F8D)!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  min-height:44px;
+  padding:8px 13px;
+  border-radius:14px;
+  cursor:pointer;
+}
+main.trivia-app .capture-demo-overlay{
+  position:fixed;
+  inset:0;
+  z-index:250;
+  pointer-events:none;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(10,30,80,.26);
+}
+main.trivia-app .capture-demo-card{
+  border:3px solid #FFF0BD;
+  border-radius:24px;
+  padding:18px 26px 14px;
+  min-width:190px;
+  background:linear-gradient(135deg,#473EAA,#7E40BD,#C4459C);
+  box-shadow:0 16px 48px rgba(22,24,82,.54),0 0 38px rgba(255,234,159,.48);
+  color:#FFFFFF;
+  text-align:center;
+  font-size:18px;
+  font-weight:900;
+}
+main.trivia-app .capture-demo-card strong{
+  display:block;
+  color:#FFFFFF;
+  font-weight:900;
+  font-size:18px;
+  margin-bottom:6px;
+}
+main.trivia-app .capture-demo-svg{
+  width:min(210px,65vw);
+  height:min(210px,65vw);
+  display:block;
+  margin:auto;
+}
+main.trivia-app .trivia-audio-state{
+  color:#FFFFFF;
+  background:#31537E;
+  font-size:13px;
+  font-weight:900;
+  padding:6px 10px;
+  border:1px solid #DCEBFF;
+  border-radius:12px;
+}
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app .capture-tile .capture-liquid-rise,
+ main.trivia-app .capture-tile .capture-liquid-wave,
+ main.trivia-app .capture-tile .capture-bubble,
+ main.trivia-app .capture-tile .capture-name-backplate,
+ main.trivia-app .capture-tile .capture-player-name-object,
+ main.trivia-app .capture-tile .capture-player-icon-object,
+ main.trivia-app .capture-tile .capture-medallion,
+ main.trivia-app .capture-tile .capture-firework-ring{
+  animation:none!important;transform:none!important;opacity:1!important;
+ }
+}
