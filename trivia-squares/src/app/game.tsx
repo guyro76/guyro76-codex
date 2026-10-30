@@ -30,6 +30,7 @@ import {CAMPAIGN_STAGES,STAGE_COUNT,stageFor,canOpenStage} from '../lib/campaign
 import './tutorial.css';
 import './premium.css';
 import './responsive-layout.css';
+import './welcome-interior-theme.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
