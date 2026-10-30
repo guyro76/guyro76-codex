@@ -148,3 +148,22 @@ main.trivia-app .stage-bonus-options button.selected{
  main.trivia-app .stage-gift-tray span{animation:none!important}
  main.trivia-app .capture-tile .capture-firework-ring{display:none!important}
 }
+
+/* Always-accessible one-tap sound audition. A user gesture is required to
+   activate Web Audio on Safari and Android browsers. */
+main.trivia-app .trivia-audio-test{
+ display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ min-width:53px;min-height:40px;padding:7px 11px;cursor:pointer;
+ color:#25194A;background:linear-gradient(130deg,#FFF0BF,#FFD095);
+ border:2px solid #FFF5D4;border-radius:13px;font-weight:900;
+ box-shadow:0 6px 17px #080B3555;
+}
+main.trivia-app .trivia-audio-test strong{font-weight:950}
+main.trivia-app .trivia-audio-test:hover{filter:brightness(1.06)}
+main.trivia-app .trivia-audio-test:focus-visible{
+ outline:3px solid #FFFFFF;outline-offset:3px;
+}
+@media(max-width:520px){
+ main.trivia-app .trivia-audio-test{min-width:43px;padding:5px 7px}
+ main.trivia-app .trivia-audio-test strong{font-size:12px}
+}
