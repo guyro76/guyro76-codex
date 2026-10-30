@@ -11,6 +11,7 @@ import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
 import { playGameSound, unlockGameAudio, type SoundCue } from '../lib/gameAudio';
 import {answerFeedback} from '../lib/answerFeedback';
+import {gameplayGuidance} from '../lib/gameplayGuidance';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
@@ -910,7 +911,7 @@ export default function TriviaGame() {
   async function answer(i: number) {
     if (!question || (question.kind !== 'bonus' && !edge) || busy) return;
     if (question.deadline_at && Date.now() >= new Date(question.deadline_at).getTime()) {
-      setMessage('הזמן הסתיים — אין אפשרות לשלוח תשובה מאוחרת.');
+      setMessage(gameplayGuidance(locale,'answerTimedOut'));
       return;
     }
     setBusy(true);
@@ -1016,8 +1017,8 @@ export default function TriviaGame() {
 
   async function extendQuestionTime() {
     if(!question || question.deadline_at===null || !question.deadline_at || (secondsLeft??0)<=0) return;
-    if((question.extensions||0)>=1){setMessage('אפשר להאריך כל שאלה פעם אחת בלבד.');return;}
-    if(currentCredits<25){setMessage('להארכת זמן דרושים 25 קרדיטים שנצברו במשחק.');return;}
+    if((question.extensions||0)>=1){setMessage(gameplayGuidance(locale,'extensionUsed'));return;}
+    if(currentCredits<25){setMessage(gameplayGuidance(locale,'insufficientCredits'));return;}
     if(remote&&client){
       setBusy(true);
       const {data,error}=await client.rpc('trivia_extend_question',{p_match:remote.id});
@@ -1025,7 +1026,7 @@ export default function TriviaGame() {
       else{
         setQuestion(prev=>prev?{...prev,deadline_at:String(data.deadline_at),extensions:1}:prev);
         setProgress(prev=>({...prev,credits:Math.max(0,prev.credits-25)}));
-        setMessage('רכשת 30 שניות נוספות!');
+        setMessage(gameplayGuidance(locale,'remoteExtensionGranted'));
         play('bonus');
         await refresh(remote.id);
       }
@@ -1034,7 +1035,7 @@ export default function TriviaGame() {
       setLocalCredits(prev=>({...prev,[currentLocalSide]:prev[currentLocalSide]-25}));
       setQuestion(prev=>prev?{...prev,deadline_at:new Date(new Date(prev.deadline_at!).getTime()+30_000).toISOString(),extensions:1}:prev);
       play('bonus');
-      setMessage('נוספו 30 שניות תמורת 25 קרדיטים.');
+      setMessage(gameplayGuidance(locale,'localExtensionGranted'));
     }
   }
 
@@ -1229,7 +1230,7 @@ export default function TriviaGame() {
     setTrace(null);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     if (chosen && !state.edges[chosen]) { play('draw'); void pick(chosen); }
-    else setMessage('חבר שתי נקודות סמוכות בגרירה אחת כדי לקבל שאלה.');
+    else setMessage(gameplayGuidance(locale,'drawAdjacent'));
   }
 
   function onBoardPointerCancel(event: ReactPointerEvent<SVGSVGElement>) {
@@ -1243,11 +1244,11 @@ export default function TriviaGame() {
   function onDotKeyDown(event: ReactKeyboardEvent<SVGCircleElement>, dot: Dot) {
     if (!canPlay || question || bonusSelect || finished || (event.key !== 'Enter' && event.key !== ' ')) return;
     event.preventDefault();
-    if (!keyboardStart) { setKeyboardStart(dot); setMessage('בחר כעת נקודה סמוכה כדי להשלים קו'); return; }
+    if (!keyboardStart) { setKeyboardStart(dot); setMessage(gameplayGuidance(locale,'chooseAdjacent')); return; }
     const chosen = edgeBetween(keyboardStart, dot, state.rows, state.cols);
     setKeyboardStart(null);
     if (chosen && !state.edges[chosen]) { play('draw'); void pick(chosen); }
-    else setMessage('יש לבחור רק שתי נקודות סמוכות עם קו פנוי.');
+    else setMessage(gameplayGuidance(locale,'invalidKeyboardLine'));
   }
 
   const colors: Record<Side, string> = {
