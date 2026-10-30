@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 
-for(const viewport of [{width:1280,height:800},{width:1024,height:768}]){
+for(const viewport of [{width:1280,height:800},{width:1024,height:768},{width:768,height:1024}]){
  test('compact playfield fits desktop/tablet viewport '+viewport.width+'x'+viewport.height,async({page},testInfo)=>{
   test.skip(testInfo.project.name!=='chromium-desktop','Viewport-specific desktop layout regression');
   await page.setViewportSize(viewport);
