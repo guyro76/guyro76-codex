@@ -5,6 +5,7 @@ import type {SupabaseClient} from '@supabase/supabase-js';
 import type {ActiveLocale} from '../lib/i18n';
 import {cardById,localStageCard,readLocalAlbum,saveLocalAlbum,type StageCard,type LocalEarned} from '../lib/stageRewards';
 import {intermissionText,intermissionWord,intermissionPrize,intermissionCard} from '../lib/intermissionLocales';
+import {STAGE_COUNT} from '../lib/campaignStages';
 
 type RewardProps={
   stageKey:string;
@@ -154,8 +155,8 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
         </div>}
         {played && <div className='lumen-prize-won' role='status' aria-live='polite'><strong>{translate('🎉 הפרס שלך:','🎉 Your prize:')} {showPrize(prize)}</strong><span>{translate('נשמר באוסף המשחק שלך.','Saved to your game collection.')}</span></div>}
         {notice&&<p role='alert'>{notice}</p>}
-        {stageNumber<30 ? <button type='button' className='lumen-next-button' onClick={onAdvance}>{translate('המשך לשלב הבא ←','Continue to next stage →')}</button>
-         : <p className='lumen-campaign-complete'>{translate('🏆 השלמת את כל 30 השלבים — אלוף הטריוויה!','🏆 You completed all 30 stages — Trivia Champion!')}</p>}
+        {stageNumber<STAGE_COUNT ? <button type='button' className='lumen-next-button' onClick={onAdvance}>{translate('המשך לשלב הבא ←','Continue to next stage →')}</button>
+         : <p className='lumen-campaign-complete'>{translate('🏆 השלמת את כל 100 השלבים — אלוף הטריוויה!','🏆 You completed all 100 stages — Trivia Champion!')}</p>}
         <button type='button' className='lumen-album-trigger' onClick={()=>setAlbumExpanded(v=>!v)} aria-expanded={albumExpanded}>{translate('📚 האלבום שלי ·','📚 My album ·')} {album.length} {translate('קלפים','cards')}</button>
         {albumExpanded&&<div className='lumen-album-grid'>{[...album].reverse().slice(0,12).map(item=>{
           const found=cardById(item.cardId);
