@@ -1385,6 +1385,21 @@ export default function TriviaGame() {
     `}</style>
     <GameTimeBar locale={locale}/>
     <div className='skin-picker-bar'>
+      <button type='button' className='trivia-sound-toggle' data-testid='trivia-sound-toggle'
+        aria-label={muted?(locale==='he'?'הפעל צלילים':locale==='en'?'Turn sound on':locale==='ru'?'Включить звук':locale==='fr'?'Activer le son':locale==='es'?'Activar sonido':'تشغيل الصوت'):
+           (locale==='he'?'השתק צלילים':locale==='en'?'Mute sound':locale==='ru'?'Выключить звук':locale==='fr'?'Couper le son':locale==='es'?'Silenciar sonido':'كتم الصوت')}
+        aria-pressed={!muted} onClick={()=>{
+          const enable=muted||volume===0;
+          if(enable){
+            unlockGameAudio();
+            if(volume===0)setVolume(70);
+            playGameSound('correct',{muted:false,volume:(volume===0?70:volume)/100});
+          }
+          setMuted(!enable);
+        }}>
+        <span aria-hidden='true'>{muted||volume===0?'🔇':'🔊'}</span>
+        <strong>{locale==='he'?'צליל':locale==='en'?'Sound':locale==='ru'?'Звук':locale==='fr'?'Son':locale==='es'?'Sonido':'الصوت'}</strong>
+      </button>
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
         aria-label={tr('עיצוב המשחק')} title={tr('בחר סקין למשחק')}>
