@@ -21,6 +21,7 @@ const weatherTranslations:Record<ActiveLocale,Record<WeatherName,string>>={
  en:{Clear:'Clear','Partly cloudy':'Partly cloudy',Cloudy:'Cloudy',Fog:'Fog',Rain:'Rain',Snow:'Snow',Showers:'Showers',Thunderstorms:'Thunderstorms',Variable:'Variable'},
  ru:{Clear:'Ясно','Partly cloudy':'Переменная облачность',Cloudy:'Облачно',Fog:'Туман',Rain:'Дождь',Snow:'Снег',Showers:'Ливни',Thunderstorms:'Грозы',Variable:'Переменная погода'},
  fr:{Clear:'Dégagé','Partly cloudy':'Partiellement nuageux',Cloudy:'Nuageux',Fog:'Brouillard',Rain:'Pluie',Snow:'Neige',Showers:'Averses',Thunderstorms:'Orages',Variable:'Variable'},
+ es:{Clear:'Despejado','Partly cloudy':'Parcialmente nublado',Cloudy:'Nublado',Fog:'Niebla',Rain:'Lluvia',Snow:'Nieve',Showers:'Chubascos',Thunderstorms:'Tormentas',Variable:'Variable'},
  ar:{Clear:'صافٍ','Partly cloudy':'غائم جزئيًا',Cloudy:'غائم',Fog:'ضباب',Rain:'ممطر',Snow:'ثلج',Showers:'زخات مطر',Thunderstorms:'عواصف رعدية',Variable:'متغير'}
 };
 const labels:Record<ActiveLocale,{area:string;time:string;weather:string;loading:string;unavailable:string;source:string;version:string;updated:string;credit:string;status:string;}>={
@@ -28,11 +29,13 @@ const labels:Record<ActiveLocale,{area:string;time:string;weather:string;loading
  en:{area:'CURRENT TIME · ISRAEL',time:'Time in Israel',weather:'WEATHER IN ISRAEL',loading:'Loading weather…',unavailable:'Weather unavailable',source:'Weather: Open-Meteo',version:'GAME VERSION',updated:'Updated',credit:'Developer credit',status:'Game status: time, date, weather and version'},
  ru:{area:'ВРЕМЯ В ИЗРАИЛЕ',time:'Время в Израиле',weather:'ПОГОДА В ИЗРАИЛЕ',loading:'Загрузка погоды…',unavailable:'Погода недоступна',source:'Погода: Open-Meteo',version:'ВЕРСИЯ ИГРЫ',updated:'Обновлено',credit:'Сведения о разработчике',status:'Игровой статус: время, дата, погода и версия'},
  fr:{area:'HEURE EN ISRAËL',time:'Heure en Israël',weather:'MÉTÉO EN ISRAËL',loading:'Chargement de la météo…',unavailable:'Météo indisponible',source:'Météo : Open-Meteo',version:'VERSION DU JEU',updated:'Mis à jour',credit:'Crédits du créateur',status:'État du jeu : heure, date, météo et version'},
+ es:{area:'HORA EN ISRAEL',time:'Hora en Israel',weather:'EL TIEMPO EN ISRAEL',loading:'Cargando el tiempo…',unavailable:'El tiempo no está disponible',source:'Meteorología: Open-Meteo',version:'VERSIÓN DEL JUEGO',updated:'Actualizado',credit:'Créditos del creador',status:'Estado del juego: hora, fecha, tiempo y versión'},
  ar:{area:'الوقت في إسرائيل',time:'الوقت في إسرائيل',weather:'الطقس في إسرائيل',loading:'جارٍ تحميل الطقس…',unavailable:'الطقس غير متاح',source:'الطقس: Open-Meteo',version:'إصدار اللعبة',updated:'تم التحديث',credit:'معلومات عن المطوّر',status:'حالة اللعبة: الوقت والتاريخ والطقس والإصدار'}
 };
-const cityTranslations:Record<'ru'|'fr'|'ar',Record<string,string>>={
+const cityTranslations:Record<'ru'|'fr'|'ar'|'es',Record<string,string>>={
  ru:{harish:'Хариш',telaviv:'Тель-Авив',jerusalem:'Иерусалим',haifa:'Хайфа',beersheva:'Беэр-Шева',eilat:'Эйлат'},
  fr:{harish:'Harish',telaviv:'Tel-Aviv',jerusalem:'Jérusalem',haifa:'Haïfa',beersheva:'Beer-Sheva',eilat:'Eilat'},
+ es:{harish:'Harish',telaviv:'Tel Aviv',jerusalem:'Jerusalén',haifa:'Haifa',beersheva:'Beerseba',eilat:'Eilat'},
  ar:{harish:'حريش',telaviv:'تل أبيب',jerusalem:'القدس',haifa:'حيفا',beersheva:'بئر السبع',eilat:'إيلات'}
 };
 function condition(code:number,locale:ActiveLocale){
@@ -108,7 +111,7 @@ export default function GameTimeBar({locale}:{locale:ActiveLocale}){
    setCityId(next);
    try{localStorage.setItem('trivia-weather-city',next)}catch{}
  };
- const intlLocale=locale==='he'?'he-IL':locale==='en'?'en-GB':locale==='ru'?'ru-RU':locale==='fr'?'fr-FR':'ar-EG-u-ca-gregory';
+ const intlLocale=locale==='he'?'he-IL':locale==='en'?'en-GB':locale==='ru'?'ru-RU':locale==='fr'?'fr-FR':locale==='es'?'es-ES':'ar-EG-u-ca-gregory';
  const date=now?new Intl.DateTimeFormat(intlLocale,{timeZone:zone,day:'2-digit',month:'2-digit',year:'numeric'}).format(now):'--/--/----';
  const clock=now?new Intl.DateTimeFormat('en-GB',{timeZone:zone,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(now):'--:--:--';
  const hebrew=now&&locale==='he'?new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{timeZone:zone,day:'numeric',month:'long',year:'numeric'}).format(now):null;

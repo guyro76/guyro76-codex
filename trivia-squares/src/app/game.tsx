@@ -12,6 +12,8 @@ import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
+import { spanishQuestions } from '../lib/spanishQuestions';
+import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
@@ -41,9 +43,9 @@ type Mode = 'bot' | 'online' | 'local' | 'solo';
 type Question = { text: string; answers: string[]; edge?: string; id?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus' | 'premium_bonus'; premium?: boolean; premiumOwner?: Side; deadline_at?: string | null; extensions?: number };
 type WrongAnswerFeedback = { text:string; answers:string[]; selectedIndex:number; correctIndex:number | null };
 type LocalSourceQuestion={id:number;text:string;answers:string[];correct:number;category:string;difficulty:number;locale:ActiveLocale};
-const cacheLocales:ActiveLocale[]=['he','en','ru','fr','ar'];
-const blankQuestionCache=():Record<ActiveLocale,LocalSourceQuestion[]>=>({he:[],en:[],ru:[],fr:[],ar:[]});
-const blankCursorCache=():Record<ActiveLocale,number>=>({he:0,en:0,ru:0,fr:0,ar:0});
+const cacheLocales:ActiveLocale[]=['he','en','ru','fr','ar','es'];
+const blankQuestionCache=():Record<ActiveLocale,LocalSourceQuestion[]>=>({he:[],en:[],ru:[],fr:[],ar:[],es:[]});
+const blankCursorCache=():Record<ActiveLocale,number>=>({he:0,en:0,ru:0,fr:0,ar:0,es:0});
 type GameState = {
   rows: number;
   cols: number;
@@ -72,17 +74,19 @@ const skins:{id:SkinId;he:string;en:string;colors:[string,string,string]}[]=[
  {id:'future',he:'עתידני AI · סגול כתום',en:'AI Future · Purple & Orange',colors:['#42117E','#F15A24','#E946CC']}
 ];
 
-const skinNames:Record<'ru'|'fr'|'ar',Record<SkinId,string>>={
+const skinNames:Record<'ru'|'fr'|'ar'|'es',Record<SkinId,string>>={
  ru:{regular:'Оригинальный',urban:'Городской',vintage:'Классический винтаж',retro:'Ретро-аркада',pop:'Поп-арт',future:'AI: фиолетовый и оранжевый'},
  fr:{regular:'Original',urban:'Métropole urbaine',vintage:'Vintage classique',retro:'Arcade rétro',pop:'Pop Art',future:'IA futuriste : violet et orange'},
- ar:{regular:'الأصلي',urban:'المدينة الحديثة',vintage:'كلاسيكي عتيق',retro:'ألعاب ريترو',pop:'فن البوب',future:'مستقبلي بالبنفسجي والبرتقالي'}
+ ar:{regular:'الأصلي',urban:'المدينة الحديثة',vintage:'كلاسيكي عتيق',retro:'ألعاب ريترو',pop:'فن البوب',future:'مستقبلي بالبنفسجي والبرتقالي'},
+ es:{regular:'Original',urban:'Urbano',vintage:'Clásico vintage',retro:'Arcade retro',pop:'Arte pop',future:'IA futurista · violeta y naranja'}
 };
 const authorCredits:Record<ActiveLocale,string>={
  he:'© 2026 תוכנן ובוצע ע״י גיא רוזנברג · כל הזכויות שמורות ©',
  en:'© 2026 Designed and developed by Guy Rosenberg · All rights reserved ©',
  ru:'© 2026 Создано Гаем Розенбергом · Все права защищены ©',
  fr:'© 2026 Conçu et développé par Guy Rosenberg · Tous droits réservés ©',
- ar:'© 2026 تصميم وتطوير غاي روزنبرغ · جميع الحقوق محفوظة ©'
+ ar:'© 2026 تصميم وتطوير غاي روزنبرغ · جميع الحقوق محفوظة ©',
+ es:'© 2026 Diseñado y desarrollado por Guy Rosenberg · Todos los derechos reservados ©'
 };
 
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
@@ -159,7 +163,7 @@ export default function TriviaGame() {
     if(!client || !user)return true;
     const {data:stats,error:statsError}=await client.rpc('trivia_my_question_stats');
     if(statsError||!stats)return false;
-    const total=['he','en','ru','fr','ar'].reduce((count,key)=>{
+    const total=['he','en','ru','fr','ar','es'].reduce((count,key)=>{
       const value=(stats as Record<string,{seen?:number}>)[key];
       return count+Number(value?.seen||0);
     },0);
@@ -281,7 +285,7 @@ export default function TriviaGame() {
       ...(locale === 'en' ? englishQuestions : offlineQuestions),
       ...freshLocalQuestions(locale,countLocalReserve(locale))
     ]
-    : internationalQuestions.filter(q=>q.locale===locale);
+    : locale==='es'?spanishQuestions:internationalQuestions.filter(q=>q.locale===locale);
   const effectiveQuestionBank=[...questionBank,...remoteQuestionCache.current[locale]];
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
@@ -1381,10 +1385,10 @@ export default function TriviaGame() {
     </div>
     <header className='hero'>
       <button type='button' className='app-menu-trigger'
-        aria-label={locale==='he'?'פתח תפריט משחק':locale==='en'?'Open game menu':locale==='ru'?'Открыть меню игры':locale==='fr'?'Ouvrir le menu du jeu':'افتح قائمة اللعبة'}
+        aria-label={locale==='he'?'פתח תפריט משחק':locale==='en'?'Open game menu':locale==='ru'?'Открыть меню игры':locale==='fr'?'Ouvrir le menu du jeu':locale==='es'?'Abrir el menú del juego':'افتح قائمة اللعبة'}
         aria-haspopup='dialog' onClick={()=>openGameMenu('stages')} disabled={!!question}>
         <span aria-hidden='true' className='app-hamburger-lines'><i/><i/><i/></span>
-        <span className='app-menu-trigger-label'>{locale==='he'?'תפריט':locale==='en'?'Menu':locale==='ru'?'Меню':locale==='fr'?'Menu':'القائمة'}</span>
+        <span className='app-menu-trigger-label'>{locale==='he'?'תפריט':locale==='en'?'Menu':locale==='ru'?'Меню':locale==='fr'?'Menu':locale==='es'?'Menú':'القائمة'}</span>
       </button>
       {user && <div className='google-player-header' aria-label={tr('החשבון המחובר')}>
         {googlePhoto ? <img src={googlePhoto} referrerPolicy='no-referrer' alt={tr('תמונת הפרופיל שלך מ-Google')}
@@ -1403,6 +1407,8 @@ export default function TriviaGame() {
           onClick={()=>setLocale('fr')}>Français</button>
         <button type='button' lang='ar' aria-pressed={locale==='ar'} disabled={!!question} className='locale-option'
           onClick={()=>setLocale('ar')}>العربية</button>
+        <button type='button' lang='es' aria-pressed={locale==='es'} disabled={!!question} className='locale-option'
+          onClick={()=>setLocale('es')}>Español</button>
       </div>
       <div className='hero-brand'>
         <TriviaMark label={locale==='he'?'לוגו טריוויה ריבועים':'Trivia Squares logo'} size={46}/>
@@ -1423,13 +1429,13 @@ export default function TriviaGame() {
       </div>
     </header>
 
-    <section className='campaign-section' aria-label={locale==='en'?'Thirty sequential stages':'שלושים שלבים לפי סדר'}>
+    <section className='campaign-section' aria-label={locale==='es'?'Treinta niveles consecutivos':locale==='en'?'Thirty sequential stages':'שלושים שלבים לפי סדר'}>
       <div className='campaign-heading'>
-        <h2>{locale==='en'?'Adventure: 30 stages':'הרפתקה: 30 שלבים'}</h2>
-        <span>{locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
+        <h2>{locale==='es'?'Aventura: 30 niveles':locale==='en'?'Adventure: 30 stages':'הרפתקה: 30 שלבים'}</h2>
+        <span>{locale==='es'?'Completados: ':locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
       </div>
       <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={30} aria-valuenow={completedStage}
-           aria-label={locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
+           aria-label={locale==='es'?'Niveles completados':locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
         <span style={{width:(completedStage/STAGE_COUNT*100)+'%'}}/>
       </div>
       <button type='button' className='campaign-stages-toggle' aria-haspopup='dialog'
@@ -1438,6 +1444,7 @@ export default function TriviaGame() {
          locale==='en'?'Choose stage · '+stageId+' / '+STAGE_COUNT:
          locale==='ru'?'Выбор уровня · '+stageId+' / '+STAGE_COUNT:
          locale==='fr'?'Choisir le niveau · '+stageId+' / '+STAGE_COUNT:
+         locale==='es'?'Elegir nivel · '+stageId+' / '+STAGE_COUNT:
          'اختيار المرحلة · '+stageId+' / '+STAGE_COUNT}
         <span aria-hidden='true'>▾</span>
       </button>
@@ -1450,7 +1457,7 @@ export default function TriviaGame() {
       <section className='glass-panel arena-panel'>
         <div className='arena-title'>
           <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
-          <div className='level-pill'>{locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
+          <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
         </div>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
@@ -1594,46 +1601,46 @@ export default function TriviaGame() {
 
       <aside className='side-stack'>
         <dialog ref={menuRef} className='app-menu-dialog'
-          aria-label={locale==='he'?'תפריט המשחק':locale==='en'?'Game menu':'Game navigation'}
+          aria-label={locale==='he'?'תפריט המשחק':locale==='es'?'Menú del juego':locale==='en'?'Game menu':'Game navigation'}
           onClick={event=>{if(event.target===event.currentTarget)event.currentTarget.close()}}>
           <div className='app-menu-shell' dir={localeDirection(locale)}>
             <div className='app-menu-heading'>
-              <div className='app-menu-brand'><TriviaMark label={locale==='he'?'סמל טריוויה ריבועים':'Trivia Squares'} size={40}/><div><strong>{tr('טריוויה ריבועים')}</strong><small>{locale==='he'?'תפריט המשחק':locale==='en'?'Game navigation':'Game menu'}</small></div></div>
-              <button type='button' className='app-menu-close' aria-label={locale==='he'?'סגור תפריט':'Close menu'} onClick={()=>menuRef.current?.close()}>✕</button>
+              <div className='app-menu-brand'><TriviaMark label={locale==='he'?'סמל טריוויה ריבועים':'Trivia Squares'} size={40}/><div><strong>{tr('טריוויה ריבועים')}</strong><small>{locale==='he'?'תפריט המשחק':locale==='es'?'Menú del juego':locale==='en'?'Game navigation':'Game menu'}</small></div></div>
+              <button type='button' className='app-menu-close' aria-label={locale==='he'?'סגור תפריט':locale==='es'?'Cerrar menú':'Close menu'} onClick={()=>menuRef.current?.close()}>✕</button>
             </div>
-            <nav className='app-menu-tabs' aria-label={locale==='he'?'ניווט במשחק':'Game navigation'}>
-              <button type='button' className='app-menu-tab app-menu-play' onClick={()=>menuRef.current?.close()}><span aria-hidden='true'>◈</span><span>{locale==='he'?'חזרה ללוח':locale==='en'?'Back to board':locale==='ru'?'К игре':locale==='fr'?'Retour au jeu':'العودة للعبة'}</span></button>
+            <nav className='app-menu-tabs' aria-label={locale==='he'?'ניווט במשחק':locale==='es'?'Navegación del juego':'Game navigation'}>
+              <button type='button' className='app-menu-tab app-menu-play' onClick={()=>menuRef.current?.close()}><span aria-hidden='true'>◈</span><span>{locale==='he'?'חזרה ללוח':locale==='en'?'Back to board':locale==='ru'?'К игре':locale==='fr'?'Retour au jeu':locale==='es'?'Volver al tablero':'العودة للعبة'}</span></button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='stages'?'page':undefined}
               onClick={()=>setMenuSection('stages')} data-section='stages'>
               <span aria-hidden='true'>▦</span>
-              <span>{locale==='he'?"שלבים":locale==='en'?"Stages":locale==='ru'?"Уровни":locale==='fr'?"Niveaux":"المراحل"}</span>
+              <span>{locale==='he'?"שלבים":locale==='en'?"Stages":locale==='ru'?"Уровни":locale==='fr'?"Niveaux":locale==='es'?"Niveles":"المراحل"}</span>
             </button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='modes'?'page':undefined}
               onClick={()=>setMenuSection('modes')} data-section='modes'>
               <span aria-hidden='true'>🎮</span>
-              <span>{locale==='he'?"מצבי משחק":locale==='en'?"Play modes":locale==='ru'?"Режимы":locale==='fr'?"Modes de jeu":"أوضاع اللعب"}</span>
+              <span>{locale==='he'?"מצבי משחק":locale==='en'?"Play modes":locale==='ru'?"Режимы":locale==='fr'?"Modes de jeu":locale==='es'?"Modos de juego":"أوضاع اللعب"}</span>
             </button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='profile'?'page':undefined}
               onClick={()=>setMenuSection('profile')} data-section='profile'>
               <span aria-hidden='true'>🎨</span>
-              <span>{locale==='he'?"התאמה אישית":locale==='en'?"Customize":locale==='ru'?"Профиль":locale==='fr'?"Personnalisation":"التخصيص"}</span>
+              <span>{locale==='he'?"התאמה אישית":locale==='en'?"Customize":locale==='ru'?"Профиль":locale==='fr'?"Personnalisation":locale==='es'?"Personalización":"التخصيص"}</span>
             </button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='rewards'?'page':undefined}
               onClick={()=>setMenuSection('rewards')} data-section='rewards'>
               <span aria-hidden='true'>★</span>
-              <span>{locale==='he'?"הישגים":locale==='en'?"Rewards":locale==='ru'?"Награды":locale==='fr'?"Récompenses":"المكافآت"}</span>
+              <span>{locale==='he'?"הישגים":locale==='en'?"Rewards":locale==='ru'?"Награды":locale==='fr'?"Récompenses":locale==='es'?"Recompensas":"المكافآت"}</span>
             </button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='account'?'page':undefined}
               onClick={()=>setMenuSection('account')} data-section='account'>
               <span aria-hidden='true'>♙</span>
-              <span>{locale==='he'?"חשבון":locale==='en'?"Account":locale==='ru'?"Аккаунт":locale==='fr'?"Compte":"الحساب"}</span>
+              <span>{locale==='he'?"חשבון":locale==='en'?"Account":locale==='ru'?"Аккаунт":locale==='fr'?"Compte":locale==='es'?"Cuenta":"الحساب"}</span>
             </button>
             </nav>
             <div className='app-menu-content' data-active-section={menuSection}>
               <section className='app-menu-pane' hidden={menuSection!=='stages'} aria-label={locale==='he'?'בחירת שלב':'Choose stage'}>
-                <h2 className='panel-title'>{locale==='he'?'השלבים שלי · '+completedStage+' הושלמו':locale==='en'?'Campaign stages · '+completedStage+' completed': 'Stages'}</h2>
+                <h2 className='panel-title'>{locale==='he'?'השלבים שלי · '+completedStage+' הושלמו':locale==='es'?'Mis niveles · '+completedStage+' completados':locale==='en'?'Campaign stages · '+completedStage+' completed': 'Stages'}</h2>
       <div id='campaign-stage-grid' className='campaign-track menu-stages-grid'
-         aria-label={locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
+         aria-label={locale==='es'?'Elegir un nivel desbloqueado':locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
         {CAMPAIGN_STAGES.map(stage=>{
           const unlocked=stage.id<=stageUnlocked;
           const isSelected=stage.id===stageId;
@@ -1644,13 +1651,13 @@ export default function TriviaGame() {
              onClick={()=>{chooseStage(stage.id);menuRef.current?.close()}}>
             <span className='campaign-stage-number'>{isSelected?'✦ ':unlocked?'': '🔒 '}{String(stage.id).padStart(2,'0')}</span>
             <strong className='campaign-stage-icon' aria-hidden='true'>{stage.icon}</strong>
-            <span className='campaign-stage-title'>{locale==='en'?stage.nameEn:stage.nameHe}</span>
-            <small>{unlocked?(locale==='en'?'Board':'לוח')+' '+stage.size+'×'+stage.size:(locale==='en'?'Locked':'נעול')}</small>
+            <span className='campaign-stage-title'>{locale==='es'?SPANISH_STAGE_NAMES[stage.id]:locale==='en'?stage.nameEn:stage.nameHe}</span>
+            <small>{unlocked?(locale==='es'?'Tablero ':locale==='en'?'Board ':'לוח ')+stage.size+'×'+stage.size:(locale==='es'?'Bloqueado':locale==='en'?'Locked':'נעול')}</small>
           </button>
         })}
       </div>
 
-                <p className='smalltxt'>{locale==='he'?'שלבים נפתחים לפי סדר. ההתקדמות הנוכחית נשמרת.':locale==='en'?'Stages unlock in order. Your progress is preserved.':'Progress is preserved.'}</p>
+                <p className='smalltxt'>{locale==='he'?'שלבים נפתחים לפי סדר. ההתקדמות הנוכחית נשמרת.':locale==='es'?'Los niveles se desbloquean en orden. Tu progreso se conserva.':locale==='en'?'Stages unlock in order. Your progress is preserved.':'Progress is preserved.'}</p>
               </section>
               <div className='settings-drawer-content'>
         <section className='glass-panel app-menu-pane' hidden={menuSection!=='modes'}>
