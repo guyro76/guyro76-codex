@@ -110,7 +110,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     if(selected==='wheel')setWheelTurns(t=>t+5+Math.floor(Math.random()*3));
     if(remoteMatchId&&client){
       const {data,error}=await client.rpc('trivia_stage_play',{p_match:remoteMatchId,p_game:selected,p_guess:selected==='word'?guess.trim():null});
-      if(error){setNotice(translate('לא ניתן לקבל את הפרס: ','Unable to award prize: ')+error.message);setPlaying(false);return;}
+      if(error){setNotice(translate('לא ניתן לקבל את הפרס: ','Unable to award prize: ')+error.message);setPlaying(false);setBurstBalloon(null);setCakeCut(false);cakeTriggered.current=false;return;}
       const result=String(data.prize||'');
       setPrize(result);setPlayed(true);onRemotePrize();
     }else{
