@@ -19,7 +19,7 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
   // Show the saved nickname at the centre and the separately configured avatar at the corner.
   // Scale long player names to the available cell width without changing ownership or save data.
   const label = name.trim() || mark;
-  const textSize = Math.max(9,Math.min(18,(width-14)/Math.max(1.8,Array.from(label).length*.66)));
+  const textSize = Math.max(12,Math.min(18,(width-14)/Math.max(1.8,Array.from(label).length*.66)));
   const textWidth = Math.min(width-12,Math.max(24,Array.from(label).length*textSize*.7));
   const corner = Math.min(12,width*.16);
   const sparkles=Array.from({length:8},(_,i)=>{
