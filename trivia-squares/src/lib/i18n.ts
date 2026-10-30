@@ -4,7 +4,7 @@
  * Strings are authored by editors, never machine-translated at runtime.
  */
 import {extraDictionaries} from './i18nExtra.ts';
-import {uiCompleteness} from './i18nCompleteness';
+import {uiCompleteness} from './i18nCompleteness.ts';
 export type ActiveLocale='he'|'en'|'ru'|'fr'|'ar'|'es';
 export type PlannedLocale=never;
 export const activeLocales=['he','en','ru','fr','ar','es'] as const;
