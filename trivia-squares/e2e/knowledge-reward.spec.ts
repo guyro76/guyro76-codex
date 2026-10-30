@@ -1,9 +1,11 @@
 import {test,expect} from '@playwright/test';
+import {answerDisplayedLocalQuestion,useOfflineQuestionFixtures} from './localQuestionFixture';
 
 test('an ordinary correct answer grants 5 credits and 10 knowledge points, including after reload',async({page},info)=>{
   test.skip(info.project.name!=='chromium-desktop','Desktop mouse case; touch gesture covered by game.spec.ts');
   // Exercise the same real first-run path as the passing gameplay E2E.
   // A stored player-name key alone does not activate a local game.
+  await useOfflineQuestionFixtures(page);
   await page.goto('/');
   const tutorial=page.getByRole('dialog',{name:'הסבר משחק'});
   await expect(tutorial).toBeVisible();
@@ -25,7 +27,7 @@ test('an ordinary correct answer grants 5 credits and 10 knowledge points, inclu
   await page.mouse.move(b.x,b.y,{steps:12});await page.mouse.up();
   const question=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(question).toBeVisible();
-  await question.getByRole('button',{name:/קנברה/}).click();
+  await answerDisplayedLocalQuestion(question,true);
   await expect(question).toHaveCount(0);
   await expect(page.locator('.status-line')).toContainText('+5 קרדיטים');
   await expect(page.locator('.arena-quick-wallet')).toContainText('🪙 5');

@@ -40,3 +40,14 @@ test('recent topic history is bounded and rejects invalid stored data',()=>{
  assert.deepEqual(readRecentQuestionTopics(['capitals','fake','music']),['capitals','music']);
  assert.equal(readRecentQuestionTopics(Array(40).fill('music')).length,8);
 });
+
+test('first turn honors a topic-restricted question pool without geography override',()=>{
+ const available=[
+  {category:'גאוגרפיה',text:'מהי בירת אוסטרליה?'},
+  {category:'מוזיקה',text:'מי שר את שיר הנושא?'}
+ ];
+ const preferred=available.filter(q=>q.category==='מוזיקה');
+ const choice=selectVariedQuestion(preferred,[],()=>0);
+ assert.equal(choice?.topic,'music');
+ assert.equal(choice?.question,preferred[0]);
+});

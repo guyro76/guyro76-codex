@@ -1,6 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
+import {answerDisplayedLocalQuestion,useOfflineQuestionFixtures} from './localQuestionFixture';
 
 async function ready(page: Page) {
+  await useOfflineQuestionFixtures(page);
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'טריוויה ריבועים' })).toBeVisible();
   const tutorial = page.getByRole('dialog', { name: 'הסבר משחק' });
@@ -71,8 +73,7 @@ test('player draws with a marker from one dot to a neighbor, then answers the qu
   await draw(page,[1,1],[1,2]);
   const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(quiz).toBeVisible();
-  await expect(quiz.getByText('מהי בירת אוסטרליה?')).toBeVisible();
-  await quiz.getByRole('button',{name:/קנברה/}).click();
+  await answerDisplayedLocalQuestion(quiz,true);
   await expect(quiz).toHaveCount(0);
   await expect(page.getByText('תשובה נכונה!',{exact:false})).toBeVisible();
   await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}')?.edges?.['h-0-0'])).toBe('host');
@@ -90,7 +91,7 @@ test('non-adjacent or diagonal dragging never creates an edge',async({page})=>{
 test('successful local move remains on board after page reload',async({page})=>{
   await ready(page);
   await draw(page,[1,1],[1,2]);
-  await page.getByRole('dialog',{name:'שאלת טריוויה'}).getByRole('button',{name:/קנברה/}).click();
+  await answerDisplayedLocalQuestion(page.getByRole('dialog',{name:'שאלת טריוויה'}),true);
   await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}')?.edges?.['h-0-0'])).toBe('host');
   await page.reload();
   await expect(page.locator('svg.board')).toBeVisible();
@@ -163,7 +164,7 @@ test('marker ink color is independent from territory color',async({page})=>{
   await nav.getByRole('button',{name:'בחר צבע קו #EF4444'}).click();
   await nav.getByRole('button',{name:'סגור תפריט'}).click();
   await draw(page,[1,1],[1,2]);
-  await page.getByRole('dialog',{name:'שאלת טריוויה'}).getByRole('button',{name:/קנברה/}).click();
+  await answerDisplayedLocalQuestion(page.getByRole('dialog',{name:'שאלת טריוויה'}),true);
   await expect(page.locator('svg.board line[stroke="#EF4444"][stroke-width="10"]')).toHaveCount(1);
 });
 
@@ -172,7 +173,7 @@ test('each subsequent question is new and never repeats the previous question',a
   await draw(page,[1,1],[1,2]);
   const first=page.getByRole('dialog',{name:'שאלת טריוויה'});
   const firstText=await first.locator('h2').innerText();
-  await first.getByRole('button',{name:/סידני/}).click();
+  await answerDisplayedLocalQuestion(first,false);
   const feedback=page.getByRole('dialog',{name:'התשובה הנכונה היא:'});
   await expect(feedback).toBeVisible();
   await feedback.getByRole('button',{name:'המשך למשחק'}).click();
@@ -215,8 +216,7 @@ test('new game reloads reviewed questions without repeating any previously displ
   const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(quiz).toBeVisible();
   const first=await quiz.locator('h2').innerText();
-  const answer=quiz.getByRole('button',{name:/סידני/});
-  await answer.click();
+  await answerDisplayedLocalQuestion(quiz,false);
   await page.getByRole('dialog',{name:'התשובה הנכונה היא:'}).getByRole('button',{name:'המשך למשחק'}).click();
   await page.getByRole('button',{name:/התחל משחק/}).click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-pool-release-v1')||'{}').he)).toBe(3);
@@ -392,12 +392,12 @@ test('a wrong answer reveals the correct option in a modal and blocks board prog
   await ready(page);
   await draw(page,[1,1],[1,2]);
   const question=page.getByRole('dialog',{name:'שאלת טריוויה'});
-  await question.getByRole('button',{name:/סידני/}).click();
+  const answered=await answerDisplayedLocalQuestion(question,false);
   await expect(question).toHaveCount(0);
   const feedback=page.getByRole('dialog',{name:'התשובה הנכונה היא:'});
   await expect(feedback).toBeVisible();
-  await expect(feedback.locator('.feedback-correct')).toContainText('קנברה');
-  await expect(feedback.locator('.feedback-wrong')).toContainText('סידני');
+  await expect(feedback.locator('.feedback-correct')).toContainText(answered.correctAnswer);
+  await expect(feedback.locator('.feedback-wrong')).toContainText(answered.chosenAnswer);
   await expect(page.locator('svg.board')).toBeVisible();
   await expect(page.getByRole('button',{name:/התחל משחק/})).toBeVisible();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}').edges?.['h-0-0'])).toBeUndefined();

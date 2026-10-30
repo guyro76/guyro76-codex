@@ -879,9 +879,9 @@ export default function TriviaGame() {
       // Enforce rotating broad topics rather than only raw category labels.
       const chosen=selectVariedQuestion(remaining,recentQuestionTopics.current);
       if(!chosen){setEdge(null);return;}
-      const q=usedLocalQuestionIds.current.size===0&&locale==='he'
-        ? remaining.find(v=>v.text.includes('בירת אוסטרליה'))||chosen.question
-        : chosen.question;
+      // Respect the player's selected topics from the first question onwards.
+      // Never override balanced rotation with a hard-coded geography question.
+      const q=chosen.question;
       if(preferred.length===0){
         setMessage(locale==='he'
           ? 'השאלות בנושאים שבחרת אזלו. מצאנו עבורך שאלה חדשה בנושא אחר, בלי למחוק את ההתקדמות.'

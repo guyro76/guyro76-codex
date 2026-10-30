@@ -1,6 +1,7 @@
 'use client';
 import type { KeyboardEvent } from 'react';
 import type {ActiveLocale} from '../lib/i18n';
+import {captureTileA11yLabel} from '../lib/captureTileA11y';
 
 export type CaptureStyle = 'lumen' | 'neon' | 'seal' | 'prism' | 'token';
 
@@ -26,16 +27,14 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
     const reach=Math.min(width,height)*.38;
     return {x:cx+Math.cos(angle)*reach,y:cy+Math.sin(angle)*reach,r:i%2===0?1.8:1.1};
   });
-  const hitLabel = locale==='he'
-    ? 'שינוי בעלות על ריבוע בשורה '+(row+1)+' עמודה '+(col+1)+'. שייך ל'+name
-    : 'Change owner of square row '+(row+1)+' column '+(col+1)+'. Currently '+name;
+  const hitLabel = captureTileA11yLabel(locale,{row,col,name,selectable:true});
   const onKeyDown=(event:KeyboardEvent<SVGGElement>)=>{
     if(selectable && (event.key==='Enter' || event.key===' ')){event.preventDefault();event.stopPropagation();onSelect?.()}
   };
   return <g className={'capture-tile capture-style-'+style} data-square={row+'-'+col}
     data-capture-style={style} data-owner={name}
     role={selectable?'button':'img'} tabIndex={selectable?0:undefined}
-    aria-label={selectable?hitLabel:(locale==='he'?'הריבוע של '+name:'Square claimed by '+name)} onClick={selectable?onSelect:undefined}
+    aria-label={selectable?hitLabel:captureTileA11yLabel(locale,{row,col,name,selectable:false})} onClick={selectable?onSelect:undefined}
     onKeyDown={selectable?onKeyDown:undefined}
     style={{cursor:selectable?'pointer':undefined}}>
     <defs>
