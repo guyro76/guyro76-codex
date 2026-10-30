@@ -541,3 +541,35 @@ test('guest reports a bad question without giving up the line or exposing a prof
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}'));
  expect(Object.keys(saved.edges||{})).toHaveLength(0);
 });
+
+
+for(const direction of [
+  {name:'left to right',a:[1,1],b:[1,2]},
+  {name:'right to left',a:[1,2],b:[1,1]},
+  {name:'top to bottom',a:[1,1],b:[2,1]},
+  {name:'bottom to top',a:[2,1],b:[1,1]}
+] as const){
+  test('swipe '+direction.name+' between adjacent dots always opens a question',async({page})=>{
+    await ready(page);
+    await draw(page,[...direction.a],[...direction.b]);
+    const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
+    await expect(quiz).toBeVisible();
+    const displayed=await quiz.locator('h2').innerText();
+    expect(displayed.length).toBeGreaterThan(10);
+    expect(displayed).not.toContain('undefined');
+    const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
+    expect(saved.length).toBe(1);
+    await answerDisplayedLocalQuestion(quiz,true);
+    await expect(quiz).toHaveCount(0);
+  });
+}
+test('finger release 72 percent toward neighboring dot still opens trivia without a diagonal',async({page},info)=>{
+ test.skip(info.project.name!=='chromium-desktop','Sub-dot screen position verified in desktop Chromium');
+ await ready(page);
+ const a=await dotPoint(page,1,1),b=await dotPoint(page,1,2);
+ await page.mouse.move(a.x,a.y);
+ await page.mouse.down();
+ await page.mouse.move(a.x+(b.x-a.x)*.72,a.y+(b.y-a.y)*.72,{steps:12});
+ await page.mouse.up();
+ await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toBeVisible();
+});
