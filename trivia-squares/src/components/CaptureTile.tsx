@@ -15,7 +15,11 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
   const cx = x + width / 2, cy = y + height / 2;
   const radius = Math.min(width,height) * .265;
   const mark = (name.trim().slice(0,1) || '★').toLocaleUpperCase();
-  const textSize = Math.max(12,Math.min(28,radius*1.12));
+  // Show the player's saved name on every captured square, never the avatar emoji.
+  // Scale long player names to the available cell width without changing ownership or save data.
+  const label = name.trim() || mark;
+  const textSize = Math.max(9,Math.min(18,(width-14)/Math.max(1.8,Array.from(label).length*.66)));
+  const textWidth = Math.min(width-12,Math.max(24,Array.from(label).length*textSize*.7));
   const corner = Math.min(12,width*.16);
   const sparkles=Array.from({length:8},(_,i)=>{
     const angle=(i*2*Math.PI)/8-Math.PI/2;
@@ -85,8 +89,14 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
       : <circle className='capture-medallion' cx={cx} cy={cy} r={radius}
         fill='#101B3B' fillOpacity='.94' stroke={'url(#'+id+'-metal)'} strokeWidth={style==='token'?2.5:1.8}/>}
     <circle cx={cx} cy={cy} r={radius*.82} stroke={color} strokeOpacity='.56' fill='none' strokeWidth='.7'/>
-    <text className='capture-mark' x={cx} y={cy + textSize*.35} fontSize={style==='token'?Math.min(30,radius*1.18):textSize}
-      textAnchor='middle' fontWeight='900' fill='#FFFFFF' aria-hidden='true'>{icon || mark}</text>
+    <rect className='capture-name-backplate' x={cx-textWidth/2-4} y={cy-textSize*.9}
+      width={textWidth+8} height={textSize*1.8} rx={Math.min(8,textSize*.55)}
+      fill='#101B3B' fillOpacity='.95' stroke={color} strokeOpacity='.85' strokeWidth='1' aria-hidden='true'/>
+    <text className='capture-mark capture-player-name' x={cx} y={cy+textSize*.34}
+      fontSize={textSize} textAnchor='middle' fontWeight='900' fill='#FFFFFF'
+      direction={locale==='he'||locale==='ar'?'rtl':'ltr'}
+      textLength={Array.from(label).length*textSize*.7>width-14?width-14:undefined}
+      lengthAdjust='spacingAndGlyphs' aria-hidden='true'>{label}</text>
     <g className='capture-firework' aria-hidden='true' pointerEvents='none'>
       {sparkles.map((spark,i)=><circle key={i} className='capture-firework-spark' cx={spark.x} cy={spark.y} r={spark.r}
         fill={i%2===0?'#FFF5B1':'#FFFFFF'} style={{animationDelay:(.67+i*.037)+'s'}}/>)}
