@@ -290,13 +290,16 @@ test('first-run tutorial changes its instructional language without dismissing t
   await expect(he.getByTestId('tutorial-preview')).toHaveAttribute('data-locale','he');
 });
 
-test('30 campaign stages exist and later stages cannot be opened before completing the current board',async({page})=>{
+test('100 stages exist in compact five-stage chapters and locked levels cannot be opened',async({page})=>{
  await ready(page);
  const cards=page.locator('.campaign-stage-card');
- await expect(cards).toHaveCount(30);
+ await expect(cards).toHaveCount(5);
  await expect(page.locator('[data-stage="1"]')).toHaveAttribute('aria-current','step');
  await expect(page.locator('[data-stage="2"]')).toBeDisabled();
- await expect(page.locator('[data-stage="30"]')).toBeDisabled();
+ await page.getByRole('combobox',{name:'פרק'}).selectOption('20');
+ await expect(cards).toHaveCount(5);
+ await expect(page.locator('[data-stage="100"]')).toBeDisabled();
+ await page.getByRole('combobox',{name:'פרק'}).selectOption('1');
  await expect(page.getByText(/כל שלב נפתח רק אחרי שסוגרים/)).toBeVisible();
  await draw(page,[1,1],[1,2]);
  await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toBeVisible();
@@ -321,7 +324,7 @@ test('live clock shows Hebrew date only in Hebrew and copyright switches with lo
  await expect(page.getByRole('button',{name:/Online friend/})).toBeVisible();
  await expect(page.getByRole('button',{name:/Local/})).toBeVisible();
  await expect(page.getByText(/Registration is only needed for connected play/)).toBeVisible();
- await expect(page.locator('.campaign-stage-card')).toHaveCount(30);
+ await expect(page.locator('.campaign-stage-card')).toHaveCount(5);
 });
 
 
