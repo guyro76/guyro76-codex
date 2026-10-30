@@ -1656,7 +1656,7 @@ export default function TriviaGame() {
         <section className='glass-panel app-menu-pane' hidden={menuSection!=='modes'}>
           <h2 className='panel-title'>{tr("🎯 חדר המשחק")}</h2>
           <div className='mode-row'>
-            {([['solo','👤 משחק עצמאי','👤 Solo'],['bot','🤖 נגד מחשב','🤖 Vs computer'],['online','🌐 נגד חבר','🌐 Vs friend'],['local','👥 שניים במכשיר','👥 Two players'] ] as const).map(([value, he, en]) =>
+            {([['solo','👤 משחק עצמאי','👤 Solo'],['bot','🤖 נגד מחשב','🤖 Computer'],['online','🌐 נגד חבר','🌐 Online friend'],['local','👥 שניים במכשיר','👥 Local two players'] ] as const).map(([value, he, en]) =>
               <button key={value} className='choice' disabled={stageStarted&&!finished} aria-pressed={mode===value}
                 onClick={()=>{setMode(value);try{localStorage.setItem('trivia-mode-v2',value)}catch{};
                  if(value==='solo'&&!remote){setLocal(prev=>({...repairSoloBoard(prev),mode:'solo'}));setCapturePending(null)}
