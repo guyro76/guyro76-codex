@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicConfig';
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawing';
+import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween, edgeFromSwipe } from '../lib/dotDrawing';
 import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
@@ -1191,7 +1191,8 @@ export default function TriviaGame() {
     gesture.current = { pointerId: event.pointerId, start };
     inkPointsRef.current=[dotXY(start, state.rows, state.cols)];
     play('marker');
-    event.currentTarget.setPointerCapture(event.pointerId);
+    // Mobile Safari can reject capture on an SVG, but the drag must still start.
+    try{event.currentTarget.setPointerCapture(event.pointerId)}catch{}
     setTrace({ start, target: dotXY(start, state.rows, state.cols), end: null, ink: [dotXY(start, state.rows, state.cols)] });
   }
 
@@ -1222,12 +1223,11 @@ export default function TriviaGame() {
   function onBoardPointerUp(event: ReactPointerEvent<SVGSVGElement>) {
     const active = gesture.current;
     if (!active || event.pointerId !== active.pointerId) return;
-    const end = nearestDot(boardPoint(event), state.rows, state.cols);
-    const chosen = end ? edgeBetween(active.start, end, state.rows, state.cols) : null;
+    const chosen = edgeFromSwipe(active.start,boardPoint(event),state.rows,state.cols);
     gesture.current = null;
     inkPointsRef.current=[];
     setTrace(null);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    try{if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId)}catch{}
     if (chosen && !state.edges[chosen]) { play('draw'); void pick(chosen); }
     else setMessage(gameplayGuidance(locale,'drawAdjacent'));
   }
@@ -1237,7 +1237,7 @@ export default function TriviaGame() {
     gesture.current = null;
     inkPointsRef.current=[];
     setTrace(null);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    try{if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId)}catch{}
   }
 
   function onDotKeyDown(event: ReactKeyboardEvent<SVGCircleElement>, dot: Dot) {
