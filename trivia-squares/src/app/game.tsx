@@ -387,17 +387,31 @@ export default function TriviaGame() {
           if(stageFor(validStage).size===value.rows){
             const savedCapture=JSON.parse(localStorage.getItem('trivia-capture-settings-v1')||'{}') as {guestName?:string};
             const realGuest=hasActualOpponent(savedCapture.guestName,localStorage.getItem('trivia-player-name')||'');
-            const migrating=value.mode==='local'&&!realGuest;
+            // Migrate historic phantom player-2 squares in both old "local"
+            // and already-marked "solo" saves. Never touch a real two-player game.
+            const obsoleteLocalGuest=value.mode==='local'&&!realGuest;
+            const corruptSoloGuest=value.mode==='solo'&&(
+              value.turn!=='host'||Number(value.scores.guest||0)>0||
+              Object.values(value.owners).includes('guest')||
+              Object.values(value.edges).includes('guest'));
+            const migrating=obsoleteLocalGuest||corruptSoloGuest;
             const repaired=migrating?{...repairSoloBoard(value),mode:'solo' as const}:value;
             setLocal(repaired);setSize(repaired.rows);
             if(migrating){
-              setMode('solo');localStorage.setItem('trivia-mode-v2','solo');
-              // Restore earned credits and charms from the phantom player without clearing the board.
+              // Commit the repaired board immediately. A refresh must not undo it,
+              // and a previous Player 2 must not be recreated by stale mode data.
+              try{
+                localStorage.setItem('trivia-local-game-v1',JSON.stringify(repaired));
+                localStorage.setItem('trivia-mode-v2','solo');
+              }catch{}
+              setMode('solo');
+              // Transfer credits and time charms once, leaving the earned wallet intact.
               try{
                 const rewards=JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}');
                 localStorage.setItem('trivia-local-rewards',JSON.stringify({
+                  ...rewards,
                   credits:{host:Number(rewards.credits?.host||0)+Number(rewards.credits?.guest||0),guest:0},
-                  charms:{host:Number(rewards.charms?.host||0)+Number(rewards.charms?.guest||0),guest:0},wallet:rewards.wallet
+                  charms:{host:Number(rewards.charms?.host||0)+Number(rewards.charms?.guest||0),guest:0}
                 }));
               }catch{}
             }
