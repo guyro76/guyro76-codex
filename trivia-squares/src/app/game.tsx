@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicConfig';
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
@@ -30,6 +31,7 @@ import {CAMPAIGN_STAGES,STAGE_COUNT,stageFor,canOpenStage} from '../lib/campaign
 import './tutorial.css';
 import './premium.css';
 import './responsive-layout.css';
+import './welcome-interior-theme.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
@@ -1666,7 +1668,7 @@ export default function TriviaGame() {
           type='button' onClick={()=>setStageRewardOpen(true)}>
           {locale==='he'?'🎁 פתח שוב את משחק הביניים והפרסים':locale==='es'?'🎁 Abrir premios y minijuego':locale==='fr'?'🎁 Ouvrir les récompenses et le mini-jeu':locale==='ru'?'🎁 Открыть награды и мини-игру':locale==='ar'?'🎁 فتح المكافآت واللعبة المصغرة':'🎁 Open stage rewards and minigame'}
         </button>}
-        {finished && stageRewardReady && stageRewardOpen && <div className='stage-reward-modal-layer'
+        {finished && stageRewardReady && stageRewardOpen && typeof document !== 'undefined' && document.querySelector('main.trivia-app') && createPortal(<div className='stage-reward-modal-layer'
           role='dialog' aria-modal='true' aria-label={locale==='he'?'משחק הביניים ופרסי השלב':locale==='es'?'Minijuego y recompensas del nivel':locale==='fr'?'Mini-jeu et récompenses du niveau':locale==='ru'?'Мини-игра и награды этапа':locale==='ar'?'اللعبة المصغرة ومكافآت المرحلة':'Stage minigame and rewards'}
           onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();setStageRewardOpen(false);}}}>
           <div className='stage-reward-modal-inner'>
@@ -1687,7 +1689,7 @@ export default function TriviaGame() {
           onSound={rewardSound}
             />
           </div>
-        </div>}
+        </div>,document.querySelector('main.trivia-app')!)}
       </section>
 
       <aside className='side-stack'>
