@@ -55,6 +55,7 @@ test('QA: all literal game controls and answer-feedback strings are localized',a
   const translated=translate(locale,key);
   if(locale!=='en')assert.ok(Object.hasOwn(extraDictionaries[locale],key),'Missing native '+locale+' translation for: '+key);
   else assert.ok(Object.hasOwn(englishDictionary,key),'Missing English translation for: '+key);
-  assert.ok(!/[\u0590-\u05ff]/u.test(translated),'Untranslated control in '+locale+': '+key);
+  // The Hebrew option in the language picker intentionally uses its native script.
+  if(key!=='עברית')assert.ok(!/[\u0590-\u05ff]/u.test(translated),'Untranslated control in '+locale+': '+key);
  }
 });
