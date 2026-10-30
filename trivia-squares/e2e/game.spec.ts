@@ -305,18 +305,23 @@ test('first-run tutorial changes its instructional language without dismissing t
   await expect(he.getByTestId('tutorial-preview')).toHaveAttribute('data-locale','he');
 });
 
-test('30 campaign stages exist and later stages cannot be opened before completing the current board',async({page})=>{
+test('100 campaign stages are navigated in groups of five without skipping current stage',async({page})=>{
  await ready(page);
  const cards=page.locator('.campaign-stage-card');
- await expect(cards).toHaveCount(30);
- await expect(page.locator('[data-stage="1"]')).toHaveAttribute('aria-current','step');
- await expect(page.locator('[data-stage="2"]')).toBeDisabled();
- await expect(page.locator('[data-stage="30"]')).toBeDisabled();
+ await expect(cards).toHaveCount(5);
+ await page.getByRole('button',{name:'פתח תפריט משחק'}).click();
+ const nav=page.getByRole('dialog',{name:'תפריט המשחק'});
+ await expect(nav.locator('[data-stage="1"]')).toHaveAttribute('aria-current','step');
+ await expect(nav.locator('[data-stage="2"]')).toBeDisabled();
+ await nav.locator('#campaign-chapter-select').selectOption('20');
+ await expect(cards).toHaveCount(5);
+ await expect(nav.locator('[data-stage="100"]')).toBeDisabled();
+ await nav.locator('#campaign-chapter-select').selectOption('1');
+ await expect(nav.locator('[data-stage="1"]')).toHaveAttribute('aria-current','step');
+ await nav.getByRole('button',{name:'סגור תפריט'}).click();
  await expect(page.getByText(/כל שלב נפתח רק אחרי שסוגרים/)).toBeVisible();
  await draw(page,[1,1],[1,2]);
  await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toBeVisible();
- await expect(page.locator('[data-stage="2"]')).toBeDisabled();
- await expect(page.locator('output#board-size')).toContainText('3 × 3');
 });
 
 test('live clock shows Hebrew date only in Hebrew and copyright switches with locale',async({page})=>{
@@ -341,7 +346,7 @@ test('live clock shows Hebrew date only in Hebrew and copyright switches with lo
  await nav.getByRole('button',{name:'Account'}).click();
  await expect(nav.getByText(/Registration is only needed for connected play/)).toBeVisible();
  await nav.getByRole('button',{name:'Close menu'}).click();
- await expect(page.locator('.campaign-stage-card')).toHaveCount(30);
+ await expect(page.locator('.campaign-stage-card')).toHaveCount(5);
 });
 
 
