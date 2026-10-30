@@ -15,7 +15,7 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
   const cx = x + width / 2, cy = y + height / 2;
   const radius = Math.min(width,height) * .265;
   const mark = (name.trim().slice(0,1) || '★').toLocaleUpperCase();
-  // Show the player's saved name on every captured square, never the avatar emoji.
+  // Show the saved nickname at the centre and the separately configured avatar at the corner.
   // Scale long player names to the available cell width without changing ownership or save data.
   const label = name.trim() || mark;
   const textSize = Math.max(9,Math.min(18,(width-14)/Math.max(1.8,Array.from(label).length*.66)));
@@ -112,7 +112,15 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
           textOverflow:'ellipsis',unicodeBidi:'isolate'}}>{label}</span>
       </div>
     </foreignObject>
+    {icon && <foreignObject className='capture-player-icon-object'
+      x={x+width-23} y={y+3} width={19} height={19} pointerEvents='none' aria-hidden='true'>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',
+        width:'100%',height:'100%',fontSize:Math.min(16,width*.23),fontWeight:900,
+        filter:'drop-shadow(0 1px 2px #101436)',lineHeight:1}}>{icon}</div>
+    </foreignObject>}
     <g className='capture-firework' aria-hidden='true' pointerEvents='none'>
+      <circle className='capture-firework-ring' cx={cx} cy={cy} r={radius*.71}
+        stroke='#FFF1C0' strokeWidth='2' fill='none'/>
       {sparkles.map((spark,i)=><circle key={i} className='capture-firework-spark' cx={spark.x} cy={spark.y} r={spark.r}
         fill={i%2===0?'#FFF5B1':'#FFFFFF'} style={{animationDelay:(.67+i*.037)+'s'}}/>)}
     </g>

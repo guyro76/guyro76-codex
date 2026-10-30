@@ -1,0 +1,169 @@
+/* Premium gameplay feedback. CSS-only motion, accessible high contrast,
+   no external graphics/audio, bold labels, respects reduced motion. */
+main.trivia-app .capture-win-toast{
+  position:absolute;top:39px;inset-inline-end:0;z-index:15;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  background:linear-gradient(120deg,#3B226E,#692AA1 58%,#A34791);
+  border:2px solid #FFDA93;border-radius:16px;padding:10px 14px;
+  color:#FFFFFF;font-size:14px;font-weight:900;white-space:nowrap;
+  box-shadow:0 10px 28px rgba(10,7,51,.5),0 0 22px rgba(240,155,255,.4);
+  pointer-events:none;
+  animation:winToastEnter 1.8s cubic-bezier(.18,.84,.27,1) both;
+}
+main.trivia-app .capture-win-toast strong{font-weight:950;color:#FFFFFF}
+main.trivia-app .capture-win-toast span{
+  color:#2C1745;background:#FFE1A3;border-radius:100px;
+  padding:3px 9px;font-weight:950;font-variant-numeric:tabular-nums
+}
+main.trivia-app .arena-head-right{position:relative}
+@keyframes winToastEnter{
+  0%{opacity:0;transform:translateY(13px) scale(.8)}
+  19%{opacity:1;transform:translateY(-3px) scale(1.07)}
+  35%,76%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-16px) scale(.96)}
+}
+/* Water -> name -> icon -> fireworks: precisely staged, even on Android
+   Chromium and iOS Safari, with never a forced content change after capture. */
+main.trivia-app .capture-tile .capture-player-name-object{
+  animation:captureNameAppear .36s cubic-bezier(.18,1.14,.4,1) .48s both;
+  transform-box:fill-box;transform-origin:center center;
+}
+main.trivia-app .capture-tile .capture-name-backplate{
+  animation:captureNameAppear .35s cubic-bezier(.19,1.1,.4,1) .48s both;
+  transform-box:fill-box;transform-origin:center center;
+}
+main.trivia-app .capture-tile .capture-player-icon-object{
+  animation:captureNameAppear .35s cubic-bezier(.19,1.2,.41,1) .59s both;
+  transform-box:fill-box;transform-origin:center center;
+}
+@keyframes captureNameAppear{
+  0%{opacity:0;transform:scale(.66)}
+  72%{opacity:1;transform:scale(1.12)}
+  100%{opacity:1;transform:scale(1)}
+}
+main.trivia-app .capture-tile .capture-firework-ring{
+  transform-box:fill-box;transform-origin:center center;
+  animation:captureRingFirework .56s ease-out .69s both;
+}
+@keyframes captureRingFirework{
+  from{opacity:0;transform:scale(.2);stroke-width:3}
+  25%{opacity:1}
+  to{opacity:0;transform:scale(1.7);stroke-width:.5}
+}
+/* The stage-completion moment is an actual reward screen, not just an inline text. */
+main.trivia-app .stage-celebration{
+  position:relative;isolation:isolate;overflow:hidden;
+  display:grid;justify-items:center;gap:7px;
+  width:100%;padding:18px 12px 15px;margin:0 auto 18px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(248,189,120,.3),transparent 70%),
+    linear-gradient(135deg,#4A276F,#342365 52%,#223369);
+  border:2px solid #FCE2A8;border-radius:22px;
+  box-shadow:0 10px 34px #110A3699,inset 0 1px #FFFFFF55,0 0 28px #C181FF44;
+  text-align:center;color:#FFFFFF;
+}
+main.trivia-app .stage-celebration>strong{
+  position:relative;z-index:2;display:block;
+  color:#FFF0C8;font-size:clamp(22px,3.4vw,32px);font-weight:950;
+  text-shadow:0 2px 9px #1B0C3E;
+}
+main.trivia-app .stage-celebration>small{
+  position:relative;z-index:2;color:#FFFFFF;font-weight:900;font-size:13px;
+}
+main.trivia-app .stage-gift-tray{
+  position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;gap:8px
+}
+main.trivia-app .stage-gift-tray span{
+  display:inline-flex;align-items:center;justify-content:center;min-width:86px;
+  color:#2C1C4D;background:linear-gradient(130deg,#FFF5CB,#FFE2AD);
+  border:2px solid #FFF7D9;border-radius:14px;padding:8px 13px;
+  font-size:clamp(15px,2.2vw,19px);font-weight:950;
+  box-shadow:0 5px 14px #1A0C3855;
+  animation:stageGiftPop .55s cubic-bezier(.24,1.32,.44,1) both;
+}
+main.trivia-app .stage-gift-tray span:nth-child(2){animation-delay:.13s}
+main.trivia-app .stage-gift-tray span:nth-child(3){animation-delay:.26s}
+main.trivia-app .stage-gift-tray span:nth-child(4){animation-delay:.39s}
+@keyframes stageGiftPop{
+  from{opacity:0;transform:translateY(26px) scale(.65)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+main.trivia-app .stage-gift-sparks{position:absolute;inset:0;pointer-events:none;z-index:1}
+main.trivia-app .stage-gift-sparks span{
+  position:absolute;top:48%;left:50%;font-size:20px;font-weight:900;
+  color:#FFE6A7;text-shadow:0 0 9px #FFF8E9;
+  animation:giftBurst 1.45s ease-out calc(var(--spark-index)*.035s) both;
+  transform-origin:center center;
+}
+main.trivia-app .stage-gift-sparks span:nth-child(3n){color:#FF9AD7}
+main.trivia-app .stage-gift-sparks span:nth-child(3n + 2){color:#B7E5FF}
+@keyframes giftBurst{
+  0%{opacity:0;transform:rotate(calc(var(--spark-index)*20deg)) translateX(0) scale(.2)}
+  25%{opacity:1}
+  100%{opacity:0;transform:rotate(calc(var(--spark-index)*20deg)) translateX(140px) scale(.6)}
+}
+main.trivia-app .stage-challenge-selected{
+  margin:9px auto!important;padding:9px 15px;
+  background:#33246B!important;color:#FFF2C4!important;
+  border:1.5px solid #D7B7FF;border-radius:13px;
+  font-weight:950!important;font-size:15px!important;
+}
+main.trivia-app .stage-bonus-quiz{
+  display:grid;gap:11px;max-width:560px;margin:9px auto;
+  padding:15px;background:#231B55;border:2px solid #B99EFF;border-radius:17px;
+  box-shadow:0 8px 22px #0A082A66;
+}
+main.trivia-app .stage-bonus-quiz h4{
+  color:#FFFFFF;font-size:clamp(17px,2.8vw,23px);font-weight:950;
+  margin:0;text-align:center;line-height:1.45
+}
+main.trivia-app .stage-bonus-quiz small{
+  color:#FFF1D0;font-weight:900;font-size:13px;
+}
+main.trivia-app .stage-bonus-options{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px
+}
+main.trivia-app .stage-bonus-options button{
+  min-height:57px;text-align:start;cursor:pointer;
+  background:#FFF5F8;color:#28204E;border:2px solid #CAB2FF;
+  border-radius:14px;padding:12px;font-weight:950;font-size:15px;
+}
+main.trivia-app .stage-bonus-options button:hover:not(:disabled),
+main.trivia-app .stage-bonus-options button:focus-visible{
+  background:#FFE6B8;color:#291B45;border-color:#FFB66C
+}
+main.trivia-app .stage-bonus-options button.selected{
+  background:#FFE2A6;border:3px solid #F8A359
+}
+@media(max-width:620px){
+  main.trivia-app .capture-win-toast{top:33px;font-size:12px;padding:7px 9px;gap:5px}
+  main.trivia-app .stage-bonus-options{grid-template-columns:1fr}
+  main.trivia-app .stage-celebration{padding:13px 8px;margin-bottom:10px}
+  main.trivia-app .stage-gift-tray span{min-width:66px;padding:6px 8px}
+  main.trivia-app .stage-bonus-options button{min-height:48px}
+}
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app .capture-win-toast,
+ main.trivia-app .capture-tile :is(.capture-player-name-object,.capture-name-backplate,.capture-player-icon-object,.capture-firework-ring),
+ main.trivia-app .stage-gift-sparks span,
+ main.trivia-app .stage-gift-tray span{animation:none!important}
+ main.trivia-app .capture-tile .capture-firework-ring{display:none!important}
+}
+
+/* Always-accessible one-tap sound audition. A user gesture is required to
+   activate Web Audio on Safari and Android browsers. */
+main.trivia-app .trivia-audio-test{
+ display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ min-width:53px;min-height:40px;padding:7px 11px;cursor:pointer;
+ color:#25194A;background:linear-gradient(130deg,#FFF0BF,#FFD095);
+ border:2px solid #FFF5D4;border-radius:13px;font-weight:900;
+ box-shadow:0 6px 17px #080B3555;
+}
+main.trivia-app .trivia-audio-test strong{font-weight:950}
+main.trivia-app .trivia-audio-test:hover{filter:brightness(1.06)}
+main.trivia-app .trivia-audio-test:focus-visible{
+ outline:3px solid #FFFFFF;outline-offset:3px;
+}
+@media(max-width:520px){
+ main.trivia-app .trivia-audio-test{min-width:43px;padding:5px 7px}
+ main.trivia-app .trivia-audio-test strong{font-size:12px}
+}

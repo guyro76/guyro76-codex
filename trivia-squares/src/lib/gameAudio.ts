@@ -3,7 +3,7 @@
  * No audio downloads, copyrighted samples, user tracking or microphone permission.
  * The Web Audio context is created only after a player interaction.
  */
-export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond' | 'pop' | 'slice';
+export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond' | 'pop' | 'slice' | 'liquid' | 'fireworks';
 let audio: AudioContext | null = null;
 let lastStrokeAt = -1;
 let pendingResume = false;
@@ -164,6 +164,19 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
       note(392, 0, 0.16, 0.075, 'triangle');
       note(329.63, 0.14, 0.20, 0.070, 'triangle');
       note(261.63, 0.30, 0.33, 0.060, 'sine');
+      break;
+    case 'liquid':
+      // A soft rising water shimmer, timed with the filling territory.
+      note(196,0,.14,.11,'sine');
+      note(261.63,.13,.19,.11,'triangle');
+      note(329.63,.30,.21,.095,'sine');
+      note(392,.48,.20,.08,'sine');
+      break;
+    case 'fireworks':
+      // Original, non-copyrighted victory sparkle after the tile fills.
+      [1046.5,1318.51,1567.98,2093].forEach((hz,i)=>note(hz,i*.07,.16,.125,'triangle'));
+      note(783.99,.34,.25,.13,'sine');
+      note(1046.5,.43,.31,.12,'sine');
       break;
     case 'capture':
       note(523.25, 0, 0.16, 0.14);

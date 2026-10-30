@@ -32,6 +32,7 @@ import './tutorial.css';
 import './premium.css';
 import './responsive-layout.css';
 import './welcome-interior-theme.css';
+import './reward-ceremony.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
@@ -67,7 +68,7 @@ type GameState = {
 type PlayerIdentity = { name: string; color: string; line_color?: string; avatar: string };
 type RemoteMatch = { id: string; status: string; host_id: string; guest_id: string | null; version: number; state: GameState; question?: Question; players?: { host?: PlayerIdentity; guest?: PlayerIdentity } };
 type Profile = { display_name: string; color: string; line_color?: string; avatar: string; remember_color: boolean; locale?: ActiveLocale };
-type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number; time_charms?: number };
+type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number; time_charms?: number; knowledge_points?:number; stars?:number };
 type SkinId='regular'|'urban'|'vintage'|'retro'|'pop'|'future';
 const modeLabels={
  solo:{he:'👤 משחק עצמאי',en:'👤 Solo',ru:'👤 Соло',fr:'👤 Solo',ar:'👤 لعب فردي',es:'👤 Solo'},
@@ -218,7 +219,7 @@ export default function TriviaGame() {
   // re-mounts, where an effect may otherwise persist its zero defaults.
   // localReady gates wallet display on the initial server render.
   const savedRewardSnapshot=useMemo(()=>{
-    const empty={credits:{host:0,guest:0},charms:{host:0,guest:0},wallet:{stars:0,fruits:0,diamonds:0}};
+    const empty={credits:{host:0,guest:0},charms:{host:0,guest:0},wallet:{stars:0,fruits:0,diamonds:0,knowledge_points:{host:0,guest:0}}};
     if(typeof window==='undefined')return empty;
     try{
       const data=JSON.parse(localStorage.getItem('trivia-local-rewards')||'null');
@@ -226,7 +227,7 @@ export default function TriviaGame() {
       const safe=(value:unknown)=>Math.max(0,Math.floor(Number(value)||0));
       return {credits:{host:safe(data.credits?.host),guest:safe(data.credits?.guest)},
         charms:{host:safe(data.charms?.host),guest:safe(data.charms?.guest)},
-        wallet:{stars:safe(data.wallet?.stars),fruits:safe(data.wallet?.fruits),diamonds:safe(data.wallet?.diamonds)}};
+        wallet:{stars:safe(data.wallet?.stars),fruits:safe(data.wallet?.fruits),diamonds:safe(data.wallet?.diamonds),knowledge_points:{host:safe(data.wallet?.knowledge_points?.host),guest:safe(data.wallet?.knowledge_points?.guest)}}};
     }catch{return empty;}
   },[]);
   const [localCredits,setLocalCredits]=useState<Record<'host'|'guest',number>>(()=>savedRewardSnapshot.credits);
@@ -267,6 +268,18 @@ export default function TriviaGame() {
   const [volume, setVolume] = useState(65);
   const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
   const rewardSound=useCallback((cue:'bonus'|'win'|'pop'|'slice')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
+  const celebrateCapture=useCallback((count:number)=>{
+    if(count<=0)return;
+    playGameSound('liquid',{muted,volume:volume/100});
+    playGameSound('fireworks',{muted,volume:volume/100},.62);
+    playGameSound('coin',{muted,volume:volume/100},.95);
+  },[muted,volume]);
+  const [captureToast,setCaptureToast]=useState<{id:number;amount:number}|null>(null);
+  useEffect(()=>{
+    if(!captureToast)return;
+    const id=window.setTimeout(()=>setCaptureToast(null),1900);
+    return()=>window.clearTimeout(id);
+  },[captureToast]);
   const [invite, setInvite] = useState<string | null>(null);
   const botBusy = useRef(false);
   const boardRef = useRef<SVGSVGElement>(null);
@@ -318,6 +331,7 @@ export default function TriviaGame() {
   const streak = Number(remote?.state.streak?.[state.turn] || 0);
   const currentLocalSide: 'host'|'guest' = state.mode==='solo' ? 'host' : state.turn === 'guest' ? 'guest' : 'host';
   const currentCredits = remote ? progress.credits : (localReady ? localCredits[currentLocalSide] : 0);
+  const currentKnowledgePoints=remote ? (progress.knowledge_points||0) : (localReady?localWallet.knowledge_points[currentLocalSide]:0);
   const currentCharms = remote ? (progress.time_charms || 0) : (localReady ? localCharms[currentLocalSide] : 0);
   const timeFreezeActive = remote
     ? Boolean(remote.state.time_freeze?.[player])
@@ -510,7 +524,7 @@ export default function TriviaGame() {
       const rewards=JSON.parse(localStorage.getItem('trivia-local-rewards')||'null');
       if(rewards?.credits) setLocalCredits(rewards.credits);
       if(rewards?.charms) setLocalCharms(rewards.charms);
-      if(rewards?.wallet){const w=rewards.wallet;setLocalWallet({stars:Math.max(0,Number(w.stars)||0),fruits:Math.max(0,Number(w.fruits)||0),diamonds:Math.max(0,Number(w.diamonds)||0)});}
+      if(rewards?.wallet){const w=rewards.wallet;const safe=(v:unknown)=>Math.max(0,Math.floor(Number(v)||0));setLocalWallet({stars:safe(w.stars),fruits:safe(w.fruits),diamonds:safe(w.diamonds),knowledge_points:{host:safe(w.knowledge_points?.host),guest:safe(w.knowledge_points?.guest)}});}
     }catch{}
     try{
       const pending=JSON.parse(localStorage.getItem('trivia-local-question')||'null') as Question|null;
@@ -904,6 +918,7 @@ export default function TriviaGame() {
       if (error) setMessage(error.message);
       else {
         const gained = Number(data.gained || 0);
+        if(gained>0){celebrateCapture(gained);setCaptureToast({id:Date.now(),amount:5+gained*10});}
         if(data.correct===false){
           const idx=Number(data.correct_index);
           setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,
@@ -913,13 +928,15 @@ export default function TriviaGame() {
         else if (data.bonus && data.correct) play('bonus');
         else if (gained) play('capture');
         else play(data.correct ? 'correct' : 'wrong');
-        setMessage(locale==='en'
+        setMessage(locale==='es'
+          ? (data.bonus ? data.correct?'¡Pregunta dorada superada!':'Sigue intentándolo.' : data.correct ? gained?'¡Capturaste '+gained+' casillas! +10 puntos de conocimiento, +'+(5+gained*10)+' créditos':'¡Correcto! +10 puntos de conocimiento y 5 créditos':'Respuesta incorrecta.')
+          : locale==='en'
           ? (data.bonus
               ? data.correct?'Golden question complete! Two bonus captures earned! ✨':'Golden question missed. Try a new streak.'
-              : data.correct ? gained?'Great! You claimed '+gained+' squares!':'Correct! The line is yours!':'Wrong answer. Next player.')
+              : data.correct ? gained?'Great! You claimed '+gained+' squares! +10 XP, +'+(5+gained*10)+' credits':'Correct! +10 XP, +5 credits':'Wrong answer. Next player.')
           : (data.bonus
               ? data.correct?'שאלת הזהב הצליחה! הרווחת שני אסימוני סגירה ✨':'שאלת הזהב הוחמצה. אפשר לנסות שוב אחרי רצף חדש.'
-              : data.correct ? gained?'מצוין! כבשת '+gained+' ריבועים!':'תשובה נכונה, הקו שלך!':'תשובה שגויה, התור עובר.'));
+              : data.correct ? gained?'מצוין! כבשת '+gained+' ריבועים! +10 נקודות ידע, +'+(5+gained*10)+' קרדיטים':'תשובה נכונה! +10 נקודות ידע, +5 קרדיטים':'תשובה שגויה, התור עובר.'));
         setQuestion(null); setEdge(null);
         await refresh(remote.id);
         const { data: update } = await client.rpc('trivia_my_profile');
@@ -937,9 +954,10 @@ export default function TriviaGame() {
           const captured=awardPremiumSquares(local,edge,side,2);
           const doubled={...captured.board,scores:{...captured.board.scores,[side]:captured.board.scores[side]+captured.captured.length}};
           setLocal(doubled);
-          const amount=Math.max(10,captured.captured.length*20);
+          if(captured.captured.length){celebrateCapture(captured.captured.length);setCaptureToast({id:Date.now(),amount:5+Math.max(10,captured.captured.length*20)});}
+          const amount=5+Math.max(10,captured.captured.length*20);
           setLocalCredits(prev=>({...prev,[side==='guest'?'guest':'host']:prev[side==='guest'?'guest':'host']+amount}));
-          setLocalWallet(prev=>({...prev,stars:prev.stars+4,fruits:prev.fruits+captured.captured.length*2,diamonds:prev.diamonds+(captured.captured.length?1:0)}));
+          setLocalWallet(prev=>({...prev,stars:prev.stars+4,fruits:prev.fruits+captured.captured.length*2,diamonds:prev.diamonds+(captured.captured.length?1:0),knowledge_points:{...prev.knowledge_points,[side==='guest'?'guest':'host']:prev.knowledge_points[side==='guest'?'guest':'host']+10}}));
           play('bonus');
           playGameSound('coin',{muted,volume:volume/100},.28);
           playGameSound('star',{muted,volume:volume/100},.58);
@@ -961,20 +979,23 @@ export default function TriviaGame() {
       setLocal(next);
       const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
       const gained = newSquares.length;
+      if(gained){celebrateCapture(gained);setCaptureToast({id:Date.now(),amount:5+gained*10});}
       if(gained && local.mode==='local' && ownerMode==='manual')setCapturePending({keys:newSquares,from:'new'});
       if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
       else if (gained) play('capture');
       else play(correct ? 'correct' : 'wrong');
-      setMessage(locale==='en'?
- (correct?(gained?'You captured '+gained+' squares!':'Correct answer!'):'Wrong answer!'):
- (correct?(gained?'סגרת '+gained+' ריבועים!':'תשובה נכונה!'):'תשובה שגויה!'));
+      setMessage(locale==='es'? (correct?(gained?'¡Capturaste '+gained+' casillas! +10 puntos de conocimiento, +'+(5+10*gained)+' créditos':'¡Respuesta correcta! +10 puntos de conocimiento, +5 créditos'):'Respuesta incorrecta.') : locale==='en'?
+ (correct?(gained?'You captured '+gained+' squares! +10 XP, +'+(5+10*gained)+' credits':'Correct answer! +10 XP, +5 credits'):'Wrong answer!'):
+ (correct?(gained?'סגרת '+gained+' ריבועים! +10 נקודות ידע, +'+(5+10*gained)+' קרדיטים':'תשובה נכונה! +10 נקודות ידע, +5 קרדיטים'):'תשובה שגויה!'));
       if(correct){
-        setLocalWallet(prev=>({...prev,stars:prev.stars+1,fruits:prev.fruits+gained}));
+        const rewardSide=local.mode==='solo'?'host':local.turn==='guest'?'guest':'host';
+         setLocalWallet(prev=>({...prev,stars:prev.stars+1,fruits:prev.fruits+gained,knowledge_points:{...prev.knowledge_points,[rewardSide]:prev.knowledge_points[rewardSide]+10}}));
+         setLocalCredits(prev=>({...prev,[rewardSide]:prev[rewardSide]+5+(10*gained)}));
+         playGameSound('coin',{muted,volume:volume/100},.40);
         playGameSound('star',{muted,volume:volume/100},.25);
         if(gained)playGameSound('fruit',{muted,volume:volume/100},.48);
       }
       if(gained>0){
-        setLocalCredits(prev=>({...prev,[local.mode==='solo'?'host':local.turn==='guest'?'guest':'host']:prev[local.mode==='solo'?'host':local.turn==='guest'?'guest':'host']+10*gained}));
         if(Object.keys(next.owners).length===next.rows*next.cols && ownerMode!=='manual'){
           const winner=next.scores.host>next.scores.guest?'host':next.scores.guest>next.scores.host?'guest':null;
           if(winner)setLocalCharms(prev=>({...prev,[winner]:prev[winner]+1}));
@@ -1277,6 +1298,16 @@ export default function TriviaGame() {
     if(prize.includes('קרדיטים'))playGameSound('coin',{muted,volume:volume/100},.15);
     setMessage('קיבלת את הפרס: '+prize);
   },[muted,volume]);
+  const stageClearGift=useCallback(()=>{
+    // One-time claim is stored in the local stage album before this callback.
+    setLocalCredits(prev=>({...prev,host:prev.host+25}));
+    setLocalWallet(prev=>({...prev,stars:prev.stars+3,diamonds:prev.diamonds+1,fruits:prev.fruits+2}));
+    playGameSound('win',{muted,volume:volume/100});
+    playGameSound('coin',{muted,volume:volume/100},.45);
+    setMessage(locale==='he'?'סיימת שלב! קיבלת 25 קרדיטים, 3 כוכבים, יהלום ו-2 פירות!':
+      locale==='es'?'¡Nivel completado! 25 créditos, 3 estrellas, 1 diamante y 2 frutas.':
+      'Stage complete! +25 credits, +3 stars, +1 diamond, +2 fruit.');
+  },[muted,volume,locale]);
   const stageRemoteReward=useCallback(()=>{
     if(client)void client.rpc('trivia_my_profile').then(({data})=>{
       if(data?.progress)setProgress(data.progress as Progress);
@@ -1288,8 +1319,8 @@ export default function TriviaGame() {
   };
   const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
   const displayWorld={
-    name:locale==='en'?selectedStage.nameEn:selectedStage.nameHe,
-    subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
+    name:locale==='es'?(SPANISH_STAGE_NAMES[stageId]||selectedStage.nameEn):locale==='he'?selectedStage.nameHe:selectedStage.nameEn,
+    subtitle:locale==='es'?'Conecta puntos, responde y conquista todas las casillas del nivel.':locale==='he'?selectedStage.subtitleHe:selectedStage.subtitleEn
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
   return <main data-preview-viewport={previewViewport} className={'trivia-app theme-' + world.slug + ' skin-' + skin + (stageStarted?' playing-layout':' setup-layout')} style={css.main} dir={localeDirection(locale)} lang={locale} onPointerDownCapture={()=>unlockGameAudio()} onKeyDownCapture={event=>{if(event.key==='Enter'||event.key===' ')unlockGameAudio()}}>
@@ -1435,6 +1466,24 @@ export default function TriviaGame() {
         <span aria-hidden='true'>{muted||volume===0?'🔇':'🔊'}</span>
         <strong>{locale==='he'?'צליל':locale==='en'?'Sound':locale==='ru'?'Звук':locale==='fr'?'Son':locale==='es'?'Sonido':'الصوت'}</strong>
       </button>
+      <button type='button' className='trivia-audio-test'
+        data-testid='trivia-audio-test'
+        aria-label={locale==='he'?'בדוק צלילים':locale==='es'?'Probar sonido':locale==='fr'?'Tester le son':locale==='ru'?'Проверить звук':locale==='ar'?'اختبار الصوت':'Test sound'}
+        title={locale==='he'?'השמע צליל הדגמה':locale==='es'?'Reproducir sonido de prueba':locale==='fr'?'Écouter un son':locale==='ru'?'Проверить звук':locale==='ar'?'تشغيل صوت تجريبي':'Play sample sound'}
+        onClick={()=>{
+          unlockGameAudio();
+          if(muted)setMuted(false);
+          if(volume<65)setVolume(85);
+          playGameSound('fireworks',{muted:false,volume:Math.max(.85,volume/100)});
+          setMessage(locale==='he'?'בדיקת צליל: אמור להישמע צליל זיקוקים. בדוק עוצמת מכשיר ומצב שקט.':
+            locale==='es'?'Prueba de sonido: escucha los fuegos artificiales. Comprueba el volumen del teléfono.':
+            locale==='fr'?'Test sonore : écoutez les feux d’artifice et vérifiez le volume.':
+            locale==='ru'?'Проверка звука: послушайте фейерверк и проверьте громкость.':
+            locale==='ar'?'اختبار الصوت: استمع إلى الألعاب النارية وتحقق من مستوى الصوت.':
+            'Sound test: listen for the fireworks chime. Check device volume and mute settings.');
+        }}>
+        <span aria-hidden='true'>🔉</span><strong>{locale==='he'?'בדוק':locale==='es'?'Probar':locale==='fr'?'Tester':locale==='ru'?'Проверить':locale==='ar'?'اختبار':'Test'}</strong>
+      </button>
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
         aria-label={tr('עיצוב המשחק')} title={tr('בחר סקין למשחק')}>
@@ -1530,8 +1579,13 @@ export default function TriviaGame() {
         <div className='arena-title'>
           <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
           <div className='arena-head-right'>
-             <div className='arena-quick-wallet' aria-label={locale==='he'?'פרסים וקרדיטים זמינים':'Available game credits and charms'}>
-               <span title={locale==='he'?'קרדיטים זמינים':'Available credits'}>🪙 {currentCredits}</span>
+             {captureToast && <div key={captureToast.id} className='capture-win-toast' role='status' aria-live='polite'>
+               <strong>🎆 {locale==='he'?'ריבוע נכבש!':locale==='es'?'¡Casilla conquistada!':locale==='fr'?'Case conquise !':locale==='ru'?'Клетка захвачена!':locale==='ar'?'تم الاستيلاء على المربع!':'Square captured!'}</strong>
+               <span>🪙 +{captureToast.amount}</span>
+             </div>}
+             <div className='arena-quick-wallet' aria-label={locale==='he'?'פרסים וקרדיטים זמינים':locale==='es'?'Premios, créditos y puntos':locale==='fr'?'Récompenses et crédits':locale==='ru'?'Награды и монеты':locale==='ar'?'المكافآت والعملات':'Available game credits and charms'}>
+               <span title={locale==='he'?'קרדיטים זמינים':locale==='es'?'Créditos disponibles':locale==='fr'?'Crédits disponibles':locale==='ru'?'Доступные монеты':locale==='ar'?'العملات المتاحة':'Available credits'}>🪙 {currentCredits}</span>
+               <span title={locale==='he'?'נקודות ידע':locale==='es'?'Puntos de conocimiento':locale==='fr'?'Points de connaissance':locale==='ru'?'Баллы знаний':locale==='ar'?'نقاط المعرفة':'Knowledge points'}>🧠 {currentKnowledgePoints}</span>
                <span title={locale==='he'?'קמעות זמן':'Time charms'}>⏳ {currentCharms}</span>
              </div>
              <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
@@ -1685,6 +1739,7 @@ export default function TriviaGame() {
           client={remote?client:null}
           onAdvance={advanceStage}
           onLocalPrize={stageLocalReward}
+          onStageClear={stageClearGift}
           onRemotePrize={stageRemoteReward}
           onSound={rewardSound}
             />
@@ -1867,7 +1922,7 @@ export default function TriviaGame() {
               locale==='es'?'🧠 Propón una pregunta y gana créditos':'🧠 اقترح سؤالاً واكسب رصيدًا'}
            </a>
           <div className='wallet'>
-            {([['🍎','פירות',remote?progress.fruits:(localReady?localWallet.fruits:0)],['💎','יהלומים',remote?progress.diamonds:(localReady?localWallet.diamonds:0)],['🪙','קרדיטים',currentCredits],['⭐','כוכבים',remote?0:(localReady?localWallet.stars:0)],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
+            {([['🍎','פירות',remote?progress.fruits:(localReady?localWallet.fruits:0)],['💎','יהלומים',remote?progress.diamonds:(localReady?localWallet.diamonds:0)],['🪙','קרדיטים',currentCredits],['⭐','כוכבים',remote?(progress.stars||0):(localReady?localWallet.stars:0)],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
               <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{tr(label)}</span></div>)}
           </div>
           <p className='smalltxt' style={{margin:'10px 0 5px'}}>{tr("⏳ כל שאלה: דקה. אפשר לקנות עוד 30 שניות ב־25 קרדיטים, פעם אחת לשאלה.")}</p>
