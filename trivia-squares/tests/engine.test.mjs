@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyLocalAnswer, validEdge } from '../src/lib/engine.ts';
+import { applyLocalAnswer, boardIsFilled, validEdge } from '../src/lib/engine.ts';
+
+import {shouldOfferPremiumFollowUp} from '../src/lib/premiumCaptures.ts';
 
 const fresh=()=>({rows:3,cols:3,mode:'local',turn:'host',edges:{},owners:{},scores:{host:0,guest:0,bot:0}});
 test('invalid or remote dot edges cannot be placed',()=>{
@@ -47,4 +49,25 @@ test('same edge can close two neighboring squares',()=>{
 test('taken edges are ignored',()=>{
  const s=fresh();s.edges={'h-0-0':'host'};
  assert.equal(applyLocalAnswer(s,'h-0-0',true),s);
+});
+
+test('finishing the final square suppresses any additional premium bonus question',()=>{
+ const b=fresh();
+ for(let r=0;r<=3;r++)for(let c=0;c<3;c++)b.edges['h-'+r+'-'+c]='host';
+ for(let r=0;r<3;r++)for(let c=0;c<=3;c++)if(r!==2||c!==3)b.edges['v-'+r+'-'+c]='host';
+ for(let r=0;r<3;r++)for(let c=0;c<3;c++)if(r!==2||c!==2)b.owners[r+'-'+c]='host';
+ b.scores.host=8;
+ const won=applyLocalAnswer(b,'v-2-3',true,true);
+ assert.equal(won.owners['2-2'],'host');
+ assert.equal(won.scores.host,9);
+ assert.equal(boardIsFilled(won),true);
+ assert.equal(shouldOfferPremiumFollowUp(won,true,true),false);
+ assert.equal(applyLocalAnswer(won,'h-0-0',true,true),won);
+ const unfinished=structuredClone(won);delete unfinished.owners['2-2'];
+ assert.equal(shouldOfferPremiumFollowUp(unfinished,true,true),true);
+});
+test('extra legacy owner keys do not incorrectly finish a board',()=>{
+ const b=fresh();
+ b.owners=Object.fromEntries(Array.from({length:9},(_,i)=>['9-'+i,'host']));
+ assert.equal(boardIsFilled(b),false);
 });

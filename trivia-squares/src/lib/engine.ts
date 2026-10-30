@@ -19,8 +19,15 @@ export function validEdge(board: BoardState, value: string): boolean {
   return r>=0 && r<board.rows && c>=0 && c<=board.cols;
 }
 
+/** Board completion requires every real cell to be claimed, not an arbitrary number of keys. */
+export function boardIsFilled(board:Pick<BoardState,'rows'|'cols'|'owners'>):boolean{
+ if(!Number.isInteger(board.rows)||!Number.isInteger(board.cols)||board.rows<1||board.cols<1)return false;
+ for(let row=0;row<board.rows;row++)for(let col=0;col<board.cols;col++)
+   if(!['host','guest','bot'].includes(board.owners[row+'-'+col]))return false;
+ return true;
+}
 export function applyLocalAnswer<T extends BoardState>(board: T, edge: string, correct: boolean, solo = false): T {
-  if(!validEdge(board,edge) || board.edges[edge]) return board;
+  if(boardIsFilled(board) || !validEdge(board,edge) || board.edges[edge]) return board;
   const acting:Side=solo?'host':board.turn;
   const nextTurn=solo?'host':board.turn==='host'?'guest':'host';
   if(!correct) return {...board,turn:nextTurn};

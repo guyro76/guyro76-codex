@@ -1,4 +1,9 @@
-import {claimPremiumNeighbor,type BoardState,type Side} from './engine';
+import {boardIsFilled,claimPremiumNeighbor,type BoardState,type Side} from './engine';
+
+/** Do not prompt another premium question after the last captured square. */
+export function shouldOfferPremiumFollowUp(board:BoardState,correct:boolean,premium:boolean):boolean{
+ return correct && premium && !boardIsFilled(board);
+}
 
 /** A premium capture NEVER changes the board level or steals an existing cell.
  * The already-completed square next to the just-answered line counts as the

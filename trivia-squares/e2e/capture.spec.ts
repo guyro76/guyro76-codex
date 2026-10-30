@@ -98,3 +98,34 @@ test('every chapter changes the board material palette without changing captures
   await expect.poll(()=>arena.evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('gradient');
   await expect.poll(()=>arena.evaluate(el=>getComputedStyle(el).getPropertyValue('--world-edge').trim())).toContain('rgba');
 });
+
+test('Adi completed board resumes as victory, not an extra premium question',async({page})=>{
+ await page.addInitScript(()=>{
+  localStorage.setItem('trivia-tutorial-seen-v1','true');
+  localStorage.setItem('trivia-player-name','עדי');
+  localStorage.setItem('trivia-mode-v2','solo');
+  localStorage.setItem('trivia-stage-id-v1','1');
+  localStorage.setItem('trivia-stage-started-v1','true');
+  const owners:Record<string,string>={};
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++)owners[r+'-'+c]='host';
+  localStorage.setItem('trivia-local-game-v1',JSON.stringify({
+   rows:3,cols:3,mode:'solo',turn:'host',edges:{},owners,
+   scores:{host:9,guest:0,bot:0}
+  }));
+  localStorage.setItem('trivia-local-question',JSON.stringify({
+   id:11,text:'כמה שחקנים יש לקבוצת כדורגל על המגרש בתחילת משחק תקני?',
+   answers:['9','10','11','12'],edge:'h-0-0',
+   premium:true,kind:'premium_bonus',premiumOwner:'host',deadline_at:null
+  }));
+ });
+ await page.goto('/');
+ await expect(page.locator('.victory-panel')).toBeVisible();
+ await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toHaveCount(0);
+ await expect(page.locator('svg.board .capture-tile[data-owner="עדי"]')).toHaveCount(9);
+ await expect.poll(()=>page.evaluate(()=>localStorage.getItem('trivia-local-question'))).toBeNull();
+ await expect.poll(()=>page.evaluate(()=>localStorage.getItem('trivia-stage-completed-v1'))).toBe('1');
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}'));
+ expect(Object.keys(saved.owners)).toHaveLength(9);
+ expect(saved.scores.host).toBe(9);
+ await expect(page.getByRole('button',{name:'השלב הבא',exact:true})).toBeVisible();
+});

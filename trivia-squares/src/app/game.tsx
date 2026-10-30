@@ -5,8 +5,8 @@ import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicConfig';
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawing';
-import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
-import {awardPremiumSquares} from '../lib/premiumCaptures';
+import { applyLocalAnswer, boardIsFilled, repairSoloBoard } from '../lib/engine';
+import {awardPremiumSquares,shouldOfferPremiumFollowUp} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
 import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
@@ -250,8 +250,9 @@ export default function TriviaGame() {
   const googleName = providerGoogle ? String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim().slice(0,70) : '';
   const googlePhotoRaw = providerGoogle ? String(user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '') : '';
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
-  const canPlay = validName && localReady && !showTutorial && !capturePending && !wrongAnswerFeedback && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
-  const finished = !capturePending && !question && !wrongAnswerFeedback && Object.keys(state.owners).length === state.rows * state.cols;
+  const boardFullyCaptured = boardIsFilled(state);
+  const canPlay = !boardFullyCaptured && validName && localReady && !showTutorial && !capturePending && !wrongAnswerFeedback && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
+  const finished = boardFullyCaptured && !capturePending && !question && !wrongAnswerFeedback;
   const completedStage = mode==='local'||mode==='solo' ? localStageCompleted : serverStageCompleted;
   const stageUnlocked = Math.min(STAGE_COUNT,completedStage+1);
   const selectedStage = stageFor(stageId);
@@ -463,6 +464,13 @@ export default function TriviaGame() {
     window.addEventListener('online',up); window.addEventListener('offline',down);
     return ()=>{window.removeEventListener('online',up);window.removeEventListener('offline',down)};
   },[]);
+  // A saved premium prompt from an older build must not reopen a completed board.
+  useEffect(()=>{
+    if(!localReady||remote||!question||!boardIsFilled(local))return;
+    setQuestion(null);
+    setEdge(null);
+    setMessage('כל הריבועים נסגרו! השלב הושלם. אפשר לעבור לשלב הבא.');
+  },[localReady,remote?.id,question?.id,local]);
   useEffect(()=>{
     if(!localReady)return;
     try{localStorage.setItem('trivia-capture-settings-v1',JSON.stringify({style:captureStyle,ownerMode,guestName,guestColor,guestAvatar}));}catch{}
@@ -703,7 +711,7 @@ export default function TriviaGame() {
   }
   async function pick(key: string) {
     if(!stageStarted)setStageStarted(true);
-    if (!canPlay || finished || state.edges[key] || question || bonusSelect) return;
+    if (!canPlay || boardFullyCaptured || finished || state.edges[key] || question || bonusSelect) return;
     if (remote && client) {
       setBusy(true);
       const { data, error } = await client.rpc('trivia_choose_edge', { p_match: remote.id, p_edge: key });
@@ -897,7 +905,7 @@ export default function TriviaGame() {
       const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
       const gained = newSquares.length;
       if(gained && local.mode==='local' && ownerMode==='manual')setCapturePending({keys:newSquares,from:'new'});
-      if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
+      if (boardIsFilled(next)) play('win');
       else if (gained) play('capture');
       else play(correct ? 'correct' : 'wrong');
       setMessage(locale==='en'?
@@ -910,12 +918,12 @@ export default function TriviaGame() {
       }
       if(gained>0){
         setLocalCredits(prev=>({...prev,[local.mode==='solo'?'host':local.turn==='guest'?'guest':'host']:prev[local.mode==='solo'?'host':local.turn==='guest'?'guest':'host']+10*gained}));
-        if(Object.keys(next.owners).length===next.rows*next.cols && ownerMode!=='manual'){
+        if(boardIsFilled(next) && ownerMode!=='manual'){
           const winner=next.scores.host>next.scores.guest?'host':next.scores.guest>next.scores.host?'guest':null;
           if(winner)setLocalCharms(prev=>({...prev,[winner]:prev[winner]+1}));
         }
       }
-      if(correct && question.premium){
+      if(shouldOfferPremiumFollowUp(next,correct,Boolean(question.premium))){
         const unused=effectiveQuestionBank.filter(item=>item.id!==q.id &&
           selectedTopics.includes(topicForQuestion(item.category,item.text)) &&
           !usedLocalQuestionIds.current.has(item.id) &&
@@ -984,7 +992,7 @@ export default function TriviaGame() {
   }
 
   async function startGoldQuestion() {
-    if (!client || !remote || !canPlay || !earnedBonus || question) return;
+    if (!client || !remote || !canPlay || boardFullyCaptured || !earnedBonus || question) return;
     setBusy(true);
     const { data, error } = await client.rpc('trivia_bonus_question',{p_match:remote.id});
     if (error) setMessage(error.message);
@@ -1103,7 +1111,7 @@ export default function TriviaGame() {
   }
 
   function onBoardPointerDown(event: ReactPointerEvent<SVGSVGElement>) {
-    if (!canPlay || finished || !!question || bonusSelect || (event.pointerType === 'mouse' && event.button !== 0)) {
+    if (!canPlay || boardFullyCaptured || finished || !!question || bonusSelect || (event.pointerType === 'mouse' && event.button !== 0)) {
       if(!validName && !showTutorial){setMessage(tr("כדי לצייר קו, הזן קודם שם שחקן."));document.getElementById('quick-player-name')?.focus();}
       return;
     }
@@ -1163,7 +1171,7 @@ export default function TriviaGame() {
   }
 
   function onDotKeyDown(event: ReactKeyboardEvent<SVGCircleElement>, dot: Dot) {
-    if (!canPlay || question || bonusSelect || finished || (event.key !== 'Enter' && event.key !== ' ')) return;
+    if (!canPlay || boardFullyCaptured || question || bonusSelect || finished || (event.key !== 'Enter' && event.key !== ' ')) return;
     event.preventDefault();
     if (!keyboardStart) { setKeyboardStart(dot); setMessage('בחר כעת נקודה סמוכה כדי להשלים קו'); return; }
     const chosen = edgeBetween(keyboardStart, dot, state.rows, state.cols);
@@ -1548,7 +1556,7 @@ export default function TriviaGame() {
         </div>
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>{tr("ממתינים שהחבר ייכנס לחדר...")}</p>}
         <div className='control-row'>
-          <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>
+          {!finished && <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>}
           <button className='glass-button' onClick={() => {
             if (muted) playGameSound('correct',{muted:false,volume:volume/100});
             setMuted(v=>!v);
