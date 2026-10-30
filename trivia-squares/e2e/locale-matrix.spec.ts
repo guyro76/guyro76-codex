@@ -3,14 +3,15 @@ import {offlineQuestions} from '../src/lib/offlineQuestions';
 import {englishQuestions} from '../src/lib/englishQuestions';
 import {internationalQuestions} from '../src/lib/internationalQuestions';
 
-// Ten independent checks, two per locale, each executed by desktop and mobile Chromium projects.
+// Twelve independent checks, two per locale, each executed by desktop and mobile Chromium projects.
 // No billed agents, no third-party AI calls, and no user information collected.
 const locales=[
  {id:'he',dir:'rtl',credit:/גיא רוזנברג/},
  {id:'en',dir:'ltr',credit:/Guy Rosenberg/},
  {id:'ru',dir:'ltr',credit:/Розенберг/},
  {id:'fr',dir:'ltr',credit:/Rosenberg/},
- {id:'ar',dir:'rtl',credit:/روزنبرغ/}
+ {id:'ar',dir:'rtl',credit:/روزنبرغ/},
+ {id:'es',dir:'ltr',credit:/Guy Rosenberg/}
 ] as const;
 for(const locale of locales){
  test('QA '+locale.id+' #1: native language, RTL/LTR, six skins, saved preference and footer',async({page})=>{
@@ -76,7 +77,7 @@ for(const locale of locales){
   await expect(page.locator('.lumen-intermission-choices button')).toHaveCount(2);
   await page.locator('.lumen-intermission-choices button').first().click();
   await expect(page.locator('.lumen-word-game input')).toBeVisible();
-  const answer=({he:'תפוח',en:'apple',ru:'яблоко',fr:'pomme',ar:'تفاحة'} as Record<string,string>)[locale.id];
+  const answer=({he:'תפוח',en:'apple',ru:'яблоко',fr:'pomme',ar:'تفاحة',es:'manzana'} as Record<string,string>)[locale.id];
   await page.locator('.lumen-word-game input').fill(answer);
   await page.locator('.lumen-word-game .lumen-cta').click();
   await expect(page.locator('.lumen-prize-won')).toBeVisible();
