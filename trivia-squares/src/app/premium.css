@@ -1242,3 +1242,10 @@ main.trivia-app .skin-picker-item{min-width:0}
  main.trivia-app .locale-switch{justify-content:center;gap:5px;padding:7px}
  main.trivia-app .locale-option{flex:1 1 auto;font-size:clamp(12px,2.7vw,14px);padding:8px 10px}
 }
+
+
+/* Keep the long campaign stage rail inside its container.
+   RTL / Cyrillic labels must never increase document width. */
+main.trivia-app{overflow-x:clip}
+main.trivia-app .campaign-section{max-width:100%;min-width:0;overflow-x:clip}
+main.trivia-app .campaign-track{box-sizing:border-box;min-width:0;width:100%;max-width:100%}
