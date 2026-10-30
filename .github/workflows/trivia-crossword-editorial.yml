@@ -1,0 +1,65 @@
+name: Trivia Squares - Wikipedia Crossword Editorial Candidates
+
+# Manual generation only. No periodic jobs, no paid APIs, no Vercel deployments.
+on:
+  workflow_dispatch:
+    inputs:
+      topics:
+        description: 'Comma separated fact families: film-director,novel-author,capital,painting-artist,israel-politician-birthplace'
+        required: true
+        default: 'film-director,novel-author'
+        type: string
+      limit:
+        description: 'Maximum source facts (1-100) in this review batch'
+        required: true
+        default: '10'
+        type: string
+  pull_request:
+    paths:
+      - 'trivia-squares/scripts/crossword-topics.mjs'
+      - 'trivia-squares/scripts/generate-crossword-trivia.mjs'
+      - 'trivia-squares/tests/crossword-generator.test.mjs'
+      - '.github/workflows/trivia-crossword-editorial.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trivia-crossword-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    defaults:
+      run:
+        working-directory: trivia-squares
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+      - name: Verify crossword compiler, source rules and multilingual answers
+        run: node --test tests/crossword-generator.test.mjs
+      - name: Check command-line entry point
+        run: node scripts/generate-crossword-trivia.mjs --help
+      - name: Generate sourced review candidates (manual requests only)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          FACT_TOPICS: ${{ inputs.topics }}
+          FACT_LIMIT: ${{ inputs.limit }}
+        run: |
+          set -euo pipefail
+          node scripts/generate-crossword-trivia.mjs --topics "$FACT_TOPICS" --limit "$FACT_LIMIT" --out editorial-candidates.json
+          node --input-type=module -e "import fs from 'node:fs';const v=JSON.parse(fs.readFileSync('editorial-candidates.json','utf8'));if(!v.questions.length)throw Error('No fully verified candidates - revise the topic/source selection');console.log(v.quality)"
+      - name: Attach editorial review file (not production questions)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: trivia-wikipedia-review-candidates
+          path: trivia-squares/editorial-candidates.json
+          retention-days: 7
+          if-no-files-found: error
