@@ -10,6 +10,7 @@ import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
 import { playGameSound, unlockGameAudio, type SoundCue } from '../lib/gameAudio';
+import {answerFeedback} from '../lib/answerFeedback';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
@@ -928,15 +929,7 @@ export default function TriviaGame() {
         else if (data.bonus && data.correct) play('bonus');
         else if (gained) play('capture');
         else play(data.correct ? 'correct' : 'wrong');
-        setMessage(locale==='es'
-          ? (data.bonus ? data.correct?'¡Pregunta dorada superada!':'Sigue intentándolo.' : data.correct ? gained?'¡Capturaste '+gained+' casillas! +10 puntos de conocimiento, +'+(5+gained*10)+' créditos':'¡Correcto! +10 puntos de conocimiento y 5 créditos':'Respuesta incorrecta.')
-          : locale==='en'
-          ? (data.bonus
-              ? data.correct?'Golden question complete! Two bonus captures earned! ✨':'Golden question missed. Try a new streak.'
-              : data.correct ? gained?'Great! You claimed '+gained+' squares! +10 XP, +'+(5+gained*10)+' credits':'Correct! +10 XP, +5 credits':'Wrong answer. Next player.')
-          : (data.bonus
-              ? data.correct?'שאלת הזהב הצליחה! הרווחת שני אסימוני סגירה ✨':'שאלת הזהב הוחמצה. אפשר לנסות שוב אחרי רצף חדש.'
-              : data.correct ? gained?'מצוין! כבשת '+gained+' ריבועים! +10 נקודות ידע, +'+(5+gained*10)+' קרדיטים':'תשובה נכונה! +10 נקודות ידע, +5 קרדיטים':'תשובה שגויה, התור עובר.'));
+        setMessage(answerFeedback(locale,{correct:!!data.correct,gained,bonus:!!data.bonus}));
         setQuestion(null); setEdge(null);
         await refresh(remote.id);
         const { data: update } = await client.rpc('trivia_my_profile');
@@ -984,9 +977,7 @@ export default function TriviaGame() {
       if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
       else if (gained) play('capture');
       else play(correct ? 'correct' : 'wrong');
-      setMessage(locale==='es'? (correct?(gained?'¡Capturaste '+gained+' casillas! +10 puntos de conocimiento, +'+(5+10*gained)+' créditos':'¡Respuesta correcta! +10 puntos de conocimiento, +5 créditos'):'Respuesta incorrecta.') : locale==='en'?
- (correct?(gained?'You captured '+gained+' squares! +10 XP, +'+(5+10*gained)+' credits':'Correct answer! +10 XP, +5 credits'):'Wrong answer!'):
- (correct?(gained?'סגרת '+gained+' ריבועים! +10 נקודות ידע, +'+(5+10*gained)+' קרדיטים':'תשובה נכונה! +10 נקודות ידע, +5 קרדיטים'):'תשובה שגויה!'));
+      setMessage(answerFeedback(locale,{correct,gained}));
       if(correct){
         const rewardSide=local.mode==='solo'?'host':local.turn==='guest'?'guest':'host';
          setLocalWallet(prev=>({...prev,stars:prev.stars+1,fruits:prev.fruits+gained,knowledge_points:{...prev.knowledge_points,[rewardSide]:prev.knowledge_points[rewardSide]+10}}));
