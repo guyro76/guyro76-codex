@@ -58,7 +58,7 @@ export function localStageCard(world:number,runId:string):StageCard {
   return stageCards.filter(c=>c.world===world)[index] || stageCards[0];
 }
 export const localAlbumKey = 'trivia-local-collectible-album-v1';
-export type LocalEarned = {matchId:string;cardId:string;played:boolean;game?:'wheel'|'word'|'balloons'|'cake';prize?:string;earnedAt:string};
+export type LocalEarned = {matchId:string;cardId:string;played:boolean;game?:'wheel'|'word'|'balloons'|'cake'|'quiz';prize?:string;clearRewarded?:boolean;earnedAt:string};
 export function readLocalAlbum():LocalEarned[]{
   try{
     const list=JSON.parse(localStorage.getItem(localAlbumKey)||'[]');
