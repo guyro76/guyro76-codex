@@ -32,6 +32,7 @@ import './tutorial.css';
 import './premium.css';
 import './responsive-layout.css';
 import './welcome-interior-theme.css';
+import './reward-ceremony.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
@@ -1464,6 +1465,21 @@ export default function TriviaGame() {
         }}>
         <span aria-hidden='true'>{muted||volume===0?'🔇':'🔊'}</span>
         <strong>{locale==='he'?'צליל':locale==='en'?'Sound':locale==='ru'?'Звук':locale==='fr'?'Son':locale==='es'?'Sonido':'الصوت'}</strong>
+      </button>
+      <button type='button' className='trivia-audio-test'
+        data-testid='trivia-audio-test'
+        aria-label={locale==='he'?'בדוק צלילים':locale==='es'?'Probar sonido':locale==='fr'?'Tester le son':locale==='ru'?'Проверить звук':locale==='ar'?'اختبار الصوت':'Test sound'}
+        title={locale==='he'?'השמע צליל הדגמה':locale==='es'?'Reproducir sonido de prueba':'Play sample sound'}
+        onClick={()=>{
+          unlockGameAudio();
+          if(muted)setMuted(false);
+          if(volume<65)setVolume(85);
+          playGameSound('fireworks',{muted:false,volume:Math.max(.85,volume/100)});
+          setMessage(locale==='he'?'בדיקת צליל: אמור להישמע צליל זיקוקים. בדוק עוצמת מכשיר ומצב שקט.':
+            locale==='es'?'Prueba de sonido: escucha los fuegos artificiales. Comprueba el volumen del teléfono.':
+            'Sound test: listen for the fireworks chime. Check device volume and mute settings.');
+        }}>
+        <span aria-hidden='true'>🔉</span><strong>{locale==='he'?'בדוק':locale==='es'?'Probar':'Test'}</strong>
       </button>
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
