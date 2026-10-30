@@ -72,9 +72,45 @@ const PHRASES={
  founder:['מי ייסד את החברה „%s”?','Who founded the company “%s”?','Кто основал компанию «%s»?','Qui a fondé l’entreprise « %s » ?','من أسس شركة «%s»؟'],
  birthCity:['באיזו עיר נולד/ה %s?','In which city was %s born?','В каком городе родился или родилась %s?','Dans quelle ville est né(e) %s ?','في أي مدينة وُلدت شخصية %s؟']
 };
+// Additional clue styles: classic question, identification, and "who is behind ...?".
+// Only one phrasing is selected for a given subject/fact so repetition is not faked.
+const CLUE_VARIANTS={
+ capital:[
+  ['איזו עיר משמשת כבירת %s?','Which city serves as the capital of %s?','Какой город является столицей %s?','Quelle ville est la capitale de %s ?','ما المدينة التي تُعد عاصمة %s؟'],
+  ['חידת בירות: מהי בירת %s?','Capital city challenge: name the capital of %s.','Знаток столиц: назовите столицу %s.','Question capitales : quelle est la capitale de %s ?','تحدّي العواصم: ما عاصمة %s؟']
+ ],
+ director:[
+  ['מי עומד מאחורי הבימוי של „%s”?','Which filmmaker directed “%s”?','Кому принадлежит режиссура фильма «%s»?','À qui doit-on la réalisation du film « %s » ?','لمن يعود إخراج فيلم «%s»؟'],
+  ['זהו את הבמאי: „%s”. במי מדובר?','Name the director behind “%s”.','Назовите режиссёра картины «%s».','Nommez le réalisateur du film « %s ».','حدّد المخرج الذي أخرج فيلم «%s».']
+ ],
+ author:[
+  ['על איזה סופר או סופרת חתום הספר „%s”?','Which author wrote “%s”?','Назовите автора книги «%s».','Quel auteur est à l’origine du livre « %s » ?','من مؤلف كتاب «%s»؟'],
+  ['חידת ספרות: מי המחבר של „%s”?','Literature challenge: name the author of “%s”.','Литературная загадка: кто автор книги «%s»?','Défi littéraire : qui a écrit « %s » ?','لغز أدبي: من كتب «%s»؟']
+ ],
+ seriesCreator:[
+  ['איזה יוצר או יוצרת עומדים מאחורי הסדרה „%s”?','Who is credited as the creator of “%s”?','Кто считается создателем сериала «%s»?','À qui doit-on la création de la série « %s » ?','من هو مبتكر مسلسل «%s»؟']
+ ],
+ songPerformer:[
+  ['זהו את המבצע: מי שר או שרה את „%s”?','Name the performer of the song “%s”.','Назовите исполнителя песни «%s».','Qui interprète la chanson « %s » ?','من صاحب أداء أغنية «%s»؟']
+ ],
+ painter:[
+  ['חידת אמנות: למי מיוחס הציור „%s”?','Art challenge: which painter created “%s”?','Загадка об искусстве: кто создал картину «%s»?','Défi artistique : qui a peint « %s » ?','لغز فني: من صاحب لوحة «%s»؟']
+ ],
+ birthCity:[
+  ['היכן נולד/ה %s? בחרו את העיר הנכונה.','Which city is the birthplace of %s?','Какой город является местом рождения %s?','Quelle ville est le lieu de naissance de %s ?','ما مدينة ميلاد %s؟']
+ ]
+};
+function stableClueChoice(s){
+ let h=2166136261;
+ for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}
+ return h>>>0;
+}
 export function phraseFor(phrase,locale,subject){
- const v=PHRASES[phrase]?.[LANGUAGES.indexOf(locale)];
- if(!v||!subject||/^\s*Q\d+$/.test(subject))throw new Error('Untranslated or unrecognized clue');
- return v.replace('%s',subject);
+ const langIndex=LANGUAGES.indexOf(locale);
+ const variants=[PHRASES[phrase],...(CLUE_VARIANTS[phrase]||[])];
+ if(langIndex<0||!subject||/^\s*Q\d+$/.test(subject)||!variants[0])
+  throw new Error('Untranslated or unrecognized clue');
+ const choice=stableClueChoice(phrase+':'+subject)%variants.length;
+ return variants[choice][langIndex].replace('%s',subject);
 }
 export const TOPICS_NEEDING_EDITORIAL_SOURCES=CATEGORIES.filter(c=>!FACT_TEMPLATES.some(f=>f.category===c.id)).map(c=>c.id);
