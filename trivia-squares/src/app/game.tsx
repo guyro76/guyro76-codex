@@ -12,6 +12,7 @@ import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/play
 import { playGameSound, unlockGameAudio, type SoundCue } from '../lib/gameAudio';
 import {answerFeedback} from '../lib/answerFeedback';
 import {gameplayGuidance} from '../lib/gameplayGuidance';
+import {viewportModeLabel,viewportPreviewLabel} from '../lib/viewportPreviewLabels';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
@@ -1493,8 +1494,8 @@ export default function TriviaGame() {
         </div>
       </section>}
     </div>
-    <nav className='viewport-preview-switch' aria-label={locale==='he'?'בדיקת תצוגה במכשירים':'Device viewport preview'}>
-      {(['auto','desktop','tablet','mobile'] as const).map(mode=><button key={mode} type='button' aria-pressed={previewViewport===mode} onClick={()=>setPreviewViewport(mode)}>{({auto:'אוטומטי',desktop:'מחשב',tablet:'טאבלט',mobile:'נייד'} as const)[mode]}</button>)}
+    <nav className='viewport-preview-switch' aria-label={viewportPreviewLabel(locale)}>
+      {(['auto','desktop','tablet','mobile'] as const).map(mode=><button key={mode} type='button' aria-pressed={previewViewport===mode} onClick={()=>setPreviewViewport(mode)}>{viewportModeLabel(locale,mode)}</button>)}
     </nav>
     <header className='hero'>
       <button type='button' className='app-menu-trigger'
