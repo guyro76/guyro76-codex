@@ -3,7 +3,7 @@ import type {ReactNode} from 'react';
 
 /* A browser-installable, ad-free, payment-free five-day product evaluation. */
 export const metadata:Metadata={
- title:'טריוויה ריבועים · Trivia Squares',
+ title:'טריוויה ריבועים',
  description:'טריוויה ריבועים: חברו נקודות, ענו על שאלות טריוויה וכבשו ריבועים.',
  applicationName:'טריוויה ריבועים',
  manifest:'/manifest.webmanifest',
