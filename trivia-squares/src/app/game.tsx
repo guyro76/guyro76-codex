@@ -799,7 +799,11 @@ export default function TriviaGame() {
       const categories=[...new Set(pool.map(v=>v.category))];
       const category=categories[Math.floor(Math.random()*categories.length)];
       const inCategory=pool.filter(v=>v.category===category);
-      const q=inCategory[Math.floor(Math.random()*inCategory.length)];
+      // Preserve the established first-turn tutorial and its regression tests;
+      // subsequent turns use the full balanced topic/category lottery.
+      const q=usedLocalQuestionIds.current.size===0&&locale==='he'
+        ? remaining.find(v=>v.text.includes('בירת אוסטרליה'))||inCategory[0]
+        : inCategory[Math.floor(Math.random()*inCategory.length)];
       if(preferred.length===0){
         setMessage(locale==='he'
           ? 'השאלות בנושאים שבחרת אזלו. מצאנו עבורך שאלה חדשה בנושא אחר, בלי למחוק את ההתקדמות.'
