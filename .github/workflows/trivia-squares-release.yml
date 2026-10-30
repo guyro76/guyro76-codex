@@ -1,13 +1,12 @@
 name: Trivia Squares - Verified Vercel Release
 
+# Production is deployed automatically by the existing Vercel Git integration.
+# This workflow is a MANUAL fallback only, to avoid duplicate deployments on Free.
 on:
-  workflow_run:
-    workflows: ["Trivia Squares - Quality Gate"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       commit:
-        description: "Exact verified feature/trivia-squares commit SHA"
+        description: "Manual fallback: exact authorized feature/trivia-squares commit SHA; VERCEL_TOKEN required"
         required: true
         type: string
 
@@ -21,12 +20,6 @@ concurrency:
 
 jobs:
   release:
-    if: >-
-      (github.event_name == 'workflow_dispatch') ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_branch == 'feature/trivia-squares' &&
-       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: trivia-squares-release
