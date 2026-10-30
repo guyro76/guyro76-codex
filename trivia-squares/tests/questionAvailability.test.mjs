@@ -17,7 +17,7 @@ test('question-exhaustion and retry messages are translated into all six languag
  }
 });
 test('every locale explicitly preserves progress in exhaustion errors',()=>{
- const saved={he:/נשמר/,en:/sav/i,ru:/сохран/,fr:/sauvegard/,ar:/حفظ/,es:/guardad/i};
+ const saved={he:/נשמר/,en:/sav/i,ru:/сохран/,fr:/sauvegard/,ar:/حفظ/,es:/guardad|guardaron/i};
  for(const locale of activeLocales){
   for(const state of ['networkError','offlineExhausted','serverExhausted']){
    assert.match(questionAvailabilityMessage(locale,state),saved[locale],locale+' '+state);
