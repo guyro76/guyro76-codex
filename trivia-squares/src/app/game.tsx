@@ -66,17 +66,19 @@ const skins:{id:SkinId;he:string;en:string;colors:[string,string,string]}[]=[
  {id:'future',he:'עתידני AI · סגול כתום',en:'AI Future · Purple & Orange',colors:['#42117E','#F15A24','#E946CC']}
 ];
 
-const localSkinLabels:Record<'ru'|'fr'|'ar',Record<SkinId,string>>={
+const localSkinLabels:Record<'ru'|'fr'|'ar'|'es',Record<SkinId,string>>={
  ru:{regular:'Оригинал',urban:'Городской',vintage:'Винтаж',retro:'Ретро-аркада',pop:'Поп-арт',future:'ИИ: фиолетовый и оранжевый'},
  fr:{regular:'Original',urban:'Urbain',vintage:'Vintage',retro:'Rétro arcade',pop:'Pop art',future:'IA : violet et orange'},
- ar:{regular:'الأصلي',urban:'حضري',vintage:'كلاسيكي عتيق',retro:'أركيد قديم',pop:'فن البوب',future:'ذكاء اصطناعي: بنفسجي وبرتقالي'}
+ ar:{regular:'الأصلي',urban:'حضري',vintage:'كلاسيكي عتيق',retro:'أركيد قديم',pop:'فن البوب',future:'ذكاء اصطناعي: بنفسجي وبرتقالي'},
+ es:{regular:'Original',urban:'Urbano',vintage:'Clásico vintage',retro:'Arcade retro',pop:'Arte pop',future:'IA futurista · violeta y naranja'}
 };
 const localeExtras:Record<ActiveLocale,{skin:string;stages:string;completed:string;footer:string}>={
  he:{skin:'6 סקינים לבחירה · ההתקדמות נשמרת',stages:'הרפתקה: 30 שלבים',completed:'הושלמו:',footer:'© 2026 תוכנן ובוצע ע״י גיא רוזנברג · כל הזכויות שמורות ©'},
  en:{skin:'6 skins to choose from · progress is preserved',stages:'Adventure: 30 stages',completed:'Completed:',footer:'© 2026 Designed and developed by Guy Rosenberg · All rights reserved ©'},
  ru:{skin:'6 тем оформления · прогресс сохраняется',stages:'Приключение: 30 уровней',completed:'Завершено:',footer:'© 2026 Разработка и дизайн: Гай Розенберг · Все права защищены ©'},
  fr:{skin:'6 thèmes au choix · progression sauvegardée',stages:'Aventure : 30 niveaux',completed:'Terminés :',footer:'© 2026 Conçu et développé par Guy Rosenberg · Tous droits réservés ©'},
- ar:{skin:'6 مظاهر للاختيار · يتم حفظ التقدم',stages:'المغامرة: 30 مرحلة',completed:'المكتملة:',footer:'© 2026 تصميم وتطوير غاي روزنبرغ · جميع الحقوق محفوظة ©'}
+ ar:{skin:'6 مظاهر للاختيار · يتم حفظ التقدم',stages:'المغامرة: 30 مرحلة',completed:'المكتملة:',footer:'© 2026 تصميم وتطوير غاي روزنبرغ · جميع الحقوق محفوظة ©'},
+ es:{skin:'6 estilos para elegir · progreso guardado',stages:'Aventura: 30 niveles',completed:'Completados:',footer:'© 2026 Diseñado y desarrollado por Guy Rosenberg · Todos los derechos reservados ©'}
 };
 
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
