@@ -351,3 +351,75 @@ main.trivia-app .app-menu-heading{padding-block-start:max(17px,env(safe-area-ins
  main.trivia-app .app-menu-tab:not([aria-current=page]):hover{background:rgba(199,225,255,.23)}
  main.trivia-app .app-menu-trigger:not(:disabled):hover{background:rgba(41,79,146,.94)}
 }
+
+/* Portrait tablet: the in-progress board must fit without a document-length scroll.
+ * Short landscape devices keep the naturally scrollable layout for accessibility. */
+@media(min-width:650px) and (max-width:819px) and (min-height:800px){
+ main.trivia-app.playing-layout{
+   height:100dvh!important;min-height:0!important;overflow:hidden;
+   display:flex;flex-direction:column;gap:4px;
+   padding:7px 10px 5px!important
+ }
+ main.trivia-app.playing-layout .game-timebar{
+   flex:0 0 auto;max-height:45px;overflow:hidden;
+   margin:0!important;padding:5px 10px!important
+ }
+ main.trivia-app.playing-layout .game-timebar :is(.game-status-kicker,.game-weather-source,.game-live-clock small,.game-version small){
+   display:none!important
+ }
+ main.trivia-app.playing-layout .skin-picker-bar{
+   flex:0 0 auto;min-height:33px;margin:0!important
+ }
+ main.trivia-app.playing-layout .skin-palette-trigger{padding:4px 9px!important;min-height:31px;font-size:12px!important}
+ main.trivia-app.playing-layout .skin-picker-panel{
+   position:absolute;z-index:20;top:100%;max-height:50dvh;overflow:auto
+ }
+ main.trivia-app.playing-layout .hero{
+   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+   gap:4px 10px;flex:0 0 auto;padding:0 3px 4px!important
+ }
+ main.trivia-app.playing-layout .hero :is(.eyebrow,.player-name-autosaved){display:none!important}
+ main.trivia-app.playing-layout .hero p{display:none}
+ main.trivia-app.playing-layout .hero h1{font-size:24px!important}
+ main.trivia-app.playing-layout .hero-name{margin:0!important;padding:4px 7px!important;max-width:220px}
+ main.trivia-app.playing-layout .hero-name input{padding:7px!important}
+ main.trivia-app.playing-layout .campaign-section{
+   flex:0 0 auto;margin:0!important;padding:6px 10px!important
+ }
+ main.trivia-app.playing-layout .campaign-rule{display:none}
+ main.trivia-app.playing-layout .campaign-progress{height:4px;margin:3px 0!important}
+ main.trivia-app.playing-layout .campaign-stages-toggle{min-height:30px!important;margin:2px 0!important}
+ main.trivia-app.playing-layout .game-grid{flex:1 1 0;min-height:0}
+ main.trivia-app.playing-layout .arena-panel{
+   display:flex;flex-direction:column;align-items:stretch;
+   min-height:0;overflow:auto!important;padding:8px 12px!important
+ }
+ main.trivia-app.playing-layout .arena-title{margin:0 0 4px}
+ main.trivia-app.playing-layout .arena-title h2{font-size:19px!important}
+ main.trivia-app.playing-layout .scoreboard{margin:4px 0!important}
+ main.trivia-app.playing-layout .player-tile{padding:6px!important}
+ main.trivia-app.playing-layout .player-tile .portrait{width:34px!important;height:34px!important}
+ main.trivia-app.playing-layout .arena{
+   width:min(100%,calc(100dvh - 465px),540px);
+   flex:0 1 auto;min-height:0;max-height:calc(100dvh - 465px);
+   aspect-ratio:1;margin:1px auto;
+   display:grid;place-items:center;padding:8px!important
+ }
+ main.trivia-app.playing-layout .arena-inner{
+   width:100%;height:100%;display:grid;place-items:center
+ }
+ main.trivia-app.playing-layout .board{
+   width:100%!important;height:100%!important;
+   max-width:100%!important;max-height:100%!important
+ }
+ main.trivia-app.playing-layout .gesture-hint{margin:3px auto!important;font-size:12px!important}
+ main.trivia-app.playing-layout .level-progress{height:5px;margin-top:3px}
+ main.trivia-app.playing-layout .status-line{min-height:27px;font-size:12px!important}
+ main.trivia-app.playing-layout .control-row{gap:6px!important}
+ main.trivia-app.playing-layout .control-row :is(.gold-button,.glass-button){
+   font-size:12px!important;padding:7px 9px!important
+ }
+ main.trivia-app.playing-layout .footer{flex:0 0 auto;margin:0 auto!important;font-size:10px!important}
+ main.trivia-app.playing-layout #app-footer{flex:0 0 auto;margin:0!important;padding:0!important}
+ main.trivia-app.playing-layout #app-footer .game-question-source-credit{display:none!important}
+}
