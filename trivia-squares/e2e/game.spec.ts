@@ -510,3 +510,19 @@ test('a real local Player 2 keeps their colored captured squares and score acros
     return {owner:b.owners?.['0-0'],guest:b.scores?.guest};
   })).toEqual({owner:'guest',guest:1});
 });
+
+test('guest reports a bad question without giving up the line or exposing a profile',async({page})=>{
+ await ready(page);
+ await draw(page,[1,1],[1,2]);
+ const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
+ await expect(quiz).toBeVisible();
+ await quiz.getByRole('button',{name:'דווח על בעיה בשאלה'}).click();
+ await quiz.getByRole('combobox',{name:'מה לא תקין בשאלה?'}).selectOption('wrong_answer');
+ await quiz.getByRole('button',{name:'שלח דיווח'}).click();
+ await expect(quiz.getByRole('status')).toContainText('נשמר במכשיר בלבד');
+ const reports=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-reports-v1')||'[]'));
+ expect(reports).toEqual(expect.arrayContaining([expect.objectContaining({locale:'he',reason:'wrong_answer'})]));
+ await expect(quiz).toBeVisible();
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}'));
+ expect(Object.keys(saved.edges||{})).toHaveLength(0);
+});
