@@ -1,0 +1,229 @@
+/*
+  Visual parity with the premium first-visit WelcomeScreen.
+  Gameplay geometry, gestures, persistence, stage logic and non-regular skins
+  intentionally remain unchanged. All treatment uses CSS, not downloaded assets.
+  UI: high contrast / bold / touch-friendly / RTL & LTR / reduced motion.
+*/
+main.trivia-app{
+ --entry-gold:#FFC785;
+ --entry-gold-soft:#FFF2C9;
+ --entry-violet:#C8B3FF;
+ --entry-ink:#F8F5FF;
+ --entry-muted:#E6DBFF;
+ --entry-outline:#C9B6F0;
+ --entry-focus:#FFCD89;
+}
+main.trivia-app.skin-regular{
+ --entry-surface:#1B1545;
+ --entry-surface-raised:#29205F;
+ --entry-panel:#251B59;
+ --entry-glow:rgba(176,99,248,.36);
+ --entry-pink:rgba(249,112,167,.19);
+}
+main.trivia-app.skin-regular::before{
+ background:
+  radial-gradient(ellipse 65% 60% at 83% 20%,rgba(141,81,222,.43),transparent 75%),
+  radial-gradient(ellipse 58% 65% at 9% 87%,rgba(255,137,97,.22),transparent 79%),
+  linear-gradient(145deg,#10163C 0%,#1B1545 47%,#100E34 100%)!important;
+}
+main.trivia-app.skin-regular::after{
+ background:
+  radial-gradient(ellipse 27% 25% at 77% 35%,rgba(146,83,238,.28),transparent 85%),
+  radial-gradient(ellipse 36% 28% at 20% 67%,rgba(255,154,102,.17),transparent 83%)!important;
+ opacity:.65!important;pointer-events:none!important;
+}
+/* The entry-screen header is echoed in the in-game header. The warm
+   headline is always placed on a dark navy/violet surface. */
+main.trivia-app.skin-regular .hero{
+ background:
+  radial-gradient(ellipse 45% 85% at 88% 7%,rgba(157,102,255,.19),transparent 86%),
+  linear-gradient(132deg,rgba(42,31,97,.96),rgba(22,20,69,.95))!important;
+ border:1.5px solid rgba(227,204,255,.56)!important;
+ border-radius:24px!important;
+ box-shadow:0 16px 46px rgba(7,4,37,.31),inset 0 1px rgba(255,255,255,.23)!important;
+}
+main.trivia-app.skin-regular .hero .eyebrow{
+ color:#FFD29F!important;letter-spacing:.14em!important;
+ text-shadow:none!important;font-weight:900!important;
+}
+main.trivia-app.skin-regular .hero h1{
+ color:#FFE2AE!important;
+ background:linear-gradient(115deg,#FFF1CD 0%,#FFC48E 52%,#FFD0F0 100%)!important;
+ -webkit-background-clip:text!important;background-clip:text!important;
+ -webkit-text-fill-color:transparent!important;
+ font-weight:950!important;filter:none!important;text-shadow:none!important;
+}
+main.trivia-app.skin-regular .hero p,
+main.trivia-app.skin-regular .hero .hero-name label{
+ color:#F4EDFF!important;font-weight:900!important;
+}
+main.trivia-app.skin-regular .hero-name{
+ background:rgba(19,20,64,.69)!important;
+ border:1px solid rgba(217,192,255,.62)!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.17),0 10px 26px rgba(7,4,37,.2)!important;
+}
+main.trivia-app.skin-regular .hero-name input{
+ background:#FCF8FF!important;color:#22204C!important;
+ border:2px solid #D1B5FF!important;font-weight:900!important;
+}
+main.trivia-app.skin-regular .locale-switch,
+main.trivia-app.skin-regular .skin-picker-bar{
+ background:rgba(32,24,77,.65)!important;
+ border:1px solid rgba(220,199,255,.5)!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.12)!important;
+ border-radius:17px!important;
+}
+main.trivia-app.skin-regular .locale-option[aria-pressed=true]{
+ background:linear-gradient(122deg,#FFF0C4,#FFC28A)!important;
+ color:#29214F!important;border-color:#FFE7AC!important;
+}
+/* The chapter ribbon resembles the three feature cards on the entrance,
+   without increasing its height during active gameplay. */
+main.trivia-app.skin-regular .campaign-section{
+ background:linear-gradient(130deg,rgba(48,35,106,.94),rgba(25,22,72,.96))!important;
+ border:1.5px solid rgba(215,190,255,.57)!important;
+ box-shadow:0 13px 36px rgba(8,5,43,.3),inset 0 1px rgba(255,255,255,.21)!important;
+ border-radius:21px!important;
+}
+main.trivia-app.skin-regular .campaign-heading h2{
+ color:#FFE3BA!important;font-weight:950!important;
+}
+main.trivia-app.skin-regular .campaign-progress{
+ background:rgba(6,7,40,.78)!important;border:1px solid rgba(210,179,255,.45)!important;
+}
+main.trivia-app.skin-regular .campaign-progress :is(span,.campaign-progress-fill){
+ background:linear-gradient(90deg,#FFAB78,#FFD58C,#E5A0FF)!important;
+ box-shadow:0 0 12px rgba(250,172,144,.4)!important;
+}
+main.trivia-app.skin-regular .campaign-stages-toggle,
+main.trivia-app.skin-regular .skin-palette-trigger{
+ background:linear-gradient(125deg,#53418F,#34245F)!important;
+ border:1.5px solid #C5B1F5!important;color:#FFFFFF!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.24),0 7px 19px rgba(8,5,46,.2)!important;
+ border-radius:14px!important;font-weight:900!important;
+}
+/* The world-card illustration from the welcome is used as inspiration for the
+   playable board: purple paper, warm sparks, no overlay over pointer targets. */
+main.trivia-app.skin-regular .arena-panel{
+ background:
+  radial-gradient(ellipse 52% 53% at 92% 0%,rgba(139,82,222,.2),transparent 85%),
+  linear-gradient(145deg,rgba(41,31,101,.96),rgba(24,22,75,.97))!important;
+ border:1.5px solid #CBB5F5!important;
+ border-radius:25px!important;
+ box-shadow:0 21px 60px rgba(7,3,39,.34),0 0 32px rgba(144,95,245,.09),inset 0 1px #FFFFFF30!important;
+}
+main.trivia-app.skin-regular .arena-title h2{color:#FFE4BA!important;font-weight:950!important}
+main.trivia-app.skin-regular .arena-title p{color:#F1EAFE!important;font-weight:900!important}
+main.trivia-app.skin-regular .arena{
+ background:
+  radial-gradient(circle at 20% 15%,rgba(194,135,255,.18),transparent 58%),
+  linear-gradient(137deg,#201850,#30246B 48%,#171B4C)!important;
+ border:2px solid #BAA9FA!important;
+ border-radius:25px!important;
+ box-shadow:0 16px 48px rgba(8,4,46,.55),inset 0 1px #FFFFFF40,0 0 28px rgba(132,80,237,.2)!important;
+}
+main.trivia-app.skin-regular .arena-inner{
+ background:linear-gradient(150deg,#1B2456,#271B60)!important;
+ border:2px solid rgba(206,189,255,.92)!important;
+ box-shadow:inset 0 0 34px rgba(152,112,238,.14),0 7px 24px rgba(7,4,38,.36)!important;
+}
+/* Score panel resembles entry feature chips, rather than plain dashboard cells. */
+main.trivia-app.skin-regular .scoreboard{
+ background:linear-gradient(125deg,rgba(23,21,74,.85),rgba(59,39,105,.77))!important;
+ border:1.5px solid rgba(198,175,255,.64)!important;
+ box-shadow:inset 0 1px #FFFFFF26,0 8px 19px rgba(10,6,43,.25)!important;
+ border-radius:19px!important;
+}
+main.trivia-app.skin-regular .scoreboard .player-tile{
+ background:rgba(143,105,214,.12)!important;
+ border:1px solid rgba(213,196,255,.32)!important;
+ border-radius:15px!important;
+}
+main.trivia-app.skin-regular :is(.score-name,.score-num,.versus){color:#FFFFFF!important;font-weight:900!important}
+main.trivia-app.skin-regular .arena-quick-wallet span{
+ background:linear-gradient(125deg,#3D316C,#27214D)!important;
+ border:1.5px solid #D2BDF7!important;color:#FFEBCE!important;
+ font-weight:900!important;
+}
+main.trivia-app.skin-regular .level-pill{
+ background:linear-gradient(130deg,#FFE7AE,#FFC18A)!important;
+ border:2px solid #FFF2CA!important;
+ color:#29214E!important;font-weight:950!important;
+ box-shadow:0 4px 14px rgba(255,189,128,.2)!important;
+}
+/* Welcome CTA, soft and secondary buttons, identical visual hierarchy. */
+main.trivia-app.skin-regular :is(.gold-button,.lumen-cta,.lumen-next-button){
+ background:linear-gradient(133deg,#FFF2BE,#FFCC83 54%,#FFAF8C)!important;
+ color:#28214E!important;border:2px solid #FFE9BA!important;
+ box-shadow:0 9px 23px rgba(255,159,100,.2),inset 0 1px #FFFFFFC0!important;
+ border-radius:15px!important;font-weight:950!important;
+}
+main.trivia-app.skin-regular :is(.glass-button,.trivia-sound-toggle,.app-menu-trigger){
+ background:linear-gradient(128deg,#594894,#35245E)!important;
+ color:#FFFFFF!important;border:1.5px solid #CAB9F9!important;
+ border-radius:14px!important;font-weight:900!important;
+}
+main.trivia-app.skin-regular .status-line,
+main.trivia-app.skin-regular .gesture-hint{color:#F8F1FF!important;font-weight:900!important}
+/* Answers are on pale cards; dark text is mandatory for contrast. */
+main.trivia-app.skin-regular .quiz-card:not(.answer-feedback-card){
+ background:
+  radial-gradient(ellipse 65% 42% at 75% 2%,rgba(151,107,239,.22),transparent 89%),
+  linear-gradient(145deg,#312568,#1A1B50)!important;
+ border:2px solid #E3C8FD!important;
+ border-radius:26px!important;
+ box-shadow:0 23px 65px rgba(6,3,34,.55),inset 0 1px #FFFFFF30!important;
+}
+main.trivia-app.skin-regular .quiz-card h2{color:#FFFFFF!important;font-weight:950!important}
+main.trivia-app.skin-regular .answer-option:not(.feedback-answer){
+ background:#FCF7FF!important;color:#22204B!important;
+ border:2px solid #C5B0F3!important;border-radius:15px!important;
+ font-weight:900!important;
+}
+main.trivia-app.skin-regular .answer-option:not(.feedback-answer):hover:not(:disabled){
+ background:#FFF0D1!important;color:#26204D!important;border-color:#FFB676!important;
+}
+main.trivia-app.skin-regular .quiz-badge{
+ background:linear-gradient(125deg,#FFE7B6,#FFBF8B)!important;
+ color:#29214E!important;font-weight:900!important;
+}
+/* Reward overlays must look part of the same game rather than another product. */
+main.trivia-app.skin-regular .stage-reward-modal-inner{
+ background:linear-gradient(143deg,#302468,#1B1748)!important;
+ border:2px solid #E7BDFA!important;border-radius:23px!important;
+ box-shadow:0 20px 60px rgba(6,3,29,.72),0 0 28px rgba(164,101,243,.24)!important;
+}
+main.trivia-app.skin-regular .lumen-intermission-choices button{
+ background:#FCF4FF!important;color:#24204C!important;border:2px solid #CBB3F2!important;
+ border-radius:17px!important;font-weight:900!important;
+}
+main.trivia-app.skin-regular .lumen-intermission-choices button span{
+ color:#37265F!important;font-weight:900!important;
+}
+/* Shared identity: rounded cards + focus treatment on ALL six skins. Selected
+   skins still keep their own palettes, instead of being turned all-purple. */
+main.trivia-app :is(.hero,.campaign-section,.arena-panel,.quiz-card,.stage-reward-modal-inner){
+ border-radius:clamp(18px,2.2vw,25px)!important;
+}
+main.trivia-app :is(button,input,select,[tabindex="0"]):focus-visible{
+ outline:3px solid var(--entry-focus)!important;outline-offset:3px!important;
+}
+main.trivia-app .hero :is(h1,h2),
+main.trivia-app :is(.campaign-heading h2,.arena-title h2,.quiz-card h2),
+main.trivia-app :is(.score-name,.score-num,.level-pill,.answer-option){
+ font-weight:900!important;
+}
+@media(max-width:700px){
+ main.trivia-app.skin-regular .hero,
+ main.trivia-app.skin-regular .campaign-section,
+ main.trivia-app.skin-regular .arena-panel{border-radius:18px!important}
+ main.trivia-app.skin-regular .arena,
+ main.trivia-app.skin-regular .arena-inner{border-radius:17px!important}
+ main.trivia-app.skin-regular .hero h1{font-size:clamp(23px,6.1vw,34px)!important}
+}
+/* Decorative treatment never changes the board dimensions or intercepts drag. */
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app :is(.hero,.arena,.arena-inner,.campaign-section,.answer-option,.quiz-card){
+  animation:none!important;transition:none!important;
+ }
+}
