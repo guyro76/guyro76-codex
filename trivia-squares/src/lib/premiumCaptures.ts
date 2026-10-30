@@ -1,4 +1,4 @@
-import {boardIsFilled,claimPremiumNeighbor,type BoardState,type Side} from './engine';
+import {boardIsFilled,claimPremiumNeighbor,type BoardState,type Side} from './engine.ts';
 
 /** Do not prompt another premium question after the last captured square. */
 export function shouldOfferPremiumFollowUp(board:BoardState,correct:boolean,premium:boolean):boolean{
