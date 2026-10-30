@@ -480,3 +480,17 @@ main.trivia-app .stage-reward-reopen{border:2px solid #FFDF9A;background:#264474
 @media(prefers-reduced-motion:reduce){
  main.trivia-app .stage-reward-modal-inner{animation:none!important;transition:none!important}
 }
+
+/* QA 768x1024 (Android/iPad portrait): keep the complete board visible,
+   including after a marker gesture activates compact play mode. */
+@media (min-width:650px) and (max-width:819px) and (min-height:800px){
+ main.trivia-app.playing-layout .arena{
+   width:min(100%,calc(100dvh - 595px),425px)!important;
+   max-height:min(calc(100dvh - 595px),425px)!important;
+   flex-shrink:0!important;
+ }
+ main.trivia-app.playing-layout .arena-panel{gap:0!important;padding:4px!important}
+ main.trivia-app.playing-layout .arena-title{min-height:0!important;margin:0!important}
+ main.trivia-app.playing-layout .scoreboard{margin:0!important;gap:4px!important}
+ main.trivia-app.playing-layout .gesture-hint{margin:0 auto!important}
+}
