@@ -127,10 +127,21 @@ test('local storage deletion actually removes the game preference keys',async({p
     localStorage.setItem('trivia-local-game-v1','test');
     localStorage.setItem('trivia-personal-choice','test');
     localStorage.setItem('trivia-tutorial-seen-v1','1');
+    localStorage.setItem('trivia-question-reports-v1','test');
+    localStorage.setItem('trivia-local-collectible-album-v1','test');
+    localStorage.setItem('trivia-stage-id-v1','9');
+    sessionStorage.setItem('trivia-intermission-seeded-v1','1');
+    localStorage.setItem('unrelated-app-setting','keep');
   });
   await page.getByRole('button',{name:'מחק נתוני משחק מקומיים'}).click();
-  const saved=await page.evaluate(()=>['trivia-local-game-v1','trivia-personal-choice','trivia-tutorial-seen-v1'].map(k=>localStorage.getItem(k)));
-  expect(saved).toEqual([null,null,null]);
+  const saved=await page.evaluate(()=>({
+    items:['trivia-local-game-v1','trivia-personal-choice','trivia-tutorial-seen-v1',
+      'trivia-question-reports-v1','trivia-local-collectible-album-v1','trivia-stage-id-v1']
+      .map(k=>localStorage.getItem(k)),
+    session:sessionStorage.getItem('trivia-intermission-seeded-v1'),
+    other:localStorage.getItem('unrelated-app-setting')
+  }));
+  expect(saved).toEqual({items:[null,null,null,null,null,null],session:null,other:'keep'});
   await expect(page.getByRole('status')).toContainText('נמחקו');
 });
 
