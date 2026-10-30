@@ -120,6 +120,8 @@ export default function TriviaGame() {
   const [mode, setMode] = useState<Mode>('solo');
   const [size, setSize] = useState(3);
   const [stageId,setStageId]=useState(1);
+  const [campaignChapter,setCampaignChapter]=useState(1);
+  useEffect(()=>setCampaignChapter(Math.ceil(stageId/5)),[stageId]);
   const [localStageCompleted,setLocalStageCompleted]=useState(0);
   const [serverStageCompleted,setServerStageCompleted]=useState(0);
   const [stageStarted,setStageStarted]=useState(false);
@@ -399,9 +401,9 @@ export default function TriviaGame() {
     try {
       const savedLevel=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
       const completed=Number(localStorage.getItem('trivia-stage-completed-v1')||'0');
-      const safeCompleted=Number.isInteger(completed)?Math.min(30,Math.max(0,completed)):0;
+      const safeCompleted=Number.isInteger(completed)?Math.min(STAGE_COUNT,Math.max(0,completed)):0;
       setLocalStageCompleted(safeCompleted);
-      if(Number.isInteger(savedLevel)&&savedLevel>=1&&savedLevel<=Math.min(30,safeCompleted+1)){
+      if(Number.isInteger(savedLevel)&&savedLevel>=1&&savedLevel<=Math.min(STAGE_COUNT,safeCompleted+1)){
         setStageId(savedLevel);setSize(stageFor(savedLevel).size);
       }
       setStageStarted(localStorage.getItem('trivia-stage-started-v1')==='true');
@@ -416,7 +418,7 @@ export default function TriviaGame() {
           && value.cols===value.rows && value.edges && value.owners && value.scores){
           // Restore only a board whose size matches the saved locked campaign stage.
           const savedStage=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
-          const validStage=Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=30?savedStage:1;
+          const validStage=Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=STAGE_COUNT?savedStage:1;
           if(stageFor(validStage).size===value.rows){
             const savedCapture=JSON.parse(localStorage.getItem('trivia-capture-settings-v1')||'{}') as {guestName?:string};
             const realGuest=hasActualOpponent(savedCapture.guestName,localStorage.getItem('trivia-player-name')||'');
@@ -1429,12 +1431,12 @@ export default function TriviaGame() {
       </div>
     </header>
 
-    <section className='campaign-section' aria-label={locale==='es'?'Treinta niveles consecutivos':locale==='en'?'Thirty sequential stages':'שלושים שלבים לפי סדר'}>
+    <section className='campaign-section' aria-label={locale==='es'?'Cien niveles consecutivos':locale==='en'?'One hundred sequential stages':'מאה שלבים לפי סדר'}>
       <div className='campaign-heading'>
-        <h2>{locale==='es'?'Aventura: 30 niveles':locale==='en'?'Adventure: 30 stages':'הרפתקה: 30 שלבים'}</h2>
+        <h2>{locale==='es'?'Aventura: 100 niveles':locale==='en'?'Adventure: 100 stages':'הרפתקה: 100 שלבים'}</h2>
         <span>{locale==='es'?'Completados: ':locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
       </div>
-      <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={30} aria-valuenow={completedStage}
+      <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={STAGE_COUNT} aria-valuenow={completedStage}
            aria-label={locale==='es'?'Niveles completados':locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
         <span style={{width:(completedStage/STAGE_COUNT*100)+'%'}}/>
       </div>
@@ -1639,9 +1641,23 @@ export default function TriviaGame() {
             <div className='app-menu-content' data-active-section={menuSection}>
               <section className='app-menu-pane' hidden={menuSection!=='stages'} aria-label={locale==='he'?'בחירת שלב':'Choose stage'}>
                 <h2 className='panel-title'>{locale==='he'?'השלבים שלי · '+completedStage+' הושלמו':locale==='es'?'Mis niveles · '+completedStage+' completados':locale==='en'?'Campaign stages · '+completedStage+' completed': 'Stages'}</h2>
+      <nav className='campaign-chapter-nav' aria-label={locale==='he'?'בחירת פרק':locale==='es'?'Elegir capítulo':locale==='en'?'Choose chapter':locale==='fr'?'Choisir un chapitre':locale==='ru'?'Выбрать главу':'اختيار الفصل'}>
+        <button type='button' onClick={()=>setCampaignChapter(v=>Math.max(1,v-1))}
+           disabled={campaignChapter===1} aria-label='Previous chapter'>‹</button>
+        <label htmlFor='campaign-chapter-select'>{locale==='he'?'פרק':locale==='es'?'Capítulo':locale==='en'?'Chapter':locale==='fr'?'Chapitre':locale==='ru'?'Глава':'الفصل'}</label>
+        <select id='campaign-chapter-select' value={campaignChapter} onChange={e=>setCampaignChapter(Number(e.target.value))}>
+          {Array.from({length:Math.ceil(STAGE_COUNT/5)},(_,i)=>{
+            const number=i+1;
+            const title=locale==='he'?'פרק ':locale==='es'?'Capítulo ':locale==='en'?'Chapter ':locale==='fr'?'Chapitre ':locale==='ru'?'Глава ':'الفصل ';
+            return <option key={number} value={number}>{title}{number} · {number*5-4}-{number*5}</option>;
+          })}
+        </select>
+        <button type='button' onClick={()=>setCampaignChapter(v=>Math.min(Math.ceil(STAGE_COUNT/5),v+1))}
+           disabled={campaignChapter===Math.ceil(STAGE_COUNT/5)} aria-label='Next chapter'>›</button>
+      </nav>
       <div id='campaign-stage-grid' className='campaign-track menu-stages-grid'
          aria-label={locale==='es'?'Elegir un nivel desbloqueado':locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
-        {CAMPAIGN_STAGES.map(stage=>{
+        {CAMPAIGN_STAGES.filter(stage=>stage.chapter===campaignChapter).map(stage=>{
           const unlocked=stage.id<=stageUnlocked;
           const isSelected=stage.id===stageId;
           const enabled=unlocked&&(isSelected||!stageBusy)&&(!stageStarted||finished||isSelected);
@@ -1651,7 +1667,7 @@ export default function TriviaGame() {
              onClick={()=>{chooseStage(stage.id);menuRef.current?.close()}}>
             <span className='campaign-stage-number'>{isSelected?'✦ ':unlocked?'': '🔒 '}{String(stage.id).padStart(2,'0')}</span>
             <strong className='campaign-stage-icon' aria-hidden='true'>{stage.icon}</strong>
-            <span className='campaign-stage-title'>{locale==='es'?SPANISH_STAGE_NAMES[stage.id]:locale==='en'?stage.nameEn:stage.nameHe}</span>
+            <span className='campaign-stage-title'>{locale==='es'?(SPANISH_STAGE_NAMES[stage.id]||stage.nameEn):locale==='en'?stage.nameEn:stage.nameHe}</span>
             <small>{unlocked?(locale==='es'?'Tablero ':locale==='en'?'Board ':'לוח ')+stage.size+'×'+stage.size:(locale==='es'?'Bloqueado':locale==='en'?'Locked':'נעול')}</small>
           </button>
         })}
