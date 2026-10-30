@@ -18,7 +18,10 @@ q AS (
    question IS NULL OR btrim(question)='' OR
    CASE WHEN jsonb_typeof(answers)='array' THEN jsonb_array_length(answers)<>4 ELSE true END
    OR correct_index NOT BETWEEN 0 AND 3
- )) AS malformed_count
+ )) AS malformed_count,
+ COUNT(*) FILTER (WHERE active AND CASE WHEN jsonb_typeof(answers)='array' THEN
+   (SELECT count(DISTINCT lower(btrim(value))) FROM jsonb_array_elements_text(answers) AS t(value))<>4
+   ELSE true END) AS non_distinct_answer_sets
  FROM trivia_squares.questions GROUP BY locale
 ),
 r AS (
@@ -41,6 +44,7 @@ coalesce(q.sourced_count,0) with_individual_source_record,
 greatest(5000-coalesce(q.sourced_count,0),0) minimum_provenance_gap,
 coalesce(q.math_category_count,0) math_category_count,
 coalesce(q.malformed_count,0) malformed_count,
+coalesce(q.non_distinct_answer_sets,0) non_distinct_answer_sets,
 coalesce(d.duplicate_groups,0) exact_duplicate_groups,
 coalesce(r.flagged_approved,0) flagged_approved_reserve,
 coalesce(r.approved_without_source_url,0) reserve_missing_url,
