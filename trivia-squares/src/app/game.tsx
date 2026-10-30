@@ -38,6 +38,10 @@ type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local' | 'solo';
 type Question = { text: string; answers: string[]; edge?: string; id?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus' | 'premium_bonus'; premium?: boolean; premiumOwner?: Side; deadline_at?: string | null; extensions?: number };
 type WrongAnswerFeedback = { text:string; answers:string[]; selectedIndex:number; correctIndex:number | null };
+type LocalSourceQuestion={id:number;text:string;answers:string[];correct:number;category:string;difficulty:number;locale:ActiveLocale};
+const cacheLocales:ActiveLocale[]=['he','en','ru','fr','ar'];
+const blankQuestionCache=():Record<ActiveLocale,LocalSourceQuestion[]>=>({he:[],en:[],ru:[],fr:[],ar:[]});
+const blankCursorCache=():Record<ActiveLocale,number>=>({he:0,en:0,ru:0,fr:0,ar:0});
 type GameState = {
   rows: number;
   cols: number;
@@ -131,6 +135,8 @@ export default function TriviaGame() {
   const usedLocalQuestionIds=useRef<Set<number>>(new Set());
   const lastQuestionCategory=useRef<string|null>(null);
   const seenQuestionTexts=useRef<Set<string>>(new Set());
+  const remoteQuestionCache=useRef<Record<ActiveLocale,LocalSourceQuestion[]>>(blankQuestionCache());
+  const remoteQuestionCursor=useRef<Record<ActiveLocale,number>>(blankCursorCache());
   const [localPoolRelease,setLocalPoolRelease]=useState<{he:number;en:number}>({he:0,en:0});
   const localPoolRef=useRef<{he:number;en:number}>({he:0,en:0});
   const rememberShownQuestion=useCallback((text:string)=>{
@@ -267,6 +273,7 @@ export default function TriviaGame() {
       ...freshLocalQuestions(locale,countLocalReserve(locale))
     ]
     : internationalQuestions.filter(q=>q.locale===locale);
+  const effectiveQuestionBank=[...questionBank,...remoteQuestionCache.current[locale]];
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
 
@@ -332,6 +339,19 @@ export default function TriviaGame() {
       const available={he:Math.max(0,Math.min(countLocalReserve('he'),Math.trunc(Number(storedPool.he)||0))),
         en:Math.max(0,Math.min(countLocalReserve('en'),Math.trunc(Number(storedPool.en)||0)))};
       localPoolRef.current=available;setLocalPoolRelease(available);
+      // Cache question batches AND their cursor to survive a browser refresh.
+      for(const l of cacheLocales){
+        try{
+          const raw=JSON.parse(localStorage.getItem('trivia-local-extra-questions-v1-'+l)||'[]');
+          if(Array.isArray(raw))remoteQuestionCache.current[l]=raw.filter((q:LocalSourceQuestion)=>
+            q&&q.locale===l&&Number.isSafeInteger(q.id)&&q.id>=1_000_000_000&&
+            typeof q.text==='string'&&q.text.length>=12&&
+            Array.isArray(q.answers)&&q.answers.length===4&&
+            Number.isInteger(q.correct)&&q.correct>=0&&q.correct<=3).slice(-160);
+          const cursor=Number(localStorage.getItem('trivia-local-question-cursor-v1-'+l)||'0');
+          remoteQuestionCursor.current[l]=Number.isSafeInteger(cursor)&&cursor>=0?cursor:0;
+        }catch{}
+      }
       const ids=JSON.parse(localStorage.getItem('trivia-used-question-ids')||'[]') as number[];
       if(Array.isArray(ids)){
         usedLocalQuestionIds.current=new Set(ids.filter(x=>Number.isInteger(x)));
@@ -387,17 +407,31 @@ export default function TriviaGame() {
           if(stageFor(validStage).size===value.rows){
             const savedCapture=JSON.parse(localStorage.getItem('trivia-capture-settings-v1')||'{}') as {guestName?:string};
             const realGuest=hasActualOpponent(savedCapture.guestName,localStorage.getItem('trivia-player-name')||'');
-            const migrating=value.mode==='local'&&!realGuest;
+            // Migrate historic phantom player-2 squares in both old "local"
+            // and already-marked "solo" saves. Never touch a real two-player game.
+            const obsoleteLocalGuest=value.mode==='local'&&!realGuest;
+            const corruptSoloGuest=value.mode==='solo'&&(
+              value.turn!=='host'||Number(value.scores.guest||0)>0||
+              Object.values(value.owners).includes('guest')||
+              Object.values(value.edges).includes('guest'));
+            const migrating=obsoleteLocalGuest||corruptSoloGuest;
             const repaired=migrating?{...repairSoloBoard(value),mode:'solo' as const}:value;
             setLocal(repaired);setSize(repaired.rows);
             if(migrating){
-              setMode('solo');localStorage.setItem('trivia-mode-v2','solo');
-              // Restore earned credits and charms from the phantom player without clearing the board.
+              // Commit the repaired board immediately. A refresh must not undo it,
+              // and a previous Player 2 must not be recreated by stale mode data.
+              try{
+                localStorage.setItem('trivia-local-game-v1',JSON.stringify(repaired));
+                localStorage.setItem('trivia-mode-v2','solo');
+              }catch{}
+              setMode('solo');
+              // Transfer credits and time charms once, leaving the earned wallet intact.
               try{
                 const rewards=JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}');
                 localStorage.setItem('trivia-local-rewards',JSON.stringify({
+                  ...rewards,
                   credits:{host:Number(rewards.credits?.host||0)+Number(rewards.credits?.guest||0),guest:0},
-                  charms:{host:Number(rewards.charms?.host||0)+Number(rewards.charms?.guest||0),guest:0},wallet:rewards.wallet
+                  charms:{host:Number(rewards.charms?.host||0)+Number(rewards.charms?.guest||0),guest:0}
                 }));
               }catch{}
             }
@@ -413,7 +447,10 @@ export default function TriviaGame() {
     }catch{}
     try{
       const pending=JSON.parse(localStorage.getItem('trivia-local-question')||'null') as Question|null;
-      if(pending?.id && pending?.edge && [...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve,...internationalQuestions].some(q=>q.id===pending.id)){
+      if(pending?.id && pending?.edge && (
+        [...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve,...internationalQuestions].some(q=>q.id===pending.id)||
+        cacheLocales.some(l=>remoteQuestionCache.current[l].some(q=>q.id===pending.id))
+      )){
         setQuestion(pending);
         setEdge(pending.edge);
       }
@@ -674,38 +711,66 @@ export default function TriviaGame() {
       setBusy(false);
     } else {
       setEdge(key);
-      const unseen=questionBank.filter(q=>
-        !usedLocalQuestionIds.current.has(q.id) && !seenQuestionTexts.current.has(canonicalQuestion(q.text)));
-      // Respect chosen topics until they run out; gracefully widen without repeating.
+      let unseen=effectiveQuestionBank.filter(q=>
+        !usedLocalQuestionIds.current.has(q.id)&&!seenQuestionTexts.current.has(canonicalQuestion(q.text)));
+      // A line must always be earned with an actual trivia question.
+      if(!unseen.length&&client&&navigator.onLine){
+        setBusy(true);
+        let afterId=remoteQuestionCursor.current[locale];
+        let failed=false;
+        for(let page=0;page<60&&!unseen.length;page++){
+          const {data,error}=await client.rpc('trivia_local_question_batch',{
+            p_locale:locale,p_after_id:afterId,p_limit:100
+          });
+          if(error||!Array.isArray(data)){failed=true;break;}
+          if(!data.length)break;
+          const fresh:LocalSourceQuestion[]=[];
+          for(const raw of data as Record<string,unknown>[]){
+            const id=Number(raw.id),answerIndex=Number(raw.correct);
+            if(!Number.isSafeInteger(id)||id<=afterId||!Array.isArray(raw.answers)||
+              raw.answers.length!==4||raw.answers.some(a=>typeof a!=='string')||
+              !Number.isInteger(answerIndex)||answerIndex<0||answerIndex>3||
+              typeof raw.text!=='string'||typeof raw.category!=='string'||raw.locale!==locale)continue;
+            fresh.push({id:id+1_000_000_000,locale,text:raw.text,
+              answers:raw.answers as string[],correct:answerIndex,
+              difficulty:Number(raw.difficulty)||2,category:raw.category});
+          }
+          const last=Number((data[data.length-1] as {id?:unknown}).id);
+          if(!Number.isSafeInteger(last)||last<=afterId){failed=true;break;}
+          afterId=last;remoteQuestionCursor.current[locale]=afterId;
+          const unique=new Map([...remoteQuestionCache.current[locale],...fresh].map(q=>[q.id,q]));
+          remoteQuestionCache.current[locale]=[...unique.values()].slice(-160);
+          try{
+            localStorage.setItem('trivia-local-extra-questions-v1-'+locale,JSON.stringify(remoteQuestionCache.current[locale]));
+            localStorage.setItem('trivia-local-question-cursor-v1-'+locale,String(afterId));
+          }catch{}
+          unseen=fresh.filter(q=>!usedLocalQuestionIds.current.has(q.id)&&
+            !seenQuestionTexts.current.has(canonicalQuestion(q.text)));
+        }
+        setBusy(false);
+        if(!unseen.length){
+          setEdge(null);
+          setMessage(failed?
+            'לא ניתן לטעון שאלות כרגע. בדקו את החיבור לאינטרנט ונסו שוב. הלוח והניקוד נשמרו.':
+            'כל השאלות החדשות הזמינות נוצלו. ההתקדמות נשמרה; אין סגירת קווים ללא תשובת טריוויה.');
+          return;
+        }
+      }
+      if(!unseen.length){
+        setEdge(null);
+        setMessage('השאלות השמורות במכשיר נוצלו. התחברו לאינטרנט לטעינת שאלות נוספות. הלוח והניקוד נשמרו.');
+        return;
+      }
       const preferred=unseen.filter(q=>selectedTopics.includes(topicForQuestion(q.category,q.text)));
       const remaining=preferred.length?preferred:unseen;
-      // Rotate categories fairly: movies, music and TV are accessible from the first stage.
-      // Never sacrifice the ban on repeating a previously seen question.
       const alternatives=remaining.filter(v=>v.category!==lastQuestionCategory.current);
       const pool=alternatives.length?alternatives:remaining;
       const categories=[...new Set(pool.map(v=>v.category))];
       const category=categories[Math.floor(Math.random()*categories.length)];
       const inCategory=pool.filter(v=>v.category===category);
-      const q=usedLocalQuestionIds.current.size===0 && locale==='he'
-        ? remaining.find(v=>v.text.includes('בירת אוסטרליה')) || inCategory[0]
+      const q=usedLocalQuestionIds.current.size===0&&locale==='he'
+        ? remaining.find(v=>v.text.includes('בירת אוסטרליה'))||inCategory[0]
         : inCategory[Math.floor(Math.random()*inCategory.length)];
-      if(!q){
-        // Exhaustion must not block a saved local board, or fabricate a repeated question.
-        // Grant only this free local stroke (never a server-ranked result).
-        const next=applyLocalAnswer(local,key,true,local.mode==='solo');
-        setLocal(next);
-        const gained=Object.keys(next.owners).length-Object.keys(local.owners).length;
-        if(gained){
-          const acting=local.mode==='solo'?'host':local.turn==='guest'?'guest':'host';
-          setLocalCredits(prev=>({...prev,[acting]:prev[acting]+10*gained}));
-          play('capture');
-        }else play('draw');
-        setEdge(null);
-        setMessage(locale==='he'
-          ? 'כל השאלות החדשות הזמינות מוצו. הקו הושלם ללא שאלה כדי שתוכלו להמשיך באותו הלוח בלי לאפס אותו.'
-          : 'All new questions are exhausted. This line is free so you can continue the same board without a reset.');
-        return;
-      }
       if(preferred.length===0){
         setMessage(locale==='he'
           ? 'השאלות בנושאים שבחרת אזלו. מצאנו עבורך שאלה חדשה בנושא אחר, בלי למחוק את ההתקדמות.'
@@ -764,7 +829,8 @@ export default function TriviaGame() {
       }
     } else {
       if (!edge) { setBusy(false); return; }
-      const q=[...englishQuestions,...offlineQuestions,...freshLocalQuestionReserve,...internationalQuestions].find(v=>v.id===question.id);
+      const q=[...englishQuestions,...offlineQuestions,...freshLocalQuestionReserve,...internationalQuestions,
+        ...cacheLocales.flatMap(l=>remoteQuestionCache.current[l])].find(v=>v.id===question.id);
       if(!q){setMessage('לא נמצאה השאלה המקורית.');setBusy(false);return;}
       const correct = i === q.correct;
       if(question.kind==='premium_bonus'){
@@ -817,7 +883,7 @@ export default function TriviaGame() {
         }
       }
       if(correct && question.premium){
-        const unused=questionBank.filter(item=>item.id!==q.id &&
+        const unused=effectiveQuestionBank.filter(item=>item.id!==q.id &&
           selectedTopics.includes(topicForQuestion(item.category,item.text)) &&
           !usedLocalQuestionIds.current.has(item.id) &&
           !seenQuestionTexts.current.has(canonicalQuestion(item.text)));
@@ -1741,6 +1807,12 @@ export default function TriviaGame() {
     <div id='app-footer' className='game-author-credit' role='contentinfo'>
       <span className='game-author-credit-copy' dir={localeDirection(locale)}>
         {authorCredits[locale]}
+      </span>
+      <span className='game-question-source-credit' style={{fontWeight:900,fontSize:12,color:'#351438',display:'block',marginTop:6}}>
+        {locale==='he'?'מקור נתוני הגאוגרפיה: ':locale==='fr'?'Données géographiques : ':locale==='ru'?'Источник географических данных: ':locale==='ar'?'مصدر البيانات الجغرافية: ':'Geographic data source: '}
+        <a href='https://www.geonames.org/' target='_blank' rel='noreferrer noopener' style={{fontWeight:900,color:'#351438',textDecoration:'underline'}}>GeoNames</a>
+        {' · '}<a href='https://creativecommons.org/licenses/by/4.0/' target='_blank' rel='noreferrer noopener' style={{fontWeight:900,color:'#351438',textDecoration:'underline'}}>CC BY 4.0</a>
+        {' · '}{locale==='he'?'עיבוד: טריוויה ריבועים':locale==='fr'?'Adapté pour Trivia Squares':locale==='ru'?'Адаптировано для Trivia Squares':locale==='ar'?'بتصرف لصالح Trivia Squares':'Adapted for Trivia Squares'}
       </span>
     </div>
   </main>;
