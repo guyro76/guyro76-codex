@@ -2,26 +2,8 @@
 import {useCallback,useEffect,useState,type FormEvent} from 'react';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import type {ActiveLocale} from '../lib/i18n';
+import {questionTopics} from '../lib/questionTopics';
 
-const subjects=[
- ['tv_film','סדרות וקולנוע','TV & movies','Кино и сериалы','Films et séries','الأفلام والمسلسلات'],
- ['music','מוזיקה ושירים','Music','Музыка','Musique','الموسيقى'],
- ['eurovision','אירוויזיון','Eurovision','Евровидение','Eurovision','يوروفيجن'],
- ['history','היסטוריה','History','История','Histoire','التاريخ'],
- ['capitals','בירות ומדינות','Capitals & countries','Страны и столицы','Capitales et pays','عواصم ودول'],
- ['israel_politics','ישראל ופוליטיקה','Israel & politics','Израиль и политика','Israël et politique','إسرائيل والسياسة'],
- ['science','מדע וטכנולוגיה','Science & tech','Наука','Sciences','العلوم'],
- ['sports','ספורט','Sport','Спорт','Sport','الرياضة'],
- ['nature','טבע','Nature','Природа','Nature','الطبيعة'],
- ['arts','אמנות וספרות','Arts & books','Искусство и книги','Arts et livres','الفنون والكتب'],
- ['food','אוכל','Food','Еда','Cuisine','الطعام'],
- ['general','ידע כללי','General knowledge','Общие знания','Culture générale','معلومات عامة']
-] as const;
-const subjectSpanish:Record<string,string>={
- tv_film:'Series y cine',music:'Música',eurovision:'Eurovisión',history:'Historia',
- capitals:'Capitales y países',israel_politics:'Israel y política',science:'Ciencia y tecnología',
- sports:'Deporte',nature:'Naturaleza',arts:'Arte y literatura',food:'Gastronomía',general:'Cultura general'
-};
 const words={
  he:{heading:'🧠 השאלה שלי במשחק',reward:'על שאלה מקורית שתאומת ותאושר: 50 קרדיטים ואסימון לסגירת ריבוע אחד.',
   warning:'הפרס מוענק רק אחרי בדיקת העובדות והוספת השאלה למאגר. ניתן להציע עד שלוש שאלות ביממה.',
@@ -123,7 +105,7 @@ export default function CommunityQuestionForm({client,locale,userId,legalAccepte
    <form className="community-question-form" onSubmit={e=>void submit(e)}>
     <label htmlFor="community-topic">{t.category}</label>
     <select id="community-topic" className="form-input" value={category} onChange={e=>setCategory(e.target.value)}>
-     {subjects.map(s=><option key={s[0]} value={s[0]}>{locale==='es'?(subjectSpanish[s[0]]||s[2]):s[locale==='he'?1:locale==='en'?2:locale==='ru'?3:locale==='fr'?4:5]}</option>)}
+     {questionTopics.map(t=><option key={t.id} value={t.id}>{t[locale]}</option>)}
     </select>
     <label htmlFor="community-question">{t.question}</label>
     <textarea id="community-question" className="form-input" rows={3} minLength={12} maxLength={240} required
