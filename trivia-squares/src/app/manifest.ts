@@ -4,7 +4,7 @@ import type {MetadataRoute} from 'next';
 export default function manifest():MetadataRoute.Manifest{
   return {
     id:'/',
-    name:'טריוויה ריבועים · Trivia Squares',
+    name:'טריוויה ריבועים',
     short_name:'טריוויה ריבועים',
     description:'משחק טריוויה: מציירים קווים, עונים נכון וכובשים ריבועים',
     start_url:'/',
