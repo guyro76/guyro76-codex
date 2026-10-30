@@ -170,7 +170,7 @@ main.trivia-app .quiz-card{max-height:calc(100dvh - 25px);overflow:auto}
  main.trivia-app .game-grid{grid-template-columns:1fr!important}
  main.trivia-app .settings-drawer-content{grid-template-columns:repeat(2,minmax(0,1fr))}
  main.trivia-app .settings-drawer-content .glass-panel{min-width:0}
- main.trivia-app.playing-layout .board{width:min(100%,calc(100dvh - 365px))!important;max-width:540px!important}
+ main.trivia-app.playing-layout .board{width:min(100%,calc(100dvh - 520px))!important;max-width:480px!important}
 }
 @media (max-width:649px) {
  main.trivia-app .hero-brand{gap:7px}
