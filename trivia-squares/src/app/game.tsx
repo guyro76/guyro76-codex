@@ -1823,6 +1823,12 @@ export default function TriviaGame() {
         </section>
         <section className='glass-panel app-menu-pane' hidden={menuSection!=='rewards'}>
           <h2 className='panel-title'>{tr("💎 אוצרות והישגים")}</h2>
+           <a href="/suggest" className="glass-button" style={{display:'inline-flex',alignItems:'center',margin:'8px 0 12px',
+             fontWeight:900,textDecoration:'none',color:'#FFFFFF',background:'#294D84',border:'2px solid #FDE4A5'}}>
+             {locale==='he'?'🧠 הצע שאלה חדשה וקבל קרדיטים':locale==='en'?'🧠 Suggest a question for credits':
+              locale==='ru'?'🧠 Предложить вопрос за кредиты':locale==='fr'?'🧠 Proposer une question pour gagner des crédits':
+              locale==='es'?'🧠 Propón una pregunta y gana créditos':'🧠 اقترح سؤالاً واكسب رصيدًا'}
+           </a>
           <div className='wallet'>
             {([['🍎','פירות',remote?progress.fruits:localWallet.fruits],['💎','יהלומים',remote?progress.diamonds:localWallet.diamonds],['🪙','קרדיטים',currentCredits],['⭐','כוכבים',remote?0:localWallet.stars],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
               <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{tr(label)}</span></div>)}
