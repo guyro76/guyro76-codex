@@ -1,0 +1,53 @@
+/* Gameplay legibility: avoid 9-12px type in desktop/tablet compact mode.
+ * UI/UX Pro Max: strong hierarchy, thick labels, readable contrast, no thin text.
+ * Main board geometry remains responsive; it shrinks to reserve more vertical space
+ * instead of allowing type to be clipped or the whole page to scroll horizontally. */
+@media (min-width:820px) and (min-height:680px) {
+ main.trivia-app.playing-layout .hero .locale-option,
+ main.trivia-app.playing-layout .skin-palette-trigger,
+ main.trivia-app.playing-layout .campaign-stages-toggle,
+ main.trivia-app.playing-layout .campaign-heading span,
+ main.trivia-app.playing-layout .score-name,
+ main.trivia-app.playing-layout .gesture-hint,
+ main.trivia-app.playing-layout .status-line,
+ main.trivia-app.playing-layout .control-row :is(.gold-button,.glass-button),
+ main.trivia-app.playing-layout .arena-title p {
+   font-size:clamp(14px,1.1vw,16px)!important;
+   font-weight:900!important;
+   line-height:1.3!important;
+ }
+ main.trivia-app.playing-layout .score-name {
+   font-size:16px!important;
+ }
+ main.trivia-app.playing-layout .arena-title h2,
+ main.trivia-app.playing-layout .campaign-heading h2 {
+   font-size:clamp(17px,1.6vw,23px)!important;
+   font-weight:900!important;
+ }
+ main.trivia-app.playing-layout .app-menu-trigger,
+ main.trivia-app.playing-layout .hero .hero-name label,
+ main.trivia-app.playing-layout .hero .hero-name input {
+   font-size:14px!important;font-weight:900!important;
+ }
+ main.trivia-app.playing-layout .game-timebar time{font-size:16px!important;font-weight:900!important}
+ main.trivia-app.playing-layout .control-row :is(.gold-button,.glass-button) {
+   min-height:40px!important;
+ }
+ main.trivia-app.playing-layout .arena {
+   width:min(100%,calc(100dvh - 420px),590px)!important;
+ }
+ main.trivia-app.playing-layout .footer,
+ main.trivia-app.playing-layout #app-footer .game-author-credit-copy{
+   font-size:14px!important;font-weight:900!important;line-height:1.3!important;
+ }
+}
+@media (min-width:650px) and (max-width:819px) and (min-height:800px) {
+ main.trivia-app.playing-layout :is(.score-name,.gesture-hint,.status-line,.campaign-heading span,.control-row .gold-button,.control-row .glass-button){
+   font-size:14px!important;font-weight:900!important;line-height:1.3!important;
+ }
+}
+@media(max-width:649px) {
+ main.trivia-app.playing-layout :is(.score-name,.gesture-hint,.status-line,.campaign-heading span,.control-row .gold-button,.control-row .glass-button){
+   font-size:clamp(14px,3.5vw,16px)!important;font-weight:900!important;line-height:1.3!important;
+ }
+}
