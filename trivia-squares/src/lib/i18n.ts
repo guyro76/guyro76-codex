@@ -4,6 +4,7 @@
  * Strings are authored by editors, never machine-translated at runtime.
  */
 import {extraDictionaries} from './i18nExtra.ts';
+import {uiCompleteness} from './i18nCompleteness';
 export type ActiveLocale='he'|'en'|'ru'|'fr'|'ar'|'es';
 export type PlannedLocale=never;
 export const activeLocales=['he','en','ru','fr','ar','es'] as const;
@@ -262,8 +263,8 @@ export const englishDictionary:Readonly<Record<string,string>>={
 };
 export function translate(locale:ActiveLocale,hebrew:string):string{
  if(locale==='he')return hebrew;
- if(locale==='en')return englishDictionary[hebrew]||hebrew;
- return extraDictionaries[locale][hebrew]||englishDictionary[hebrew]||hebrew;
+ if(locale==='en')return uiCompleteness.en[hebrew]||englishDictionary[hebrew]||hebrew;
+ return uiCompleteness[locale][hebrew]||extraDictionaries[locale][hebrew]||englishDictionary[hebrew]||hebrew;
 }
 export function localeDirection(locale:ActiveLocale):'rtl'|'ltr'{
  return locale==='he'||locale==='ar'?'rtl':'ltr';
