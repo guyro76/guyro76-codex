@@ -4,6 +4,7 @@
 export const questionTopics=[
  {id:'tv_film',he:'סרטים וסדרות',en:'Films & television',ru:'Кино и сериалы',fr:'Cinéma et séries',ar:'الأفلام والمسلسلات'},
  {id:'music',he:'מוזיקה ישראלית ועולמית',en:'Music',ru:'Музыка',fr:'Musique',ar:'الموسيقى'},
+ {id:'eurovision',he:'אירוויזיון',en:'Eurovision',ru:'Евровидение',fr:'Eurovision',ar:'يوروفيجن'},
  {id:'israel_politics',he:'ישראל, כנסת ופוליטיקה',en:'Israel & politics',ru:'Израиль и политика',fr:'Israël et politique',ar:'إسرائيل والسياسة'},
  {id:'capitals',he:'בירות ומדינות העולם',en:'Countries & capitals',ru:'Страны и столицы',fr:'Pays et capitales',ar:'الدول والعواصم'},
  {id:'aviation',he:'תעופה וחברות תעופה',en:'Aviation & airlines',ru:'Авиация',fr:'Aviation',ar:'الطيران'},
@@ -28,6 +29,7 @@ export function topicForQuestion(category:string,text:string):QuestionTopic{
  if(/בירת|עיר הבירה|capital|столиц|capitale|عاصم/.test(q))return 'capitals';
  if(/ספורט|כדורגל|כדורסל|אולימפ|טניס|sport|football|basketball|tennis|спор|رياض/.test(both))return 'sports';
  if(/סדרות|סדרה|טלוויז|קולנוע|סרט|film|movie|television|series|cinéma|кино|сериал|مسلسل|أفلام/.test(both))return 'tv_film';
+ if(/אירוויזיון|eurovision|евровидени|يوروفيجن|يوروفيزيون/.test(both))return 'eurovision';
  if(/מוזיק|שיר|זמר|להקה|אלבום|music|song|singer|band|музык|chanson|musique|موسيقى|أغنية/.test(both))return 'music';
  if(/מדע|חלל|טכנולוג|פיזיק|כימ|מחשב|science|technology|space|computer|наук|технолог|sciences|informatique|العلوم|التكنولوجيا/.test(both))return 'science';
  if(/טבע|בעל חיים|חיה|ציפור|עץ|צמח|nature|animal|wildlife|природ|nature|حيوان|الطبيعة/.test(both))return 'nature';
@@ -41,5 +43,7 @@ export function topicForQuestion(category:string,text:string):QuestionTopic{
 export function parseTopicPreferences(raw:unknown):QuestionTopic[]{
  if(!Array.isArray(raw))return [...ALL_QUESTION_TOPICS];
  const set=new Set(raw.filter((x):x is QuestionTopic=>ALL_QUESTION_TOPICS.includes(x as QuestionTopic)));
+ // Existing players who had selected all topics also get the newly added category.
+ if(set.size===ALL_QUESTION_TOPICS.length-1 && !set.has('eurovision'))set.add('eurovision');
  return set.size?ALL_QUESTION_TOPICS.filter(t=>set.has(t)):[...ALL_QUESTION_TOPICS];
 }

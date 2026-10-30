@@ -137,6 +137,7 @@ export default function TriviaGame() {
   const seenQuestionTexts=useRef<Set<string>>(new Set());
   const remoteQuestionCache=useRef<Record<ActiveLocale,LocalSourceQuestion[]>>(blankQuestionCache());
   const remoteQuestionCursor=useRef<Record<ActiveLocale,number>>(blankCursorCache());
+  const cultureFetchedLocales=useRef<Set<ActiveLocale>>(new Set());
   const [localPoolRelease,setLocalPoolRelease]=useState<{he:number;en:number}>({he:0,en:0});
   const localPoolRef=useRef<{he:number;en:number}>({he:0,en:0});
   const rememberShownQuestion=useCallback((text:string)=>{
@@ -711,7 +712,37 @@ export default function TriviaGame() {
       setBusy(false);
     } else {
       setEdge(key);
-      let unseen=effectiveQuestionBank.filter(q=>
+      // Fresh culture, series, films and Eurovision are fetched before the
+      // geography fallback. No existing board, scores or seen history is reset.
+      let cultureQuestions:LocalSourceQuestion[]=[];
+      if(client&&navigator.onLine&&!cultureFetchedLocales.current.has(locale)){
+        cultureFetchedLocales.current.add(locale);
+        setBusy(true);
+        try{
+          const {data,error}=await client.rpc('trivia_local_culture_batch',{p_locale:locale,p_limit:100});
+          if(!error&&Array.isArray(data)){
+            const fetched:LocalSourceQuestion[]=[];
+            for(const raw of data as Record<string,unknown>[]){
+              const id=Number(raw.id),answerIndex=Number(raw.correct);
+              if(!Number.isSafeInteger(id)||id<=0||!Array.isArray(raw.answers)||
+                raw.answers.length!==4||raw.answers.some(a=>typeof a!=='string')||
+                !Number.isInteger(answerIndex)||answerIndex<0||answerIndex>3||
+                typeof raw.text!=='string'||typeof raw.category!=='string'||raw.locale!==locale)continue;
+              fetched.push({id:id+1_000_000_000,locale,text:raw.text,
+                answers:raw.answers as string[],correct:answerIndex,
+                difficulty:Number(raw.difficulty)||2,category:raw.category});
+            }
+            cultureQuestions=fetched;
+            const unique=new Map([...remoteQuestionCache.current[locale],...fetched].map(q=>[q.id,q]));
+            remoteQuestionCache.current[locale]=[...unique.values()].slice(-160);
+            try{
+              localStorage.setItem('trivia-local-extra-questions-v1-'+locale,JSON.stringify(remoteQuestionCache.current[locale]));
+            }catch{}
+          }else cultureFetchedLocales.current.delete(locale); // retry a transient network failure
+        }catch{cultureFetchedLocales.current.delete(locale);}
+        finally{setBusy(false);}
+      }
+      let unseen=[...effectiveQuestionBank,...cultureQuestions].filter(q=>
         !usedLocalQuestionIds.current.has(q.id)&&!seenQuestionTexts.current.has(canonicalQuestion(q.text)));
       // A line must always be earned with an actual trivia question.
       if(!unseen.length&&client&&navigator.onLine){
@@ -768,6 +799,8 @@ export default function TriviaGame() {
       const categories=[...new Set(pool.map(v=>v.category))];
       const category=categories[Math.floor(Math.random()*categories.length)];
       const inCategory=pool.filter(v=>v.category===category);
+      // Preserve the established first-turn tutorial and its regression tests;
+      // subsequent turns use the full balanced topic/category lottery.
       const q=usedLocalQuestionIds.current.size===0&&locale==='he'
         ? remaining.find(v=>v.text.includes('בירת אוסטרליה'))||inCategory[0]
         : inCategory[Math.floor(Math.random()*inCategory.length)];

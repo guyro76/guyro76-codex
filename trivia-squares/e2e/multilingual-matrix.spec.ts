@@ -49,6 +49,15 @@ if(profile==='visual'){
   expect(styles.weight).toBeGreaterThanOrEqual(900);
   expect(styles.size).toBeGreaterThanOrEqual(17);
   const width=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,viewport:window.innerWidth}));
+  if(width.scroll>width.viewport+12){
+    const overflow=await page.evaluate(()=>[...document.querySelectorAll('body *')]
+      .map(element=>({tag:element.tagName,cls:typeof element.className==='string'?element.className.slice(0,100):'',
+        width:Math.round(element.getBoundingClientRect().width),
+        left:Math.round(element.getBoundingClientRect().left),
+        right:Math.round(element.getBoundingClientRect().right)}))
+      .filter(v=>v.width>0&&(v.right>window.innerWidth+12||v.left< -12)).slice(0,30));
+    console.info('OVERFLOW_DIAG',locale,JSON.stringify(overflow));
+  }
   expect(width.scroll).toBeLessThanOrEqual(width.viewport+12);
  });
  test('QA visual: six skin choices save independently of language and stage',async({page})=>{
