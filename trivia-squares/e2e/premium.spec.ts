@@ -56,12 +56,19 @@ test('sports questions may be disabled and the topic preference survives reload'
    localStorage.setItem('trivia-player-name','עדי');
  });
  await page.goto('/');
- await page.getByRole('checkbox',{name:'ספורט'}).uncheck();
+ await page.getByRole('button',{name:'פתח תפריט משחק'}).click();
+ let nav=page.getByRole('dialog',{name:'תפריט המשחק'});
+ await nav.getByRole('button',{name:/מצבי משחק/}).click();
+ await nav.getByRole('checkbox',{name:'ספורט'}).uncheck();
  await expect.poll(()=>page.evaluate(()=>{
   return (JSON.parse(localStorage.getItem('trivia-question-topics-v1')||'[]') as string[]).includes('sports');
  })).toBe(false);
+ await nav.getByRole('button',{name:'סגור תפריט'}).click();
  await page.reload();
- await expect(page.getByRole('checkbox',{name:'ספורט'})).not.toBeChecked();
+ await page.getByRole('button',{name:'פתח תפריט משחק'}).click();
+ nav=page.getByRole('dialog',{name:'תפריט המשחק'});
+ await nav.getByRole('button',{name:/מצבי משחק/}).click();
+ await expect(nav.getByRole('checkbox',{name:'ספורט'})).not.toBeChecked();
 });
 
 test('wrong answer holds green correct and red chosen answer until Continue, preserving board',async({page})=>{
