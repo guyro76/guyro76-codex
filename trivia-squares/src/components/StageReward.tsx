@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useState} from 'react';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import type {ActiveLocale} from '../lib/i18n';
+import type {SoundCue} from '../lib/gameAudio';
 import {cardById,localStageCard,readLocalAlbum,saveLocalAlbum,type StageCard,type LocalEarned} from '../lib/stageRewards';
 import {intermissionText,intermissionWord,intermissionPrize,intermissionCard} from '../lib/intermissionLocales';
 import {STAGE_COUNT} from '../lib/campaignStages';
@@ -17,7 +18,7 @@ type RewardProps={
   onAdvance:()=>void;
   onLocalPrize:(prize:string)=>void;
   onRemotePrize:()=>void;
-  onSound:(cue:'bonus'|'win')=>void;
+  onSound:(cue:SoundCue)=>void;
 };
 
 function Illustration({card}:{card:StageCard}){
@@ -103,7 +104,10 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   const finish=useCallback(async(selected:'wheel'|'word')=>{
     if(!card||played||playing)return;
     setPlaying(true);setNotice('');setGame(selected);
-    if(selected==='wheel')setWheelTurns(t=>t+5+Math.floor(Math.random()*3));
+    if(selected==='wheel'){
+      onSound('coin');
+      setWheelTurns(t=>t+5+Math.floor(Math.random()*3));
+    } else onSound('turn');
     if(remoteMatchId&&client){
       const {data,error}=await client.rpc('trivia_stage_play',{p_match:remoteMatchId,p_game:selected,p_guess:selected==='word'?guess.trim():null});
       if(error){setNotice(translate('לא ניתן לקבל את הפרס: ','Unable to award prize: ')+error.message);setPlaying(false);return;}
@@ -137,8 +141,8 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
         <h3>{translate('מה בא לך לעשות עם האוצר?','What will you do with your treasure?')}</h3>
         <p>{translate('לבחירתך אתגר אחד לכל שלב. אפשר גם לדלג ולהתקדם.','Choose one optional challenge per stage, or skip ahead.')}</p>
         {!played && !game && <div className='lumen-intermission-choices'>
-          <button type='button' onClick={()=>setGame('word')}><strong>{translate('🔠 נחש את המילה','🔠 Guess the word')}</strong><span>{translate('רמז ואותיות לאוצר הבא','A clue to your next treasure')}</span></button>
-          <button type='button' onClick={()=>setGame('wheel')}><strong>{translate('🎡 גלגל ההפתעות','🎡 Prize wheel')}</strong><span>{translate('פרס וירטואלי, ללא תשלום','A free virtual prize')}</span></button>
+          <button type='button' onClick={()=>{onSound('turn');setGame('word')}}><strong>{translate('🔠 נחש את המילה','🔠 Guess the word')}</strong><span>{translate('רמז ואותיות לאוצר הבא','A clue to your next treasure')}</span></button>
+          <button type='button' onClick={()=>{onSound('turn');setGame('wheel')}}><strong>{translate('🎡 גלגל ההפתעות','🎡 Prize wheel')}</strong><span>{translate('פרס וירטואלי, ללא תשלום','A free virtual prize')}</span></button>
         </div>}
         {game==='word'&&!played&&<div className='lumen-word-game'>
           <p><strong>{translate('רמז:','Hint:')}</strong> {word.hint}</p>
