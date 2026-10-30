@@ -55,7 +55,9 @@ function tone(ctx: AudioContext, hz: number, at: number, duration: number, gain:
   osc.type = wave;
   osc.frequency.setValueAtTime(hz, at);
   envelope.gain.setValueAtTime(0.0001, at);
-  envelope.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), at + 0.013);
+  // Stronger but safely limited effects: prior sub-10% gain was barely audible
+  // on mobile speakers even with in-game volume set to 65%.
+  envelope.gain.exponentialRampToValueAtTime(Math.min(.30,Math.max(0.0002,gain*1.75)), at + 0.013);
   envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
   osc.connect(envelope).connect(masterGain || ctx.destination);
   osc.start(at);
@@ -83,7 +85,7 @@ function marker(ctx: AudioContext, strength: number) {
   filter.Q.value = 0.75;
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.linearRampToValueAtTime(strength * 0.09, now + 0.025);
+  gain.gain.linearRampToValueAtTime(strength * 0.18, now + 0.025);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
   source.connect(filter).connect(gain).connect(masterGain || ctx.destination);
   source.start(now);
@@ -97,11 +99,11 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
   const ctx = context();
   if (!ctx) return;
   if (ctx.state !== 'running') {
-    // The cue is scheduled once the mobile device unlocks audio; never lose
-    // a legitimate answer/capture reward solely because resume is asynchronous.
+    // Safari: enqueue the oscillator in the suspended context *synchronously*
+    // with the tap; it will begin when resume resolves. Do not depend on a
+    // second asynchronous play call outside mobile's user activation.
     unlockGameAudio();
-    void ctx.resume().then(()=>{if(ctx.state==='running')playGameSound(cue,opts,delaySeconds)}).catch(()=>{});
-    return;
+    if(ctx.state==='closed')return;
   }
   const volume = Math.min(1, Math.max(0, opts.volume));
   if (cue === 'marker') {
@@ -198,4 +200,13 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
       note(554.37, 0.09, 0.19, 0.075, 'sine');
       break;
   }
+}
+
+/** Diagnostic only: READY means Web Audio is running, not that hardware isn't
+ * muted. iOS Silent Mode and device volume are outside app control. */
+export function gameAudioState(): 'unsupported'|'locked'|'ready' {
+ if(typeof window==='undefined' ||
+   !(window.AudioContext || (window as Window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext))
+   return 'unsupported';
+ return audio?.state==='running'?'ready':'locked';
 }

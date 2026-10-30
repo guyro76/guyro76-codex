@@ -35,3 +35,23 @@ export function edgeBetween(a: Dot, b: Dot, rows: number, cols: number): string 
   if (dr === 0) return 'h-' + a.row + '-' + Math.min(a.col, b.col);
   return 'v-' + Math.min(a.row, b.row) + '-' + a.col;
 }
+
+/** Accept deliberate orthogonal strokes even when the finger lifts slightly
+ * before/after the destination dot. Direction is never inferred from RTL.
+ * Diagonal, stationary, two-cell and cross-axis gestures remain invalid. */
+export function edgeFromSwipe(start:Dot,release:BoardPoint,rows:number,cols:number):string|null {
+ const exact=nearestDot(release,rows,cols);
+ if(exact)return edgeBetween(start,exact,rows,cols);
+ const origin=dotXY(start,rows,cols);
+ const dx=release.x-origin.x,dy=release.y-origin.y;
+ const stepX=BOARD_SPAN/cols,stepY=BOARD_SPAN/rows;
+ const horizontal=Math.abs(dx)>Math.abs(dy);
+ const along=horizontal?Math.abs(dx)/stepX:Math.abs(dy)/stepY;
+ const across=horizontal?Math.abs(dy):Math.abs(dx);
+ const allowableDrift=Math.min(18,(horizontal?stepY:stepX)*.24);
+ if(along<.60 || along>1.28 || across>allowableDrift)return null;
+ const target:Dot=horizontal
+   ?{row:start.row,col:start.col+Math.sign(dx)}
+   :{row:start.row+Math.sign(dy),col:start.col};
+ return edgeBetween(start,target,rows,cols);
+}
