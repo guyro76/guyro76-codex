@@ -94,7 +94,10 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
       fill='#101B3B' fillOpacity='.95' stroke={color} strokeOpacity='.85' strokeWidth='1' aria-hidden='true'/>
     <text className='capture-mark capture-player-name' x={cx} y={cy+textSize*.34}
       fontSize={textSize} textAnchor='middle' fontWeight='900' fill='#FFFFFF'
-      direction={locale==='he'||locale==='ar'?'rtl':'ltr'}
+      // SVG text-anchor + RTL direction may reverse Hebrew names on iOS Safari.
+      // The text content itself is already in logical Unicode order; let its
+      // strong RTL characters render naturally inside an LTR SVG text context.
+      direction='ltr' style={{unicodeBidi:'plaintext'}}
       textLength={Array.from(label).length*textSize*.7>width-14?width-14:undefined}
       lengthAdjust='spacingAndGlyphs' aria-hidden='true'>{label}</text>
     <g className='capture-firework' aria-hidden='true' pointerEvents='none'>
