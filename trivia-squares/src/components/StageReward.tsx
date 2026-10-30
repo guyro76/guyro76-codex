@@ -158,7 +158,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   };
   if(!card)return <section className='lumen-stage-reveal' role='status' aria-live='polite'><h2>{translate('✨ אוסף הסודות נפתח','✨ Secret collection unlocked')}</h2><p>{notice||translate('מכינים את קלף הבונוס...','Preparing your collectible card...')}</p></section>;
   return <section className='lumen-stage-reveal' aria-labelledby='stage-reward-title'>
-    <div className='lumen-stage-topline'><span>STAGE COMPLETE</span><span>{translate('✦ קלף אספנות חדש ✦','✦ New collectible card ✦')}</span></div>
+    <div className='lumen-stage-topline'><span>{translate('השלב הושלם','STAGE COMPLETE')}</span><span>{translate('✦ קלף אספנות חדש ✦','✦ New collectible card ✦')}</span></div>
     <div className='stage-celebration' data-testid='stage-celebration' aria-label={translate('חגיגת סיום השלב','Stage completion celebration')}>
       <div className='stage-gift-sparks' aria-hidden='true'>{Array.from({length:18},(_,i)=><span key={i} style={{'--spark-index':i} as CSSProperties}>{i%3===0?'✦':i%3===1?'★':'✧'}</span>)}</div>
       <strong>{translate('🎇 חגיגת הניצחון!','🎇 Victory celebration!')}</strong>
