@@ -1300,6 +1300,7 @@ export default function TriviaGame() {
           onClick={()=>setLocale('fr')}>Français</button>
         <button type='button' lang='ar' aria-pressed={locale==='ar'} disabled={!!question} className='locale-option'
           onClick={()=>setLocale('ar')}>العربية</button>
+        <button type='button' lang='es' aria-pressed={locale==='es'} disabled={!!question} className='locale-option' onClick={()=>setLocale('es')}>Español</button>
       </div>
       <div className='eyebrow'>✦ TRIVIA SQUARES · ADVENTURE ✦</div>
       <h1>{tr('טריוויה ריבועים')}</h1>
@@ -1687,6 +1688,7 @@ export default function TriviaGame() {
           <button type='button' lang='ru' aria-pressed={locale==='ru'} onClick={()=>setLocale('ru')}>Русский</button>
           <button type='button' lang='fr' aria-pressed={locale==='fr'} onClick={()=>setLocale('fr')}>Français</button>
           <button type='button' lang='ar' aria-pressed={locale==='ar'} onClick={()=>setLocale('ar')}>العربية</button>
+          <button type='button' lang='es' aria-pressed={locale==='es'} onClick={()=>setLocale('es')}>Español</button>
         </div>
         <span className='quiz-badge'>{tr("🧭 הדרך לכיבוש מתחילה כאן")}</span>
         <h2>{tr(['צייר קו כמו בטוש','ענה נכון על שאלת טריוויה','סגור ריבוע וזכה בנקודות'][tutorialPage])}</h2>
