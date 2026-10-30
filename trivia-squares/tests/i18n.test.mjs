@@ -4,8 +4,8 @@ import {localeCatalog,activeLocales,plannedLocales,isActiveLocale,localeDirectio
 import {offlineQuestions} from '../src/lib/offlineQuestions.ts';
 import {englishQuestions} from '../src/lib/englishQuestions.ts';
 
-test('QA: five languages are all enabled; Hebrew and Arabic render RTL',()=>{
- assert.deepEqual([...activeLocales],['he','en','ru','fr','ar']);
+test('QA: six languages are all enabled; Hebrew and Arabic render RTL',()=>{
+ assert.deepEqual([...activeLocales],['he','en','ru','fr','ar','es']);
  assert.deepEqual([...plannedLocales],[]);
  for(const locale of activeLocales){
   assert.equal(isActiveLocale(locale),true);
@@ -14,7 +14,7 @@ test('QA: five languages are all enabled; Hebrew and Arabic render RTL',()=>{
   assert.ok(translate(locale,'טריוויה ריבועים').trim());
  }
  for(const locale of ['he','ar'])assert.equal(localeDirection(locale),'rtl');
- for(const locale of ['en','ru','fr'])assert.equal(localeDirection(locale),'ltr');
+ for(const locale of ['en','ru','fr','es'])assert.equal(localeDirection(locale),'ltr');
 });
 test('QA specialist 4: English UI has authored primary strings',()=>{
  for(const input of ['טריוויה ריבועים','התחל משחק','גודל לוח','התחבר באמצעות Google','שכחתי סיסמה','הודעת הפרטיות','תנאי השימוש','כינוי שחקן','פרטיות','נגישות','התחל משחק']){

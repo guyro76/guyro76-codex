@@ -3,7 +3,7 @@
  * No audio downloads, copyrighted samples, user tracking or microphone permission.
  * The Web Audio context is created only after a player interaction.
  */
-export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond';
+export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond' | 'pop' | 'slice' | 'scratch';
 let audio: AudioContext | null = null;
 let lastStrokeAt = -1;
 let pendingResume = false;
@@ -113,6 +113,21 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
     tone(ctx, freq, t + offset, dur, level * volume, wave);
 
   switch (cue) {
+    case 'pop':
+      // Soft original confetti balloon burst, never a firearm effect.
+      note(620,0,.05,.11,'triangle');
+      note(310,.028,.10,.095,'sine');
+      break;
+    case 'slice':
+      // Airy cake-cut swipe with a delicate bell finish.
+      note(580,0,.12,.08,'triangle');
+      note(784,.10,.18,.085,'sine');
+      break;
+    case 'scratch':
+      // A brief paper-scratch texture followed by an original reward chime.
+      marker(ctx,volume*.5);
+      note(880,.13,.15,.075,'triangle');
+      break;
     case 'coin':
       // Two crisp metallic bounces, like coins dropping into a bank.
       note(1244.51,0,.075,.16,'triangle');
