@@ -45,7 +45,7 @@ test('saved stage 9 shows four intermissions and keeps Adi credits after reload'
 });
 
 test('family installation smoke: 100 stages, six languages, mobile icons',async({page,request})=>{
-  await page.addInitScript(()=>localStorage.setItem('trivia-tutorial-seen-v1','1'));
+  await page.addInitScript(()=>{localStorage.setItem('trivia-tutorial-seen-v1','1');localStorage.setItem('trivia-welcome-dismissed-v1','1');});
   await page.goto('/');
   await expect(page.getByRole('heading',{name:'טריוויה ריבועים'})).toBeVisible();
   await expect(page.locator('.campaign-section')).toContainText('100');
