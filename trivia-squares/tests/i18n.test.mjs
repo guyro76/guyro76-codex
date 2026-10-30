@@ -59,3 +59,11 @@ test('QA: all literal game controls and answer-feedback strings are localized',a
   if(key!=='עברית')assert.ok(!/[\u0590-\u05ff]/u.test(translated),'Untranslated control in '+locale+': '+key);
  }
 });
+
+test('QA: static stage and setup labels never fall back to Hebrew in other locales',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const game=readFileSync(new URL('../src/app/game.tsx',import.meta.url),'utf8');
+ const legacy=[...game.matchAll(/locale==='en'\?'([^']*)':'([^']*)'/g)]
+   .filter(match=>!match[1].startsWith('/en/'));
+ assert.equal(legacy.length,0,'Use tr() for text in all supported languages, not a two-locale ternary');
+});
