@@ -12,6 +12,7 @@ import { playGameSound, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
+import { spanishQuestions } from '../lib/spanishQuestions';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
@@ -283,7 +284,7 @@ export default function TriviaGame() {
       ...(locale === 'en' ? englishQuestions : offlineQuestions),
       ...freshLocalQuestions(locale,countLocalReserve(locale))
     ]
-    : internationalQuestions.filter(q=>q.locale===locale);
+    : locale==='es'?spanishQuestions:internationalQuestions.filter(q=>q.locale===locale);
   const effectiveQuestionBank=[...questionBank,...remoteQuestionCache.current[locale]];
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
