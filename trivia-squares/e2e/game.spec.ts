@@ -411,3 +411,74 @@ test('exhausted complete Hebrew question bank allows continued drawing without r
   await expect(page.locator('.level-pill')).toContainText('7');
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}').edges?.['h-0-1'])).toBe('host');
 });
+
+
+test('legacy solo game restores Player 2 captures to Player 1 on refresh without clearing edges, questions or score',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('trivia-tutorial-seen-v1','1');
+    localStorage.setItem('trivia-player-name','עדי');
+    localStorage.setItem('trivia-mode-v2','solo');
+    localStorage.setItem('trivia-stage-id-v1','7');
+    localStorage.setItem('trivia-stage-completed-v1','6');
+    localStorage.setItem('trivia-question-text-history-v1',JSON.stringify(['an existing seen question']));
+    localStorage.setItem('trivia-local-rewards',JSON.stringify({
+      credits:{host:20,guest:10},charms:{host:1,guest:2},wallet:{stars:5,fruits:8,diamonds:2}
+    }));
+    localStorage.setItem('trivia-local-game-v1',JSON.stringify({
+      rows:4,cols:4,mode:'solo',turn:'guest',
+      edges:{'h-0-0':'guest','h-1-0':'host','h-0-1':'host'},
+      owners:{'0-0':'guest','0-1':'host'},
+      scores:{host:1,guest:1,bot:0}
+    }));
+  });
+  await page.goto('/');
+  await expect.poll(async()=>page.evaluate(()=>{
+    const board=JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}');
+    const rewards=JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}');
+    return {
+      mode:board.mode,turn:board.turn,guestSquare:board.owners?.['0-0'],
+      ownerScore:board.scores?.host,guestScore:board.scores?.guest,
+      formerlyGuestLine:board.edges?.['h-0-0'],
+      otherLine:board.edges?.['h-0-1'],
+      credits:rewards.credits?.host,guestCredits:rewards.credits?.guest,
+      charms:rewards.charms?.host,fruits:rewards.wallet?.fruits
+    };
+  })).toEqual({
+    mode:'solo',turn:'host',guestSquare:'host',ownerScore:2,guestScore:0,
+    formerlyGuestLine:'host',otherLine:'host',credits:30,guestCredits:0,charms:3,fruits:8
+  });
+  await expect(page.locator('.level-pill')).toContainText('7');
+  await expect(page.locator('.scoreboard .player-tile.other')).toHaveCount(0);
+  await page.reload();
+  const persisted=await page.evaluate(()=>{
+    const b=JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}');
+    const r=JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}');
+    return {owner:b.owners?.['0-0'],host:b.scores?.host,guest:b.scores?.guest,credits:r.credits?.host,charms:r.charms?.host};
+  });
+  expect(persisted).toEqual({owner:'host',host:2,guest:0,credits:30,charms:3});
+});
+
+test('a real local Player 2 keeps their colored captured squares and score across refresh',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('trivia-tutorial-seen-v1','1');
+    localStorage.setItem('trivia-player-name','גיא');
+    localStorage.setItem('trivia-mode-v2','local');
+    localStorage.setItem('trivia-capture-settings-v1',JSON.stringify({guestName:'עדי',guestColor:'#F97316',guestAvatar:'👑'}));
+    localStorage.setItem('trivia-local-game-v1',JSON.stringify({
+      rows:3,cols:3,mode:'local',turn:'guest',
+      edges:{'h-0-0':'guest','h-1-0':'host'},
+      owners:{'0-0':'guest'},
+      scores:{host:0,guest:1,bot:0}
+    }));
+  });
+  await page.goto('/');
+  await expect.poll(()=>page.evaluate(()=>{
+    const b=JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}');
+    return {mode:b.mode,owner:b.owners?.['0-0'],guest:b.scores?.guest};
+  })).toEqual({mode:'local',owner:'guest',guest:1});
+  await page.reload();
+  await expect.poll(()=>page.evaluate(()=>{
+    const b=JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}');
+    return {owner:b.owners?.['0-0'],guest:b.scores?.guest};
+  })).toEqual({owner:'guest',guest:1});
+});
