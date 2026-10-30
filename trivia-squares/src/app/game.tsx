@@ -405,7 +405,7 @@ export default function TriviaGame() {
       if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
         const recovered:Record<string,TopicHistoryEntry[]>={};
         for(const [key,value] of Object.entries(saved)){
-          if(!/^(he|en|ru|fr|ar|es):\\d{1,3}$/.test(key)||!Array.isArray(value))continue;
+          if(!/^(he|en|ru|fr|ar|es):\d{1,3}$/.test(key)||!Array.isArray(value))continue;
           recovered[key]=value.filter((v):v is TopicHistoryEntry=>
             Boolean(v&&typeof v==='object'&&typeof v.category==='string'&&typeof v.pattern==='string'&&typeof v.topic==='string')
           ).slice(-60);
