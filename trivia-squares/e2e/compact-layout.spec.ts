@@ -10,9 +10,22 @@ for(const viewport of [{width:1280,height:800},{width:1024,height:768}]){
   if(await tutorial.isVisible())await tutorial.getByRole('button',{name:'דלג או סיים'}).click();
   await expect(page.getByRole('img',{name:'לוגו טריוויה ריבועים'})).toBeVisible();
   await expect(page.locator('#campaign-stage-grid')).toBeHidden();
-  await page.getByRole('button',{name:/בחר שלב · הצג את 30 השלבים/}).click();
-  await expect(page.locator('#campaign-stage-grid')).toBeVisible();
-  await page.getByRole('button',{name:/הסתר רשימת שלבים/}).click();
+  const menuButton=page.getByRole('button',{name:'פתח תפריט משחק'});
+  await menuButton.click();
+  const menu=page.getByRole('dialog',{name:'תפריט המשחק'});
+  await expect(menu).toBeVisible();
+  await expect(menu.locator('.campaign-stage-card')).toHaveCount(30);
+  await menu.getByRole('button',{name:/מצבי משחק/}).click();
+  await expect(menu.getByRole('heading',{name:/חדר המשחק/})).toBeVisible();
+  await menu.getByRole('button',{name:/התאמה אישית/}).click();
+  await expect(menu.getByRole('heading',{name:/השחקן שלי/})).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+  await expect(menuButton).toBeFocused();
+  await page.getByRole('button',{name:/בחירת שלב/}).click();
+  await expect(menu.locator('.campaign-stage-card')).toHaveCount(30);
+  await menu.getByRole('button',{name:'סגור תפריט'}).click();
+  await expect(menu).toBeHidden();
   await page.getByLabel('שם שחקן (חובה)').fill('טסטר');
   const board=page.locator('svg.board');
   await board.scrollIntoViewIfNeeded();
@@ -26,7 +39,7 @@ for(const viewport of [{width:1280,height:800},{width:1024,height:768}]){
   await page.mouse.move(a.x,a.y);await page.mouse.down();
   await page.mouse.move(b.x,b.y,{steps:12});await page.mouse.up();
   await expect(page.locator('main.trivia-app')).toHaveClass(/playing-layout/);
-  await expect(page.locator('aside .settings-drawer')).not.toHaveAttribute('open','');
+  await expect(page.locator('aside .app-menu-dialog')).not.toHaveAttribute('open','');
   const geometry=await page.evaluate(()=>{
    const board=document.querySelector('svg.board')!.getBoundingClientRect();
    const logo=document.querySelector('.trivia-brand-mark')!.getBoundingClientRect();
