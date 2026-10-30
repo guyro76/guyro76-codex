@@ -16,6 +16,7 @@ import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QU
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
+import TriviaMark from '../components/TriviaMark';
 import CaptureTile, {type CaptureStyle} from '../components/CaptureTile';
 import {reassignCapture,type LocalOwner,type LocalOwnerMode} from '../lib/captureOwnership';
 import TutorialPreview from '../components/TutorialPreview';
@@ -24,6 +25,7 @@ import GameTimeBar from '../components/GameTimeBar';
 import {CAMPAIGN_STAGES,STAGE_COUNT,stageFor,canOpenStage} from '../lib/campaignStages';
 import './tutorial.css';
 import './premium.css';
+import './responsive-layout.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
@@ -117,6 +119,7 @@ export default function TriviaGame() {
   const [localStageCompleted,setLocalStageCompleted]=useState(0);
   const [serverStageCompleted,setServerStageCompleted]=useState(0);
   const [stageStarted,setStageStarted]=useState(false);
+  const [stageListOpen,setStageListOpen]=useState(false);
   const [local, setLocal] = useState<GameState>(() => empty(3));
   const [stageRunId,setStageRunId] = useState('local-first');
   const [localReady, setLocalReady] = useState(false);
@@ -1226,7 +1229,7 @@ export default function TriviaGame() {
     subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
-  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin} style={css.main} dir={localeDirection(locale)} lang={locale}>
+  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin + (stageStarted?' playing-layout':' setup-layout')} style={css.main} dir={localeDirection(locale)} lang={locale}>
     <style>{`
       *{box-sizing:border-box} body{background:#111C48;color:white;font-family:Arial,'Noto Sans Hebrew',sans-serif;font-weight:800;margin:0}
       .trivia-app{--accent:#8CE8FF;min-height:100vh;position:relative;isolation:isolate}
@@ -1390,8 +1393,13 @@ export default function TriviaGame() {
         <button type='button' lang='ar' aria-pressed={locale==='ar'} disabled={!!question} className='locale-option'
           onClick={()=>setLocale('ar')}>العربية</button>
       </div>
-      <div className='eyebrow'>✦ TRIVIA SQUARES · ADVENTURE ✦</div>
-      <h1>{tr('טריוויה ריבועים')}</h1>
+      <div className='hero-brand'>
+        <TriviaMark label={locale==='he'?'לוגו טריוויה ריבועים':'Trivia Squares logo'} size={46}/>
+        <div className='hero-brand-titles'>
+          <div className='eyebrow'>✦ TRIVIA SQUARES · ADVENTURE ✦</div>
+          <h1>{tr('טריוויה ריבועים')}</h1>
+        </div>
+      </div>
       <p>{tr("חברו נקודות, ענו נכון, כבשו ריבועים והפכו לאלופי הטריוויה!")}</p>
       <div className='hero-name'>
         <label htmlFor='quick-player-name'>{tr("שם שחקן (חובה)")}</label>
@@ -1413,7 +1421,13 @@ export default function TriviaGame() {
            aria-label={locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
         <span style={{width:(completedStage/STAGE_COUNT*100)+'%'}}/>
       </div>
-      <div className='campaign-track' aria-label={locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
+      <button type='button' className='campaign-stages-toggle' aria-expanded={stageListOpen}
+        aria-controls='campaign-stage-grid' onClick={()=>setStageListOpen(v=>!v)}>
+        {locale==='he'?(stageListOpen?'הסתר רשימת שלבים':'בחר שלב · הצג את 30 השלבים'):'Stages · '+(stageListOpen?'Hide all':'Show all 30')}
+        <span aria-hidden='true'>{stageListOpen?'▴':'▾'}</span>
+      </button>
+      <div id='campaign-stage-grid' className='campaign-track' hidden={!stageListOpen}
+         aria-label={locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
         {CAMPAIGN_STAGES.map(stage=>{
           const unlocked=stage.id<=stageUnlocked;
           const isSelected=stage.id===stageId;
@@ -1581,6 +1595,13 @@ export default function TriviaGame() {
       </section>
 
       <aside className='side-stack'>
+        <details className='settings-drawer' key={stageStarted?'playing':'setup'} open={!stageStarted}>
+          <summary className='settings-drawer-trigger'>
+            <span aria-hidden='true'>⚙</span>
+            <span>{locale==='he'?'הגדרות, הישגים וחשבון':locale==='en'?'Settings, rewards & account':locale==='ru'?'Настройки и профиль':locale==='fr'?'Réglages et profil':'الإعدادات والحساب'}</span>
+            <span className='settings-drawer-chevron' aria-hidden='true'>▾</span>
+          </summary>
+          <div className='settings-drawer-content'>
         <section className='glass-panel'>
           <h2 className='panel-title'>{tr("🎯 חדר המשחק")}</h2>
           <div className='mode-row'>
@@ -1741,6 +1762,8 @@ export default function TriviaGame() {
               </div>
             </> : <p className='smalltxt'>{tr("משחק מקומי זמין כעת. התחברות מחייבת הגדרת Supabase במערכת הפריסה.")}</p>}
         </section>
+          </div>
+        </details>
       </aside>
     </div>
 
