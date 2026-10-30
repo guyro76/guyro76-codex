@@ -2,12 +2,14 @@ import {test,expect} from '@playwright/test';
 
 test('an ordinary correct answer grants 5 credits and 10 knowledge points, including after reload',async({page},info)=>{
   test.skip(info.project.name!=='chromium-desktop','Desktop mouse case; touch gesture covered by game.spec.ts');
-  await page.addInitScript(()=>{
-    localStorage.setItem('trivia-tutorial-seen-v1','true');
-    localStorage.setItem('trivia-welcome-dismissed-v1','1');
-    localStorage.setItem('trivia-player-name','טסטר');
-  });
+  // Exercise the same real first-run path as the passing gameplay E2E.
+  // A stored player-name key alone does not activate a local game.
   await page.goto('/');
+  const tutorial=page.getByRole('dialog',{name:'הסבר משחק'});
+  await expect(tutorial).toBeVisible();
+  await tutorial.getByRole('button',{name:'דלג או סיים'}).click();
+  await page.getByLabel('שם שחקן (חובה)').fill('טסטר');
+  await page.locator('svg.board').scrollIntoViewIfNeeded();
   const dots=page.locator('svg.board circle[aria-label^="נקודה "]');
   const find=async(label:string)=>{
     const box=await page.locator('svg.board circle[aria-label="'+label+'"]').boundingBox();
