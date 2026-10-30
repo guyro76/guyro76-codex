@@ -31,20 +31,26 @@ test('stage completion automatically offers a minigame, earns credits and persis
   const reward=page.getByRole('dialog',{name:'משחק הביניים ופרסי השלב'});
   await expect(reward).toBeVisible({timeout:8000});
   await expect(reward.getByRole('heading',{name:/מה בא לך לעשות עם האוצר/})).toBeVisible();
+  await expect(reward.getByTestId('stage-celebration')).toBeVisible();
+  await expect(reward.getByTestId('stage-guaranteed-gifts')).toContainText('+25');
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}').credits?.host)).toBe(25);
   await reward.getByRole('button',{name:/נחש את המילה/}).click();
   await reward.getByRole('textbox',{name:'מה המילה?'}).fill('תפוח');
   await reward.getByRole('button',{name:/בדוק מילה/}).click();
   await expect(reward.getByText(/15 קרדיטים/)).toBeVisible();
   await reward.getByRole('button',{name:/סגור וחזור ללוח/}).click();
   await expect(reward).toHaveCount(0);
-  await expect(page.locator('.arena-quick-wallet')).toContainText('15');
+  await expect(page.locator('.arena-quick-wallet')).toContainText('40');
   const persisted=await page.evaluate(()=>({
     rewards:JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}'),
     board:JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}')
   }));
-  expect(persisted.rewards.credits.host).toBe(15);
+  expect(persisted.rewards.credits.host).toBe(40);
+  expect(persisted.rewards.wallet.stars).toBe(3);
+  expect(persisted.rewards.wallet.diamonds).toBe(1);
+  expect(persisted.rewards.wallet.fruits).toBe(2);
   expect(Object.keys(persisted.board.owners)).toHaveLength(9);
   await page.reload();
   await expect(page.locator('.arena-quick-wallet')).toContainText('15');
-  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}').credits?.host)).toBe(15);
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}').credits?.host)).toBe(40);
 });
