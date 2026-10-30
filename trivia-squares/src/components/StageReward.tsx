@@ -5,15 +5,17 @@ import type {SupabaseClient} from '@supabase/supabase-js';
 import {translate as translateUi,localeDirection,type ActiveLocale} from '../lib/i18n';
 import {cardById,localStageCard,readLocalAlbum,saveLocalAlbum,stageWords,type StageCard,type LocalEarned} from '../lib/stageRewards';
 
-const localizedPuzzleWords:Record<'ru'|'fr'|'ar',Record<number,{answer:string;hint:string}>>={
+const localizedPuzzleWords:Record<'ru'|'fr'|'ar'|'es',Record<number,{answer:string;hint:string}>>={
  ru:{3:{answer:'яблоко',hint:'Фрукт из сада'},4:{answer:'алмаз',hint:'Драгоценный камень'},5:{answer:'облака',hint:'Плывут по небу'},6:{answer:'галактика',hint:'Миллиарды звёзд'}},
  fr:{3:{answer:'pomme',hint:'Un fruit du verger'},4:{answer:'diamant',hint:'Une pierre précieuse'},5:{answer:'nuages',hint:'Flottent dans le ciel'},6:{answer:'galaxie',hint:'Un ensemble d’étoiles'}},
- ar:{3:{answer:'تفاحة',hint:'فاكهة من البستان'},4:{answer:'ألماس',hint:'حجر كريم لامع'},5:{answer:'غيوم',hint:'تطفو في السماء'},6:{answer:'مجرة',hint:'مجموعة هائلة من النجوم'}}
+ ar:{3:{answer:'تفاحة',hint:'فاكهة من البستان'},4:{answer:'ألماس',hint:'حجر كريم لامع'},5:{answer:'غيوم',hint:'تطفو في السماء'},6:{answer:'مجرة',hint:'مجموعة هائلة من النجوم'}},
+ es:{3:{answer:'manzana',hint:'Una fruta del huerto'},4:{answer:'diamante',hint:'Una piedra preciosa'},5:{answer:'nubes',hint:'Flotan en el cielo'},6:{answer:'galaxia',hint:'Miles de millones de estrellas'}}
 };
-const localizedRewardWords:Record<'ru'|'fr'|'ar',Record<string,string>>={
+const localizedRewardWords:Record<'ru'|'fr'|'ar'|'es',Record<string,string>>={
  ru:{'🔠 נחש את המילה':'🔠 Угадай слово','🎡 גלגל ההפתעות':'🎡 Колесо призов','פרס וירטואלי, ללא תשלום':'Виртуальный приз бесплатно','רמז:':'Подсказка:','מה המילה?':'Какое слово?','בדוק מילה ✨':'Проверить ✨','סובב את הגלגל ✨':'Крутить колесо ✨','המשך לשלב הבא ←':'Следующий уровень →','🎉 הפרס שלך:':'🎉 Ваш приз:','קלפים':'карт'},
  fr:{'🔠 נחש את המילה':'🔠 Devinez le mot','🎡 גלגל ההפתעות':'🎡 Roue des prix','פרס וירטואלי, ללא תשלום':'Prix virtuel gratuit','רמז:':'Indice :','מה המילה?':'Quel mot ?','בדוק מילה ✨':'Vérifier ✨','סובב את הגלגל ✨':'Tourner la roue ✨','המשך לשלב הבא ←':'Niveau suivant →','🎉 הפרס שלך:':'🎉 Votre prix :','קלפים':'cartes'},
- ar:{'🔠 נחש את המילה':'🔠 خمن الكلمة','🎡 גלגל ההפתעות':'🎡 عجلة الجوائز','פרס וירטואלי, ללא תשלום':'جائزة افتراضية مجانية','רמז:':'تلميح:','מה המילה?':'ما الكلمة؟','בדוק מילה ✨':'تحقق ✨','סובב את הגלגל ✨':'أدر العجلة ✨','המשך לשלב הבא ←':'المرحلة التالية ←','🎉 הפרס שלך:':'🎉 جائزتك:','קלפים':'بطاقات'}
+ ar:{'🔠 נחש את המילה':'🔠 خمن الكلمة','🎡 גלגל ההפתעות':'🎡 عجلة الجوائز','פרס וירטואלי, ללא תשלום':'جائزة افتراضية مجانية','רמז:':'تلميح:','מה המילה?':'ما الكلمة؟','בדוק מילה ✨':'تحقق ✨','סובב את הגלגל ✨':'أدر العجلة ✨','המשך לשלב הבא ←':'المرحلة التالية ←','🎉 הפרס שלך:':'🎉 جائزتك:','קלפים':'بطاقات'},
+ es:{'🔠 נחש את המילה':'🔠 Adivina la palabra','🎡 גלגל ההפתעות':'🎡 Ruleta de premios','פרס וירטואלי, ללא תשלום':'Premio virtual gratis','רמז:':'Pista:','מה המילה?':'¿Cuál es la palabra?','בדוק מילה ✨':'Comprobar ✨','סובב את הגלגל ✨':'Girar la ruleta ✨','המשך לשלב הבא ←':'Siguiente nivel →','🎉 הפרס שלך:':'🎉 Tu premio:','קלפים':'cartas'}
 };
 
 type RewardProps={
