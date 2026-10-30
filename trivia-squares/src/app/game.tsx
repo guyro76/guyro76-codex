@@ -137,6 +137,8 @@ export default function TriviaGame() {
   const [localReady, setLocalReady] = useState(false);
   const [online, setOnline] = useState(true);
   const [remote, setRemote] = useState<RemoteMatch | null>(null);
+  const remoteMatchRef=useRef<RemoteMatch|null>(null);
+  useEffect(()=>{remoteMatchRef.current=remote},[remote]);
   const [question, setQuestion] = useState<Question | null>(null);
   const [wrongAnswerFeedback,setWrongAnswerFeedback]=useState<WrongAnswerFeedback|null>(null);
   const [skin,setSkin]=useState<SkinId>('regular');
@@ -396,7 +398,15 @@ export default function TriviaGame() {
     void client.auth.getUser().then(({ data }) => setUser(data.user));
     const { data } = client.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
-      if (!session) { setLegalAccepted(false); setRemote(null); setQuestion(null); setEdge(null); setBonusSelect(false); }
+      if (!session) {
+        setLegalAccepted(false);
+        // Anonymous local games keep their pending question during INITIAL_SESSION.
+        // A connected game is cleared on sign-out without touching local saves.
+        if(remoteMatchRef.current){
+          setQuestion(null);setEdge(null);setBonusSelect(false);
+        }
+        setRemote(null);
+      }
     });
     return () => data.subscription.unsubscribe();
   }, [client]);
