@@ -1242,3 +1242,8 @@ main.trivia-app .skin-picker-item{min-width:0}
  main.trivia-app .locale-switch{justify-content:center;gap:5px;padding:7px}
  main.trivia-app .locale-option{flex:1 1 auto;font-size:clamp(12px,2.7vw,14px);padding:8px 10px}
 }
+
+/* The 100-stage carousel scrolls inside its own rail; never widen the screen. */
+main.trivia-app{overflow-x:clip}
+main.trivia-app .campaign-section{min-width:0;max-width:100%;overflow-x:clip}
+main.trivia-app .campaign-track{box-sizing:border-box;width:100%;min-width:0;max-width:100%;}
