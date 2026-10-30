@@ -3,7 +3,6 @@ import {useEffect,useMemo,useState} from 'react';
 import {createClient,type User} from '@supabase/supabase-js';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from '../../lib/supabasePublicConfig';
 import CommunityQuestionForm from '../../components/CommunityQuestionForm';
-import TriviaMark from '../../components/TriviaMark';
 import type {ActiveLocale} from '../../lib/i18n';
 import '../community.css';
 
@@ -39,7 +38,7 @@ export default function SuggestTriviaPage(){
  const rtl=locale==='he'||locale==='ar';
  return <main className="community-page" dir={rtl?'rtl':'ltr'} lang={locale}>
   <header className="community-page-header">
-   <div className="community-page-brand"><TriviaMark size={48} label="Trivia Squares"/><strong>{locale==='he'?'טריוויה ריבועים':locale==='ar'?'مربعات المعلومات':'TRIVIA SQUARES'}</strong></div>
+   <div className="community-page-brand"><span className="community-mini-mark" aria-hidden="true">✦</span><strong>{locale==='he'?'טריוויה ריבועים':locale==='ar'?'مربعات المعلومات':'TRIVIA SQUARES'}</strong></div>
    <a href="/" className="community-back">{locale==='he'?'← חזרה למשחק':locale==='ru'?'← Назад к игре':locale==='fr'?'← Retour au jeu':locale==='ar'?'← العودة للعبة':'← Back to game'}</a>
   </header>
   <nav className="community-page-languages" aria-label="Language">
