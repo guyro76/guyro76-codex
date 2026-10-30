@@ -17,6 +17,9 @@ test('an ordinary correct answer grants 5 credits and 10 knowledge points, inclu
     return {x:box.x+box.width/2,y:box.y+box.height/2};
   };
   await expect(dots.first()).toBeVisible();
+  // The premium header can push the board below the first viewport.
+  // Playwright mouse coordinates must be in the visible viewport, like game.spec.ts.
+  await page.locator('svg.board').scrollIntoViewIfNeeded();
   const a=await find('נקודה 1, 1'),b=await find('נקודה 1, 2');
   await page.mouse.move(a.x,a.y);await page.mouse.down();
   await page.mouse.move(b.x,b.y,{steps:12});await page.mouse.up();
