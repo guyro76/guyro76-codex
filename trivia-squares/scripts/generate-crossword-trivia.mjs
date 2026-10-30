@@ -38,6 +38,42 @@ export function introSupportsAnswer(extract,label,aliases=[]){
   return name.length>=3&&(' '+normalized+' ').includes(' '+name+' ');
  });
 }
+/**
+ * Guard against incidental co-occurrence: the source sentence must also
+ * identify the relationship (e.g. "directed by Christopher Nolan").
+ * This is intentionally conservative; uncertain facts are not published.
+ */
+export function introSupportsRelationship(extract,label,kind){
+ const intro=normalize(extract),answer=normalize(label);
+ const triggers={
+  capital:['capital','capital city'],
+  currency:['currency','monetary unit'],
+  director:['directed by','film director','director'],
+  screenwriter:['screenplay by','written by','screenwriter'],
+  origin:['produced in','country of origin','film from'],
+  seriesCreator:['created by','creator'],
+  author:['written by','novel by','book by','authored by','author'],
+  albumPerformer:['album by','performed by','recorded by'],
+  songPerformer:['song by','performed by','recorded by'],
+  painter:['painting by','painted by','work by'],
+  sculptor:['sculpture by','sculpted by','work by'],
+  architect:['designed by','architect'],
+  founder:['founded by','co founded by','founder'],
+  birthCity:['born in','birthplace','place of birth']
+ }[kind]||[];
+ if(!intro||answer.length<3)return false;
+ for(const phrase of triggers){
+  let start=0;
+  while(true){
+   const i=intro.indexOf(phrase,start);
+   if(i<0)break;
+   const near=intro.slice(i+phrase.length,i+phrase.length+150);
+   if((' '+near+' ').includes(' '+answer+' '))return true;
+   start=i+phrase.length;
+  }
+ }
+ return false;
+}
 export function makeUniqueAnswers(answerId,otherIds,seed){
  const distinct=[...new Set(otherIds)].filter(v=>v!==answerId&&safeId(v,'Q')).sort();
  if(distinct.length<3)return null;
@@ -167,14 +203,16 @@ export async function generate({topicIds,limit=20,offset=0,log=()=>{}}){
    const intro=await wikipediaIntro(subject);
    await sleep(850);
    if(!intro){proofStats.noWikipediaArticle++;continue;}
-   if(!introSupportsAnswer(intro.extract,answer.labels.en.value,answerAliases(answer))){
+   const names=[answer.labels.en.value,...answerAliases(answer)];
+   if(!names.some(label=>introSupportsAnswer(intro.extract,label)&&
+        introSupportsRelationship(intro.extract,label,topic.phrase))){
     proofStats.noWikipediaIntroEvidence++;continue;
    }
    verified.push({subject,answer,source:{
     wikidata:'https://www.wikidata.org/wiki/'+subject.id+'#'+topic.property,
     wikipedia:intro.url,wikipediaRevision:intro.revision,
     wikidataClaim:topic.property,subjectId:subject.id,answerId:answer.id,
-    verification:'Wikidata single current claim + English Wikipedia intro name match'
+    verification:'Wikidata single current claim + English Wikipedia intro relation-and-name match'
    }});
    proofStats.acceptedFacts++;
    if(verified.length>=limit*2)break;
