@@ -36,6 +36,7 @@ import './premium.css';
 import './responsive-layout.css';
 import './welcome-interior-theme.css';
 import './reward-ceremony.css';
+import './readable-play.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
