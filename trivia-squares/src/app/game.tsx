@@ -13,6 +13,7 @@ import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
 import { spanishQuestions } from '../lib/spanishQuestions';
+import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
@@ -1428,13 +1429,13 @@ export default function TriviaGame() {
       </div>
     </header>
 
-    <section className='campaign-section' aria-label={locale==='en'?'Thirty sequential stages':'שלושים שלבים לפי סדר'}>
+    <section className='campaign-section' aria-label={locale==='es'?'Treinta niveles consecutivos':locale==='en'?'Thirty sequential stages':'שלושים שלבים לפי סדר'}>
       <div className='campaign-heading'>
-        <h2>{locale==='en'?'Adventure: 30 stages':'הרפתקה: 30 שלבים'}</h2>
-        <span>{locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
+        <h2>{locale==='es'?'Aventura: 30 niveles':locale==='en'?'Adventure: 30 stages':'הרפתקה: 30 שלבים'}</h2>
+        <span>{locale==='es'?'Completados: ':locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
       </div>
       <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={30} aria-valuenow={completedStage}
-           aria-label={locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
+           aria-label={locale==='es'?'Niveles completados':locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
         <span style={{width:(completedStage/STAGE_COUNT*100)+'%'}}/>
       </div>
       <button type='button' className='campaign-stages-toggle' aria-haspopup='dialog'
@@ -1456,7 +1457,7 @@ export default function TriviaGame() {
       <section className='glass-panel arena-panel'>
         <div className='arena-title'>
           <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
-          <div className='level-pill'>{locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
+          <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
         </div>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
@@ -1600,14 +1601,14 @@ export default function TriviaGame() {
 
       <aside className='side-stack'>
         <dialog ref={menuRef} className='app-menu-dialog'
-          aria-label={locale==='he'?'תפריט המשחק':locale==='en'?'Game menu':'Game navigation'}
+          aria-label={locale==='he'?'תפריט המשחק':locale==='es'?'Menú del juego':locale==='en'?'Game menu':'Game navigation'}
           onClick={event=>{if(event.target===event.currentTarget)event.currentTarget.close()}}>
           <div className='app-menu-shell' dir={localeDirection(locale)}>
             <div className='app-menu-heading'>
-              <div className='app-menu-brand'><TriviaMark label={locale==='he'?'סמל טריוויה ריבועים':'Trivia Squares'} size={40}/><div><strong>{tr('טריוויה ריבועים')}</strong><small>{locale==='he'?'תפריט המשחק':locale==='en'?'Game navigation':'Game menu'}</small></div></div>
-              <button type='button' className='app-menu-close' aria-label={locale==='he'?'סגור תפריט':'Close menu'} onClick={()=>menuRef.current?.close()}>✕</button>
+              <div className='app-menu-brand'><TriviaMark label={locale==='he'?'סמל טריוויה ריבועים':'Trivia Squares'} size={40}/><div><strong>{tr('טריוויה ריבועים')}</strong><small>{locale==='he'?'תפריט המשחק':locale==='es'?'Menú del juego':locale==='en'?'Game navigation':'Game menu'}</small></div></div>
+              <button type='button' className='app-menu-close' aria-label={locale==='he'?'סגור תפריט':locale==='es'?'Cerrar menú':'Close menu'} onClick={()=>menuRef.current?.close()}>✕</button>
             </div>
-            <nav className='app-menu-tabs' aria-label={locale==='he'?'ניווט במשחק':'Game navigation'}>
+            <nav className='app-menu-tabs' aria-label={locale==='he'?'ניווט במשחק':locale==='es'?'Navegación del juego':'Game navigation'}>
               <button type='button' className='app-menu-tab app-menu-play' onClick={()=>menuRef.current?.close()}><span aria-hidden='true'>◈</span><span>{locale==='he'?'חזרה ללוח':locale==='en'?'Back to board':locale==='ru'?'К игре':locale==='fr'?'Retour au jeu':locale==='es'?'Volver al tablero':'العودة للعبة'}</span></button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='stages'?'page':undefined}
               onClick={()=>setMenuSection('stages')} data-section='stages'>
@@ -1637,9 +1638,9 @@ export default function TriviaGame() {
             </nav>
             <div className='app-menu-content' data-active-section={menuSection}>
               <section className='app-menu-pane' hidden={menuSection!=='stages'} aria-label={locale==='he'?'בחירת שלב':'Choose stage'}>
-                <h2 className='panel-title'>{locale==='he'?'השלבים שלי · '+completedStage+' הושלמו':locale==='en'?'Campaign stages · '+completedStage+' completed': 'Stages'}</h2>
+                <h2 className='panel-title'>{locale==='he'?'השלבים שלי · '+completedStage+' הושלמו':locale==='es'?'Mis niveles · '+completedStage+' completados':locale==='en'?'Campaign stages · '+completedStage+' completed': 'Stages'}</h2>
       <div id='campaign-stage-grid' className='campaign-track menu-stages-grid'
-         aria-label={locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
+         aria-label={locale==='es'?'Elegir un nivel desbloqueado':locale==='en'?'Select an unlocked stage':'בחירת שלב פתוח'}>
         {CAMPAIGN_STAGES.map(stage=>{
           const unlocked=stage.id<=stageUnlocked;
           const isSelected=stage.id===stageId;
@@ -1650,13 +1651,13 @@ export default function TriviaGame() {
              onClick={()=>{chooseStage(stage.id);menuRef.current?.close()}}>
             <span className='campaign-stage-number'>{isSelected?'✦ ':unlocked?'': '🔒 '}{String(stage.id).padStart(2,'0')}</span>
             <strong className='campaign-stage-icon' aria-hidden='true'>{stage.icon}</strong>
-            <span className='campaign-stage-title'>{locale==='en'?stage.nameEn:stage.nameHe}</span>
-            <small>{unlocked?(locale==='en'?'Board':'לוח')+' '+stage.size+'×'+stage.size:(locale==='en'?'Locked':'נעול')}</small>
+            <span className='campaign-stage-title'>{locale==='es'?SPANISH_STAGE_NAMES[stage.id]:locale==='en'?stage.nameEn:stage.nameHe}</span>
+            <small>{unlocked?(locale==='es'?'Tablero ':locale==='en'?'Board ':'לוח ')+stage.size+'×'+stage.size:(locale==='es'?'Bloqueado':locale==='en'?'Locked':'נעול')}</small>
           </button>
         })}
       </div>
 
-                <p className='smalltxt'>{locale==='he'?'שלבים נפתחים לפי סדר. ההתקדמות הנוכחית נשמרת.':locale==='en'?'Stages unlock in order. Your progress is preserved.':'Progress is preserved.'}</p>
+                <p className='smalltxt'>{locale==='he'?'שלבים נפתחים לפי סדר. ההתקדמות הנוכחית נשמרת.':locale==='es'?'Los niveles se desbloquean en orden. Tu progreso se conserva.':locale==='en'?'Stages unlock in order. Your progress is preserved.':'Progress is preserved.'}</p>
               </section>
               <div className='settings-drawer-content'>
         <section className='glass-panel app-menu-pane' hidden={menuSection!=='modes'}>
