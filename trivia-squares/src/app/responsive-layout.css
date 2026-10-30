@@ -423,3 +423,19 @@ main.trivia-app .app-menu-heading{padding-block-start:max(17px,env(safe-area-ins
  main.trivia-app.playing-layout #app-footer{flex:0 0 auto;margin:0!important;padding:0!important}
  main.trivia-app.playing-layout #app-footer .game-question-source-credit{display:none!important}
 }
+
+/* Tablet portrait: keep drawing canvas fully visible after stage starts.
+ * Tighten vertical chrome, never hide game controls or decrease font contrast. */
+@media (min-width:650px) and (max-width:819px) and (min-height:800px){
+ main.trivia-app.playing-layout .hero{padding:3px 7px!important;margin:0!important}
+ main.trivia-app.playing-layout .hero p,
+ main.trivia-app.playing-layout .hero .eyebrow{display:none!important}
+ main.trivia-app.playing-layout .game-timebar{padding:5px 8px!important;margin:0!important;gap:5px!important}
+ main.trivia-app.playing-layout .game-timebar .game-status-kicker{display:none!important}
+ main.trivia-app.playing-layout .campaign-section{padding:5px 9px!important;margin:2px 0!important}
+ main.trivia-app.playing-layout .campaign-section .campaign-rule{display:none!important}
+ main.trivia-app.playing-layout .scoreboard{margin:4px 0!important}
+ main.trivia-app.playing-layout .arena-panel{padding:6px!important}
+ main.trivia-app.playing-layout .arena-title{margin:0!important}
+ main.trivia-app.playing-layout .skin-picker-bar{margin:1px 0!important}
+}
