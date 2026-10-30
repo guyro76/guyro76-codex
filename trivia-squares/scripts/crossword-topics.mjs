@@ -1,5 +1,5 @@
 /** Crossword-style question editor: a broad brief and explicitly verifiable templates. */
-export const LANGUAGES=['he','en','ru','fr','ar'];
+export const LANGUAGES=['he','en','ru','fr','ar','es'];
 const names=[
 ['israel-politics','פוליטיקה בישראל','Israeli politics','Politique israélienne','Политика Израиля','السياسة الإسرائيلية'],
 ['world-politics','פוליטיקה בעולם','World politics','Politique mondiale','Мировая политика','السياسة العالمية'],
@@ -32,7 +32,25 @@ const names=[
 ['nobel','פרסי נובל','Nobel Prize','Prix Nobel','Нобелевские премии','جوائز نوبل'],
 ['crossword-clues','רמזים וחידות ידע','Crossword clues','Devinettes','Загадки','الألغاز']
 ];
-export const CATEGORIES=names.map(([id,he,en,fr,ru,ar])=>({id,he,en,fr,ru,ar}));
+const SPANISH_CATEGORIES={
+ 'israel-politics':'Política israelí','world-politics':'Política mundial',
+ 'israel-history':'Historia de Israel','world-history':'Historia universal',
+ 'israel-tv':'Series israelíes','world-tv':'Series de televisión',
+ 'israel-cinema':'Cine israelí','world-cinema':'Cine internacional',
+ 'israel-music':'Música israelí','world-music':'Música internacional',
+ books:'Libros y autores',poetry:'Poesía',art:'Arte y pintura',
+ architecture:'Arquitectura y edificios',geography:'Geografía',
+ science:'Ciencia y descubrimientos',space:'Espacio y astronomía',
+ nature:'Naturaleza y animales',technology:'Tecnología e informática',
+ inventions:'Inventos e inventores',sports:'Deportes',football:'Fútbol',
+ olympics:'Juegos Olímpicos',food:'Gastronomía',
+ languages:'Idiomas y palabras','religion-culture':'Tradiciones y culturas',
+ 'children-media':'Cine y televisión infantil','famous-people':'Personajes célebres',
+ nobel:'Premios Nobel','crossword-clues':'Acertijos y pistas'
+};
+export const CATEGORIES=names.map(([id,he,en,fr,ru,ar])=>({
+ id,he,en,fr,ru,ar,es:SPANISH_CATEGORIES[id]||''
+}));
 export const FACT_TEMPLATES=[
  ['capital','geography','Q6256','P36','capital',1],
  ['currency','geography','Q6256','P38','currency',2],
@@ -105,7 +123,28 @@ function stableClueChoice(s){
  for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}
  return h>>>0;
 }
+const SPANISH_PHRASES={
+ capital:'¿Cuál es la capital de %s?',
+ currency:'¿Qué moneda se utiliza en %s?',
+ director:'¿Quién dirigió la película «%s»?',
+ screenwriter:'¿Quién escribió el guion de «%s»?',
+ origin:'¿En qué país se produjo la película «%s»?',
+ seriesCreator:'¿Quién creó la serie «%s»?',
+ author:'¿Quién escribió el libro «%s»?',
+ albumPerformer:'¿Qué artista interpretó el álbum «%s»?',
+ songPerformer:'¿Quién interpretó la canción «%s»?',
+ painter:'¿Quién pintó la obra «%s»?',
+ sculptor:'¿Quién esculpió «%s»?',
+ architect:'¿Qué arquitecto diseñó «%s»?',
+ founder:'¿Quién fundó la empresa «%s»?',
+ birthCity:'¿En qué ciudad nació %s?'
+};
 export function phraseFor(phrase,locale,subject){
+ if(locale==='es'){
+  const form=SPANISH_PHRASES[phrase];
+  if(!form||!subject||/^\s*Q\d+$/.test(subject))throw new Error('Untranslated or unrecognized clue');
+  return form.replace('%s',subject);
+ }
  const langIndex=LANGUAGES.indexOf(locale);
  const variants=[PHRASES[phrase],...(CLUE_VARIANTS[phrase]||[])];
  if(langIndex<0||!subject||/^\s*Q\d+$/.test(subject)||!variants[0])

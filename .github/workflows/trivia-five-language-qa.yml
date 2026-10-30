@@ -1,4 +1,4 @@
-name: Trivia Squares - 10 Language QA Lanes
+name: Trivia Squares - 12 Language QA Lanes
 
 on:
   pull_request:
@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       max-parallel: 5
       matrix:
-        locale: [he, en, ru, fr, ar]
+        locale: [he, en, ru, fr, ar, es]
         profile: [visual, gameplay]
     defaults:
       run:
@@ -58,7 +58,7 @@ jobs:
           fi
 
   question-bank-release-gate:
-    name: Five-language question bank QA and 5000-per-language progress report
+    name: Six-language question bank QA and 5000-per-language progress report
     runs-on: ubuntu-latest
     timeout-minutes: 7
     defaults:
@@ -78,9 +78,10 @@ jobs:
           import {englishQuestions} from './src/lib/englishQuestions.ts';
           import {freshLocalQuestionReserve} from './src/lib/freshQuestions.ts';
           import {internationalQuestions} from './src/lib/internationalQuestions.ts';
-          const combined=[...offlineQuestions.map(q=>({...q,locale:'he'})),...englishQuestions.map(q=>({...q,locale:'en'})),...freshLocalQuestionReserve,...internationalQuestions];
+          import {spanishQuestions} from './src/lib/spanishQuestions.ts';
+          const combined=[...offlineQuestions.map(q=>({...q,locale:'he'})),...englishQuestions.map(q=>({...q,locale:'en'})),...freshLocalQuestionReserve,...internationalQuestions,...spanishQuestions];
           let structurallyValidAll=true;
-          for(const locale of ['he','en','ru','fr','ar']){
+          for(const locale of ['he','en','ru','fr','ar','es']){
             const entries=combined.filter(q=>q.locale===locale);
             const unique=new Set(entries.map(q=>q.text.normalize('NFKC').trim().toLocaleLowerCase()));
             const structurallyValid=entries.every(q=>q.answers.length===4&&new Set(q.answers).size===4&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<=3);

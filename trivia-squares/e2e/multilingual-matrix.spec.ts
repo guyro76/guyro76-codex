@@ -1,13 +1,13 @@
 import {test,expect,type Page} from '@playwright/test';
 import {localeWords} from '../src/lib/intermissionLocales';
 
-type Locale='he'|'en'|'ru'|'fr'|'ar';
+type Locale='he'|'en'|'ru'|'fr'|'ar'|'es';
 const locale=(process.env.QA_LOCALE||'he') as Locale;
 const profile=process.env.QA_PROFILE||'visual';
 const dir=locale==='he'||locale==='ar'?'rtl':'ltr';
 const titles:Record<Locale,string>={
  he:'טריוויה ריבועים',en:'TRIVIA SQUARES',ru:'Квадраты викторины',
- fr:'Carrés Quiz',ar:'مربعات المعلومات'
+ fr:'Carrés Quiz',ar:'مربعات المعلومات',es:'TRIVIA SQUARES'
 };
 async function prepare(page:Page,completed=false,game='wheel'){
  await page.addInitScript(({code,finished,kind})=>{
