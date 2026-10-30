@@ -6,11 +6,8 @@ test('clock, both dates, weather, version and author credit are visible on deskt
    current:{temperature_2m:24.4,weather_code:1,is_day:1}
   })
  }));
+ await page.addInitScript(()=>localStorage.setItem('trivia-tutorial-seen-v1','true'));
  await page.goto('/');
- const tutorial=page.getByRole('dialog',{name:'הסבר משחק'});
- if(await tutorial.isVisible())await tutorial.getByRole('button',{name:'דלג או סיים'}).click();
- const tutorial=page.getByRole('dialog',{name:'הסבר משחק'});
- if(await tutorial.isVisible())await tutorial.getByRole('button',{name:'דלג או סיים'}).click();
  const bar=page.getByRole('region',{name:'נתוני המשחק: שעה, תאריך, מזג אוויר וגרסה'});
  await expect(bar).toBeVisible();
  await expect(bar.getByLabel('השעה בישראל')).toContainText(/^\d{2}:\d{2}:\d{2}$/);
@@ -29,9 +26,8 @@ test('city preference persists and weather display remains accessible in mobile 
    current:{temperature_2m:21.9,weather_code:3,is_day:0}
   })
  }));
+ await page.addInitScript(()=>localStorage.setItem('trivia-tutorial-seen-v1','true'));
  await page.goto('/');
- const tutorial=page.getByRole('dialog',{name:'הסבר משחק'});
- if(await tutorial.isVisible())await tutorial.getByRole('button',{name:'דלג או סיים'}).click();
  const select=page.getByLabel('מזג האוויר');
  await select.selectOption('jerusalem');
  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('trivia-weather-city'))).toBe('jerusalem');
