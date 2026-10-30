@@ -1297,6 +1297,16 @@ export default function TriviaGame() {
     if(prize.includes('קרדיטים'))playGameSound('coin',{muted,volume:volume/100},.15);
     setMessage('קיבלת את הפרס: '+prize);
   },[muted,volume]);
+  const stageClearGift=useCallback(()=>{
+    // One-time claim is stored in the local stage album before this callback.
+    setLocalCredits(prev=>({...prev,host:prev.host+25}));
+    setLocalWallet(prev=>({...prev,stars:prev.stars+3,diamonds:prev.diamonds+1,fruits:prev.fruits+2}));
+    playGameSound('win',{muted,volume:volume/100});
+    playGameSound('coin',{muted,volume:volume/100},.45);
+    setMessage(locale==='he'?'סיימת שלב! קיבלת 25 קרדיטים, 3 כוכבים, יהלום ו-2 פירות!':
+      locale==='es'?'¡Nivel completado! 25 créditos, 3 estrellas, 1 diamante y 2 frutas.':
+      'Stage complete! +25 credits, +3 stars, +1 diamond, +2 fruit.');
+  },[muted,volume,locale]);
   const stageRemoteReward=useCallback(()=>{
     if(client)void client.rpc('trivia_my_profile').then(({data})=>{
       if(data?.progress)setProgress(data.progress as Progress);
@@ -1710,6 +1720,7 @@ export default function TriviaGame() {
           client={remote?client:null}
           onAdvance={advanceStage}
           onLocalPrize={stageLocalReward}
+          onStageClear={stageClearGift}
           onRemotePrize={stageRemoteReward}
           onSound={rewardSound}
             />
