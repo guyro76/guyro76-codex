@@ -485,3 +485,25 @@ test('a real local Player 2 keeps their colored captured squares and score acros
     return {owner:b.owners?.['0-0'],guest:b.scores?.guest};
   })).toEqual({owner:'guest',guest:1});
 });
+
+test('iPhone Hebrew capture labels stay in logical letter order after reload',async({page})=>{
+ await page.addInitScript(()=>{
+   localStorage.setItem('trivia-tutorial-seen-v1','1');
+   localStorage.setItem('trivia-player-name','עדי');
+   localStorage.setItem('trivia-mode-v2','solo');
+   localStorage.setItem('trivia-stage-id-v1','9');
+   localStorage.setItem('trivia-stage-completed-v1','8');
+   localStorage.setItem('trivia-local-game-v1',JSON.stringify({
+     rows:5,cols:5,mode:'solo',turn:'host',edges:{'h-0-0':'host'},
+     owners:{'0-0':'host'},scores:{host:1,guest:0,bot:0}
+   }));
+ });
+ await page.goto('/');
+ const label=page.locator('svg.board .capture-player-name').first();
+ await expect(label).toHaveText('עדי');
+ await expect(label).toHaveAttribute('direction','ltr');
+ await expect.poll(()=>label.evaluate(el=>getComputedStyle(el).unicodeBidi)).toBe('plaintext');
+ await page.reload();
+ await expect(page.locator('svg.board .capture-player-name').first()).toHaveText('עדי');
+ await expect(page.locator('.level-pill')).toContainText('9');
+});
