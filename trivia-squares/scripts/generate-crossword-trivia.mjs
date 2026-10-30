@@ -180,20 +180,21 @@ export async function generate({topicIds,limit=20,offset=0,log=()=>{}}){
    if(verified.length>=limit*2)break;
   }
   const allAnswers=[...new Map(verified.map(v=>[v.answer.id,v.answer])).values()];
-  const questions=[];
+  const questionPacks=[];
   for(const item of verified){
    const distractors=allAnswers.filter(a=>a.id!==item.answer.id);
    if(distractors.length<3)continue;
    const seed=topic.id+':'+item.subject.id+':'+topic.property;
-   // Exactly one question per factual relationship, in each of five languages.
-   questions.push(...makeQuestions(topic,item.subject,item.answer,distractors,item.source,seed));
-   if(questions.length>=limit*5)break;
+   // Keep each fact atomic: either all five complete locale translations or none.
+   const pack=makeQuestions(topic,item.subject,item.answer,distractors,item.source,seed);
+   if(pack.length===LANGUAGES.length)questionPacks.push(pack);
+   if(questionPacks.length>=limit)break;
   }
-  groups.push(questions);
-  log('Verified '+verified.length+' source facts; '+questions.length+' language records');
+  groups.push(questionPacks);
+  log('Verified '+verified.length+' source facts; '+questionPacks.length+' five-locale question packs');
   await sleep(1100);
  }
- const all=roundRobin(groups,limit*LANGUAGES.length);
+ const all=roundRobin(groups,limit).flat();
  const report=auditCandidates(all);
  if(report.duplicates||report.malformed||report.sourceGaps)
   throw new Error('Editorial quality gate failed: '+JSON.stringify(report));
