@@ -1685,13 +1685,13 @@ export default function TriviaGame() {
              onClick={()=>{chooseStage(stage.id);menuRef.current?.close()}}>
             <span className='campaign-stage-number'>{isSelected?'✦ ':unlocked?'': '🔒 '}{String(stage.id).padStart(2,'0')}</span>
             <strong className='campaign-stage-icon' aria-hidden='true'>{stage.icon}</strong>
-            <span className='campaign-stage-title'>{locale==='es'?(SPANISH_STAGE_NAMES[stage.id]||stage.nameEn):locale==='en'?stage.nameEn:stage.nameHe}</span>
-            <small>{unlocked?(locale==='es'?'Tablero ':locale==='en'?'Board ':'לוח ')+stage.size+'×'+stage.size:(locale==='es'?'Bloqueado':locale==='en'?'Locked':'נעול')}</small>
+            <span className='campaign-stage-title'>{locale==='he'?stage.nameHe:locale==='es'?(SPANISH_STAGE_NAMES[stage.id]||'Nivel '+stage.id):locale==='en'?stage.nameEn:locale==='ru'?'Этап '+stage.id:locale==='fr'?'Défi '+stage.id:'التحدي '+stage.id}</span>
+            <small>{unlocked?(locale==='he'?'לוח ':locale==='es'?'Tablero ':locale==='ru'?'Поле ':locale==='fr'?'Grille ':locale==='ar'?'لوحة ':'Board ')+stage.size+'×'+stage.size:(locale==='he'?'נעול':locale==='es'?'Bloqueado':locale==='ru'?'Закрыто':locale==='fr'?'Verrouillé':locale==='ar'?'مغلق':'Locked')}</small>
           </button>
         })}
       </div>
 
-                <p className='smalltxt'>{locale==='he'?'שלבים נפתחים לפי סדר. ההתקדמות הנוכחית נשמרת.':locale==='es'?'Los niveles se desbloquean en orden. Tu progreso se conserva.':locale==='en'?'Stages unlock in order. Your progress is preserved.':'Progress is preserved.'}</p>
+                <p className='smalltxt'>{locale==='he'?'שלבים נפתחים לפי סדר. ההתקדמות הנוכחית נשמרת.':locale==='es'?'Los niveles se desbloquean en orden. Tu progreso se conserva.':locale==='en'?'Stages unlock in order. Your progress is preserved.':locale==='ru'?'Этапы открываются по порядку. Ваш прогресс сохранён.':locale==='fr'?'Les niveaux se débloquent dans l’ordre. Votre progression est conservée.':'تُفتح المراحل بالترتيب، ويُحفظ تقدمك.'}</p>
               </section>
               <div className='settings-drawer-content'>
         <section className='glass-panel app-menu-pane' hidden={menuSection!=='modes'}>
