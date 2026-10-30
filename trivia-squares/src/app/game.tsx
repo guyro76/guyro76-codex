@@ -68,7 +68,7 @@ type GameState = {
 type PlayerIdentity = { name: string; color: string; line_color?: string; avatar: string };
 type RemoteMatch = { id: string; status: string; host_id: string; guest_id: string | null; version: number; state: GameState; question?: Question; players?: { host?: PlayerIdentity; guest?: PlayerIdentity } };
 type Profile = { display_name: string; color: string; line_color?: string; avatar: string; remember_color: boolean; locale?: ActiveLocale };
-type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number; time_charms?: number; knowledge_points?:number };
+type Progress = { level: number; fruits: number; diamonds: number; credits: number; hearts: number; time_charms?: number; knowledge_points?:number; stars?:number };
 type SkinId='regular'|'urban'|'vintage'|'retro'|'pop'|'future';
 const modeLabels={
  solo:{he:'👤 משחק עצמאי',en:'👤 Solo',ru:'👤 Соло',fr:'👤 Solo',ar:'👤 لعب فردي',es:'👤 Solo'},
@@ -1919,7 +1919,7 @@ export default function TriviaGame() {
               locale==='es'?'🧠 Propón una pregunta y gana créditos':'🧠 اقترح سؤالاً واكسب رصيدًا'}
            </a>
           <div className='wallet'>
-            {([['🍎','פירות',remote?progress.fruits:(localReady?localWallet.fruits:0)],['💎','יהלומים',remote?progress.diamonds:(localReady?localWallet.diamonds:0)],['🪙','קרדיטים',currentCredits],['⭐','כוכבים',remote?0:(localReady?localWallet.stars:0)],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
+            {([['🍎','פירות',remote?progress.fruits:(localReady?localWallet.fruits:0)],['💎','יהלומים',remote?progress.diamonds:(localReady?localWallet.diamonds:0)],['🪙','קרדיטים',currentCredits],['⭐','כוכבים',remote?(progress.stars||0):(localReady?localWallet.stars:0)],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
               <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{tr(label)}</span></div>)}
           </div>
           <p className='smalltxt' style={{margin:'10px 0 5px'}}>{tr("⏳ כל שאלה: דקה. אפשר לקנות עוד 30 שניות ב־25 קרדיטים, פעם אחת לשאלה.")}</p>
