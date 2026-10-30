@@ -119,6 +119,8 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
         filter:'drop-shadow(0 1px 2px #101436)',lineHeight:1}}>{icon}</div>
     </foreignObject>}
     <g className='capture-firework' aria-hidden='true' pointerEvents='none'>
+      <circle className='capture-firework-ring' cx={cx} cy={cy} r={radius*.71}
+        stroke='#FFF1C0' strokeWidth='2' fill='none'/>
       {sparkles.map((spark,i)=><circle key={i} className='capture-firework-spark' cx={spark.x} cy={spark.y} r={spark.r}
         fill={i%2===0?'#FFF5B1':'#FFFFFF'} style={{animationDelay:(.67+i*.037)+'s'}}/>)}
     </g>
