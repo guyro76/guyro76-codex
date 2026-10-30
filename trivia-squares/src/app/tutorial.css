@@ -37,3 +37,29 @@
   backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;
  }
 }
+
+/* The bilingual tutorial must stay centered after changing the game direction
+   while HTML itself is RTL. In particular the Hebrew/English switch must remain
+   inside the iOS/Android touch viewport and the modal itself must scroll. */
+@media(max-width:650px){
+ main.trivia-app .quiz-overlay:has(#tutorial-modal){
+   position:fixed!important;inset:0!important;inset-inline:0!important;
+   width:100dvw!important;height:100dvh!important;max-width:none!important;
+   display:flex!important;align-items:center!important;justify-content:center!important;
+   overflow:hidden!important;padding:8px!important;
+ }
+ main.trivia-app #tutorial-modal{
+   position:relative!important;inset:auto!important;min-width:0!important;
+   width:min(100%,520px)!important;max-width:calc(100dvw - 16px)!important;
+   max-height:calc(100dvh - 16px)!important;overflow-y:auto!important;
+   margin:auto!important;overscroll-behavior:contain;box-sizing:border-box;
+ }
+ main.trivia-app #tutorial-modal .tutorial-language-picker{
+   direction:ltr;position:sticky;top:0;z-index:3;max-width:100%;
+   display:flex;flex-wrap:wrap;justify-content:center;gap:8px;
+   padding:5px;background:#283B76;border-radius:12px;
+ }
+ main.trivia-app #tutorial-modal .tutorial-language-picker button{
+   flex:0 0 auto;min-width:88px;white-space:nowrap;
+ }
+}
