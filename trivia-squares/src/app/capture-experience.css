@@ -38,6 +38,19 @@ main.trivia-app .capture-liquid-wave{opacity:.95}
 main.trivia-app .capture-liquid-sheen{opacity:.72}
 main.trivia-app .capture-bubble{opacity:.82}
 
+/* Keep sound, liquid preview and skins beside one another instead of growing
+   a tall vertical stack that pushes the game board off mobile screens. */
+main.trivia-app .skin-picker-bar,
+main.trivia-app.playing-layout .skin-picker-bar{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:7px!important;
+  max-width:100%;
+}
+main.trivia-app .trivia-audio-state{flex:0 1 auto}
 main.trivia-app .capture-liquid-preview-button{
   border:2px solid #FFF3BB!important;
   color:#FFFFFF!important;
