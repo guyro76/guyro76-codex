@@ -44,14 +44,14 @@ test('QA: all literal game controls and answer-feedback strings are localized',a
  const {readFileSync}=await import('node:fs');
  const sources=['../src/app/game.tsx','../src/components/StageReward.tsx','../src/components/TutorialPreview.tsx'];
  const keys=new Set();
- const matcher=/\\btr\\(\\s*(['\"\x60])([^'\"\x60\\\\\\n]{2,150})\\1\\s*\\)/g;
+ const matcher=/\btr\(\s*(['"])([^'"\n]{2,150})\1\s*\)/g;
  for(const file of sources){
   const content=readFileSync(new URL(file,import.meta.url),'utf8');
-  for(const match of content.matchAll(matcher))if(/[\\u0590-\\u05ff]/u.test(match[2]))keys.add(match[2]);
+  for(const match of content.matchAll(matcher))if(/[\u0590-\u05ff]/u.test(match[2]))keys.add(match[2]);
  }
  assert.ok(keys.size>=80,'Translation guard did not detect expected controls');
  for(const key of keys)for(const locale of ['en','ru','fr','ar']){
   const translated=translate(locale,key);
-  assert.ok(!/[\\u0590-\\u05ff]/u.test(translated),\x60Missing \${locale} translation for: \${key}\x60);
+  assert.ok(!/[\u0590-\u05ff]/u.test(translated),'Missing '+locale+' translation for: '+key);
  }
 });
