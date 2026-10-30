@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CATEGORIES,FACT_TEMPLATES,LANGUAGES,phraseFor} from '../scripts/crossword-topics.mjs';
 import {
- verifySingleStatement,hasAllTranslations,introSupportsAnswer,introSupportsRelationship,
+ verifySingleStatement,hasCurrentStatement,hasAllTranslations,introSupportsAnswer,introSupportsRelationship,
  makeUniqueAnswers,makeQuestions,auditCandidates
 } from '../scripts/generate-crossword-trivia.mjs';
 
@@ -25,6 +25,8 @@ test('editor maintains 30 topic families and sources for multiple non-geography 
 test('single Wikidata statement must have unique current answer',()=>{
  const e={claims:{P57:claims('Q42')}};
  assert.equal(verifySingleStatement(e,'P57','Q42'),true);
+ assert.equal(hasCurrentStatement(e,'P57','Q42'),true);
+ assert.equal(hasCurrentStatement(e,'P57','Q43'),false);
  assert.equal(verifySingleStatement(e,'P57','Q43'),false);
  assert.equal(verifySingleStatement(e,'P58','Q42'),false);
  e.claims.P57.push(...claims('Q43'));
