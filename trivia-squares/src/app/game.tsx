@@ -1808,6 +1808,12 @@ export default function TriviaGame() {
       <span className='game-author-credit-copy' dir={localeDirection(locale)}>
         {authorCredits[locale]}
       </span>
+      <span className='game-question-source-credit' style={{fontWeight:900,fontSize:12,color:'#351438',display:'block',marginTop:6}}>
+        {locale==='he'?'מקור נתוני הגאוגרפיה: ':locale==='fr'?'Données géographiques : ':locale==='ru'?'Источник географических данных: ':locale==='ar'?'مصدر البيانات الجغرافية: ':'Geographic data source: '}
+        <a href='https://www.geonames.org/' target='_blank' rel='noreferrer noopener' style={{fontWeight:900,color:'#351438',textDecoration:'underline'}}>GeoNames</a>
+        {' · '}<a href='https://creativecommons.org/licenses/by/4.0/' target='_blank' rel='noreferrer noopener' style={{fontWeight:900,color:'#351438',textDecoration:'underline'}}>CC BY 4.0</a>
+        {' · '}{locale==='he'?'עיבוד: טריוויה ריבועים':locale==='fr'?'Adapté pour Trivia Squares':locale==='ru'?'Адаптировано для Trivia Squares':locale==='ar'?'بتصرف لصالح Trivia Squares':'Adapted for Trivia Squares'}
+      </span>
     </div>
   </main>;
 }
