@@ -1,19 +1,20 @@
 /**
- * Supported locales: Hebrew and English.
- * Russian, French and Arabic are registered as future locale adapters only.
+ * Supported locales: Hebrew, English, Russian, French, Arabic and Spanish.
+ * Each has its own question bank and editor-authored game translations.
  * Strings are authored by editors, never machine-translated at runtime.
  */
 import {extraDictionaries} from './i18nExtra.ts';
-export type ActiveLocale='he'|'en'|'ru'|'fr'|'ar';
+export type ActiveLocale='he'|'en'|'ru'|'fr'|'ar'|'es';
 export type PlannedLocale=never;
-export const activeLocales=['he','en','ru','fr','ar'] as const;
+export const activeLocales=['he','en','ru','fr','ar','es'] as const;
 export const plannedLocales=[] as const;
 export const localeCatalog={
  he:{nativeName:'עברית',direction:'rtl',enabled:true},
  en:{nativeName:'English',direction:'ltr',enabled:true},
  ru:{nativeName:'Русский',direction:'ltr',enabled:true},
  fr:{nativeName:'Français',direction:'ltr',enabled:true},
- ar:{nativeName:'العربية',direction:'rtl',enabled:true}
+ ar:{nativeName:'العربية',direction:'rtl',enabled:true},
+ es:{nativeName:'Español',direction:'ltr',enabled:true}
 } as const;
 export const englishDictionary:Readonly<Record<string,string>>={
   "טריוויה ריבועים": "TRIVIA SQUARES",
@@ -268,7 +269,7 @@ export function localeDirection(locale:ActiveLocale):'rtl'|'ltr'{
  return locale==='he'||locale==='ar'?'rtl':'ltr';
 }
 export function isActiveLocale(value:unknown):value is ActiveLocale{
- return value==='he'||value==='en'||value==='ru'||value==='fr'||value==='ar';
+ return value==='he'||value==='en'||value==='ru'||value==='fr'||value==='ar'||value==='es';
 }
 export const translatedWorlds={
  he:[
@@ -300,5 +301,11 @@ export const translatedWorlds={
   {name:'مناجم الألماس',subtitle:'اكتشف كنوزًا متلألئة',badge:'العالم 02',reward:'ألماس'},
   {name:'مملكة الغيوم',subtitle:'رحلة بين النجوم',badge:'العالم 03',reward:'مكافآت'},
   {name:'مجرة النجوم',subtitle:'تحدي الأبطال الأكبر',badge:'العالم 04',reward:'كؤوس'}
+ ],
+ es:[
+  {name:'Jardín de las maravillas',subtitle:'Tu aventura empieza aquí',badge:'MUNDO 01',reward:'Frutas'},
+  {name:'Minas de cristal',subtitle:'Descubre tesoros brillantes',badge:'MUNDO 02',reward:'Diamantes'},
+  {name:'Reino de las nubes',subtitle:'Un viaje entre las estrellas',badge:'MUNDO 03',reward:'Bonificaciones'},
+  {name:'Galaxia de estrellas',subtitle:'El desafío definitivo',badge:'MUNDO 04',reward:'Trofeos'}
  ]
 } as const;
