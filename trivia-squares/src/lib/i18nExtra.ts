@@ -1,6 +1,4 @@
-/** Editor-authored interface translations for supported game locales.
- * English dictionary remains in i18n.ts; unreviewed copy falls back to English.
- */
+/** Editor-authored interface translations for supported game locales. */
 export const extraDictionaries:Record<'ru'|'fr'|'ar'|'es',Readonly<Record<string,string>>>={
   "ru": {
     "טריוויה ריבועים": "Квадраты викторины",
@@ -497,6 +495,9 @@ export const extraDictionaries:Record<'ru'|'fr'|'ar'|'es',Readonly<Record<string
     "הפעל קמע זמן": "Usar amuleto",
     "🔇 הפעל צלילים": "🔇 Activar sonido",
     "🔊 השתק צלילים": "🔊 Silenciar",
-    "🎮 משחק חדש": "🎮 Nueva partida"
+    "🎮 משחק חדש": "🎮 Nueva partida",
+    "יש להתחבר ולאשר את תנאי השימוש לפני הצטרפות לחדר.": "Debes iniciar sesión y aceptar las condiciones para unirte a la sala.",
+    " | קמעות זמן: ": " | Amuletos de tiempo: ",
+    " | כיבושי בונוס: ": " | Capturas adicionales: "
   }
 };
