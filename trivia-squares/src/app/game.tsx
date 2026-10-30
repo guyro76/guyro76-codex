@@ -14,6 +14,7 @@ import {answerFeedback} from '../lib/answerFeedback';
 import {gameplayGuidance} from '../lib/gameplayGuidance';
 import {viewportModeLabel,viewportPreviewLabel} from '../lib/viewportPreviewLabels';
 import {questionAvailabilityMessage} from '../lib/questionAvailability';
+import {canonicalTriviaDestination} from '../lib/canonicalOrigin';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
@@ -125,6 +126,11 @@ export default function TriviaGame() {
   const client = useMemo<SupabaseClient | null>(() => {
     return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   }, []);
+  useEffect(()=>{
+    const canonical=canonicalTriviaDestination(window.location.href);
+    if(canonical)window.location.replace(canonical);
+  },[]);
+
   const [user, setUser] = useState<User | null>(null);
   const [locale, setLocale] = useState<ActiveLocale>('he');
   const [previewViewport,setPreviewViewport]=useState<'auto'|'desktop'|'tablet'|'mobile'>('auto');
