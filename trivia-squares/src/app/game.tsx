@@ -8,7 +8,7 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween } from '../lib/dotDrawi
 import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
-import { playGameSound, type SoundCue } from '../lib/gameAudio';
+import { playGameSound, unlockGameAudio, type SoundCue } from '../lib/gameAudio';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
@@ -223,7 +223,7 @@ export default function TriviaGame() {
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(65);
   const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
-  const rewardSound=useCallback((cue:'bonus'|'win')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
+
   const [invite, setInvite] = useState<string | null>(null);
   const botBusy = useRef(false);
   const boardRef = useRef<SVGSVGElement>(null);
@@ -1228,7 +1228,7 @@ export default function TriviaGame() {
     subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
-  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin} style={css.main} dir={localeDirection(locale)} lang={locale}>
+  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin} style={css.main} dir={localeDirection(locale)} lang={locale} onPointerDownCapture={()=>{if(!muted && volume>0)unlockGameAudio()}}>
     <style>{`
       *{box-sizing:border-box} body{background:#111C48;color:white;font-family:Arial,'Noto Sans Hebrew',sans-serif;font-weight:800;margin:0}
       .trivia-app{--accent:#8CE8FF;min-height:100vh;position:relative;isolation:isolate}
@@ -1585,7 +1585,7 @@ export default function TriviaGame() {
           onAdvance={advanceStage}
           onLocalPrize={stageLocalReward}
           onRemotePrize={stageRemoteReward}
-          onSound={rewardSound}
+          onSound={play}
         />}
       </section>
 
