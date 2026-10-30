@@ -15,6 +15,8 @@ const claims=(answerId,rank='normal')=>[{
 
 test('editor maintains 30 topic families and sources for multiple non-geography domains',()=>{
  assert.ok(CATEGORIES.length>=30);
+ assert.equal(LANGUAGES.length,6);
+ assert.ok(LANGUAGES.includes('es'));
  assert.ok(FACT_TEMPLATES.length>=15);
  for(const l of LANGUAGES)assert.ok(CATEGORIES.every(c=>c[l]?.length>=3));
  assert.ok(FACT_TEMPLATES.some(x=>x.category==='israel-politics'));
@@ -46,6 +48,8 @@ test('every language must have real source and answer labels, never Q IDs',()=>{
  delete a.labels.ar;
  assert.equal(hasAllTranslations(s,a),false);
  assert.throws(()=>phraseFor('director','he','Q123'));
+ assert.throws(()=>phraseFor('director','es','Q123'));
+ assert.match(phraseFor('director','es','El padrino'),/El padrino/);
 });
 test('all options are unique, shuffled and include exactly the verified correct answer',()=>{
  const r=makeUniqueAnswers('Q10',['Q20','Q30','Q40','Q10','Q20'],'Q999');
@@ -55,7 +59,7 @@ test('all options are unique, shuffled and include exactly the verified correct 
  assert.equal(r.ids[r.correct_index],'Q10');
  assert.equal(makeUniqueAnswers('Q10',['Q20','Q30'],'Q999'),null);
 });
-test('every verified source fact makes one five-language question pack',()=>{
+test('every verified source fact makes one six-language question pack',()=>{
  const topic=FACT_TEMPLATES.find(t=>t.id==='film-director');
  const subject=entity('Q100','Movie'),answer=entity('Q200','Director');
  const options=[entity('Q300','Other A'),entity('Q400','Other B'),entity('Q500','Other C')];
@@ -82,7 +86,7 @@ test('untranslated distractors are rejected rather than fabricated',()=>{
  const distractors=[entity('Q300','City A'),entity('Q400','City B'),entity('Q500','City C')];
  delete distractors[1].labels.ru;
  const rows=makeQuestions(topic,s,a,distractors,source,'capital:Q100:P36');
- assert.ok(rows.length<5);
+ assert.ok(rows.length<6);
  assert.ok(!rows.some(q=>q.locale==='ru'));
 });
 test('editor rejects repeated questions and incomplete Wikipedia provenance',()=>{

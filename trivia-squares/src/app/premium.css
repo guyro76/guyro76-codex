@@ -1243,9 +1243,118 @@ main.trivia-app .skin-picker-item{min-width:0}
  main.trivia-app .locale-option{flex:1 1 auto;font-size:clamp(12px,2.7vw,14px);padding:8px 10px}
 }
 
+/* Campaign chapter carousel: only five stage cards rendered at once, never 100. */
+main.trivia-app .campaign-chapter-nav{
+ display:flex;align-items:center;justify-content:center;gap:10px;max-width:100%;margin:14px 0 10px;flex-wrap:wrap;
+}
+main.trivia-app .campaign-chapter-nav label{font-weight:900;color:#F4F8FF}
+main.trivia-app .campaign-chapter-nav select{
+ min-width:150px;max-width:220px;padding:10px 14px;border-radius:13px;
+ background:#19345A;color:#FFF;font-size:15px;font-weight:900;border:1px solid #A7D8F0;
+}
+main.trivia-app .campaign-chapter-nav button{
+ font-weight:900;font-size:23px;min-width:42px;min-height:42px;border-radius:13px;
+ background:#254A70;color:#FFF;border:1px solid #9FDCEF;cursor:pointer;
+}
+main.trivia-app .campaign-chapter-nav button:disabled{opacity:.4;cursor:not-allowed}
+main.trivia-app .campaign-track{max-width:100%;min-width:0;overflow-x:auto}
+main.trivia-app .campaign-section{max-width:100%;min-width:0;overflow-x:clip}
 
-/* Keep the long campaign stage rail inside its container.
-   RTL / Cyrillic labels must never increase document width. */
+/* Avoid document-level horizontal overflow from translated footer links and stage titles.
+   Keep horizontal scrolling contained inside the five-card chapter carousel. */
+main.trivia-app{max-width:100%;overflow-x:clip}
+main.trivia-app .campaign-chapter-nav{min-width:0;max-width:100%}
+
+/* iOS six-language campaign width containment */
 main.trivia-app{overflow-x:clip}
 main.trivia-app .campaign-section{max-width:100%;min-width:0;overflow-x:clip}
-main.trivia-app .campaign-track{box-sizing:border-box;min-width:0;width:100%;max-width:100%}
+main.trivia-app .campaign-track{width:100%;box-sizing:border-box;max-width:100%;min-width:0}
+
+/* Original six-language balloon and cake intermissions. Bold high-contrast UI. */
+main.trivia-app .lumen-balloons-game,
+main.trivia-app .lumen-cake-game{
+  margin-top:12px;padding:16px;border-radius:18px;
+  background:linear-gradient(145deg,#264D8A,#54367C);
+  border:2px solid #C4DDF9;color:#FFFFFF;text-align:center
+}
+main.trivia-app .lumen-balloons-game p,
+main.trivia-app .lumen-cake-game p{font-size:15px;font-weight:900;color:#F4F8FF;margin:0 0 16px}
+main.trivia-app .lumen-balloon-rack{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;
+  gap:clamp(4px,1.1vw,10px);min-width:0
+}
+main.trivia-app .lumen-balloon-target{
+  min-width:0;min-height:120px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;border:2px solid #FFE7A0;border-radius:17px;
+  background:linear-gradient(160deg,#183969,#324D84);
+  color:#FFFFFF;cursor:pointer;box-shadow:0 7px 17px rgba(6,15,43,.25);
+  font-weight:900;transition:transform .18s,background-color .18s
+}
+main.trivia-app .lumen-balloon-target:hover:not(:disabled){transform:translateY(-6px)}
+main.trivia-app .lumen-balloon-target:focus-visible,
+main.trivia-app .lumen-cake-target:focus-visible{outline:3px solid #FFFFFF;outline-offset:3px}
+main.trivia-app .lumen-balloon-target .lumen-balloon-shape{
+  font-size:clamp(33px,4vw,58px);line-height:1.1;filter:drop-shadow(0 5px 8px rgba(10,28,57,.3))
+}
+main.trivia-app .lumen-balloon-target strong{font-size:15px;font-weight:900}
+main.trivia-app .lumen-balloon-target.burst{background:linear-gradient(140deg,#9B377E,#F07875)}
+main.trivia-app .lumen-balloon-target.burst .lumen-balloon-shape{animation:lumen-balloon-pop .55s ease-out both}
+@keyframes lumen-balloon-pop{0%{transform:scale(1)}38%{transform:scale(1.7) rotate(22deg)}100%{transform:scale(.65) rotate(-14deg)}}
+main.trivia-app .lumen-cake-target{
+  position:relative;overflow:hidden;min-width:0;
+  width:min(100%,340px);min-height:170px;margin:0 auto;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  border:3px solid #FFD38D;border-radius:22px;cursor:pointer;
+  color:#34214D;background:linear-gradient(135deg,#FFF2C5,#FFBCE1 55%,#FFD6A2);
+  font-size:17px;font-weight:900;touch-action:pan-y
+}
+main.trivia-app .lumen-cake-target .lumen-cake-plate{font-size:90px;line-height:1.25}
+main.trivia-app .lumen-cake-target strong{font-size:16px;font-weight:900;color:#2C204B}
+main.trivia-app .lumen-cake-slice{position:absolute;top:5px;left:-25%;height:120%;width:6px;
+  background:#B82264;box-shadow:0 0 15px #FFFFFF;transform:rotate(30deg);opacity:0}
+main.trivia-app .lumen-cake-target.cut .lumen-cake-slice{opacity:1;animation:lumen-cake-cut .5s ease both}
+main.trivia-app .lumen-cake-target.cut .lumen-cake-plate{transform:rotate(9deg) scale(1.07)}
+@keyframes lumen-cake-cut{from{left:-25%}to{left:120%}}
+@media(max-width:440px){
+ main.trivia-app .lumen-balloon-rack{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+ main.trivia-app .lumen-balloon-target{min-height:90px;padding:4px 0}
+ main.trivia-app .lumen-balloon-target .lumen-balloon-shape{font-size:32px}
+ main.trivia-app .lumen-balloon-target strong{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app .lumen-balloon-target,main.trivia-app .lumen-cake-target,
+ main.trivia-app .lumen-balloon-target.burst .lumen-balloon-shape,
+ main.trivia-app .lumen-cake-target.cut .lumen-cake-slice{animation:none!important;transition:none!important}
+}
+
+main.trivia-app .trivia-sound-toggle{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:43px;padding:6px 12px;flex:0 0 auto;
+  border-radius:13px;border:2px solid #B7D7F7;
+  background:linear-gradient(135deg,#254B79,#3B5A87);
+  color:#FFFFFF;cursor:pointer;font-weight:900
+}
+main.trivia-app .trivia-sound-toggle strong{font-size:13px;font-weight:900}
+main.trivia-app .trivia-sound-toggle:focus-visible{outline:3px solid #FFE9A4;outline-offset:3px}
+main.trivia-app .trivia-sound-toggle[aria-pressed=false]{
+  border-color:#FFD5A6;background:linear-gradient(135deg,#71395B,#5E3965)
+}
+@media(max-width:440px){
+ main.trivia-app .trivia-sound-toggle{padding:6px 9px;min-height:40px}
+ main.trivia-app .trivia-sound-toggle strong{font-size:12px}
+}
+
+/* Reports must stay usable on iPhone, Android and desktop without covering answers. */
+main.trivia-app .question-report-widget{margin:13px auto 6px;max-width:520px;font-weight:900;text-align:center}
+main.trivia-app .question-report-toggle{background:#294A7C;border:1.5px solid #C5E0FF;color:#FFFFFF;
+ border-radius:12px;padding:10px 14px;font-weight:900;font-size:14px;cursor:pointer;min-height:44px}
+main.trivia-app .question-report-form{display:grid;gap:8px;border:1px solid #9AC6FF;border-radius:14px;
+ padding:12px;background:#203765;color:#FFFFFF;text-align:start}
+main.trivia-app .question-report-form label{font-weight:900}
+main.trivia-app .question-report-form select{width:100%;border-radius:10px;min-height:45px;padding:8px;
+ color:#14254D;background:#FFFFFF;font-weight:900}
+main.trivia-app .question-report-actions{display:flex;gap:8px;flex-wrap:wrap}
+main.trivia-app .question-report-actions button{padding:9px 14px;min-height:44px;
+ background:#FBE4A5;color:#122B50;font-weight:900;border:0;border-radius:10px;cursor:pointer}
+main.trivia-app .question-report-actions button+button{background:#E4ECFF}
+main.trivia-app .question-report-notice{font-weight:900;color:#E6FFCB;margin:7px 0}

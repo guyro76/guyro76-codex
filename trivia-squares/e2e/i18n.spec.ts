@@ -42,7 +42,11 @@ test('QA specialist 4: live switch to English updates screen and direction',asyn
  await expect(page.locator('main.trivia-app')).toHaveAttribute('lang','en');
  await expect(page.locator('main.trivia-app')).toHaveAttribute('dir','ltr');
  await expect(page.getByRole('heading',{name:'Trivia Squares'})).toBeVisible();
- await expect(page.getByText('Game room',{exact:false}).first()).toBeVisible();
+ await page.getByRole('button',{name:'Open game menu'}).click();
+ const nav=page.getByRole('dialog',{name:'Game menu'});
+ await nav.getByRole('button',{name:'Play modes'}).click();
+ await expect(nav.getByText('Game room',{exact:false}).first()).toBeVisible();
+ await nav.getByRole('button',{name:'Close menu'}).click();
  await expect(page.getByText('Apple Trail').first()).toBeVisible();
  await expect(page.locator('.locale-switch').getByRole('button',{name:'English'})).toHaveAttribute('aria-pressed','true');
 });

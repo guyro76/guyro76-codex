@@ -7,6 +7,7 @@ export default defineConfig({
   expect: { timeout: 8_000 },
   use: {
     baseURL: 'http://127.0.0.1:3210',
+    storageState: './e2e/storage-state.json',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure'
   },

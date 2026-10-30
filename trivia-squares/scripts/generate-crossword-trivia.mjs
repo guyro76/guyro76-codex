@@ -232,13 +232,13 @@ export async function generate({topicIds,limit=20,offset=0,log=()=>{}}){
    const distractors=allAnswers.filter(a=>a.id!==item.answer.id);
    if(distractors.length<3)continue;
    const seed=topic.id+':'+item.subject.id+':'+topic.property;
-   // Keep each fact atomic: either all five complete locale translations or none.
+   // Keep each fact atomic: either all six complete locale translations or none.
    const pack=makeQuestions(topic,item.subject,item.answer,distractors,item.source,seed);
    if(pack.length===LANGUAGES.length)questionPacks.push(pack);
    if(questionPacks.length>=limit)break;
   }
   groups.push(questionPacks);
-  log('Verified '+verified.length+' source facts; '+questionPacks.length+' five-locale question packs');
+  log('Verified '+verified.length+' source facts; '+questionPacks.length+' six-locale question packs');
   await sleep(1100);
  }
  const all=roundRobin(groups,limit).flat();
