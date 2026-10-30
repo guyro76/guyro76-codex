@@ -119,6 +119,7 @@ export default function TriviaGame() {
   }, []);
   const [user, setUser] = useState<User | null>(null);
   const [locale, setLocale] = useState<ActiveLocale>('he');
+  const [previewViewport,setPreviewViewport]=useState<'auto'|'desktop'|'tablet'|'mobile'>('auto');
   const [languageLoaded, setLanguageLoaded] = useState(false);
   const tr = useCallback((value: string) => translate(locale,value),[locale]);
   const [legalAccepted, setLegalAccepted] = useState(false);
@@ -1289,7 +1290,7 @@ export default function TriviaGame() {
     subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
-  return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin + (stageStarted?' playing-layout':' setup-layout')} style={css.main} dir={localeDirection(locale)} lang={locale} onPointerDownCapture={()=>unlockGameAudio()} onKeyDownCapture={event=>{if(event.key==='Enter'||event.key===' ')unlockGameAudio()}}>
+  return <main data-preview-viewport={previewViewport} className={'trivia-app theme-' + world.slug + ' skin-' + skin + (stageStarted?' playing-layout':' setup-layout')} style={css.main} dir={localeDirection(locale)} lang={locale} onPointerDownCapture={()=>unlockGameAudio()} onKeyDownCapture={event=>{if(event.key==='Enter'||event.key===' ')unlockGameAudio()}}>
     <style>{`
       *{box-sizing:border-box} body{background:#111C48;color:white;font-family:Arial,'Noto Sans Hebrew',sans-serif;font-weight:800;margin:0}
       .trivia-app{--accent:#8CE8FF;min-height:100vh;position:relative;isolation:isolate}
@@ -1449,6 +1450,9 @@ export default function TriviaGame() {
         </div>
       </section>}
     </div>
+    <nav className='viewport-preview-switch' aria-label={locale==='he'?'בדיקת תצוגה במכשירים':'Device viewport preview'}>
+      {(['auto','desktop','tablet','mobile'] as const).map(mode=><button key={mode} type='button' aria-pressed={previewViewport===mode} onClick={()=>setPreviewViewport(mode)}>{({auto:'אוטומטי',desktop:'מחשב',tablet:'טאבלט',mobile:'נייד'} as const)[mode]}</button>)}
+    </nav>
     <header className='hero'>
       <button type='button' className='app-menu-trigger'
         aria-label={locale==='he'?'פתח תפריט משחק':locale==='en'?'Open game menu':locale==='ru'?'Открыть меню игры':locale==='fr'?'Ouvrir le menu du jeu':locale==='es'?'Abrir el menú del juego':'افتح قائمة اللعبة'}
