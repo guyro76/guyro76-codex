@@ -2,7 +2,7 @@
  * Review each locale with native speakers before public competitive launch.
  */
 export type InternationalQuestion={
-  id:number;locale:'ru'|'fr'|'ar';category:string;text:string;answers:string[];correct:number;difficulty:number;
+  id:number;locale:'ru'|'fr'|'ar'|'es';category:string;text:string;answers:string[];correct:number;difficulty:number;
 };
 export const internationalQuestions:InternationalQuestion[]=[
   {
@@ -1684,5 +1684,35 @@ export const internationalQuestions:InternationalQuestion[]=[
     ],
     "correct": 3,
     "difficulty": 1
-  }
+  },
+  {"id":303000,"locale":"es","category":"Geografía","text":"¿Cuál es la capital de Francia?","answers":["París","Lyon","Marsella","Niza"],"correct":0,"difficulty":1},
+  {"id":303001,"locale":"es","category":"Ciencia","text":"¿Qué planeta es conocido como el planeta rojo?","answers":["Venus","Marte","Júpiter","Mercurio"],"correct":1,"difficulty":2},
+  {"id":303002,"locale":"es","category":"Historia","text":"¿En qué país se construyeron las pirámides de Guiza?","answers":["México","Egipto","Perú","Grecia"],"correct":1,"difficulty":3},
+  {"id":303003,"locale":"es","category":"Cine","text":"¿Qué personaje de Disney pierde un zapato de cristal?","answers":["Ariel","Cenicienta","Mulán","Elsa"],"correct":1,"difficulty":1},
+  {"id":303004,"locale":"es","category":"Deportes","text":"¿Cuántos jugadores tiene un equipo de fútbol en el campo?","answers":["9","10","11","12"],"correct":2,"difficulty":2},
+  {"id":303005,"locale":"es","category":"Naturaleza","text":"¿Cuál es el mamífero más grande del mundo?","answers":["Elefante africano","Ballena azul","Jirafa","Hipopótamo"],"correct":1,"difficulty":3},
+  {"id":303006,"locale":"es","category":"Música","text":"¿Cuántas cuerdas tiene una guitarra clásica?","answers":["4","5","6","8"],"correct":2,"difficulty":1},
+  {"id":303007,"locale":"es","category":"Literatura","text":"¿Quién escribió Don Quijote de la Mancha?","answers":["Lorca","Borges","Cervantes","Neruda"],"correct":2,"difficulty":2},
+  {"id":303008,"locale":"es","category":"Geografía","text":"¿En qué continente está Brasil?","answers":["Europa","Asia","América del Sur","África"],"correct":2,"difficulty":3},
+  {"id":303009,"locale":"es","category":"Ciencia","text":"¿Cuál es la fórmula química del agua?","answers":["CO₂","H₂O","O₂","NaCl"],"correct":1,"difficulty":1},
+  {"id":303010,"locale":"es","category":"Historia","text":"¿En qué año llegó el ser humano a la Luna por primera vez?","answers":["1959","1969","1979","1989"],"correct":1,"difficulty":2},
+  {"id":303011,"locale":"es","category":"Cine","text":"¿Qué animal es Simba en El rey león?","answers":["Tigre","León","Leopardo","Lobo"],"correct":1,"difficulty":3},
+  {"id":303012,"locale":"es","category":"Deportes","text":"¿En qué deporte se usa una raqueta y un volante?","answers":["Tenis","Bádminton","Béisbol","Balonmano"],"correct":1,"difficulty":1},
+  {"id":303013,"locale":"es","category":"Naturaleza","text":"¿Qué órgano bombea la sangre?","answers":["Pulmón","Cerebro","Corazón","Hígado"],"correct":2,"difficulty":2},
+  {"id":303014,"locale":"es","category":"Tecnología","text":"¿Qué significa WWW en una dirección web?","answers":["World Wide Web","Web World Wire","Wide Web World","World Wireless Web"],"correct":0,"difficulty":3},
+  {"id":303015,"locale":"es","category":"Geografía","text":"¿Cuál es la capital de Australia?","answers":["Sídney","Melbourne","Canberra","Perth"],"correct":2,"difficulty":1},
+  {"id":303016,"locale":"es","category":"Ciencia","text":"¿Cuál es el gas más abundante en la atmósfera terrestre?","answers":["Oxígeno","Nitrógeno","Dióxido de carbono","Argón"],"correct":1,"difficulty":2},
+  {"id":303017,"locale":"es","category":"Arte","text":"¿Quién pintó La noche estrellada?","answers":["Picasso","Monet","Van Gogh","Dalí"],"correct":2,"difficulty":3},
+  {"id":303018,"locale":"es","category":"Cine","text":"¿Qué película de Disney incluye la canción 'Libre soy'?","answers":["Encanto","Frozen","Moana","Aladdín"],"correct":1,"difficulty":1},
+  {"id":303019,"locale":"es","category":"Deportes","text":"¿Cuántos anillos tiene el símbolo olímpico?","answers":["4","5","6","7"],"correct":1,"difficulty":2},
+  {"id":303020,"locale":"es","category":"Geografía","text":"¿Qué océano está al oeste de América del Sur?","answers":["Atlántico","Índico","Pacífico","Ártico"],"correct":2,"difficulty":3},
+  {"id":303021,"locale":"es","category":"Historia","text":"¿En qué país nació Leonardo da Vinci?","answers":["España","Italia","Francia","Alemania"],"correct":1,"difficulty":1},
+  {"id":303022,"locale":"es","category":"Naturaleza","text":"¿Qué proceso usan las plantas para producir energía a partir de la luz?","answers":["Fermentación","Fotosíntesis","Evaporación","Condensación"],"correct":1,"difficulty":2},
+  {"id":303023,"locale":"es","category":"Tecnología","text":"¿Qué dispositivo se usa para mover el cursor en un ordenador?","answers":["Impresora","Ratón","Altavoz","Micrófono"],"correct":1,"difficulty":3},
+  {"id":303024,"locale":"es","category":"Literatura","text":"¿Quién escribió la saga Harry Potter?","answers":["J. K. Rowling","Agatha Christie","Jane Austen","Suzanne Collins"],"correct":0,"difficulty":1},
+  {"id":303025,"locale":"es","category":"Cine","text":"¿Cómo se llama el vaquero de Toy Story?","answers":["Buzz","Woody","Rex","Andy"],"correct":1,"difficulty":2},
+  {"id":303026,"locale":"es","category":"Geografía","text":"¿Cuál es la capital de Japón?","answers":["Kioto","Osaka","Tokio","Nagoya"],"correct":2,"difficulty":3},
+  {"id":303027,"locale":"es","category":"Ciencia","text":"¿Cuántos planetas tiene el sistema solar?","answers":["7","8","9","10"],"correct":1,"difficulty":1},
+  {"id":303028,"locale":"es","category":"Historia","text":"¿Qué civilización construyó Machu Picchu?","answers":["Azteca","Inca","Maya","Romana"],"correct":1,"difficulty":2},
+  {"id":303029,"locale":"es","category":"Deportes","text":"¿En qué deporte se practica el saque de esquina?","answers":["Baloncesto","Voleibol","Fútbol","Tenis"],"correct":2,"difficulty":3}
 ];
