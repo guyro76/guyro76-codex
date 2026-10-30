@@ -1259,3 +1259,8 @@ main.trivia-app .campaign-chapter-nav button{
 main.trivia-app .campaign-chapter-nav button:disabled{opacity:.4;cursor:not-allowed}
 main.trivia-app .campaign-track{max-width:100%;min-width:0;overflow-x:auto}
 main.trivia-app .campaign-section{max-width:100%;min-width:0;overflow-x:clip}
+
+/* Avoid document-level horizontal overflow from translated footer links and stage titles.
+   Keep horizontal scrolling contained inside the five-card chapter carousel. */
+main.trivia-app{max-width:100%;overflow-x:clip}
+main.trivia-app .campaign-chapter-nav{min-width:0;max-width:100%}
