@@ -67,3 +67,16 @@ test('QA: static stage and setup labels never fall back to Hebrew in other local
    .filter(match=>!match[1].startsWith('/en/'));
  assert.equal(legacy.length,0,'Use tr() for text in all supported languages, not a two-locale ternary');
 });
+
+test('QA: thirty stage titles and subtitles are native in every active language',async()=>{
+ const {CAMPAIGN_STAGES}=await import('../src/lib/campaignStages.ts');
+ assert.equal(CAMPAIGN_STAGES.length,30);
+ for(const stage of CAMPAIGN_STAGES)for(const key of ['nameHe','subtitleHe']){
+   const label=stage[key];
+   assert.ok(Object.hasOwn(englishDictionary,label),'Missing English stage text: '+label);
+   for(const locale of ['ru','fr','ar']){
+     assert.ok(Object.hasOwn(extraDictionaries[locale],label),'Missing '+locale+' stage text: '+label);
+     assert.ok(!/[\u0590-\u05ff]/.test(translate(locale,label)),'Hebrew leaked to '+locale+' stage');
+   }
+ }
+});

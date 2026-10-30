@@ -1222,8 +1222,8 @@ export default function TriviaGame() {
   };
   const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
   const displayWorld={
-    name:locale==='en'?selectedStage.nameEn:selectedStage.nameHe,
-    subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
+    name:tr(selectedStage.nameHe),
+    subtitle:tr(selectedStage.subtitleHe)
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
   return <main className={'trivia-app theme-' + world.slug + ' skin-' + skin} style={css.main} dir={localeDirection(locale)} lang={locale}>
@@ -1424,7 +1424,7 @@ export default function TriviaGame() {
              onClick={()=>chooseStage(stage.id)}>
             <span className='campaign-stage-number'>{isSelected?'✦ ':unlocked?'': '🔒 '}{String(stage.id).padStart(2,'0')}</span>
             <strong className='campaign-stage-icon' aria-hidden='true'>{stage.icon}</strong>
-            <span className='campaign-stage-title'>{locale==='en'?stage.nameEn:stage.nameHe}</span>
+            <span className='campaign-stage-title'>{tr(stage.nameHe)}</span>
             <small>{unlocked?(tr("לוח"))+' '+stage.size+'×'+stage.size:(tr("נעול"))}</small>
           </button>
         })}
@@ -1590,7 +1590,7 @@ export default function TriviaGame() {
                  if(value==='solo'&&!remote){setLocal(prev=>({...repairSoloBoard(prev),mode:'solo'}));setCapturePending(null)}
                  if(value==='local'&&!remote){setLocal(prev=>({...prev,mode:'local'}))}
                  if(value!=='local'&&value!=='solo'&&stageId>serverStageCompleted+1){setStageId(serverStageCompleted+1);setSize(stageFor(Math.min(STAGE_COUNT,serverStageCompleted+1)).size)} }}>
-                {locale==='en'?en:he}</button>)}
+                {tr(he)}</button>)}
           </div>
           <details className='question-topic-panel' open={!stageStarted}>
             <summary>☑️ {tr('נושאי השאלות שלי')} <span className='question-topic-count'>({selectedTopics.length}/{questionTopics.length})</span></summary>
@@ -1640,7 +1640,7 @@ export default function TriviaGame() {
              <div className='capture-style-options' role='group' aria-label={tr("סגנון כיבוש")}>
                {([['lumen','אור יוקרתי','Lumen glow'],['neon','ניאון','Neon'],['seal','חותמת מתכת','Metal seal'],['prism','קריסטל','Prism'],['token','סמל שחקן','Player token']] as const).map(([key,he,en])=><button key={key}
                  type='button' className='capture-style-option' aria-pressed={captureStyle===key} onClick={()=>setCaptureStyle(key)}>
-                 <span className={'capture-style-preview preview-'+key} aria-hidden='true'>✦</span><strong>{locale==='en'?en:he}</strong>
+                 <span className={'capture-style-preview preview-'+key} aria-hidden='true'>✦</span><strong>{tr(he)}</strong>
                </button>)}
              </div>
              {mode==='local' && <>
