@@ -1264,3 +1264,8 @@ main.trivia-app .campaign-section{max-width:100%;min-width:0;overflow-x:clip}
    Keep horizontal scrolling contained inside the five-card chapter carousel. */
 main.trivia-app{max-width:100%;overflow-x:clip}
 main.trivia-app .campaign-chapter-nav{min-width:0;max-width:100%}
+
+/* iOS six-language campaign width containment */
+main.trivia-app{overflow-x:clip}
+main.trivia-app .campaign-section{max-width:100%;min-width:0;overflow-x:clip}
+main.trivia-app .campaign-track{width:100%;box-sizing:border-box;max-width:100%;min-width:0}
