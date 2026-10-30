@@ -1358,3 +1358,29 @@ main.trivia-app .question-report-actions button{padding:9px 14px;min-height:44px
  background:#FBE4A5;color:#122B50;font-weight:900;border:0;border-radius:10px;cursor:pointer}
 main.trivia-app .question-report-actions button+button{background:#E4ECFF}
 main.trivia-app .question-report-notice{font-weight:900;color:#E6FFCB;margin:7px 0}
+
+/* Desktop board visibility regression guard (2026-10-30).
+   SVG must reserve an explicit square box even when the grid is recalculated
+   after a trivia answer. No saved match state is touched. */
+main.trivia-app .game-grid { min-width:0; align-items:start; }
+main.trivia-app .arena-panel { min-width:0; overflow:visible; }
+main.trivia-app .arena { width:100%; min-width:0; }
+main.trivia-app .arena-inner {
+ width:100%; max-width:820px; min-width:0;
+ margin-inline:auto; display:flex; justify-content:center; align-items:center;
+ aspect-ratio:1 / 1; min-height:300px;
+}
+main.trivia-app .arena-inner > svg.board {
+ display:block!important; flex:none; width:100%!important;
+ height:auto!important; max-width:760px!important;
+ aspect-ratio:1 / 1; min-width:0;
+ opacity:1!important; visibility:visible!important;
+}
+@media (min-width:851px) {
+ main.trivia-app .game-grid { grid-template-columns:minmax(0,1fr)!important; }
+ main.trivia-app .arena-panel { width:100%; }
+}
+@media (max-width:600px) {
+ main.trivia-app .arena-inner { min-height:0; }
+ main.trivia-app .arena-inner > svg.board { width:100%!important; }
+}
