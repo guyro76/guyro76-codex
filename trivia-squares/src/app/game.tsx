@@ -267,6 +267,18 @@ export default function TriviaGame() {
   const [volume, setVolume] = useState(65);
   const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
   const rewardSound=useCallback((cue:'bonus'|'win'|'pop'|'slice')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
+  const celebrateCapture=useCallback((count:number)=>{
+    if(count<=0)return;
+    playGameSound('liquid',{muted,volume:volume/100});
+    playGameSound('fireworks',{muted,volume:volume/100},.62);
+    playGameSound('coin',{muted,volume:volume/100},.95);
+  },[muted,volume]);
+  const [captureToast,setCaptureToast]=useState<{id:number;amount:number}|null>(null);
+  useEffect(()=>{
+    if(!captureToast)return;
+    const id=window.setTimeout(()=>setCaptureToast(null),1900);
+    return()=>window.clearTimeout(id);
+  },[captureToast]);
   const [invite, setInvite] = useState<string | null>(null);
   const botBusy = useRef(false);
   const boardRef = useRef<SVGSVGElement>(null);
@@ -905,6 +917,7 @@ export default function TriviaGame() {
       if (error) setMessage(error.message);
       else {
         const gained = Number(data.gained || 0);
+        if(gained>0){celebrateCapture(gained);setCaptureToast({id:Date.now(),amount:5+gained*10});}
         if(data.correct===false){
           const idx=Number(data.correct_index);
           setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,
@@ -940,6 +953,7 @@ export default function TriviaGame() {
           const captured=awardPremiumSquares(local,edge,side,2);
           const doubled={...captured.board,scores:{...captured.board.scores,[side]:captured.board.scores[side]+captured.captured.length}};
           setLocal(doubled);
+          if(captured.captured.length){celebrateCapture(captured.captured.length);setCaptureToast({id:Date.now(),amount:5+Math.max(10,captured.captured.length*20)});}
           const amount=5+Math.max(10,captured.captured.length*20);
           setLocalCredits(prev=>({...prev,[side==='guest'?'guest':'host']:prev[side==='guest'?'guest':'host']+amount}));
           setLocalWallet(prev=>({...prev,stars:prev.stars+4,fruits:prev.fruits+captured.captured.length*2,diamonds:prev.diamonds+(captured.captured.length?1:0),knowledge_points:{...prev.knowledge_points,[side==='guest'?'guest':'host']:prev.knowledge_points[side==='guest'?'guest':'host']+10}}));
@@ -964,6 +978,7 @@ export default function TriviaGame() {
       setLocal(next);
       const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
       const gained = newSquares.length;
+      if(gained){celebrateCapture(gained);setCaptureToast({id:Date.now(),amount:5+gained*10});}
       if(gained && local.mode==='local' && ownerMode==='manual')setCapturePending({keys:newSquares,from:'new'});
       if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
       else if (gained) play('capture');
@@ -1535,6 +1550,10 @@ export default function TriviaGame() {
         <div className='arena-title'>
           <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
           <div className='arena-head-right'>
+             {captureToast && <div key={captureToast.id} className='capture-win-toast' role='status' aria-live='polite'>
+               <strong>🎆 {locale==='he'?'ריבוע נכבש!':locale==='es'?'¡Casilla conquistada!':'Square captured!'}</strong>
+               <span>🪙 +{captureToast.amount}</span>
+             </div>}
              <div className='arena-quick-wallet' aria-label={locale==='he'?'פרסים וקרדיטים זמינים':'Available game credits and charms'}>
                <span title={locale==='he'?'קרדיטים זמינים':locale==='es'?'Créditos disponibles':'Available credits'}>🪙 {currentCredits}</span>
                <span title={locale==='he'?'נקודות ידע':locale==='es'?'Puntos de conocimiento':'Knowledge points'}>🧠 {currentKnowledgePoints}</span>
