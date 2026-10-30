@@ -1469,7 +1469,7 @@ export default function TriviaGame() {
       <button type='button' className='trivia-audio-test'
         data-testid='trivia-audio-test'
         aria-label={locale==='he'?'בדוק צלילים':locale==='es'?'Probar sonido':locale==='fr'?'Tester le son':locale==='ru'?'Проверить звук':locale==='ar'?'اختبار الصوت':'Test sound'}
-        title={locale==='he'?'השמע צליל הדגמה':locale==='es'?'Reproducir sonido de prueba':'Play sample sound'}
+        title={locale==='he'?'השמע צליל הדגמה':locale==='es'?'Reproducir sonido de prueba':locale==='fr'?'Écouter un son':locale==='ru'?'Проверить звук':locale==='ar'?'تشغيل صوت تجريبي':'Play sample sound'}
         onClick={()=>{
           unlockGameAudio();
           if(muted)setMuted(false);
@@ -1477,9 +1477,12 @@ export default function TriviaGame() {
           playGameSound('fireworks',{muted:false,volume:Math.max(.85,volume/100)});
           setMessage(locale==='he'?'בדיקת צליל: אמור להישמע צליל זיקוקים. בדוק עוצמת מכשיר ומצב שקט.':
             locale==='es'?'Prueba de sonido: escucha los fuegos artificiales. Comprueba el volumen del teléfono.':
+            locale==='fr'?'Test sonore : écoutez les feux d’artifice et vérifiez le volume.':
+            locale==='ru'?'Проверка звука: послушайте фейерверк и проверьте громкость.':
+            locale==='ar'?'اختبار الصوت: استمع إلى الألعاب النارية وتحقق من مستوى الصوت.':
             'Sound test: listen for the fireworks chime. Check device volume and mute settings.');
         }}>
-        <span aria-hidden='true'>🔉</span><strong>{locale==='he'?'בדוק':locale==='es'?'Probar':'Test'}</strong>
+        <span aria-hidden='true'>🔉</span><strong>{locale==='he'?'בדוק':locale==='es'?'Probar':locale==='fr'?'Tester':locale==='ru'?'Проверить':locale==='ar'?'اختبار':'Test'}</strong>
       </button>
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
@@ -1577,7 +1580,7 @@ export default function TriviaGame() {
           <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
           <div className='arena-head-right'>
              {captureToast && <div key={captureToast.id} className='capture-win-toast' role='status' aria-live='polite'>
-               <strong>🎆 {locale==='he'?'ריבוע נכבש!':locale==='es'?'¡Casilla conquistada!':'Square captured!'}</strong>
+               <strong>🎆 {locale==='he'?'ריבוע נכבש!':locale==='es'?'¡Casilla conquistada!':locale==='fr'?'Case conquise !':locale==='ru'?'Клетка захвачена!':locale==='ar'?'تم الاستيلاء على المربع!':'Square captured!'}</strong>
                <span>🪙 +{captureToast.amount}</span>
              </div>}
              <div className='arena-quick-wallet' aria-label={locale==='he'?'פרסים וקרדיטים זמינים':'Available game credits and charms'}>
