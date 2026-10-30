@@ -387,9 +387,9 @@ export default function TriviaGame() {
     try {
       const savedLevel=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
       const completed=Number(localStorage.getItem('trivia-stage-completed-v1')||'0');
-      const safeCompleted=Number.isInteger(completed)?Math.min(30,Math.max(0,completed)):0;
+      const safeCompleted=Number.isInteger(completed)?Math.min(STAGE_COUNT,Math.max(0,completed)):0;
       setLocalStageCompleted(safeCompleted);
-      if(Number.isInteger(savedLevel)&&savedLevel>=1&&savedLevel<=Math.min(30,safeCompleted+1)){
+      if(Number.isInteger(savedLevel)&&savedLevel>=1&&savedLevel<=Math.min(STAGE_COUNT,safeCompleted+1)){
         setStageId(savedLevel);setSize(stageFor(savedLevel).size);
       }
       setStageStarted(localStorage.getItem('trivia-stage-started-v1')==='true');
@@ -404,7 +404,7 @@ export default function TriviaGame() {
           && value.cols===value.rows && value.edges && value.owners && value.scores){
           // Restore only a board whose size matches the saved locked campaign stage.
           const savedStage=Number(localStorage.getItem('trivia-stage-id-v1')||'1');
-          const validStage=Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=30?savedStage:1;
+          const validStage=Number.isInteger(savedStage)&&savedStage>=1&&savedStage<=STAGE_COUNT?savedStage:1;
           if(stageFor(validStage).size===value.rows){
             const savedCapture=JSON.parse(localStorage.getItem('trivia-capture-settings-v1')||'{}') as {guestName?:string};
             const realGuest=hasActualOpponent(savedCapture.guestName,localStorage.getItem('trivia-player-name')||'');
@@ -1404,12 +1404,12 @@ export default function TriviaGame() {
       </div>
     </header>
 
-    <section className='campaign-section' aria-label={locale==='en'?'Thirty sequential stages':'שלושים שלבים לפי סדר'}>
+    <section className='campaign-section' aria-label={locale==='en'?'One hundred sequential stages':'מאה שלבים לפי סדר'}>
       <div className='campaign-heading'>
-        <h2>{locale==='en'?'Adventure: 30 stages':'הרפתקה: 30 שלבים'}</h2>
+        <h2>{locale==='en'?'Adventure: 100 stages':'הרפתקה: 100 שלבים'}</h2>
         <span>{locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
       </div>
-      <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={30} aria-valuenow={completedStage}
+      <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={STAGE_COUNT} aria-valuenow={completedStage}
            aria-label={locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
         <span style={{width:(completedStage/STAGE_COUNT*100)+'%'}}/>
       </div>
