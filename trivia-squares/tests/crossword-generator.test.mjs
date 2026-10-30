@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CATEGORIES,FACT_TEMPLATES,LANGUAGES,phraseFor} from '../scripts/crossword-topics.mjs';
 import {
- verifySingleStatement,hasAllTranslations,introSupportsAnswer,
+ verifySingleStatement,hasAllTranslations,introSupportsAnswer,introSupportsRelationship,
  makeUniqueAnswers,makeQuestions,auditCandidates
 } from '../scripts/generate-crossword-trivia.mjs';
 
@@ -92,4 +92,14 @@ test('editor rejects repeated questions and incomplete Wikipedia provenance',()=
  assert.equal(report.duplicates,1);
  assert.equal(report.malformed,0);
  assert.equal(auditCandidates([{...row,source:{...source,wikipediaRevision:null}}]).sourceGaps,1);
+});
+
+test('Wikipedia candidate must evidence the specific property, not merely mention the answer',()=>{
+ const article='The movie stars Christopher Nolan and was directed by Steven Spielberg.';
+ assert.equal(introSupportsAnswer(article,'Christopher Nolan'),true);
+ assert.equal(introSupportsRelationship(article,'Christopher Nolan','director'),false);
+ assert.equal(introSupportsRelationship(article,'Steven Spielberg','director'),true);
+ assert.equal(introSupportsRelationship('The novel was written by Jane Austen.','Jane Austen','author'),true);
+ assert.equal(introSupportsRelationship('Marie Curie was born in Warsaw.','Warsaw','birthCity'),true);
+ assert.equal(introSupportsRelationship('Paris is a famous city in France.','Paris','capital'),false);
 });
