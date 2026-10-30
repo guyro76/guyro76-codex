@@ -1,0 +1,100 @@
+name: Trivia Squares - 10 Language QA Lanes
+
+on:
+  pull_request:
+    paths:
+      - 'trivia-squares/**'
+      - '.github/workflows/trivia-five-language-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trivia-language-qa-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  five-language-quality:
+    name: "${{ matrix.locale }} QA / ${{ matrix.profile }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        locale: [he, en, ru, fr, ar]
+        profile: [visual, gameplay]
+    defaults:
+      run:
+        working-directory: trivia-squares
+    env:
+      QA_LOCALE: ${{ matrix.locale }}
+      QA_PROFILE: ${{ matrix.profile }}
+      CI: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Node.js 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+      - name: Install pinned dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Strict TypeScript checks
+        run: npm run typecheck
+      - name: Build local candidate
+        run: npm run build
+      - name: Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Two independent role-specific checks per language
+        run: |
+          if [ "$QA_PROFILE" = visual ]; then
+            npx playwright test e2e/multilingual-matrix.spec.ts --project=chromium-desktop
+          else
+            npx playwright test e2e/multilingual-matrix.spec.ts --project=chromium-mobile
+          fi
+
+  question-bank-release-gate:
+    name: Five-language question bank QA and 5000-per-language progress report
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    defaults:
+      run:
+        working-directory: trivia-squares
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+      - name: Verify target bank coverage without fake or repeated questions
+        run: |
+          node --input-type=module <<'JS'
+          import {offlineQuestions} from './src/lib/offlineQuestions.ts';
+          import {englishQuestions} from './src/lib/englishQuestions.ts';
+          import {freshLocalQuestionReserve} from './src/lib/freshQuestions.ts';
+          import {internationalQuestions} from './src/lib/internationalQuestions.ts';
+          const combined=[...offlineQuestions.map(q=>({...q,locale:'he'})),...englishQuestions.map(q=>({...q,locale:'en'})),...freshLocalQuestionReserve,...internationalQuestions];
+          let structurallyValidAll=true;
+          for(const locale of ['he','en','ru','fr','ar']){
+            const entries=combined.filter(q=>q.locale===locale);
+            const unique=new Set(entries.map(q=>q.text.normalize('NFKC').trim().toLocaleLowerCase()));
+            const structurallyValid=entries.every(q=>q.answers.length===4&&new Set(q.answers).size===4&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<=3);
+            console.log(locale,'total',entries.length,'unique',unique.size,'goal',5000);
+            if(unique.size<5000)console.warn('PENDING CONTENT GOAL:',locale,5000-unique.size,'more unique questions needed. Deployment is allowed.');
+            if(unique.size!==entries.length||!structurallyValid){
+              console.error('INVALID CONTENT: duplicated or malformed questions for',locale);
+              structurallyValidAll=false;
+            }
+          }
+          if(!structurallyValidAll){
+            console.error('BLOCKED: invalid question records require correction before release.');
+            process.exitCode=1;
+          }else{
+            console.log('Question structure verified. Bank growth goal is tracked separately and does not block deployment.');
+          }
+          JS

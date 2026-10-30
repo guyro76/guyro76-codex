@@ -1222,3 +1222,23 @@ main.trivia-app.skin-future .answer-option:not(.feedback-answer):not(:disabled):
 @media(prefers-reduced-motion:reduce) {
  main.trivia-app.skin-future::after {animation:none!important}
 }
+
+/* Five-language overflow hardening. Cyrillic headings and long localized labels
+   reflow inside the viewport; all five language buttons remain accessible. */
+main.trivia-app .locale-switch{flex-wrap:wrap;width:min(100%,820px);border-radius:22px}
+main.trivia-app .locale-option{min-width:0;max-width:100%;overflow-wrap:anywhere;white-space:normal;text-align:center}
+main.trivia-app .hero,main.trivia-app .glass-panel,main.trivia-app .game-grid,
+main.trivia-app .campaign-section,main.trivia-app .arena-panel,
+main.trivia-app .game-timebar,main.trivia-app .lumen-stage-reveal{min-width:0;max-width:100%}
+main.trivia-app .campaign-heading,main.trivia-app .arena-title,main.trivia-app .game-status-kicker,
+main.trivia-app .game-weather-display,main.trivia-app .game-version a,
+main.trivia-app .skin-picker-item strong,main.trivia-app .hero p,
+main.trivia-app .score-name,main.trivia-app .game-author-credit-copy,
+main.trivia-app .campaign-rule,main.trivia-app .lumen-reward-options{overflow-wrap:anywhere;word-break:normal;min-width:0}
+main.trivia-app .game-timebar>div{max-width:100%}
+main.trivia-app .game-version a{max-width:100%;white-space:normal}
+main.trivia-app .skin-picker-item{min-width:0}
+@media(max-width:700px){
+ main.trivia-app .locale-switch{justify-content:center;gap:5px;padding:7px}
+ main.trivia-app .locale-option{flex:1 1 auto;font-size:clamp(12px,2.7vw,14px);padding:8px 10px}
+}

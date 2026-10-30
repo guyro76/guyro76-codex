@@ -7,11 +7,12 @@ const board=(rows=2,cols=2):BoardState=>({
  rows,cols,turn:'host',edges:{},owners:{},scores:{host:0,guest:0,bot:0}
 });
 
-test('premium closes only one when a single square remains, without overriding other captures',()=>{
+test('premium closes only the last free square and does not steal another player square',()=>{
  const current=board();
  current.owners={'0-0':'host','0-1':'guest','1-0':'host'};
  current.scores={host:2,guest:1,bot:0};
- const out=awardPremiumSquares(current,'h-1-1','host',2);
+ const out=awardPremiumSquares(current,'v-1-1','host',2);
+ expect(out.baseSquares).toEqual(['1-0']);
  expect(out.captured).toEqual(['1-1']);
  expect(out.board.owners['1-1']).toBe('host');
  expect(Object.keys(out.board.owners)).toHaveLength(4);
@@ -20,11 +21,14 @@ test('premium closes only one when a single square remains, without overriding o
  expect(current.owners['1-1']).toBeUndefined();
 });
 
-test('premium closes two free neighbouring squares when available, never more than two',()=>{
- const out=awardPremiumSquares(board(),'h-1-0','host',2);
- expect(out.captured).toHaveLength(2);
- expect(out.captured).toContain('0-0');
- expect(out.captured).toContain('1-0');
+test('premium adds one extra neighbouring square after the normal closure, never stealing or skipping',()=>{
+ const current=board();
+ current.owners={'0-0':'host'};
+ current.scores={host:1,guest:0,bot:0};
+ const out=awardPremiumSquares(current,'h-1-0','host',2);
+ expect(out.baseSquares).toEqual(['0-0']);
+ expect(out.captured).toHaveLength(1);
+ expect(out.captured).toContain('0-1');
  expect(out.board.scores.host).toBe(2);
  expect(Object.keys(out.board.owners)).toHaveLength(2);
 });

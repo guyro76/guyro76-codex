@@ -3,7 +3,7 @@
  * Russian, French and Arabic are registered as future locale adapters only.
  * Strings are authored by editors, never machine-translated at runtime.
  */
-import {extraDictionaries} from './i18nExtra';
+import {extraDictionaries} from './i18nExtra.ts';
 export type ActiveLocale='he'|'en'|'ru'|'fr'|'ar';
 export type PlannedLocale=never;
 export const activeLocales=['he','en','ru','fr','ar'] as const;
