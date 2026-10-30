@@ -98,3 +98,35 @@ test('every chapter changes the board material palette without changing captures
   await expect.poll(()=>arena.evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('gradient');
   await expect.poll(()=>arena.evaluate(el=>getComputedStyle(el).getPropertyValue('--world-edge').trim())).toContain('rgba');
 });
+
+test('saved stage nine keeps its squares and does not reset when campaign grows to 100',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('trivia-tutorial-seen-v1','true');
+    localStorage.setItem('trivia-player-name','עדי');
+    localStorage.setItem('trivia-stage-id-v1','9');
+    localStorage.setItem('trivia-stage-completed-v1','8');
+    localStorage.setItem('trivia-stage-started-v1','true');
+    localStorage.setItem('trivia-mode-v2','solo');
+    localStorage.setItem('trivia-local-game-v1',JSON.stringify({
+      rows:5,cols:5,mode:'solo',turn:'host',
+      edges:{'h-0-0':'host','h-1-0':'host','v-0-0':'host','v-0-1':'host'},
+      owners:{'0-0':'host'},scores:{host:1,guest:0,bot:0}
+    }));
+  });
+  await page.goto('/');
+  await expect(page.locator('.level-pill')).toContainText('9 / 100');
+  await expect(page.locator('.campaign-stage-card')).toHaveCount(5);
+  await expect(page.locator('[data-stage="9"]')).toHaveAttribute('aria-current','step');
+  const owned=page.locator('svg.board .capture-tile[data-square="0-0"]');
+  await expect(owned).toHaveAttribute('data-owner','עדי');
+  await page.reload();
+  await expect(page.locator('.level-pill')).toContainText('9 / 100');
+  await expect(owned).toHaveAttribute('data-owner','עדי');
+  const saved=await page.evaluate(()=>({
+    stage:localStorage.getItem('trivia-stage-id-v1'),
+    board:JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}')
+  }));
+  expect(saved.stage).toBe('9');
+  expect(saved.board.scores.host).toBe(1);
+  expect(saved.board.owners['0-0']).toBe('host');
+});
