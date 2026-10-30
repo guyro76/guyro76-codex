@@ -341,3 +341,52 @@ main.trivia-app .stage-reward-dismiss{
  main.trivia-app.playing-layout .gesture-hint,
  main.trivia-app.playing-layout .status-line{font-size:12px!important}
 }
+
+/* Carry the same identity into the menus, sound bar and end-of-stage screens. */
+main.trivia-app.skin-regular .game-timebar{
+ background:linear-gradient(120deg,rgba(43,32,101,.9),rgba(27,23,77,.92))!important;
+ border:1px solid rgba(221,197,255,.56)!important;
+ color:#F8F2FF!important;border-radius:18px!important;
+ box-shadow:inset 0 1px #FFFFFF22,0 8px 23px rgba(7,4,39,.24)!important;
+}
+main.trivia-app.skin-regular .skin-picker-panel,
+main.trivia-app.skin-regular .app-menu-dialog[open]{
+ background:linear-gradient(150deg,#332567,#1B194F)!important;
+ border:2px solid #D4B6F8!important;
+ box-shadow:0 23px 62px rgba(6,3,36,.58),inset 0 1px #FFFFFF35!important;
+ color:#FFFFFF!important;
+}
+main.trivia-app.skin-regular .app-menu-heading{
+ background:linear-gradient(105deg,rgba(96,67,155,.28),rgba(45,25,98,.07))!important;
+ border-block-end:1px solid rgba(222,196,255,.44)!important;
+}
+main.trivia-app.skin-regular .app-menu-tab{
+ background:rgba(153,124,225,.2)!important;
+ border:1px solid #AFA0E4!important;color:#F9F5FF!important;
+ font-weight:900!important;
+}
+main.trivia-app.skin-regular .app-menu-tab[aria-current=page]{
+ background:linear-gradient(135deg,#FFF0BB,#FFBC8A)!important;
+ border-color:#FFDEAD!important;color:#29214E!important;
+}
+main.trivia-app.skin-regular .app-menu-close{
+ background:rgba(163,129,217,.22)!important;
+ border:1px solid #D5BFFA!important;color:#FFF4DF!important;
+}
+main.trivia-app.skin-regular .skin-picker-item[aria-pressed=true]{
+ border:2px solid #FFCD91!important;
+ box-shadow:0 0 0 2px rgba(255,191,128,.15),inset 0 1px #FFFFFF44!important;
+}
+main.trivia-app.skin-regular .lumen-stage-reveal{
+ background:linear-gradient(145deg,rgba(47,34,103,.93),rgba(24,23,72,.96))!important;
+ border:1.5px solid rgba(218,184,255,.7)!important;
+ box-shadow:0 15px 40px rgba(6,3,30,.36)!important;
+}
+main.trivia-app.skin-regular .lumen-reward-options :is(h3,p),
+main.trivia-app.skin-regular .lumen-stage-reveal h2{
+ color:#F9F3FF!important;font-weight:900!important;
+}
+main.trivia-app.skin-regular .question-topic-panel{
+ background:rgba(40,30,97,.66)!important;
+ border:1px solid rgba(210,184,255,.55)!important;
+}
