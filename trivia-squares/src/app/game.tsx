@@ -210,9 +210,24 @@ export default function TriviaGame() {
   const [secondsLeft,setSecondsLeft]=useState<number | null>(null);
   const timeoutBusy=useRef(false);
   const lastTickRef=useRef<number | null>(null);
-  const [localCredits,setLocalCredits]=useState<Record<'host'|'guest',number>>({host:0,guest:0});
-  const [localCharms,setLocalCharms]=useState<Record<'host'|'guest',number>>({host:0,guest:0});
-  const [localWallet,setLocalWallet]=useState({stars:0,fruits:0,diamonds:0});
+  // Lazy hydration protects an earned wallet against Next.js/React strict-mode
+  // re-mounts, where an effect may otherwise persist its zero defaults.
+  // localReady gates wallet display on the initial server render.
+  const savedRewardSnapshot=useMemo(()=>{
+    const empty={credits:{host:0,guest:0},charms:{host:0,guest:0},wallet:{stars:0,fruits:0,diamonds:0}};
+    if(typeof window==='undefined')return empty;
+    try{
+      const data=JSON.parse(localStorage.getItem('trivia-local-rewards')||'null');
+      if(!data||typeof data!=='object')return empty;
+      const safe=(value:unknown)=>Math.max(0,Math.floor(Number(value)||0));
+      return {credits:{host:safe(data.credits?.host),guest:safe(data.credits?.guest)},
+        charms:{host:safe(data.charms?.host),guest:safe(data.charms?.guest)},
+        wallet:{stars:safe(data.wallet?.stars),fruits:safe(data.wallet?.fruits),diamonds:safe(data.wallet?.diamonds)}};
+    }catch{return empty;}
+  },[]);
+  const [localCredits,setLocalCredits]=useState<Record<'host'|'guest',number>>(()=>savedRewardSnapshot.credits);
+  const [localCharms,setLocalCharms]=useState<Record<'host'|'guest',number>>(()=>savedRewardSnapshot.charms);
+  const [localWallet,setLocalWallet]=useState(()=>savedRewardSnapshot.wallet);
   const [localFreeze,setLocalFreeze]=useState<Record<'host'|'guest',boolean>>({host:false,guest:false});
   const [name, setName] = useState('');
   const [nameSavedOnDevice,setNameSavedOnDevice]=useState(false);
