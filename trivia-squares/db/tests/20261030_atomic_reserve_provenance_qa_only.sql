@@ -31,10 +31,11 @@ BEGIN
   -- Explicit metadata is written atomically with a newly published question.
   INSERT INTO trivia_squares.question_reserve
     (locale, category, difficulty, question, answers, correct_index,
-     approved, fact_source_url, fact_verified_on)
+     approved, source_note, fact_source_url, fact_verified_on)
   VALUES
     ('en','QA-only',1,label,
      '["A","B","C","D"]'::jsonb,0,true,
+     'QA-only synthetic fixture, not an editorial verification',
      'https://example.org/qa',CURRENT_DATE);
   inserted_count := trivia_squares.publish_reviewed_questions(1);
   IF inserted_count <> 1 OR NOT EXISTS (
