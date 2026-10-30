@@ -3,6 +3,7 @@
  */
 export const questionTopics=[
  {id:'tv_film',he:'סרטים וסדרות',en:'Films & television',ru:'Кино и сериалы',fr:'Cinéma et séries',ar:'الأفلام والمسلسلات',es:'Películas y series'},
+ {id:'disney',he:'סרטי דיסני',en:'Disney films',ru:'Фильмы Диснея',fr:'Films Disney',ar:'أفلام ديزني',es:'Películas de Disney'},
  {id:'music',he:'מוזיקה ישראלית ועולמית',en:'Music',ru:'Музыка',fr:'Musique',ar:'الموسيقى',es:'Música'},
  {id:'eurovision',he:'אירוויזיון',en:'Eurovision',ru:'Евровидение',fr:'Eurovision',ar:'يوروفيجن',es:'Eurovisión'},
  {id:'israel_politics',he:'ישראל, כנסת ופוליטיקה',en:'Israel & politics',ru:'Израиль и политика',fr:'Israël et politique',ar:'إسرائيل والسياسة',es:'Israel y política'},
@@ -28,6 +29,8 @@ export function topicForQuestion(category:string,text:string):QuestionTopic{
  if(/כנסת|ממשלה|פוליטיק|ראש ממשלה|נשיא ישראל|בחירות|politic|knesset|политик|السياس/.test(both))return 'israel_politics';
  if(/בירת|עיר הבירה|capital|столиц|capitale|عاصم|capitales/.test(q))return 'capitals';
  if(/ספורט|כדורגל|כדורסל|אולימפ|טניס|sport|football|basketball|tennis|спор|رياض/.test(both))return 'sports';
+ // Disney is a selectable category rather than being absorbed into generic films.
+ if(/דיסני|disney|дисне|ديزني/i.test(both))return 'disney';
  if(/סדרות|סדרה|טלוויז|קולנוע|סרט|film|movie|television|series|cinéma|кино|сериал|مسلسل|أفلام|películas|cine|disney|friends/.test(both))return 'tv_film';
  if(/אירוויזיון|eurovision|евровидени|يوروفيجن|يوروفيزيون|eurovisión/.test(both))return 'eurovision';
  if(/מוזיק|שיר|זמר|להקה|אלבום|music|song|singer|band|музык|chanson|musique|موسيقى|أغنية|música|canción|cantante/.test(both))return 'music';
@@ -44,6 +47,8 @@ export function parseTopicPreferences(raw:unknown):QuestionTopic[]{
  if(!Array.isArray(raw))return [...ALL_QUESTION_TOPICS];
  const set=new Set(raw.filter((x):x is QuestionTopic=>ALL_QUESTION_TOPICS.includes(x as QuestionTopic)));
  // Existing players who had selected all topics also get the newly added category.
- if(set.size===ALL_QUESTION_TOPICS.length-1 && !set.has('eurovision'))set.add('eurovision');
+ // Preserve the old 13-topic migration without silently re-enabling Disney
+ // for an existing player who intentionally chose only their own topics.
+ if(set.size===ALL_QUESTION_TOPICS.length-2 && !set.has('eurovision') && !set.has('disney'))set.add('eurovision');
  return set.size?ALL_QUESTION_TOPICS.filter(t=>set.has(t)):[...ALL_QUESTION_TOPICS];
 }
