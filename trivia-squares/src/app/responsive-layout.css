@@ -443,7 +443,11 @@ main.trivia-app .app-menu-heading{padding-block-start:max(17px,env(safe-area-ins
 /* App shell: portrait tablets on Chromium/Android/Safari must keep the board in view.
    Reward overlay is deliberately separate from gameplay sizing. */
 @media (min-width:650px) and (max-width:819px) and (min-height:800px){
- main.trivia-app.playing-layout .arena{max-height:min(calc(100dvh - 540px),475px)!important}
+ main.trivia-app.playing-layout .arena{
+  width:min(100%,max(285px,calc(100dvh - 610px)),420px)!important;
+  max-height:min(max(285px,calc(100dvh - 610px)),420px)!important;
+  flex-shrink:1;min-height:0!important;
+ }
  main.trivia-app.playing-layout .arena-panel{overscroll-behavior:contain}
 }
 main.trivia-app .arena-head-right{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;min-width:0}
