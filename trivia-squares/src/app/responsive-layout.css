@@ -1,0 +1,425 @@
+/* Compact game-stage viewport, with all optional controls available in a drawer.
+ * Portrait phones and accessibility zoom remain naturally scrollable. */
+main.trivia-app .hero-brand{
+  display:inline-flex;align-items:center;justify-content:center;gap:12px;
+  direction:inherit;text-align:start;min-width:0
+}
+main.trivia-app .hero-brand-titles{min-width:0}
+main.trivia-app .trivia-brand-mark{
+  width:46px;height:46px;flex:none;filter:drop-shadow(0 7px 14px rgba(7,12,40,.44))
+}
+main.trivia-app .campaign-stages-toggle{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  width:100%;min-height:39px;margin:4px 0 6px;
+  border:1px solid rgba(210,231,255,.42);border-radius:12px;
+  background:rgba(147,174,233,.15);color:#FFF6D6;font-size:13px;font-weight:900;
+  cursor:pointer
+}
+main.trivia-app .campaign-stages-toggle:focus-visible,
+main.trivia-app .settings-drawer-trigger:focus-visible{outline:3px solid #FFE49C;outline-offset:3px}
+main.trivia-app .campaign-track[hidden]{display:none!important}
+main.trivia-app .settings-drawer{min-width:0}
+main.trivia-app .settings-drawer-trigger{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  min-height:52px;padding:12px 14px;
+  border:1px solid rgba(213,236,255,.46);border-radius:16px;
+  background:linear-gradient(135deg,rgba(59,83,147,.75),rgba(20,39,84,.8));
+  color:#FFEDB9;font-size:15px;font-weight:900;cursor:pointer;list-style:none
+}
+main.trivia-app .settings-drawer-trigger::-webkit-details-marker{display:none}
+main.trivia-app .settings-drawer-trigger::marker{content:''}
+main.trivia-app .settings-drawer-chevron{transition:transform .2s}
+main.trivia-app .settings-drawer[open] .settings-drawer-chevron{transform:rotate(180deg)}
+main.trivia-app .settings-drawer-content{display:grid;gap:12px;padding-top:12px;min-width:0}
+main.trivia-app .settings-drawer-content > .glass-panel{min-width:0}
+main.trivia-app .side-stack{min-width:0}
+main.trivia-app .campaign-section{margin:10px 0 14px;padding:10px 15px}
+main.trivia-app .campaign-progress{margin:5px 0 7px}
+main.trivia-app .campaign-section .campaign-heading{margin-bottom:4px}
+main.trivia-app .campaign-section .campaign-heading h2{font-size:clamp(16px,1.5vw,20px)!important}
+main.trivia-app .campaign-rule{margin:7px 0 0;font-size:12px}
+main.trivia-app .quiz-card{max-height:calc(100dvh - 25px);overflow:auto}
+@media (min-width:820px) {
+ main.trivia-app .hero{
+   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+   gap:8px 16px;text-align:start;padding:5px 8px 12px!important
+ }
+ main.trivia-app .hero .eyebrow{font-size:9px!important;letter-spacing:.15em!important}
+ main.trivia-app .hero h1{font-size:clamp(23px,2.25vw,36px)!important;line-height:1.2;margin:0}
+ main.trivia-app .hero p{display:none}
+ main.trivia-app .hero-name{margin:0!important;max-width:300px;padding:6px 9px!important}
+ main.trivia-app .hero-name label{font-size:11px}
+ main.trivia-app .hero-name input{width:min(100%,165px);padding:6px;font-size:13px}
+ main.trivia-app .hero .google-player-header{margin:0!important;padding:4px 8px!important}
+ main.trivia-app .google-player-header img{width:30px!important;height:30px!important}
+ main.trivia-app .hero .locale-switch{display:flex;gap:3px;flex-wrap:wrap}
+ main.trivia-app .hero .locale-option{padding:7px 9px!important;min-height:32px!important;font-size:11px!important}
+}
+@media (min-width:820px) and (min-height:680px) {
+ main.trivia-app.playing-layout{
+   height:100dvh!important;min-height:0!important;overflow:hidden;
+   display:flex;flex-direction:column;gap:5px;
+   padding:8px clamp(10px,1.5vw,21px) 5px!important;
+ }
+ main.trivia-app.playing-layout .game-timebar{
+   flex:0 0 auto;margin:0!important;min-height:0;padding:4px 12px!important;
+   gap:8px;max-height:49px;overflow:hidden
+ }
+ main.trivia-app.playing-layout .game-timebar .game-weather-source,
+ main.trivia-app.playing-layout .game-timebar .game-status-kicker,
+ main.trivia-app.playing-layout .game-timebar .game-live-clock small,
+ main.trivia-app.playing-layout .game-timebar .game-version small{display:none!important}
+ main.trivia-app.playing-layout .game-timebar time{font-size:15px!important}
+ main.trivia-app.playing-layout .skin-picker-bar{
+   flex:0 0 auto;margin:0!important;gap:0;align-items:flex-end
+ }
+ main.trivia-app.playing-layout .skin-palette-trigger{padding:4px 10px!important;min-height:30px;font-size:12px}
+ main.trivia-app.playing-layout .skin-palette-icon{font-size:15px}
+ main.trivia-app.playing-layout .skin-picker-panel{
+   position:absolute;inset-inline-end:0;top:100%;z-index:20;max-height:70dvh;overflow-y:auto
+ }
+ main.trivia-app.playing-layout .hero{
+   flex:0 0 auto;margin:0;gap:8px 12px;padding:0 4px 3px!important;min-height:43px
+ }
+ main.trivia-app.playing-layout .hero .eyebrow,
+ main.trivia-app.playing-layout .hero p,
+ main.trivia-app.playing-layout .hero .player-name-autosaved{display:none!important}
+ main.trivia-app.playing-layout .hero-brand .trivia-brand-mark{width:36px;height:36px}
+ main.trivia-app.playing-layout .hero h1{font-size:clamp(20px,2.2vw,28px)!important}
+ main.trivia-app.playing-layout .hero-name{padding:4px 7px!important}
+ main.trivia-app.playing-layout .campaign-section{
+   flex:0 0 auto;position:relative;margin:0!important;
+   padding:5px 12px!important;border-radius:13px
+ }
+ main.trivia-app.playing-layout .campaign-heading{margin:0!important}
+ main.trivia-app.playing-layout .campaign-heading h2{font-size:14px!important}
+ main.trivia-app.playing-layout .campaign-heading span{font-size:11px}
+ main.trivia-app.playing-layout .campaign-progress{margin:4px 0!important;height:4px}
+ main.trivia-app.playing-layout .campaign-stages-toggle{
+   width:auto;margin:0!important;padding:5px 13px;min-height:25px;
+   font-size:10px;position:absolute;inset-inline-end:10px;top:4px;
+ }
+ main.trivia-app.playing-layout .campaign-rule{display:none}
+ main.trivia-app.playing-layout .campaign-track:not([hidden]){
+   position:absolute;inset-inline:8px;top:100%;z-index:18;
+   max-height:min(220px,45dvh);padding:9px;overflow:auto;
+   background:#142B60;border:1px solid #C9E5F4;border-radius:15px;
+   box-shadow:0 15px 34px #07122AD9
+ }
+ main.trivia-app.playing-layout .game-grid{
+   display:grid;flex:1 1 0;min-height:0;max-height:100%;
+   grid-template-columns:minmax(0,1fr) minmax(214px,270px)!important;
+   gap:10px!important;align-items:stretch!important
+ }
+ main.trivia-app.playing-layout .arena-panel{
+   display:flex;flex-direction:column;min-height:0;overflow:auto!important;
+   padding:9px 12px!important;gap:3px
+ }
+ main.trivia-app.playing-layout .arena-title{margin:0!important;min-height:27px}
+ main.trivia-app.playing-layout .arena-title h2{font-size:clamp(16px,1.6vw,19px)!important}
+ main.trivia-app.playing-layout .arena-title p{font-size:11px!important}
+ main.trivia-app.playing-layout .level-pill{padding:3px 6px!important}
+ main.trivia-app.playing-layout .scoreboard{flex:0 0 auto;margin:2px 0!important;gap:7px!important}
+ main.trivia-app.playing-layout .player-tile{padding:5px 8px!important;border-radius:12px!important}
+ main.trivia-app.playing-layout .player-tile .portrait{
+   width:32px!important;height:32px!important;font-size:17px!important;border-radius:10px!important
+ }
+ main.trivia-app.playing-layout .score-num{font-size:23px!important}
+ main.trivia-app.playing-layout .score-name{font-size:10px!important}
+ main.trivia-app.playing-layout .arena{
+   flex:0 1 auto;min-height:0;margin:0 auto;max-width:100%;
+   display:grid;place-items:center;
+   width:min(100%, calc(100dvh - 360px), 590px);
+   aspect-ratio:1 / 1;overflow:hidden;
+   padding:7px!important;border-radius:17px!important;
+   box-shadow:0 6px 20px #02091A88!important
+ }
+ main.trivia-app.playing-layout .arena-inner{
+   width:100%;height:100%;min-width:0;min-height:0;
+   display:grid;place-items:center;border-radius:12px!important
+ }
+ main.trivia-app.playing-layout .board{
+   width:100%!important;height:100%!important;max-width:100%!important;
+   max-height:100%;aspect-ratio:1
+ }
+ main.trivia-app.playing-layout .gesture-hint{margin:1px auto!important;font-size:11px!important}
+ main.trivia-app.playing-layout .level-progress{height:5px!important;margin-top:4px}
+ main.trivia-app.playing-layout .status-line{min-height:26px;font-size:12px!important}
+ main.trivia-app.playing-layout .control-row{gap:5px!important}
+ main.trivia-app.playing-layout .control-row :is(.gold-button,.glass-button){
+   padding:7px 9px!important;border-radius:10px!important;font-size:11px!important
+ }
+ main.trivia-app.playing-layout .control-row label{padding:5px!important;font-size:10px}
+ main.trivia-app.playing-layout .side-stack{
+   max-height:100%;overflow:auto;scrollbar-width:thin
+ }
+ main.trivia-app.playing-layout .side-stack .settings-drawer-content{
+   max-height:calc(100dvh - 260px);overflow:auto
+ }
+ main.trivia-app.playing-layout .footer{
+   flex:0 0 auto;margin:0 auto!important;padding:0!important;
+   font-size:10px!important;gap:10px
+ }
+ main.trivia-app.playing-layout #app-footer{flex:0 0 auto;padding:2px!important;margin:0!important}
+ main.trivia-app.playing-layout #app-footer .game-author-credit-copy{font-size:10px!important}
+ main.trivia-app.playing-layout #app-footer .game-question-source-credit{display:none!important}
+}
+@media (min-width:650px) and (max-width:819px) {
+ main.trivia-app .hero{padding:7px!important}
+ main.trivia-app .hero h1{font-size:clamp(25px,4vw,36px)!important}
+ main.trivia-app .game-grid{grid-template-columns:1fr!important}
+ main.trivia-app .settings-drawer-content{grid-template-columns:repeat(2,minmax(0,1fr))}
+ main.trivia-app .settings-drawer-content .glass-panel{min-width:0}
+ main.trivia-app.playing-layout .board{width:min(100%,calc(100dvh - 365px))!important;max-width:540px!important}
+}
+@media (max-width:649px) {
+ main.trivia-app .hero-brand{gap:7px}
+ main.trivia-app .trivia-brand-mark{width:36px;height:36px}
+ main.trivia-app .hero h1{font-size:clamp(30px,8vw,48px)!important}
+ main.trivia-app .campaign-section{margin:8px 0}
+ main.trivia-app .campaign-track:not([hidden]){max-width:100%}
+ main.trivia-app .settings-drawer-content{display:block}
+ main.trivia-app .settings-drawer-content >.glass-panel{margin-bottom:12px}
+ main.trivia-app .settings-drawer-trigger{font-size:13px}
+}
+@media(max-width:819px) {
+ main.trivia-app .settings-drawer-content .mode-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+
+/* UI/UX Pro Max navigation: native modal drawer (focus/Escape from <dialog>).
+ * Game remains the primary surface, with all secondary functions inside menu. */
+main.trivia-app .app-menu-trigger{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  flex:0 0 auto;min-width:48px;min-height:46px;
+  padding:8px 12px;border-radius:14px;cursor:pointer;
+  border:1px solid rgba(233,244,255,.56);
+  background:rgba(17,42,87,.87);color:#FFF4CF;
+  font-weight:900;font-size:14px;box-shadow:0 4px 16px rgba(2,8,27,.35)
+}
+main.trivia-app .app-menu-trigger:focus-visible,
+main.trivia-app .app-menu-close:focus-visible,
+main.trivia-app .app-menu-tab:focus-visible{
+  outline:3px solid #FFE9A4;outline-offset:3px
+}
+main.trivia-app .app-menu-trigger:disabled{opacity:.5;cursor:not-allowed}
+main.trivia-app .app-hamburger-lines{display:grid;gap:4px;width:23px;flex:0 0 auto}
+main.trivia-app .app-hamburger-lines i{
+  display:block;height:3px;width:100%;border-radius:99px;background:#FFF0BB
+}
+main.trivia-app .app-menu-dialog:not([open]){display:none!important}
+main.trivia-app .app-menu-dialog[open]{
+  position:fixed;display:block;
+  inset-block:0;inset-inline-start:0;inset-inline-end:auto;
+  margin:0;padding:0;
+  width:min(440px,100vw);height:100dvh;max-width:100vw;max-height:100dvh;
+  box-sizing:border-box;border:1px solid rgba(227,242,255,.40);
+  border-inline-start:0;
+  border-radius:24px 0 0 24px;
+  background:linear-gradient(155deg,#142F61,#101C45 64%,#21194D);
+  color:#F8FBFF;box-shadow:0 20px 65px rgba(0,0,0,.55);
+  overflow:hidden;z-index:100;
+}
+main.trivia-app[dir=ltr] .app-menu-dialog[open]{
+  border-radius:0 24px 24px 0;border-inline-start:1px solid rgba(227,242,255,.40);
+  border-inline-end:0
+}
+main.trivia-app .app-menu-dialog::backdrop{
+  background:rgba(6,12,33,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)
+}
+main.trivia-app .app-menu-shell{
+  display:grid;grid-template-rows:auto auto minmax(0,1fr);
+  width:100%;height:100%;overflow:hidden
+}
+main.trivia-app .app-menu-heading{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:17px 20px 13px;
+  border-block-end:1px solid rgba(225,239,255,.19)
+}
+main.trivia-app .app-menu-brand{display:flex;align-items:center;gap:12px;min-width:0}
+main.trivia-app .app-menu-brand strong{font-size:17px;font-weight:900;display:block}
+main.trivia-app .app-menu-brand small{display:block;font-size:11px;color:#C8DFFF;font-weight:900;margin-block-start:3px}
+main.trivia-app .app-menu-close{
+  display:grid;place-items:center;min-width:44px;min-height:44px;flex-shrink:0;
+  background:rgba(205,229,255,.13);color:#FFF5D1;font-size:22px;font-weight:900;
+  border:1px solid rgba(226,239,255,.28);border-radius:13px;cursor:pointer
+}
+main.trivia-app .app-menu-tabs{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;
+  padding:12px 16px;
+  border-block-end:1px solid rgba(226,240,255,.17)
+}
+main.trivia-app .app-menu-tab{
+  min-height:46px;display:flex;flex-direction:column;justify-content:center;
+  align-items:center;gap:2px;padding:6px;
+  color:#EAF2FF;background:rgba(190,214,255,.10);
+  border:1px solid rgba(210,233,255,.28);border-radius:11px;
+  font-size:12px;font-weight:900;text-align:center;cursor:pointer
+}
+main.trivia-app .app-menu-tab[aria-current=page]{
+  background:#FFE3A1;color:#172954;border-color:#FFF2C8
+}
+main.trivia-app .app-menu-tab span:first-child{font-size:17px;line-height:1.1}
+main.trivia-app .app-menu-play{background:#2E766F;color:#F0FFFB;border-color:#A5E8D5}
+main.trivia-app .app-menu-content{
+  padding:15px clamp(12px,3vw,23px) max(20px,env(safe-area-inset-bottom));
+  overflow-y:auto;overscroll-behavior:contain;min-height:0;scrollbar-width:thin
+}
+main.trivia-app .app-menu-content .app-menu-pane[hidden]{display:none!important}
+main.trivia-app .settings-drawer-content{
+  display:block!important;padding:0!important;margin:0!important
+}
+main.trivia-app .app-menu-content .glass-panel{
+  padding:5px 0 16px!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important
+}
+main.trivia-app .app-menu-content .panel-title{
+  margin:0 0 13px!important;font-size:19px!important;color:#FFF5CD!important
+}
+main.trivia-app .menu-stages-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;max-width:100%;overflow:visible!important;
+  padding:5px 0 10px;scroll-snap-type:none
+}
+main.trivia-app .menu-stages-grid .campaign-stage-card{
+  flex:none!important;min-width:0;min-height:93px;
+  padding:8px 5px!important;box-shadow:none!important;border-radius:14px
+}
+main.trivia-app .menu-stages-grid .campaign-stage-icon{font-size:21px!important}
+main.trivia-app .menu-stages-grid .campaign-stage-number{font-size:12px!important}
+main.trivia-app .menu-stages-grid .campaign-stage-title{
+  font-size:12px!important;overflow-wrap:anywhere
+}
+main.trivia-app .menu-stages-grid small{font-size:10px}
+main.trivia-app .game-grid,
+main.trivia-app.playing-layout .game-grid{
+  grid-template-columns:minmax(0,1fr)!important
+}
+main.trivia-app .side-stack{display:contents!important}
+main.trivia-app .side-stack .app-menu-dialog[open]{overflow:hidden}
+main.trivia-app .campaign-stages-toggle{min-height:40px}
+@media(min-width:820px) and (min-height:680px){
+ main.trivia-app.playing-layout .arena{
+  width:min(100%,calc(100dvh - 325px),600px)!important;
+  max-height:calc(100dvh - 325px)!important
+ }
+ main.trivia-app.playing-layout .campaign-stages-toggle{
+  position:static;min-height:29px;max-width:280px;font-size:11px
+ }
+ main.trivia-app.playing-layout .campaign-section{
+  display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+ }
+ main.trivia-app.playing-layout .campaign-heading{flex:1 1 220px;margin:0!important}
+ main.trivia-app.playing-layout .campaign-progress{
+  flex:0 0 120px;width:120px;order:1
+ }
+ main.trivia-app.playing-layout .campaign-stages-toggle{order:2}
+ main.trivia-app.playing-layout .app-menu-trigger{min-height:44px;padding:5px 10px;font-size:12px}
+ main.trivia-app.playing-layout .hero{
+  justify-content:space-between;padding:0 4px 3px!important;
+  flex-wrap:nowrap
+ }
+ main.trivia-app.playing-layout .hero .locale-switch{max-width:300px;flex-wrap:wrap}
+ main.trivia-app.playing-layout .app-menu-dialog[open]{height:100dvh}
+ main.trivia-app.playing-layout .side-stack{display:contents!important}
+}
+@media(max-width:819px){
+ main.trivia-app .hero .app-menu-trigger{order:0}
+ main.trivia-app .hero .hero-brand{order:1}
+ main.trivia-app .hero .locale-switch{order:2}
+ main.trivia-app .hero .hero-name{order:3}
+ main.trivia-app .app-menu-trigger-label{display:none}
+ main.trivia-app .app-menu-dialog[open]{width:min(420px,100vw)}
+}
+@media(max-width:460px){
+ main.trivia-app .app-menu-dialog[open]{border-radius:0}
+ main.trivia-app .app-menu-tabs{gap:5px;padding:10px}
+ main.trivia-app .app-menu-tab{font-size:11px}
+ main.trivia-app .menu-stages-grid{gap:6px}
+}
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app .app-menu-dialog *, main.trivia-app .app-menu-trigger *{transition:none!important}
+}
+
+/* Native modal prevents interacting with the game; also stop background wheel scroll. */
+html:has(main.trivia-app .app-menu-dialog[open]){overflow:hidden}
+main.trivia-app .app-menu-heading{padding-block-start:max(17px,env(safe-area-inset-top))}
+@media(hover:hover) and (pointer:fine){
+ main.trivia-app .app-menu-tab:not([aria-current=page]):hover{background:rgba(199,225,255,.23)}
+ main.trivia-app .app-menu-trigger:not(:disabled):hover{background:rgba(41,79,146,.94)}
+}
+
+/* Portrait tablet: the in-progress board must fit without a document-length scroll.
+ * Short landscape devices keep the naturally scrollable layout for accessibility. */
+@media(min-width:650px) and (max-width:819px) and (min-height:800px){
+ main.trivia-app.playing-layout{
+   height:100dvh!important;min-height:0!important;overflow:hidden;
+   display:flex;flex-direction:column;gap:4px;
+   padding:7px 10px 5px!important
+ }
+ main.trivia-app.playing-layout .game-timebar{
+   flex:0 0 auto;max-height:45px;overflow:hidden;
+   margin:0!important;padding:5px 10px!important
+ }
+ main.trivia-app.playing-layout .game-timebar :is(.game-status-kicker,.game-weather-source,.game-live-clock small,.game-version small){
+   display:none!important
+ }
+ main.trivia-app.playing-layout .skin-picker-bar{
+   flex:0 0 auto;min-height:33px;margin:0!important
+ }
+ main.trivia-app.playing-layout .skin-palette-trigger{padding:4px 9px!important;min-height:31px;font-size:12px!important}
+ main.trivia-app.playing-layout .skin-picker-panel{
+   position:absolute;z-index:20;top:100%;max-height:50dvh;overflow:auto
+ }
+ main.trivia-app.playing-layout .hero{
+   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+   gap:4px 10px;flex:0 0 auto;padding:0 3px 4px!important
+ }
+ main.trivia-app.playing-layout .hero :is(.eyebrow,.player-name-autosaved){display:none!important}
+ main.trivia-app.playing-layout .hero p{display:none}
+ main.trivia-app.playing-layout .hero h1{font-size:24px!important}
+ main.trivia-app.playing-layout .hero-name{margin:0!important;padding:4px 7px!important;max-width:220px}
+ main.trivia-app.playing-layout .hero-name input{padding:7px!important}
+ main.trivia-app.playing-layout .campaign-section{
+   flex:0 0 auto;margin:0!important;padding:6px 10px!important
+ }
+ main.trivia-app.playing-layout .campaign-rule{display:none}
+ main.trivia-app.playing-layout .campaign-progress{height:4px;margin:3px 0!important}
+ main.trivia-app.playing-layout .campaign-stages-toggle{min-height:30px!important;margin:2px 0!important}
+ main.trivia-app.playing-layout .game-grid{flex:1 1 0;min-height:0}
+ main.trivia-app.playing-layout .arena-panel{
+   display:flex;flex-direction:column;align-items:stretch;
+   min-height:0;overflow:auto!important;padding:8px 12px!important
+ }
+ main.trivia-app.playing-layout .arena-title{margin:0 0 4px}
+ main.trivia-app.playing-layout .arena-title h2{font-size:19px!important}
+ main.trivia-app.playing-layout .scoreboard{margin:4px 0!important}
+ main.trivia-app.playing-layout .player-tile{padding:6px!important}
+ main.trivia-app.playing-layout .player-tile .portrait{width:34px!important;height:34px!important}
+ main.trivia-app.playing-layout .arena{
+   width:min(100%,calc(100dvh - 465px),540px);
+   flex:0 1 auto;min-height:0;max-height:calc(100dvh - 465px);
+   aspect-ratio:1;margin:1px auto;
+   display:grid;place-items:center;padding:8px!important
+ }
+ main.trivia-app.playing-layout .arena-inner{
+   width:100%;height:100%;display:grid;place-items:center
+ }
+ main.trivia-app.playing-layout .board{
+   width:100%!important;height:100%!important;
+   max-width:100%!important;max-height:100%!important
+ }
+ main.trivia-app.playing-layout .gesture-hint{margin:3px auto!important;font-size:12px!important}
+ main.trivia-app.playing-layout .level-progress{height:5px;margin-top:3px}
+ main.trivia-app.playing-layout .status-line{min-height:27px;font-size:12px!important}
+ main.trivia-app.playing-layout .control-row{gap:6px!important}
+ main.trivia-app.playing-layout .control-row :is(.gold-button,.glass-button){
+   font-size:12px!important;padding:7px 9px!important
+ }
+ main.trivia-app.playing-layout .footer{flex:0 0 auto;margin:0 auto!important;font-size:10px!important}
+ main.trivia-app.playing-layout #app-footer{flex:0 0 auto;margin:0!important;padding:0!important}
+ main.trivia-app.playing-layout #app-footer .game-question-source-credit{display:none!important}
+}

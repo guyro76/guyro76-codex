@@ -21,7 +21,11 @@ test('captured tile is premium and its owner can be corrected and persisted',asy
   const tile=page.locator('svg.board .capture-tile[data-square="0-0"]');
   await expect(tile).toBeVisible();
   await expect(tile).toHaveAttribute('data-capture-style','lumen');
-  await page.getByRole('group',{name:'סגנון כיבוש'}).getByRole('button',{name:/ניאון/}).click();
+  await page.getByRole('button',{name:'פתח תפריט משחק'}).click();
+  const nav=page.getByRole('dialog',{name:'תפריט המשחק'});
+  await nav.getByRole('button',{name:/התאמה אישית/}).click();
+  await nav.getByRole('group',{name:'סגנון כיבוש'}).getByRole('button',{name:/ניאון/}).click();
+  await nav.getByRole('button',{name:'סגור תפריט'}).click();
   await expect(tile).toHaveAttribute('data-capture-style','neon');
   await tile.click();
   const chooser=page.getByRole('dialog',{name:'מי סגר את הריבוע?'});
