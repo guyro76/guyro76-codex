@@ -2023,7 +2023,7 @@ export default function TriviaGame() {
           {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{(locale==='he'?['א','ב','ג','ד']:locale==='ar'?['أ','ب','ج','د']:['A','B','C','D'])[i]}</span>{a}</button>)}
         </div>
         <QuestionReportButton client={client} userId={user?.id||null} legalAccepted={legalAccepted}
-          questionId={question.id} locale={locale}/>
+          questionId={Number(question.id)||0} locale={locale}/>
         <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>{tr(question.kind==='premium_bonus'?'תשובה נכונה מעניקה עד שני כיבושים סמוכים, ניקוד ופרסים כפולים. אם נשאר ריבוע אחד ייכבש רק הוא.':question.kind==='bonus'?'תשובה נכונה מעניקה שני אסימוני כיבוש זהב':'תשובה שגויה משאירה את הקו פתוח ומעבירה את התור')}</p>
       </section>
     </div>}
