@@ -914,7 +914,9 @@ export default function TriviaGame() {
         else if (data.bonus && data.correct) play('bonus');
         else if (gained) play('capture');
         else play(data.correct ? 'correct' : 'wrong');
-        setMessage(locale==='en'
+        setMessage(locale==='es'
+          ? (data.bonus ? data.correct?'¡Pregunta dorada superada!':'Sigue intentándolo.' : data.correct ? gained?'¡Capturaste '+gained+' casillas! +10 puntos de conocimiento, +'+(5+gained*10)+' créditos':'¡Correcto! +10 puntos de conocimiento y 5 créditos':'Respuesta incorrecta.')
+          : locale==='en'
           ? (data.bonus
               ? data.correct?'Golden question complete! Two bonus captures earned! ✨':'Golden question missed. Try a new streak.'
               : data.correct ? gained?'Great! You claimed '+gained+' squares! +10 XP, +'+(5+gained*10)+' credits':'Correct! +10 XP, +5 credits':'Wrong answer. Next player.')
@@ -966,7 +968,7 @@ export default function TriviaGame() {
       if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
       else if (gained) play('capture');
       else play(correct ? 'correct' : 'wrong');
-      setMessage(locale==='en'?
+      setMessage(locale==='es'? (correct?(gained?'¡Capturaste '+gained+' casillas! +10 puntos de conocimiento, +'+(5+10*gained)+' créditos':'¡Respuesta correcta! +10 puntos de conocimiento, +5 créditos'):'Respuesta incorrecta.') : locale==='en'?
  (correct?(gained?'You captured '+gained+' squares! +10 XP, +'+(5+10*gained)+' credits':'Correct answer! +10 XP, +5 credits'):'Wrong answer!'):
  (correct?(gained?'סגרת '+gained+' ריבועים! +10 נקודות ידע, +'+(5+10*gained)+' קרדיטים':'תשובה נכונה! +10 נקודות ידע, +5 קרדיטים'):'תשובה שגויה!'));
       if(correct){
@@ -1291,8 +1293,8 @@ export default function TriviaGame() {
   };
   const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
   const displayWorld={
-    name:locale==='en'?selectedStage.nameEn:selectedStage.nameHe,
-    subtitle:locale==='en'?selectedStage.subtitleEn:selectedStage.subtitleHe
+    name:locale==='es'?(SPANISH_STAGE_NAMES[stageId]||selectedStage.nameEn):locale==='he'?selectedStage.nameHe:selectedStage.nameEn,
+    subtitle:locale==='es'?'Conecta puntos, responde y conquista todas las casillas del nivel.':locale==='he'?selectedStage.subtitleHe:selectedStage.subtitleEn
   };
   const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
   return <main data-preview-viewport={previewViewport} className={'trivia-app theme-' + world.slug + ' skin-' + skin + (stageStarted?' playing-layout':' setup-layout')} style={css.main} dir={localeDirection(locale)} lang={locale} onPointerDownCapture={()=>unlockGameAudio()} onKeyDownCapture={event=>{if(event.key==='Enter'||event.key===' ')unlockGameAudio()}}>
