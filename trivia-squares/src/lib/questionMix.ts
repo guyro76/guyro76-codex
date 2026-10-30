@@ -42,7 +42,7 @@ export function selectVariedQuestion<T extends QuestionForMix>(
 
 export function readRecentQuestionTopics(raw:unknown):QuestionTopic[]{
  const allowed=new Set<QuestionTopic>([
-  'tv_film','music','eurovision','israel_politics','capitals','aviation','cars',
+  'tv_film','disney','music','eurovision','israel_politics','capitals','aviation','cars',
   'sports','science','nature','history','food','arts','general'
  ]);
  return Array.isArray(raw)?raw.filter((v):v is QuestionTopic=>allowed.has(v as QuestionTopic)).slice(-8):[];
