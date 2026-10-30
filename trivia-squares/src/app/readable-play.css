@@ -33,9 +33,8 @@
  main.trivia-app.playing-layout .control-row :is(.gold-button,.glass-button) {
    min-height:40px!important;
  }
- main.trivia-app.playing-layout .arena {
-   width:min(100%,calc(100dvh - 420px),590px)!important;
- }
+ /* The existing responsive layout owns board geometry. Do not resize the
+    input hit targets when a stage is restarted or when a line is drawn. */
  main.trivia-app.playing-layout .footer,
  main.trivia-app.playing-layout #app-footer .game-author-credit-copy{
    font-size:14px!important;font-weight:900!important;line-height:1.3!important;
