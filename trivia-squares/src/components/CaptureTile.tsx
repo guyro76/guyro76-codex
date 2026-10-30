@@ -68,12 +68,12 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
           ' Q'+(x+width*.23)+' '+(y+height*.03)+' '+(x+width*.5)+' '+(y+height*.14)+
           ' T'+(x+width+2)+' '+(y+height*.12)+
           ' L'+(x+width+2)+' '+(y+height*.28)+
-          ' L'+(x-2)+' '+(y+height*.28)+' Z'} fill='#FFFFFF' fillOpacity='.20'/>
+          ' L'+(x-2)+' '+(y+height*.28)+' Z'} fill='#FFFFFF' fillOpacity='.54'/>
         <ellipse className='capture-liquid-sheen' cx={cx} cy={y+height*.18} rx={width*.38} ry={height*.075}
-          fill='#FFFFFF' fillOpacity='.15'/>
-        <circle className='capture-bubble' cx={x+width*.21} cy={y+height*.67} r={Math.max(1.4,width*.034)} fill='#FFFFFF' fillOpacity='.40'/>
-        <circle className='capture-bubble' cx={x+width*.74} cy={y+height*.48} r={Math.max(1.1,width*.026)} fill='#FFFFFF' fillOpacity='.32'/>
-        <circle className='capture-bubble' cx={x+width*.58} cy={y+height*.81} r={Math.max(1,width*.02)} fill='#FFFFFF' fillOpacity='.38'/>
+          fill='#FFFFFF' fillOpacity='.37'/>
+        <circle className='capture-bubble' cx={x+width*.21} cy={y+height*.67} r={Math.max(1.4,width*.034)} fill='#FFFFFF' fillOpacity='.74'/>
+        <circle className='capture-bubble' cx={x+width*.74} cy={y+height*.48} r={Math.max(1.1,width*.026)} fill='#FFFFFF' fillOpacity='.58'/>
+        <circle className='capture-bubble' cx={x+width*.58} cy={y+height*.81} r={Math.max(1,width*.02)} fill='#FFFFFF' fillOpacity='.62'/>
       </g>
     </g>
     <rect className='capture-inset' x={x+3} y={y+3} width={width-6} height={height-6}
@@ -121,7 +121,7 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
       <circle className='capture-firework-ring' cx={cx} cy={cy} r={radius*.71}
         stroke='#FFF1C0' strokeWidth='2' fill='none'/>
       {sparkles.map((spark,i)=><circle key={i} className='capture-firework-spark' cx={spark.x} cy={spark.y} r={spark.r}
-        fill={i%2===0?'#FFF5B1':'#FFFFFF'} style={{animationDelay:(.67+i*.037)+'s'}}/>)}
+        fill={i%2===0?'#FFF5B1':'#FFFFFF'} style={{animationDelay:(1.50+i*.037)+'s'}}/>)}
     </g>
     {style!=='token' && <>
       <path d={'M'+(cx-radius*.55)+' '+(cy+radius*.61)+' H'+(cx+radius*.55)} stroke={color} strokeOpacity='.9' strokeWidth='1.2'/>
