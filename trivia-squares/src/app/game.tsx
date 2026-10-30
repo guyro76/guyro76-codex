@@ -132,6 +132,8 @@ export default function TriviaGame() {
   const [localStageCompleted,setLocalStageCompleted]=useState(0);
   const [serverStageCompleted,setServerStageCompleted]=useState(0);
   const [stageStarted,setStageStarted]=useState(false);
+  const [stageRewardOpen,setStageRewardOpen]=useState(true);
+  const [stageRewardReady,setStageRewardReady]=useState(false);
   const menuRef=useRef<HTMLDialogElement>(null);
   const [menuSection,setMenuSection]=useState<'stages'|'modes'|'profile'|'rewards'|'account'>('stages');
   const openGameMenu=(section:typeof menuSection='stages')=>{
@@ -276,6 +278,18 @@ export default function TriviaGame() {
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
   const canPlay = validName && localReady && !showTutorial && !capturePending && !wrongAnswerFeedback && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
   const finished = !capturePending && !question && !wrongAnswerFeedback && Object.keys(state.owners).length === state.rows * state.cols;
+  // Do not cover the last liquid-fill capture. Show the stage minigame prominently
+  // after the capture completes; use the same flow on iOS, Android and desktop.
+  useEffect(()=>{
+    if(!finished){setStageRewardReady(false);return;}
+    const handle=window.setTimeout(()=>setStageRewardReady(true),950);
+    return()=>window.clearTimeout(handle);
+  },[finished,stageRunId]);
+  useEffect(()=>{
+    if(finished&&stageRewardReady&&stageRewardOpen){
+      document.getElementById('stage-reward-dismiss')?.focus({preventScroll:true});
+    }
+  },[finished,stageRewardReady,stageRewardOpen]);
   const completedStage = mode==='local'||mode==='solo' ? localStageCompleted : serverStageCompleted;
   const stageUnlocked = Math.min(STAGE_COUNT,completedStage+1);
   const selectedStage = stageFor(stageId);
@@ -671,6 +685,7 @@ export default function TriviaGame() {
     if(stageId>stageUnlocked){setMessage(locale==='en'?'Finish the earlier stages to unlock this one.':'יש לסיים את השלבים הקודמים כדי לפתוח את השלב הזה.');return;}
     if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
     try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
+    setStageRewardOpen(true);
     setBusy(true); setQuestion(null); setWrongAnswerFeedback(null); setEdge(null); setBonusSelect(false); setCapturePending(null);
     if(mode==='local' && !hasActualOpponent(guestName,name)){
       setMessage('כדי לשחק בשניים יש להקליד שם אמיתי של משתתף נוסף. למשחק לבד בחרו משחק עצמאי.');
@@ -1104,6 +1119,7 @@ export default function TriviaGame() {
       return;
     }
     if(nextId===stageId)return;
+    setStageRewardOpen(true);
     const next=stageFor(nextId);
     if(locale==='he'||locale==='en')expandLocalPool(locale);
     const nextRun='local-'+crypto.randomUUID();
@@ -1476,7 +1492,13 @@ export default function TriviaGame() {
       <section className='glass-panel arena-panel'>
         <div className='arena-title'>
           <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
-          <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
+          <div className='arena-head-right'>
+             <div className='arena-quick-wallet' aria-label={locale==='he'?'פרסים וקרדיטים זמינים':'Available game credits and charms'}>
+               <span title={locale==='he'?'קרדיטים זמינים':'Available credits'}>🪙 {currentCredits}</span>
+               <span title={locale==='he'?'קמעות זמן':'Time charms'}>⏳ {currentCharms}</span>
+             </div>
+             <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
+           </div>
         </div>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
@@ -1605,7 +1627,19 @@ export default function TriviaGame() {
             ✨ {tr(bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס')} ({availableBonus})</button>}
           {finished && stageId<STAGE_COUNT && <button className='glass-button' disabled={stageId>completedStage} onClick={advanceStage}>{locale==='en'?'Next stage →':'השלב הבא ←'}</button>}
         </div>
-        {finished && <StageReward
+        {finished && !stageRewardOpen && <button className='stage-reward-reopen'
+          type='button' onClick={()=>setStageRewardOpen(true)}>
+          {locale==='he'?'🎁 פתח שוב את משחק הביניים והפרסים':'🎁 Open stage rewards and minigame'}
+        </button>}
+        {finished && stageRewardReady && stageRewardOpen && <div className='stage-reward-modal-layer'
+          role='dialog' aria-modal='true' aria-label={locale==='he'?'משחק הביניים ופרסי השלב':'Stage minigame and rewards'}
+          onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();setStageRewardOpen(false);}}}>
+          <div className='stage-reward-modal-inner'>
+            <button id='stage-reward-dismiss' className='stage-reward-dismiss' type='button'
+              onClick={()=>setStageRewardOpen(false)}>
+              {locale==='he'?'✕ סגור וחזור ללוח':'✕ Close and return to board'}
+            </button>
+            <StageReward
           locale={locale}
           stageNumber={stageId}
           stageKey={remote?.id||stageRunId}
@@ -1616,7 +1650,9 @@ export default function TriviaGame() {
           onLocalPrize={stageLocalReward}
           onRemotePrize={stageRemoteReward}
           onSound={rewardSound}
-        />}
+            />
+          </div>
+        </div>}
       </section>
 
       <aside className='side-stack'>
