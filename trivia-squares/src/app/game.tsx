@@ -12,6 +12,7 @@ import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/play
 import { playGameSound, unlockGameAudio, type SoundCue } from '../lib/gameAudio';
 import {answerFeedback} from '../lib/answerFeedback';
 import {gameplayGuidance} from '../lib/gameplayGuidance';
+import {questionAvailabilityMessage} from '../lib/questionAvailability';
 import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
@@ -864,15 +865,13 @@ export default function TriviaGame() {
         setBusy(false);
         if(!unseen.length){
           setEdge(null);
-          setMessage(failed?
-            'לא ניתן לטעון שאלות כרגע. בדקו את החיבור לאינטרנט ונסו שוב. הלוח והניקוד נשמרו.':
-            'כל השאלות החדשות הזמינות נוצלו. ההתקדמות נשמרה; אין סגירת קווים ללא תשובת טריוויה.');
+          setMessage(questionAvailabilityMessage(locale,failed?'networkError':'serverExhausted'));
           return;
         }
       }
       if(!unseen.length){
         setEdge(null);
-        setMessage('השאלות השמורות במכשיר נוצלו. התחברו לאינטרנט לטעינת שאלות נוספות. הלוח והניקוד נשמרו.');
+        setMessage(questionAvailabilityMessage(locale,'offlineExhausted'));
         return;
       }
       const preferred=unseen.filter(q=>selectedTopics.includes(topicForQuestion(q.category,q.text)));
@@ -884,9 +883,7 @@ export default function TriviaGame() {
       // Never override balanced rotation with a hard-coded geography question.
       const q=chosen.question;
       if(preferred.length===0){
-        setMessage(locale==='he'
-          ? 'השאלות בנושאים שבחרת אזלו. מצאנו עבורך שאלה חדשה בנושא אחר, בלי למחוק את ההתקדמות.'
-          : 'Your chosen topics ran out. A new question from another topic is shown without resetting your progress.');
+        setMessage(questionAvailabilityMessage(locale,'topicFallback'));
       }
       if(user&&client&&navigator.onLine){
         // Register the question globally before showing it on an authenticated device.
