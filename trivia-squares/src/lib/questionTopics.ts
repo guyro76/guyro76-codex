@@ -47,8 +47,13 @@ export function parseTopicPreferences(raw:unknown):QuestionTopic[]{
  if(!Array.isArray(raw))return [...ALL_QUESTION_TOPICS];
  const set=new Set(raw.filter((x):x is QuestionTopic=>ALL_QUESTION_TOPICS.includes(x as QuestionTopic)));
  // Existing players who had selected all topics also get the newly added category.
- // Preserve the old 13-topic migration without silently re-enabling Disney
- // for an existing player who intentionally chose only their own topics.
- if(set.size===ALL_QUESTION_TOPICS.length-2 && !set.has('eurovision') && !set.has('disney'))set.add('eurovision');
+ // If every category was enabled in a previous app version, automatically
+ // include the newly introduced Disney category so existing players benefit.
+ // Deliberately narrowed topic selections remain unchanged.
+ if(set.size===ALL_QUESTION_TOPICS.length-1 && !set.has('disney'))set.add('disney');
+ // Old pre-Eurovision all-selected players should receive both new categories.
+ if(set.size===ALL_QUESTION_TOPICS.length-2 && !set.has('eurovision') && !set.has('disney')){
+  set.add('eurovision');set.add('disney');
+ }
  return set.size?ALL_QUESTION_TOPICS.filter(t=>set.has(t)):[...ALL_QUESTION_TOPICS];
 }
