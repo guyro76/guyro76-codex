@@ -93,7 +93,7 @@ begin
   on conflict (user_id) do update set credits=trivia_squares.progress.credits+excluded.credits,fruits=trivia_squares.progress.fruits+excluded.fruits,knowledge_points=trivia_squares.progress.knowledge_points+excluded.knowledge_points,updated_at=pg_catalog.now();
  end if;
  return pg_catalog.jsonb_build_object('correct',correct,'correct_index',q.correct_index,'gained',gained,'turn',s->>'turn','finished',(s->'scores'->>'host')::integer+(s->'scores'->>'guest')::integer+(s->'scores'->>'bot')::integer=(s->>'rows')::integer*(s->>'cols')::integer,'state',s);
-end $function$
+end $function$;
 
 
 comment on column trivia_squares.progress.knowledge_points is
@@ -151,5 +151,5 @@ begin
   'earned_at',item.earned_at,'minigame',item.minigame,
   'prize',item.minigame_prize,
   'played',item.minigame_completed_at is not null);
-end $function$
+end $function$;
 
