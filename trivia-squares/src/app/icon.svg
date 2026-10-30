@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Trivia Squares">
+<defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#5F279D"/><stop offset=".53" stop-color="#282C81"/><stop offset="1" stop-color="#E85E43"/></linearGradient><linearGradient id="glow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#D0FCFF"/><stop offset="1" stop-color="#A6A8FF"/></linearGradient></defs>
+<rect width="192" height="192" rx="38" fill="url(#bg)"/>
+<rect x="39" y="39" width="114" height="114" rx="16" fill="#151A51" fill-opacity=".43" stroke="url(#glow)" stroke-width="11"/>
+<path d="M96 58L106 85L134 96L106 106L96 134L86 106L58 96L86 85Z" fill="#FFD77A" stroke="#FFFFFF" stroke-width="2"/>
+<g fill="#F6FBFF" stroke="#7F9FF7" stroke-width="4"><circle cx="39" cy="39" r="13"/><circle cx="153" cy="39" r="13"/><circle cx="39" cy="153" r="13"/><circle cx="153" cy="153" r="13"/></g></svg>
