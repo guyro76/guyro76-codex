@@ -14,7 +14,8 @@ for(const viewport of [{width:1280,height:800},{width:1024,height:768},{width:76
   await menuButton.click();
   const menu=page.getByRole('dialog',{name:'תפריט המשחק'});
   await expect(menu).toBeVisible();
-  await expect(menu.locator('.campaign-stage-card')).toHaveCount(30);
+  await expect(menu.locator('.campaign-stage-card')).toHaveCount(5);
+  await expect(menu.locator('#campaign-chapter-select')).toHaveValue('1');
   await menu.getByRole('button',{name:/מצבי משחק/}).click();
   await expect(menu.getByRole('heading',{name:/חדר המשחק/})).toBeVisible();
   await menu.getByRole('button',{name:/התאמה אישית/}).click();
@@ -23,7 +24,7 @@ for(const viewport of [{width:1280,height:800},{width:1024,height:768},{width:76
   await expect(menu).toBeHidden();
   await expect(menuButton).toBeFocused();
   await page.getByRole('button',{name:/בחירת שלב/}).click();
-  await expect(menu.locator('.campaign-stage-card')).toHaveCount(30);
+  await expect(menu.locator('.campaign-stage-card')).toHaveCount(5);
   await menu.getByRole('button',{name:'סגור תפריט'}).click();
   await expect(menu).toBeHidden();
   await page.getByLabel('שם שחקן (חובה)').fill('טסטר');
