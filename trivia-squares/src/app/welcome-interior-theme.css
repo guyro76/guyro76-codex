@@ -299,3 +299,57 @@ main.trivia-app.skin-regular .arena-panel .arena-title .level-pill{
  background:linear-gradient(130deg,#FFE7AE,#FFC18A)!important;
  border:2px solid #FFF2CA!important;
 }
+
+/* The milestone rule must stay readable before play; stage switching stays in
+   the compact menu after the first marker gesture. */
+main.trivia-app.setup-layout .campaign-rule{
+ display:block!important;color:#F7EDFF!important;font-weight:900!important;
+}
+/* Single-source board sizing: some earlier UX styles applied width:100% and
+   height:100% in different flex/grid contexts, creating a 690px offscreen or
+   0px SVG. Set a real square box only WHILE playing. No state is modified. */
+@media(min-width:820px) and (min-height:680px){
+ main.trivia-app.playing-layout .arena-panel{
+  min-height:0!important;overflow:auto!important;gap:4px!important;
+  padding:8px!important;
+ }
+ main.trivia-app.playing-layout .arena{
+  width:clamp(270px,calc(100dvh - 440px),345px)!important;
+  height:auto!important;max-width:100%!important;max-height:none!important;
+  min-width:270px!important;min-height:270px!important;
+  flex:0 0 auto!important;aspect-ratio:1/1!important;
+  margin:0 auto!important;padding:7px!important;
+ }
+ main.trivia-app.playing-layout .arena-panel .arena-inner{
+  display:block!important;width:100%!important;height:auto!important;
+  max-width:none!important;min-height:0!important;aspect-ratio:1/1!important;
+  margin:0!important;padding:0!important;
+ }
+ main.trivia-app.playing-layout .arena-panel .arena-inner > svg.board{
+  display:block!important;width:100%!important;height:auto!important;
+  min-width:0!important;min-height:0!important;aspect-ratio:1/1!important;
+ }
+ main.trivia-app.playing-layout .arena-title{min-height:0!important;padding:3px!important;margin:0!important}
+ main.trivia-app.playing-layout .scoreboard{min-height:0!important;margin:2px 0!important;padding:4px 9px!important}
+}
+@media(min-width:650px) and (max-width:819px) and (min-height:800px){
+ main.trivia-app.playing-layout .arena-panel{
+  gap:3px!important;min-height:0!important;overflow:auto!important;padding:6px!important;
+ }
+ main.trivia-app.playing-layout .arena{
+  width:clamp(260px,calc(100dvh - 650px),345px)!important;
+  height:auto!important;min-width:260px!important;min-height:260px!important;
+  max-width:100%!important;max-height:none!important;
+  flex:0 0 auto!important;aspect-ratio:1/1!important;
+  margin:0 auto!important;padding:6px!important;
+ }
+ main.trivia-app.playing-layout .arena-panel .arena-inner{
+  display:block!important;width:100%!important;height:auto!important;
+  max-width:none!important;min-height:0!important;aspect-ratio:1/1!important;
+ }
+ main.trivia-app.playing-layout .arena-panel .arena-inner > svg.board{
+  display:block!important;width:100%!important;height:auto!important;aspect-ratio:1/1!important;
+ }
+ main.trivia-app.playing-layout .scoreboard{min-height:0!important;margin:2px 0!important;padding:5px!important}
+ main.trivia-app.playing-layout .arena-title{min-height:0!important;padding:3px!important}
+}
