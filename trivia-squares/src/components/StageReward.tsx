@@ -1,6 +1,6 @@
 'use client';
 
-import {useCallback,useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState,type CSSProperties} from 'react';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import type {ActiveLocale} from '../lib/i18n';
 import {cardById,localStageCard,readLocalAlbum,saveLocalAlbum,type StageCard,type LocalEarned} from '../lib/stageRewards';
@@ -159,7 +159,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   return <section className='lumen-stage-reveal' aria-labelledby='stage-reward-title'>
     <div className='lumen-stage-topline'><span>STAGE COMPLETE</span><span>{translate('✦ קלף אספנות חדש ✦','✦ New collectible card ✦')}</span></div>
     <div className='stage-celebration' data-testid='stage-celebration' aria-label={translate('חגיגת סיום השלב','Stage completion celebration')}>
-      <div className='stage-gift-sparks' aria-hidden='true'>{Array.from({length:18},(_,i)=><span key={i} style={{'--spark-index':i} as React.CSSProperties}>{i%3===0?'✦':i%3===1?'★':'✧'}</span>)}</div>
+      <div className='stage-gift-sparks' aria-hidden='true'>{Array.from({length:18},(_,i)=><span key={i} style={{'--spark-index':i} as CSSProperties}>{i%3===0?'✦':i%3===1?'★':'✧'}</span>)}</div>
       <strong>{translate('🎇 חגיגת הניצחון!','🎇 Victory celebration!')}</strong>
       {!remoteMatchId && <div className='stage-gift-tray' data-testid='stage-guaranteed-gifts'>
         <span>🪙 +25</span><span>⭐ +3</span><span>💎 +1</span><span>🍎 +2</span>
