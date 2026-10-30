@@ -18,6 +18,11 @@ const normalize=s=>String(s||'').normalize('NFKC').toLocaleLowerCase('en').repla
 const hash=s=>{let n=2166136261;for(const c of s){n^=c.charCodeAt(0);n=Math.imul(n,16777619);}return n>>>0;};
 const entityId=uri=>/^https?:\/\/www\.wikidata\.org\/entity\/(Q[1-9][0-9]*)$/.exec(uri)?.[1]||null;
 
+export function hasCurrentStatement(entity,property,targetId){
+ return Array.isArray(entity?.claims?.[property])&&entity.claims[property].some(s=>
+  s.rank!=='deprecated'&&s.mainsnak?.snaktype==='value'&&
+  s.mainsnak?.datavalue?.value?.id===targetId);
+}
 export function verifySingleStatement(entity,property,targetId){
  const statements=entity?.claims?.[property];
  if(!Array.isArray(statements))return false;
@@ -108,6 +113,9 @@ function wikidataQuery(topic,limit,offset){
  for(const p of [topic.property,topic.extraProperty].filter(Boolean))
   if(!safeId(p,'P'))throw new Error('Invalid property');
  let body='?subject wdt:P31 wd:'+topic.classId+' . ?subject wdt:'+topic.property+' ?answer . ';
+ // Search only items that actually have an English Wikipedia article, not
+ // millions of Wikidata-only items with no independently readable evidence.
+ body+='?article schema:about ?subject ; schema:isPartOf <https://en.wikipedia.org/> . ';
  if(topic.extraProperty)body+='?subject wdt:'+topic.extraProperty+' wd:'+topic.extraItem+' . ';
  body+='FILTER(STRSTARTS(STR(?answer), "http://www.wikidata.org/entity/Q")) ';
  // Restrict to subjects with Wikipedia sitelinks; no expensive text REGEX.
@@ -194,7 +202,8 @@ export async function generate({topicIds,limit=20,offset=0,log=()=>{}}){
   for(const fact of bindings){
    proofStats.scanned++;
    const subject=data[fact.subjectId],answer=data[fact.answerId];
-   if(!verifySingleStatement(subject,topic.property,fact.answerId)){
+   if(!verifySingleStatement(subject,topic.property,fact.answerId)||
+      (topic.extraProperty&&!hasCurrentStatement(subject,topic.extraProperty,topic.extraItem))){
     proofStats.noUniqueClaim++;continue;
    }
    if(!hasAllTranslations(subject,answer)){
