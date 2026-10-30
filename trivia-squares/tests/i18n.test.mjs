@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {extraDictionaries} from '../src/lib/i18nExtra.ts';
 import {localeCatalog,activeLocales,plannedLocales,isActiveLocale,localeDirection,translate,translatedWorlds,englishDictionary} from '../src/lib/i18n.ts';
 import {offlineQuestions} from '../src/lib/offlineQuestions.ts';
 import {englishQuestions} from '../src/lib/englishQuestions.ts';
@@ -52,6 +53,8 @@ test('QA: all literal game controls and answer-feedback strings are localized',a
  assert.ok(keys.size>=80,'Translation guard did not detect expected controls');
  for(const key of keys)for(const locale of ['en','ru','fr','ar']){
   const translated=translate(locale,key);
-  assert.ok(!/[\u0590-\u05ff]/u.test(translated),'Missing '+locale+' translation for: '+key);
+  if(locale!=='en')assert.ok(Object.hasOwn(extraDictionaries[locale],key),'Missing native '+locale+' translation for: '+key);
+  else assert.ok(Object.hasOwn(englishDictionary,key),'Missing English translation for: '+key);
+  assert.ok(!/[\u0590-\u05ff]/u.test(translated),'Untranslated control in '+locale+': '+key);
  }
 });
