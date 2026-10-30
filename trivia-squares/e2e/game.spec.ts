@@ -290,13 +290,23 @@ test('first-run tutorial changes its instructional language without dismissing t
   await expect(he.getByTestId('tutorial-preview')).toHaveAttribute('data-locale','he');
 });
 
-test('30 campaign stages exist and later stages cannot be opened before completing the current board',async({page})=>{
+test('100 campaign stages are navigable ten at a time without skipping progress',async({page})=>{
  await ready(page);
  const cards=page.locator('.campaign-stage-card');
- await expect(cards).toHaveCount(30);
+ await expect(cards).toHaveCount(10);
+ await expect(page.locator('.campaign-progress')).toHaveAttribute('aria-valuemax','100');
  await expect(page.locator('[data-stage="1"]')).toHaveAttribute('aria-current','step');
  await expect(page.locator('[data-stage="2"]')).toBeDisabled();
+ // Check locked late stages without rendering or scrolling 100 cards at once.
+ const next=page.getByRole('button',{name:'10 השלבים הבאים'});
+ const back=page.getByRole('button',{name:'10 השלבים הקודמים'});
+ await next.click();
+ await expect(page.locator('[data-stage="11"]')).toBeDisabled();
+ await next.click();
  await expect(page.locator('[data-stage="30"]')).toBeDisabled();
+ await back.click();
+ await back.click();
+ await expect(page.locator('[data-stage="1"]')).toHaveAttribute('aria-current','step');
  await expect(page.getByText(/כל שלב נפתח רק אחרי שסוגרים/)).toBeVisible();
  await draw(page,[1,1],[1,2]);
  await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toBeVisible();
@@ -321,7 +331,7 @@ test('live clock shows Hebrew date only in Hebrew and copyright switches with lo
  await expect(page.getByRole('button',{name:/Online friend/})).toBeVisible();
  await expect(page.getByRole('button',{name:/Local/})).toBeVisible();
  await expect(page.getByText(/Registration is only needed for connected play/)).toBeVisible();
- await expect(page.locator('.campaign-stage-card')).toHaveCount(30);
+ await expect(page.locator('.campaign-stage-card')).toHaveCount(10);
 });
 
 
