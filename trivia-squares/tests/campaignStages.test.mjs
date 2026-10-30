@@ -5,8 +5,8 @@ import {CAMPAIGN_STAGES,STAGE_COUNT,stageFor,canOpenStage,nextUnlockedStage} fro
 test('one hundred distinct stages with coherent geometry and thirteen chapters',()=>{
  assert.equal(STAGE_COUNT,100);
  assert.deepEqual(CAMPAIGN_STAGES.map(s=>s.id),Array.from({length:100},(_,i)=>i+1));
- assert.equal(new Set(CAMPAIGN_STAGES.map(s=>s.nameHe)).size,30);
- assert.equal(new Set(CAMPAIGN_STAGES.map(s=>s.nameEn)).size,30);
+ assert.equal(new Set(CAMPAIGN_STAGES.map(s=>s.nameHe)).size,100);
+ assert.equal(new Set(CAMPAIGN_STAGES.map(s=>s.nameEn)).size,100);
  assert.equal(new Set(CAMPAIGN_STAGES.map(s=>s.chapter)).size,13);
  for(const s of CAMPAIGN_STAGES){
   assert.ok(s.size>=3 && s.size<=6);
