@@ -109,7 +109,10 @@ test('account and legal routes are rendered', async ({page})=>{
 
 test('online registration requires explicit adult and policy acknowledgements', async ({page})=>{
   await ready(page);
-  const google=page.getByRole('button',{name:'התחבר באמצעות Google'});
+  await page.getByRole('button',{name:'פתח תפריט משחק'}).click();
+  const nav=page.getByRole('dialog',{name:'תפריט המשחק'});
+  await nav.getByRole('button',{name:/חשבון/}).click();
+  const google=nav.getByRole('button',{name:'התחבר באמצעות Google'});
   await expect(google).toBeDisabled();
   await page.getByRole('checkbox',{name:/אני בן\/בת 18/}).check();
   await expect(google).toBeDisabled();
@@ -143,7 +146,11 @@ test('one-minute spinning hourglass appears during a drawn-line question',async(
 
 test('marker ink color is independent from territory color',async({page})=>{
   await ready(page);
-  await page.getByRole('button',{name:'בחר צבע קו #EF4444'}).click();
+  await page.getByRole('button',{name:'פתח תפריט משחק'}).click();
+  const nav=page.getByRole('dialog',{name:'תפריט המשחק'});
+  await nav.getByRole('button',{name:/התאמה אישית/}).click();
+  await nav.getByRole('button',{name:'בחר צבע קו #EF4444'}).click();
+  await nav.getByRole('button',{name:'סגור תפריט'}).click();
   await draw(page,[1,1],[1,2]);
   await page.getByRole('dialog',{name:'שאלת טריוויה'}).getByRole('button',{name:/קנברה/}).click();
   await expect(page.locator('svg.board line[stroke="#EF4444"][stroke-width="10"]')).toHaveCount(1);
@@ -173,10 +180,18 @@ test('required player name persists after reload and notebook grid remains trans
   await expect(guide).toBeVisible();
   await guide.getByRole('button',{name:'דלג או סיים'}).click();
   await expect(page.getByRole('button',{name:/התחל משחק/})).toBeDisabled();
-  await page.getByLabel('כינוי שחקן').fill('שחקנית הבודקת');
-  await page.getByRole('button',{name:/שמור שם, צבע טוש/}).click();
+  await page.getByRole('button',{name:'פתח תפריט משחק'}).click();
+  let nav=page.getByRole('dialog',{name:'תפריט המשחק'});
+  await nav.getByRole('button',{name:/התאמה אישית/}).click();
+  await nav.getByLabel('כינוי שחקן').fill('שחקנית הבודקת');
+  await nav.getByRole('button',{name:/שמור שם, צבע טוש/}).click();
+  await nav.getByRole('button',{name:'סגור תפריט'}).click();
   await page.reload();
-  await expect(page.getByLabel('כינוי שחקן')).toHaveValue('שחקנית הבודקת');
+  await page.getByRole('button',{name:'פתח תפריט משחק'}).click();
+  nav=page.getByRole('dialog',{name:'תפריט המשחק'});
+  await nav.getByRole('button',{name:/התאמה אישית/}).click();
+  await expect(nav.getByLabel('כינוי שחקן')).toHaveValue('שחקנית הבודקת');
+  await nav.getByRole('button',{name:'סגור תפריט'}).click();
   const grid=page.locator('.arena-inner');
   await expect(grid).toHaveCSS('background-size', /24px 24px/);
   const rgb=await grid.evaluate(e=>getComputedStyle(e).backgroundColor);
@@ -316,11 +331,16 @@ test('live clock shows Hebrew date only in Hebrew and copyright switches with lo
  await expect(bar.locator('.game-live-clock small')).toHaveCount(0);
  await expect(page.locator('.game-author-credit')).toContainText('Designed and developed by Guy Rosenberg');
  await expect(page.locator('.game-version .game-status-kicker')).toContainText('GAME VERSION');
- await expect(page.getByRole('heading',{name:'Game room'})).toBeVisible();
- await expect(page.getByRole('button',{name:/Computer/})).toBeVisible();
- await expect(page.getByRole('button',{name:/Online friend/})).toBeVisible();
- await expect(page.getByRole('button',{name:/Local/})).toBeVisible();
- await expect(page.getByText(/Registration is only needed for connected play/)).toBeVisible();
+ await page.getByRole('button',{name:'Open game menu'}).click();
+ const nav=page.getByRole('dialog',{name:'Game menu'});
+ await nav.getByRole('button',{name:/Play modes/}).click();
+ await expect(nav.getByRole('heading',{name:'Game room'})).toBeVisible();
+ await expect(nav.getByRole('button',{name:/Computer/})).toBeVisible();
+ await expect(nav.getByRole('button',{name:/Online friend/})).toBeVisible();
+ await expect(nav.getByRole('button',{name:/Local/})).toBeVisible();
+ await nav.getByRole('button',{name:'Account'}).click();
+ await expect(nav.getByText(/Registration is only needed for connected play/)).toBeVisible();
+ await nav.getByRole('button',{name:'Close menu'}).click();
  await expect(page.locator('.campaign-stage-card')).toHaveCount(30);
 });
 
