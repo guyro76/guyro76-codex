@@ -560,6 +560,13 @@ for(const direction of [
     const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
     expect(saved.length).toBe(1);
     await answerDisplayedLocalQuestion(quiz,true);
+    await expect.poll(()=>page.evaluate(()=>{
+      const q=JSON.parse(localStorage.getItem('trivia-local-question')||'null');
+      return q===null||q.kind==='premium_bonus';
+    })).toBe(true);
+    if(await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-question')||'null')?.kind==='premium_bonus')){
+      await answerDisplayedLocalQuestion(quiz,true);
+    }
     await expect(quiz).toHaveCount(0);
   });
 }

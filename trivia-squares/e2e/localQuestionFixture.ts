@@ -33,6 +33,6 @@ export async function answerDisplayedLocalQuestion(quiz:Locator,correct:boolean)
   const index=correct?item.correct:(item.correct+1)%item.answers.length;
   const chosenAnswer=item.answers[index];
   const correctAnswer=item.answers[item.correct];
-  await quiz.getByRole('button',{name:new RegExp(escapeRegex(chosenAnswer))}).click();
+  await quiz.locator('button.answer-option').nth(index).click();
   return {correctAnswer,chosenAnswer};
 }
