@@ -1879,3 +1879,90 @@ main.trivia-app[data-preview-viewport=mobile] .hero-name input{width:100%!import
  main.trivia-app .arena{padding:7px!important}
  main.trivia-app .arena-title h2{font-size:23px!important}
 }
+
+
+/* Capture V2: unmistakable, bottom-to-top liquid before the winning name.
+ * Use the exact CaptureTile component for the live board and replay demo.
+ * Respect reduced-motion: the completed, labeled square stays visible. */
+main.trivia-app .capture-tile .capture-liquid-rise{
+ transform-box:fill-box!important;
+ transform-origin:center bottom!important;
+ animation:triviaLiquidPour 1.35s cubic-bezier(.15,.72,.22,1) both!important;
+}
+main.trivia-app .capture-tile .capture-liquid-crest{
+ transform-box:fill-box;
+ transform-origin:center;
+ animation:triviaLiquidCrest 1.05s ease-in-out .15s both;
+ filter:drop-shadow(0 0 3px #FFFFFFB8);
+}
+main.trivia-app .capture-tile .capture-liquid-wave{
+ animation:triviaLiquidSlosh .95s ease-in-out .12s both!important;
+}
+main.trivia-app .capture-tile .capture-bubble{
+ animation:captureBubbleUp 1.35s ease-out .30s both!important;
+}
+main.trivia-app .capture-tile .capture-bubble:nth-of-type(2){animation-delay:.48s!important}
+main.trivia-app .capture-tile .capture-bubble:nth-of-type(3){animation-delay:.66s!important}
+main.trivia-app .capture-tile .capture-medallion{
+ animation:captureSymbolMedal .48s cubic-bezier(.18,1.55,.39,1) 1.04s both!important;
+}
+main.trivia-app .capture-tile .capture-player-name-object,
+main.trivia-app .capture-tile .capture-player-icon-object,
+main.trivia-app .capture-tile .capture-name-backplate{
+ animation:triviaLiquidNameReveal .32s ease-out 1.10s both;
+}
+@keyframes triviaLiquidPour{
+ 0%{transform:translateY(112%)}
+ 67%{transform:translateY(24%)}
+ 89%{transform:translateY(-5%)}
+ 100%{transform:translateY(0)}
+}
+@keyframes triviaLiquidCrest{
+ 0%{opacity:.45;transform:translateX(-7%)}
+ 45%{opacity:1;transform:translateX(6%)}
+ 100%{opacity:.85;transform:translateX(0)}
+}
+@keyframes triviaLiquidSlosh{
+ 0%{opacity:.6;transform:translateX(-8%) rotate(-3deg)}
+ 60%{opacity:.96;transform:translateX(4%) rotate(2deg)}
+ 100%{opacity:.75;transform:translateX(0)}
+}
+@keyframes triviaLiquidNameReveal{from{opacity:0}to{opacity:1}}
+main.trivia-app .capture-demo-overlay{
+ position:fixed;inset:0;z-index:100;
+ display:flex;align-items:center;justify-content:center;
+ padding:18px;background:#08152EBB;backdrop-filter:blur(12px);
+}
+main.trivia-app .capture-demo-dialog{
+ width:min(100%,370px);border:2px solid #FCE3A0;border-radius:24px;
+ background:linear-gradient(150deg,#284D81,#162B55);
+ color:#FFFFFF;padding:20px;box-shadow:0 25px 70px #06152ACC;
+ display:flex;align-items:center;flex-direction:column;gap:13px;
+ text-align:center;
+}
+main.trivia-app .capture-demo-dialog h2{
+ color:#FFFFFF;font-size:21px;font-weight:900;margin:0;
+}
+main.trivia-app .capture-demo-dialog p{
+ color:#F2F7FF;font-size:15px;font-weight:900;margin:0;line-height:1.5;
+}
+main.trivia-app .capture-demo-dialog svg{width:190px;height:190px;max-width:85%;display:block}
+main.trivia-app .capture-demo-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+main.trivia-app .capture-demo-actions button,
+main.trivia-app .trivia-liquid-preview-trigger{
+ min-height:44px;font-size:15px;font-weight:900;
+ background:#FFF0B4;color:#1A3056;border:2px solid #FCE3A0;
+ border-radius:13px;padding:9px 14px;
+}
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app .capture-tile .capture-liquid-rise,
+ main.trivia-app .capture-tile .capture-liquid-crest,
+ main.trivia-app .capture-tile .capture-liquid-wave,
+ main.trivia-app .capture-tile .capture-bubble,
+ main.trivia-app .capture-tile .capture-medallion,
+ main.trivia-app .capture-tile .capture-player-name-object,
+ main.trivia-app .capture-tile .capture-player-icon-object,
+ main.trivia-app .capture-tile .capture-name-backplate{
+  animation:none!important;transform:none!important;opacity:1!important;
+ }
+}
