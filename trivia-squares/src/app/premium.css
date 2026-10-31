@@ -1966,3 +1966,24 @@ main.trivia-app .trivia-liquid-preview-trigger{
   animation:none!important;transform:none!important;opacity:1!important;
  }
 }
+
+
+/* Keep sound, liquid preview and skins on wrapped tool rows. Avoid the
+ * previous four-button vertical stack that pushes the board out of view. */
+main.trivia-app .skin-picker-bar{
+ flex-direction:row!important;
+ flex-wrap:wrap!important;
+ align-items:center!important;
+ gap:8px!important;
+}
+main.trivia-app .skin-picker-bar .skin-picker-panel{
+ flex:1 1 100%;min-width:0;
+}
+main.trivia-app .skin-picker-bar > button{
+ flex:0 0 auto;max-width:100%;
+ white-space:normal;text-align:center;
+}
+main.trivia-app .trivia-liquid-preview-trigger:focus-visible,
+main.trivia-app .capture-demo-actions button:focus-visible{
+ outline:3px solid #FFFFFF;outline-offset:3px;
+}
