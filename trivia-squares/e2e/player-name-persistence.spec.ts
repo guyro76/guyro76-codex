@@ -29,14 +29,14 @@ test('the same canonical site remembers player name, answered questions and cred
  await expect(dialog).toHaveCount(0);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]').length)).toBeGreaterThan(0);
  const historyBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
- const creditsBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}').credits);
+ const creditsBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}').credits?.host);
  await page.reload();
  await expect(page.getByLabel('שם שחקן (חובה)')).toHaveValue('גיא בודק שמירה');
  await page.goto('/?source=same-website-link');
  await expect(page.getByLabel('שם שחקן (חובה)')).toHaveValue('גיא בודק שמירה');
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
  expect(saved).toEqual(historyBefore);
- const creditsAfter=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}').credits);
+ const creditsAfter=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}').credits?.host);
  expect(creditsAfter).toBe(creditsBefore);
  expect(firstQuestion.length).toBeGreaterThan(10);
 });
