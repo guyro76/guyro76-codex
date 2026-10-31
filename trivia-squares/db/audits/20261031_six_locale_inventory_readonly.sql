@@ -107,3 +107,24 @@ SELECT l.locale,count(r.id) AS released_total,
 FROM locales l LEFT JOIN released r USING(locale)
 GROUP BY l.locale
 ORDER BY array_position(ARRAY['he','en','ru','fr','ar','es'],l.locale);
+
+
+-- 100-stage question-capacity scenario, read-only.
+-- The configured square boards contain 2*size*(size+1) edge slots each.
+-- One question per edge is an illustrative scenario, NOT a guaranteed draw count:
+-- wrong answers/premium follow-ups may require more; automatic captures/bot
+-- behavior may change demand. No repeat/recycle is authorized by this audit.
+-- A locale with fewer active questions than edge slots has a capacity risk.
+WITH edge_slots AS (
+ SELECT count(*) AS stage_count,
+        sum(2*size*(size+1))::bigint AS edge_slots
+ FROM trivia_squares.campaign_stages
+), inventory AS (
+ SELECT locale,count(*) FILTER (WHERE active)::bigint AS active_questions
+ FROM trivia_squares.questions GROUP BY locale
+)
+SELECT locale,stage_count,edge_slots,active_questions,
+ greatest(0,edge_slots-active_questions) AS gap_if_one_question_per_edge,
+ active_questions>=edge_slots AS covers_one_per_edge_scenario
+FROM inventory CROSS JOIN edge_slots
+ORDER BY array_position(ARRAY['he','en','ru','fr','ar','es'],locale);
