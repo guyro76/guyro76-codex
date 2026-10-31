@@ -15,14 +15,28 @@ test('the same canonical site remembers player name, answered questions and cred
  await expect(dialog).toBeVisible();
  const firstQuestion=await dialog.locator('h2').innerText();
  await answerDisplayedLocalQuestion(dialog,true);
+ // A random premium question legitimately opens a second bonus quiz.
+ // Complete that quiz before checking persistence; do not mistake it for a stuck dialog.
+ await expect.poll(()=>page.evaluate(()=>{
+   const pending=JSON.parse(localStorage.getItem('trivia-local-question')||'null');
+   return pending===null||pending.kind==='premium_bonus';
+ })).toBe(true);
+ const hasBonus=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-question')||'null')?.kind==='premium_bonus');
+ if(hasBonus){
+   await expect(dialog.locator('.quiz-badge')).toContainText('ניקוד ופרסים כפולים');
+   await answerDisplayedLocalQuestion(dialog,true);
+ }
  await expect(dialog).toHaveCount(0);
- await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]').length)).toBe(1);
+ await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]').length)).toBeGreaterThan(0);
+ const historyBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
+ const creditsBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}').credits?.host);
  await page.reload();
  await expect(page.getByLabel('שם שחקן (חובה)')).toHaveValue('גיא בודק שמירה');
  await page.goto('/?source=same-website-link');
  await expect(page.getByLabel('שם שחקן (חובה)')).toHaveValue('גיא בודק שמירה');
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
- expect(saved).toHaveLength(1);
- expect(saved[0]).toBeTruthy();
+ expect(saved).toEqual(historyBefore);
+ const creditsAfter=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}').credits?.host);
+ expect(creditsAfter).toBe(creditsBefore);
  expect(firstQuestion.length).toBeGreaterThan(10);
 });
