@@ -11,14 +11,15 @@ q AS (
  count(*) FILTER (WHERE q.active) AS active,
  count(*) FILTER (WHERE q.active AND q.category IN
   ('גאוגרפיה','Geography','География','Géographie','الجغرافيا','Geografía','Geografía · ciudades')) AS geography_core,
- count(*) FILTER (WHERE q.active AND p.question_id IS NOT NULL) AS sourced_active,
+ count(*) FILTER (WHERE q.active AND EXISTS (
+  SELECT 1 FROM trivia_squares.question_provenance p
+  WHERE p.question_id=q.id AND p.locale=q.locale
+ )) AS sourced_active,
  count(*) FILTER (WHERE q.active AND
   (jsonb_typeof(q.answers) IS DISTINCT FROM 'array'
    OR CASE WHEN jsonb_typeof(q.answers)='array' THEN jsonb_array_length(q.answers)<>4 ELSE true END
-   OR q.correct_index NOT BETWEEN 0 AND 3)) AS invalid_answer_shape
+   OR q.correct_index IS NULL OR q.correct_index NOT BETWEEN 0 AND 3)) AS invalid_answer_shape
  FROM trivia_squares.questions q
- LEFT JOIN trivia_squares.question_provenance p
-   ON p.question_id=q.id AND p.locale=q.locale
  GROUP BY q.locale
 ),
 r AS (
@@ -49,7 +50,8 @@ SELECT
    GROUP BY 1,2 HAVING count(*)>1
  ) duplicates) AS exact_duplicate_groups,
  (SELECT count(*) FROM trivia_squares.questions q WHERE q.active
-  AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(q.answers) a
+  AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(
+               CASE WHEN jsonb_typeof(q.answers)='array' THEN q.answers ELSE '[]'::jsonb END) a
               GROUP BY lower(btrim(a)) HAVING count(*)>1)) AS repeated_answer_options;
 
 -- RLS enabled is a necessary condition, NOT proof of correct end-to-end authorization.
