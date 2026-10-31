@@ -18,11 +18,12 @@ test('fourth earned side fills a real square in vivid liquid, with sound cues an
  });
  await page.goto('/');
  await expect(page.locator('svg.board')).toBeVisible();
- await drawAdjacentForQA(page,[0,1],[1,1]);
+ // Visible dot labels are 1-indexed; these are grid dots (0,1) -> (1,1).
+ await drawAdjacentForQA(page,[1,2],[2,2]);
  const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
  await expect(quiz).toBeVisible();
  await answerDisplayedLocalQuestion(quiz,true);
- await expect(quiz).toHaveCount(0);
+ // A premium follow-up may appear after the correct answer; the capture must still happen.
  const tile=page.locator('svg.board .capture-tile[data-square="0-0"]');
  await expect(tile).toBeVisible();
  await expect(tile.locator('.capture-liquid-crest')).toHaveCount(1);
