@@ -61,8 +61,12 @@ test('captured square shows animated liquid, bold nickname, customized icon, and
  await expect(tile.locator('.capture-firework-ring')).toHaveCount(1);
  await expect(tile.locator('.capture-player-name-object span')).toContainText('עדי');
  await expect(tile.locator('.capture-player-icon-object')).toBeVisible();
- const animated=await tile.locator('.capture-liquid-rise').evaluate(el=>getComputedStyle(el).animationName);
- expect(animated).toContain('captureVesselFill');
+ const animated=await tile.locator('.capture-liquid-rise').evaluate(el=>({
+   name:getComputedStyle(el).animationName,
+   duration:parseFloat(getComputedStyle(el).animationDuration)
+ }));
+ expect(animated.name).toContain('captureLiquidSlowFill');
+ expect(animated.duration).toBeGreaterThanOrEqual(1.5);
  const testButton=page.getByTestId('trivia-audio-test');
  await expect(testButton).toBeVisible();
  await testButton.click();
