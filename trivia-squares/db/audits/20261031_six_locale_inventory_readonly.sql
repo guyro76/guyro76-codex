@@ -61,3 +61,25 @@ WHERE n.nspname='trivia_squares' AND c.relkind='r'
   AND c.relname IN ('questions','question_reserve','seen_questions',
                     'question_provenance','geography_question_audit')
 ORDER BY c.relname;
+
+-- Extra screening for arithmetic prompts and distinct choices in each active locale.
+-- Heuristic screening only: zero matches is NOT proof that every question avoids math,
+-- and four distinct choices do NOT independently establish a correct answer.
+-- Run read-only; inspect any nonzero results before approving new content.
+WITH question_checks AS (
+ SELECT q.locale,
+  (q.question ~* '[[:digit:]][[:space:]]*([+*/=×÷]|-[[:space:]]*[[:digit:]])'
+   OR q.question ~* '(מתמטיק|חשבו את|arithmetic|algebra|calculate|calculez|арифметик|вычислите|رياضيات|احسب|matemátic|calcula la suma)') AS possible_arithmetic,
+  (SELECT count(DISTINCT lower(btrim(a.value)))
+   FROM jsonb_array_elements_text(
+    CASE WHEN jsonb_typeof(q.answers)='array' THEN q.answers ELSE '[]'::jsonb END
+   ) a(value)) AS distinct_choices
+ FROM trivia_squares.questions q
+ WHERE q.active
+)
+SELECT locale,
+ count(*) FILTER (WHERE possible_arithmetic) AS arithmetic_review_candidates,
+ count(*) FILTER (WHERE distinct_choices<>4) AS non_distinct_four_choice_questions
+FROM question_checks
+GROUP BY locale
+ORDER BY array_position(ARRAY['he','en','ru','fr','ar','es'],locale);
