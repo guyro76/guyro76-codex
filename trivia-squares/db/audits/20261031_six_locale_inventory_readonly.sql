@@ -83,3 +83,27 @@ SELECT locale,
 FROM question_checks
 GROUP BY locale
 ORDER BY array_position(ARRAY['he','en','ru','fr','ar','es'],locale);
+
+-- Released-reserve provenance regression guard (six locales, read-only).
+-- Match by locale + normalized question text: reserve.id and questions.id are unrelated.
+-- A released question without an active row or without provenance is a BLOCKER.
+-- The presence of provenance does NOT establish independent factual correctness.
+WITH locales(locale) AS (VALUES ('he'),('en'),('ru'),('fr'),('ar'),('es')),
+released AS (
+ SELECT r.locale,r.id,
+ EXISTS (SELECT 1 FROM trivia_squares.questions q
+         WHERE q.active AND q.locale=r.locale
+           AND lower(btrim(q.question))=lower(btrim(r.question))) AS has_active_match,
+ EXISTS (SELECT 1 FROM trivia_squares.questions q
+         JOIN trivia_squares.question_provenance p
+           ON p.question_id=q.id AND p.locale=q.locale
+         WHERE q.active AND q.locale=r.locale
+           AND lower(btrim(q.question))=lower(btrim(r.question))) AS has_active_provenance
+ FROM trivia_squares.question_reserve r WHERE r.released_at IS NOT NULL
+)
+SELECT l.locale,count(r.id) AS released_total,
+ count(r.id) FILTER (WHERE NOT r.has_active_match) AS missing_active_question,
+ count(r.id) FILTER (WHERE r.has_active_match AND NOT r.has_active_provenance) AS missing_active_provenance
+FROM locales l LEFT JOIN released r USING(locale)
+GROUP BY l.locale
+ORDER BY array_position(ARRAY['he','en','ru','fr','ar','es'],l.locale);
