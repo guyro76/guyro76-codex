@@ -117,7 +117,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
       setCelebrating(false);
       if(!played)setGame(current=>current||(
         !remoteMatchId && stageNumber%5===0?'quiz':
-        (remoteMatchId?(['word','wheel','balloons','cake'] as const):(['word','wheel','balloons','cake','scratch','sword','scissors'] as const))[((stageNumber-1)-Math.floor((stageNumber-1)/5))%(remoteMatchId?4:7)]
+        (['word','wheel','balloons','cake','scratch','sword','scissors'] as const)[((stageNumber-1)-Math.floor((stageNumber-1)/5))%7]
       ));
     },1800);
     return()=>window.clearTimeout(t);
@@ -135,7 +135,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     setPlaying(true);setNotice('');setGame(selected);
     if(selected==='wheel')setWheelTurns(t=>t+5+Math.floor(Math.random()*3));
     if(remoteMatchId&&client){
-      if(selected==='quiz'||gestureGames.includes(selected as GestureGame)){claimRef.current=false;setPlaying(false);return;}
+      if(selected==='quiz'){claimRef.current=false;setPlaying(false);return;}
       const {data,error}=await client.rpc('trivia_stage_play',{p_match:remoteMatchId,p_game:selected,p_guess:selected==='word'?guess.trim():null});
       if(error){setNotice(translate('לא ניתן לקבל את הפרס: ','Unable to award prize: ')+error.message);setPlaying(false);setBurstBalloon(null);setCakeCut(false);cakeTriggered.current=false;claimRef.current=false;return;}
       const result=String(data.prize||'');
@@ -187,7 +187,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
           <button type='button' onClick={()=>setGame('wheel')}><strong>{translate('🎡 גלגל ההפתעות','🎡 Prize wheel')}</strong><span>{translate('פרס וירטואלי, ללא תשלום','A free virtual prize')}</span></button>
           <button type='button' onClick={()=>setGame('balloons')}><strong>🎈 {mini('balloonsTitle')}</strong><span>{mini('balloonsSubtitle')}</span></button>
           <button type='button' onClick={()=>setGame('cake')}><strong>🎂 {mini('cakeTitle')}</strong><span>{mini('cakeSubtitle')}</span></button>
-          {!remoteMatchId && gestureGames.map(kind=><button key={kind} type='button' data-testid={'choose-'+kind} onClick={()=>setGame(kind)}><strong>{gestureCopy[locale][kind]}</strong></button>)}
+          {gestureGames.map(kind=><button key={kind} type='button' data-testid={'choose-'+kind} onClick={()=>setGame(kind)}><strong>{gestureCopy[locale][kind]}</strong></button>)}
           {!remoteMatchId && <button type='button' onClick={()=>setGame('quiz')}><strong>🧠 {translate('שאלת בונוס','Bonus trivia question')}</strong><span>{translate('שאלה נוספת ופרס גדול','One more question for a bigger prize')}</span></button>}
         </div>}
         {!played && !celebrating && game && <p className='stage-challenge-selected' data-testid='selected-intermission'>{translate('האתגר שלך:','Your challenge:')} {gestureGames.includes(game as GestureGame)?gestureCopy[locale][game as GestureGame]:game==='quiz'?translate('🧠 שאלת בונוס','🧠 Bonus trivia'):game==='word'?translate('🔠 נחש את המילה','🔠 Guess the word'):game==='wheel'?translate('🎡 גלגל ההפתעות','🎡 Prize wheel'):game==='cake'?'🎂 '+mini('cakeTitle'):'🎈 '+mini('balloonsTitle')}</p>}
