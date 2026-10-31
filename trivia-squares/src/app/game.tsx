@@ -9,7 +9,8 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween, edgeFromSwipe } from '
 import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
-import { playGameSound, unlockGameAudio, gameAudioState, type SoundCue } from '../lib/gameAudio';
+import { playGameSound, unlockGameAudio, gameAudioState, recoverGameAudioOnForeground, type SoundCue } from '../lib/gameAudio';
+import {capturePreviewCopy} from '../lib/capturePreviewCopy';
 import {answerFeedback} from '../lib/answerFeedback';
 import {gameplayGuidance} from '../lib/gameplayGuidance';
 import {viewportModeLabel,viewportPreviewLabel} from '../lib/viewportPreviewLabels';
@@ -277,6 +278,11 @@ export default function TriviaGame() {
   const [busy, setBusy] = useState(false);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(65);
+  const [liquidDemo, setLiquidDemo] = useState(0);
+  useEffect(()=>{
+    document.addEventListener('visibilitychange',recoverGameAudioOnForeground);
+    return()=>document.removeEventListener('visibilitychange',recoverGameAudioOnForeground);
+  },[]);
   const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
   const rewardSound=useCallback((cue:'bonus'|'win'|'pop'|'slice')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
   const celebrateCapture=useCallback((count:number)=>{
@@ -1492,6 +1498,13 @@ export default function TriviaGame() {
         }}>
         <span aria-hidden='true'>🔉</span><strong>{locale==='he'?'בדוק':locale==='es'?'Probar':locale==='fr'?'Tester':locale==='ru'?'Проверить':locale==='ar'?'اختبار':'Test'}</strong>
       </button>
+      <button type='button' className='trivia-liquid-preview-trigger'
+        data-testid='trivia-liquid-preview' onClick={()=>{
+          unlockGameAudio();
+          setLiquidDemo(x=>x+1);
+          playGameSound('liquid',{muted,volume:volume/100});
+          playGameSound('fireworks',{muted,volume:volume/100},1.16);
+        }}><span aria-hidden='true'>🌊</span> <strong>{capturePreviewCopy[locale].open}</strong></button>
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
         aria-label={tr('עיצוב המשחק')} title={tr('בחר סקין למשחק')}>
@@ -2095,6 +2108,35 @@ export default function TriviaGame() {
           questionId={question.id} locale={locale}/>}
         <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>{tr(question.kind==='premium_bonus'?'תשובה נכונה מעניקה עד שני כיבושים סמוכים, ניקוד ופרסים כפולים. אם נשאר ריבוע אחד ייכבש רק הוא.':question.kind==='bonus'?'תשובה נכונה מעניקה שני אסימוני כיבוש זהב':'תשובה שגויה משאירה את הקו פתוח ומעבירה את התור')}</p>
       </section>
+    </div>}
+
+    {liquidDemo>0 && <div className='capture-demo-overlay' role='presentation'
+      onClick={event=>{if(event.target===event.currentTarget)setLiquidDemo(0)}}>
+      <div className='capture-demo-dialog' role='dialog' aria-modal='true'
+        aria-label={capturePreviewCopy[locale].title}
+        onKeyDown={event=>{if(event.key==='Escape')setLiquidDemo(0)}}>
+        <h2>{capturePreviewCopy[locale].title}</h2>
+        <svg key={'liquid-demo-'+liquidDemo} viewBox='0 0 150 150'
+          role='img' aria-label={capturePreviewCopy[locale].title}
+          data-testid='trivia-liquid-preview-svg'>
+          <CaptureTile row={0} col={0} x={8} y={8} width={134} height={134}
+            name={name||'Player'} color={color} icon={avatar}
+            style={captureStyle} idPrefix={'liquid-preview-'+liquidDemo}
+            locale={locale}/>
+        </svg>
+        <p>{capturePreviewCopy[locale].hint}</p>
+        <div className='capture-demo-actions'>
+          <button type='button' data-testid='trivia-liquid-replay'
+            onClick={()=>{
+              unlockGameAudio();
+              setLiquidDemo(x=>x+1);
+              playGameSound('liquid',{muted,volume:volume/100});
+              playGameSound('fireworks',{muted,volume:volume/100},1.16);
+            }}>{capturePreviewCopy[locale].again}</button>
+          <button type='button' data-testid='trivia-liquid-close' autoFocus
+            onClick={()=>setLiquidDemo(0)}>{capturePreviewCopy[locale].close}</button>
+        </div>
+      </div>
     </div>}
 
     <LocalQuestionBackup locale={locale} onRestored={entries=>{for(const item of entries)seenQuestionTexts.current.add(item)}}/>
