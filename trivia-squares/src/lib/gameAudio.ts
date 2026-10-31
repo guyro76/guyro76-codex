@@ -10,10 +10,24 @@ let pendingResume = false;
 let masterGain: GainNode | null = null;
 let masterMuted = false;
 
+/** Safari on iOS can default to ambient mode and silence game sounds with
+ * the hardware Silent switch. Ask for playback while the player explicitly
+ * enables sound; this experimental API is optional in other browsers. */
+export function configureGamePlaybackSession(): boolean {
+ if(typeof navigator==='undefined')return false;
+ try {
+  const nav=navigator as Navigator & {audioSession?:{type:string}};
+  if(!nav.audioSession)return false;
+  nav.audioSession.type='playback';
+  return nav.audioSession.type==='playback';
+ }catch{return false;}
+}
+
 // An AudioContext must be unlocked from a synchronous touch or click on mobile.
 function context(): AudioContext | null {
   if(typeof window==='undefined')return null;
   try{
+    configureGamePlaybackSession();
     const ctor=window.AudioContext || (window as Window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
     if(!ctor)return null;
     if(!audio || audio.state==='closed'){
@@ -34,6 +48,7 @@ export function setGameAudioMuted(muted:boolean):void {
   }
 }
 export function unlockGameAudio():void {
+  configureGamePlaybackSession();
   const ctx=context();
   if(!ctx || ctx.state==='running' || pendingResume)return;
   pendingResume=true;
@@ -209,4 +224,13 @@ export function gameAudioState(): 'unsupported'|'locked'|'ready' {
    !(window.AudioContext || (window as Window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext))
    return 'unsupported';
  return audio?.state==='running'?'ready':'locked';
+}
+
+/** Retry mobile Safari's non-standard "interrupted" audio state when a player
+ * comes back to the game. Any later click still runs unlockGameAudio normally. */
+export function recoverGameAudioOnForeground(): void {
+ if(typeof document==='undefined'||document.visibilityState!=='visible'||!audio)return;
+ if(audio.state==='running')return;
+ configureGamePlaybackSession();
+ unlockGameAudio();
 }
