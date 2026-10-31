@@ -45,10 +45,10 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
       </linearGradient>
       <clipPath id={id+'-vessel'}><rect x={x+1.5} y={y+1.5} width={width-3} height={height-3} rx={corner}/></clipPath>
       <linearGradient id={id+'-liquid'} x1='0' y1='0' x2='0' y2='1'>
-        <stop offset='0%' stopColor='#FFFFFF' stopOpacity='.66'/>
-        <stop offset='14%' stopColor={color} stopOpacity='.93'/>
-        <stop offset='64%' stopColor={color} stopOpacity='.83'/>
-        <stop offset='100%' stopColor='#111A45' stopOpacity='.94'/>
+        <stop offset='0%' stopColor='#FFFFFF' stopOpacity='.86'/>
+        <stop offset='12%' stopColor={color} stopOpacity='1'/>
+        <stop offset='55%' stopColor={color} stopOpacity='.98'/>
+        <stop offset='100%' stopColor={color} stopOpacity='.91'/>
       </linearGradient>
       <linearGradient id={id+'-metal'} x1='0' y1='0' x2='1' y2='1'>
         <stop offset='0%' stopColor='#FFFFFF' stopOpacity='.9'/>
@@ -69,8 +69,15 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
           ' T'+(x+width+2)+' '+(y+height*.12)+
           ' L'+(x+width+2)+' '+(y+height*.28)+
           ' L'+(x-2)+' '+(y+height*.28)+' Z'} fill='#FFFFFF' fillOpacity='.20'/>
+        <path className='capture-liquid-crest'
+          d={'M'+(x-3)+' '+(y+height*.11)+
+            ' C'+(x+width*.20)+' '+(y+height*.015)+' '+(x+width*.38)+' '+(y+height*.21)+
+            ' '+(x+width*.57)+' '+(y+height*.115)+
+            ' S'+(x+width*.82)+' '+(y+height*.04)+' '+(x+width+3)+' '+(y+height*.125)}
+          stroke='#FFF7D8' strokeOpacity='.92' strokeWidth={Math.max(2,width*.028)}
+          strokeLinecap='round' fill='none'/>
         <ellipse className='capture-liquid-sheen' cx={cx} cy={y+height*.18} rx={width*.38} ry={height*.075}
-          fill='#FFFFFF' fillOpacity='.15'/>
+          fill='#FFFFFF' fillOpacity='.27'/>
         <circle className='capture-bubble' cx={x+width*.21} cy={y+height*.67} r={Math.max(1.4,width*.034)} fill='#FFFFFF' fillOpacity='.40'/>
         <circle className='capture-bubble' cx={x+width*.74} cy={y+height*.48} r={Math.max(1.1,width*.026)} fill='#FFFFFF' fillOpacity='.32'/>
         <circle className='capture-bubble' cx={x+width*.58} cy={y+height*.81} r={Math.max(1,width*.02)} fill='#FFFFFF' fillOpacity='.38'/>
@@ -121,7 +128,7 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
       <circle className='capture-firework-ring' cx={cx} cy={cy} r={radius*.71}
         stroke='#FFF1C0' strokeWidth='2' fill='none'/>
       {sparkles.map((spark,i)=><circle key={i} className='capture-firework-spark' cx={spark.x} cy={spark.y} r={spark.r}
-        fill={i%2===0?'#FFF5B1':'#FFFFFF'} style={{animationDelay:(.67+i*.037)+'s'}}/>)}
+        fill={i%2===0?'#FFF5B1':'#FFFFFF'} style={{animationDelay:(1.19+i*.041)+'s'}}/>)}
     </g>
     {style!=='token' && <>
       <path d={'M'+(cx-radius*.55)+' '+(cy+radius*.61)+' H'+(cx+radius*.55)} stroke={color} strokeOpacity='.9' strokeWidth='1.2'/>
