@@ -2,7 +2,10 @@ import {test,expect} from '@playwright/test';
 
 for(const game of [
  {kind:'balloons',open:'בלוני ההפתעה',action:'פוצץ בלון 1'},
- {kind:'cake',open:'עוגת ההפתעה',action:'חתוך פרוסת פרס'}
+ {kind:'cake',open:'עוגת ההפתעה',action:'חתוך פרוסת פרס'},
+ {kind:'scratch',open:'כרטיס גירוד',action:'סימון'},
+ {kind:'sword',open:'חרב טריוויה',action:'סימון'},
+ {kind:'scissors',open:'מספרי המזל',action:'סימון'}
 ] as const){
  test('intermission '+game.kind+' grants exactly one local reward and survives reload',async({page})=>{
   await page.addInitScript(()=>{
@@ -23,7 +26,14 @@ for(const game of [
   const reward=page.getByRole('dialog',{name:'משחק הביניים ופרסי השלב'}).locator('.lumen-stage-reveal');
   await expect(reward).toBeVisible();
   await reward.getByRole('button',{name:new RegExp(game.open)}).click();
-  await reward.getByRole('button',{name:game.action}).click();
+  if(game.action==='סימון'){
+   const count=game.kind==='scratch'?6:3;
+   for(let i=1;i<=count;i++){
+    const target=reward.getByRole('button',{name:'סימון '+i,exact:true});
+    await target.focus();await target.press('Enter');
+    if(i<count)await expect(reward.locator('.lumen-prize-won')).toHaveCount(0);
+   }
+  }else await reward.getByRole('button',{name:game.action}).click();
   await expect(reward.locator('.lumen-prize-won')).toBeVisible();
   await expect.poll(()=>page.evaluate(()=>{
     const rows=JSON.parse(localStorage.getItem('trivia-local-collectible-album-v1')||'[]');

@@ -31,6 +31,18 @@ for(const viewport of [
   const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(quiz).toBeVisible();
   await answerDisplayedLocalQuestion(quiz,true);
+  // A randomly selected premium question legitimately opens a bonus dialog.
+  // Wait for the edge reward first, then complete that follow-up instead of
+  // treating the intended premium flow as a layout failure.
+  await expect.poll(()=>page.evaluate(()=>{
+    const pending=JSON.parse(localStorage.getItem('trivia-local-question')||'null');
+    return pending===null||pending.kind==='premium_bonus';
+  })).toBe(true);
+  const hasBonus=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-question')||'null')?.kind==='premium_bonus');
+  if(hasBonus){
+    await expect(quiz.locator('.quiz-badge')).toContainText('ניקוד ופרסים כפולים');
+    await answerDisplayedLocalQuestion(quiz,true);
+  }
   await expect(quiz).toHaveCount(0);
   await expect.poll(async()=>page.evaluate(()=>{
     const b=JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}');

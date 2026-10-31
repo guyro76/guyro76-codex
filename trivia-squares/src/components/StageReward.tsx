@@ -5,6 +5,8 @@ import type {SupabaseClient} from '@supabase/supabase-js';
 import type {ActiveLocale} from '../lib/i18n';
 import {cardById,localStageCard,readLocalAlbum,saveLocalAlbum,type StageCard,type LocalEarned} from '../lib/stageRewards';
 import {intermissionText,intermissionWord,intermissionPrize,intermissionCard,intermissionMiniText} from '../lib/intermissionLocales';
+import GestureIntermission from './GestureIntermission';
+import {gestureCopy,gestureGames,type GestureGame} from '../lib/gestureIntermissions';
 import {intermissionBonusQuestion} from '../lib/intermissionBonus';
 
 type RewardProps={
@@ -61,7 +63,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   const [card,setCard]=useState<StageCard|null>(null);
   const [playing,setPlaying]=useState(false);
   const [played,setPlayed]=useState(false);
-  const [game,setGame]=useState<'wheel'|'word'|'balloons'|'cake'|'quiz'|null>(null);
+  const [game,setGame]=useState<'wheel'|'word'|'balloons'|'cake'|'quiz'|GestureGame|null>(null);
   const [celebrating,setCelebrating]=useState(true);
   const [bonusPicked,setBonusPicked]=useState<number|null>(null);
   const claimRef=useRef(false);
@@ -77,7 +79,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   const [wheelTurns,setWheelTurns]=useState(0);
   useEffect(()=>{
     let alive=true;
-    setCard(null);setPlayed(false);setPrize('');setGame(null);setNotice('');setBurstBalloon(null);setCakeCut(false);setBonusPicked(null);setCelebrating(true);claimRef.current=false;cakeTriggered.current=false;
+    setPlaying(false);setGuess('');setCard(null);setPlayed(false);setPrize('');setGame(null);setNotice('');setBurstBalloon(null);setCakeCut(false);setBonusPicked(null);setCelebrating(true);claimRef.current=false;cakeTriggered.current=false;
     if(remoteMatchId && client){
       void (async()=>{
         const {data,error}=await client.rpc('trivia_stage_claim',{p_match:remoteMatchId});
@@ -89,7 +91,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
         onRemotePrize();
         const {data:cards}=await client.rpc('trivia_stage_album');
         if(alive && Array.isArray(cards))setAlbum(cards.map((c:Record<string,string>)=>({
-          matchId:String(c.match_id),cardId:String(c.card_id),earnedAt:String(c.earned_at),played:Boolean(c.minigame),game:c.minigame as 'wheel'|'word'|'balloons'|'cake'|'quiz',prize:c.minigame_prize
+          matchId:String(c.match_id),cardId:String(c.card_id),earnedAt:String(c.earned_at),played:Boolean(c.minigame),game:c.minigame as 'wheel'|'word'|'balloons'|'cake'|'quiz'|GestureGame,prize:c.minigame_prize
         })));
         onSound('win');
       })();
@@ -115,7 +117,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
       setCelebrating(false);
       if(!played)setGame(current=>current||(
         !remoteMatchId && stageNumber%5===0?'quiz':
-        (['word','wheel','balloons','cake'] as const)[((stageNumber-1)-Math.floor((stageNumber-1)/5))%4]
+        (remoteMatchId?(['word','wheel','balloons','cake'] as const):(['word','wheel','balloons','cake','scratch','sword','scissors'] as const))[((stageNumber-1)-Math.floor((stageNumber-1)/5))%(remoteMatchId?4:7)]
       ));
     },1800);
     return()=>window.clearTimeout(t);
@@ -127,13 +129,13 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   const shownCard=card?displayCard(card):null;
   const showPrize=(value:string)=>intermissionPrize(locale,value);
   const bonus=intermissionBonusQuestion(locale,stageNumber);
-  const finish=useCallback(async(selected:'wheel'|'word'|'balloons'|'cake'|'quiz',answerIndex?:number)=>{
+  const finish=useCallback(async(selected:'wheel'|'word'|'balloons'|'cake'|'quiz'|GestureGame,answerIndex?:number)=>{
     if(!card||played||playing||claimRef.current)return;
     claimRef.current=true;
     setPlaying(true);setNotice('');setGame(selected);
     if(selected==='wheel')setWheelTurns(t=>t+5+Math.floor(Math.random()*3));
     if(remoteMatchId&&client){
-      if(selected==='quiz'){claimRef.current=false;setPlaying(false);return;}
+      if(selected==='quiz'||gestureGames.includes(selected as GestureGame)){claimRef.current=false;setPlaying(false);return;}
       const {data,error}=await client.rpc('trivia_stage_play',{p_match:remoteMatchId,p_game:selected,p_guess:selected==='word'?guess.trim():null});
       if(error){setNotice(translate('לא ניתן לקבל את הפרס: ','Unable to award prize: ')+error.message);setPlaying(false);setBurstBalloon(null);setCakeCut(false);cakeTriggered.current=false;claimRef.current=false;return;}
       const result=String(data.prize||'');
@@ -185,9 +187,11 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
           <button type='button' onClick={()=>setGame('wheel')}><strong>{translate('🎡 גלגל ההפתעות','🎡 Prize wheel')}</strong><span>{translate('פרס וירטואלי, ללא תשלום','A free virtual prize')}</span></button>
           <button type='button' onClick={()=>setGame('balloons')}><strong>🎈 {mini('balloonsTitle')}</strong><span>{mini('balloonsSubtitle')}</span></button>
           <button type='button' onClick={()=>setGame('cake')}><strong>🎂 {mini('cakeTitle')}</strong><span>{mini('cakeSubtitle')}</span></button>
+          {!remoteMatchId && gestureGames.map(kind=><button key={kind} type='button' data-testid={'choose-'+kind} onClick={()=>setGame(kind)}><strong>{gestureCopy[locale][kind]}</strong></button>)}
           {!remoteMatchId && <button type='button' onClick={()=>setGame('quiz')}><strong>🧠 {translate('שאלת בונוס','Bonus trivia question')}</strong><span>{translate('שאלה נוספת ופרס גדול','One more question for a bigger prize')}</span></button>}
         </div>}
-        {!played && !celebrating && game && <p className='stage-challenge-selected' data-testid='selected-intermission'>{translate('האתגר שלך:','Your challenge:')} {game==='quiz'?translate('🧠 שאלת בונוס','🧠 Bonus trivia'):game==='word'?translate('🔠 נחש את המילה','🔠 Guess the word'):game==='wheel'?translate('🎡 גלגל ההפתעות','🎡 Prize wheel'):game==='cake'?'🎂 '+mini('cakeTitle'):'🎈 '+mini('balloonsTitle')}</p>}
+        {!played && !celebrating && game && <p className='stage-challenge-selected' data-testid='selected-intermission'>{translate('האתגר שלך:','Your challenge:')} {gestureGames.includes(game as GestureGame)?gestureCopy[locale][game as GestureGame]:game==='quiz'?translate('🧠 שאלת בונוס','🧠 Bonus trivia'):game==='word'?translate('🔠 נחש את המילה','🔠 Guess the word'):game==='wheel'?translate('🎡 גלגל ההפתעות','🎡 Prize wheel'):game==='cake'?'🎂 '+mini('cakeTitle'):'🎈 '+mini('balloonsTitle')}</p>}
+        {game && gestureGames.includes(game as GestureGame) && !played && !celebrating && <GestureIntermission key={stageKey+game} kind={game as GestureGame} locale={locale} disabled={playing} onComplete={()=>{onSound('slice');void finish(game);}}/>}
         {game==='quiz'&&!played&&!celebrating&&<div className='stage-bonus-quiz' data-testid='bonus-question'>
           <h4>{bonus.question}</h4>
           <div className='stage-bonus-options'>{bonus.answers.map((answer,i)=><button key={i} type='button'

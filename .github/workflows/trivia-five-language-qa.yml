@@ -58,7 +58,7 @@ jobs:
           fi
 
   question-bank-release-gate:
-    name: Six-language question bank QA and 5000-per-language progress report
+    name: Offline question structure only (NOT release approval)
     runs-on: ubuntu-latest
     timeout-minutes: 7
     defaults:
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
-      - name: Verify target bank coverage without fake or repeated questions
+      - name: Check offline structure and report inventory (no factual verification)
         run: |
           node --input-type=module <<'JS'
           import {offlineQuestions} from './src/lib/offlineQuestions.ts';
@@ -86,7 +86,7 @@ jobs:
             const unique=new Set(entries.map(q=>q.text.normalize('NFKC').trim().toLocaleLowerCase()));
             const structurallyValid=entries.every(q=>q.answers.length===4&&new Set(q.answers).size===4&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<=3);
             console.log(locale,'total',entries.length,'unique',unique.size,'goal',5000);
-            if(unique.size<5000)console.warn('PENDING CONTENT GOAL:',locale,5000-unique.size,'more unique questions needed. Deployment is allowed.');
+            if(unique.size<5000)console.warn('OFFLINE INVENTORY BELOW TARGET:',locale,5000-unique.size,'short. This does not measure the connected database or authorize release.');
             if(unique.size!==entries.length||!structurallyValid){
               console.error('INVALID CONTENT: duplicated or malformed questions for',locale);
               structurallyValidAll=false;
@@ -96,6 +96,6 @@ jobs:
             console.error('BLOCKED: invalid question records require correction before release.');
             process.exitCode=1;
           }else{
-            console.log('Question structure verified. Bank growth goal is tracked separately and does not block deployment.');
+            console.log('Offline structure checks passed only. RELEASE READINESS NOT ESTABLISHED: require 5000 fact-verified unique active questions per locale, provenance, reserve and connected tests on the release candidate.');
           }
           JS
