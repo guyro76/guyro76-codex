@@ -9,7 +9,7 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween, edgeFromSwipe } from '
 import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
-import { playGameSound, unlockGameAudio, gameAudioState, type SoundCue } from '../lib/gameAudio';
+import { playGameSound, unlockGameAudio, gameAudioState, recoverGameAudioOnForeground, type SoundCue } from '../lib/gameAudio';
 import {answerFeedback} from '../lib/answerFeedback';
 import {gameplayGuidance} from '../lib/gameplayGuidance';
 import {viewportModeLabel,viewportPreviewLabel} from '../lib/viewportPreviewLabels';
@@ -279,6 +279,10 @@ export default function TriviaGame() {
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(75);
   const [audioTestStatus,setAudioTestStatus]=useState<'unknown'|'ready'|'locked'|'unsupported'>('unknown');
+  useEffect(()=>{
+    document.addEventListener('visibilitychange',recoverGameAudioOnForeground);
+    return()=>document.removeEventListener('visibilitychange',recoverGameAudioOnForeground);
+  },[]);
   const [liquidPreviewRun,setLiquidPreviewRun]=useState(0);
   const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
   const rewardSound=useCallback((cue:'bonus'|'win'|'pop'|'slice')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
