@@ -74,8 +74,17 @@ test('player draws with a marker from one dot to a neighbor, then answers the qu
   const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(quiz).toBeVisible();
   await answerDisplayedLocalQuestion(quiz,true);
+  // A randomly selected premium question correctly opens a second trivia dialog.
+  // Both ordinary and premium paths must finish before checking the saved edge.
+  const premiumFollowUp=page.getByText('תשובת פרימיום נכונה!',{exact:false});
+  await expect.poll(async()=>await premiumFollowUp.isVisible() || await quiz.count()===0).toBe(true);
+  if(await premiumFollowUp.isVisible()){
+    await answerDisplayedLocalQuestion(quiz,true);
+    await expect(page.getByText('פרימיום!',{exact:false})).toBeVisible();
+  }else{
+    await expect(page.getByText('תשובה נכונה!',{exact:false})).toBeVisible();
+  }
   await expect(quiz).toHaveCount(0);
-  await expect(page.getByText('תשובה נכונה!',{exact:false})).toBeVisible();
   await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}')?.edges?.['h-0-0'])).toBe('host');
 });
 
