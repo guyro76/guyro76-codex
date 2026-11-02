@@ -74,3 +74,29 @@ main.trivia-app :is(.skin-picker-panel, .skin-picker-item) {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* P0 contrast tokens: solid text surfaces remain legible over translucent skins. */
+main.trivia-app {
+  --trivia-text-on-light: #14213d;
+  --trivia-text-on-dark: #ffffff;
+  --trivia-readable-light: #ffffff;
+  --trivia-readable-dark: #15223c;
+}
+main.trivia-app :is(.skin-picker-panel, .skin-picker-item) {
+  background-color: var(--trivia-readable-light);
+  color: var(--trivia-text-on-light);
+}
+main.trivia-app .skin-picker-item:focus-visible,
+main.trivia-app .skin-palette-trigger:focus-visible,
+main.trivia-app .locale-option:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 3px;
+}
+main.trivia-app :is(.skin-picker-item, .locale-option) {
+  text-shadow: none;
+}
+/* Preserve readable picker text when themes have vivid swatches. */
+main.trivia-app .skin-picker-item :is(span, strong, small) {
+  color: var(--trivia-text-on-light);
+  font-weight: 800;
+}
