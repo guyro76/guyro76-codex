@@ -290,7 +290,13 @@ export default function TriviaGame() {
   const [audioTestStatus,setAudioTestStatus]=useState<'unknown'|'ready'|'locked'|'unsupported'>('unknown');
   useEffect(()=>{
     document.addEventListener('visibilitychange',recoverGameAudioOnForeground);
-    return()=>document.removeEventListener('visibilitychange',recoverGameAudioOnForeground);
+    window.addEventListener('pageshow',recoverGameAudioOnForeground);
+    window.addEventListener('focus',recoverGameAudioOnForeground);
+    return()=>{
+      document.removeEventListener('visibilitychange',recoverGameAudioOnForeground);
+      window.removeEventListener('pageshow',recoverGameAudioOnForeground);
+      window.removeEventListener('focus',recoverGameAudioOnForeground);
+    };
   },[]);
   const [liquidPreviewRun,setLiquidPreviewRun]=useState(0);
   const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
