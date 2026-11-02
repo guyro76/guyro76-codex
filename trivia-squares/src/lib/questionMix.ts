@@ -51,28 +51,3 @@ export function readRecentQuestionTopics(raw:unknown):QuestionTopic[]{
 export function isGeographyQuestion(q:QuestionForMix):boolean{
  return topicForQuestion(q.category,q.text)===GEOGRAPHY;
 }
-
-/** When every unseen question left is geography (the server bank is ~95% generated
- *  "which country/city" rows), the topic rotation has nothing to rotate to and the
- *  player gets city after city. In that case bring back varied questions the player
- *  saw longest ago, so selectVariedQuestion can keep geography to one in four.
- *  The most recent `protectRecent` questions are never recycled. Pure: no storage. */
-export function withRecycledVariety<T extends QuestionForMix>(
- unseen:readonly T[],bank:readonly T[],seenOrder:readonly string[],
- canonical:(text:string)=>string,protectRecent=60,limit=80
-):T[]{
- if(!unseen.length||unseen.some(q=>!isGeographyQuestion(q)))return [...unseen];
- const recent=new Set(seenOrder.slice(-protectRecent));
- const rank=new Map(seenOrder.map((text,index)=>[text,index]));
- const unseenTexts=new Set(unseen.map(q=>canonical(q.text)));
- const picked=new Map<string,T>();
- for(const q of bank){
-  const key=canonical(q.text);
-  if(isGeographyQuestion(q)||recent.has(key)||unseenTexts.has(key)||picked.has(key))continue;
-  picked.set(key,q);
- }
- const recycled=[...picked.values()]
-  .sort((a,b)=>(rank.get(canonical(a.text))??-1)-(rank.get(canonical(b.text))??-1))
-  .slice(0,limit);
- return [...unseen,...recycled];
-}
