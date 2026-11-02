@@ -150,3 +150,20 @@ main.trivia-app :is(.question-text, .answer-option, .locale-option, .skin-picker
   font-weight: 800 !important;
   overflow-wrap: anywhere;
 }
+
+/* Multilingual long strings and punctuation: prevent clipped answer choices. */
+main.trivia-app :is(.question-text, .answer-option, .locale-option, .skin-picker-item) {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+main.trivia-app:lang(ar) :is(.question-text, .answer-option) {
+  letter-spacing: normal;
+  line-height: 1.65;
+}
+main.trivia-app :is(.question-text, .answer-option) :is(bdi, [dir='auto']) {
+  unicode-bidi: isolate;
+}
