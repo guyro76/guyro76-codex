@@ -149,7 +149,16 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
       const rewards=(selected==='tictactoe'||selected==='sequence'||selected==='pairs')?['30 קרדיטים']:selected==='quiz'?(correct?['30 קרדיטים']:['2 פירות']):
         selected==='word'?(correct?['15 קרדיטים']:['2 פירות']):['10 קרדיטים','5 פירות','יהלום אחד','קמע זמן אחד'];
       const result=rewards[Math.floor(Math.random()*rewards.length)];
-      const next=readLocalAlbum().map(item=>item.matchId===stageKey?{...item,played:true,game:selected,prize:result}:item);
+      const currentAlbum=readLocalAlbum();
+      const currentEntry=currentAlbum.find(item=>item.matchId===stageKey);
+      // A remount or a second tab must not award the same stage minigame twice.
+      if(!currentEntry||currentEntry.played){
+        setPlayed(Boolean(currentEntry?.played));
+        setPrize(currentEntry?.prize||'');
+        setPlaying(false);
+        return;
+      }
+      const next=currentAlbum.map(item=>item.matchId===stageKey?{...item,played:true,game:selected,prize:result}:item);
       saveLocalAlbum(next);setAlbum(next);setPrize(result);setPlayed(true);
       // Persist completion first; a rapid double click cannot claim rewards twice.
       onLocalPrize(result);
