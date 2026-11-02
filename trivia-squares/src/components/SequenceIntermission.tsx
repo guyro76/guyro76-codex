@@ -3,7 +3,7 @@ import {useEffect,useRef,useState} from 'react';
 import type {ActiveLocale} from '../lib/i18n';
 
 const symbols=['★','◆','●','▲'] as const;
-const colors=['#ec4899','#2563eb','#16a34a','#f59e0b'];
+const colors=['#be185d','#1d4ed8','#15803d','#92400e'];
 const text:Record<ActiveLocale,{title:string,round:string,watch:string,repeat:string,win:string,wrong:string,start:string,skip:string}>={
  he:{title:'אתגר זיכרון רצפים',round:'סבב',watch:'זכור את הרצף המואר',repeat:'חזור על הרצף',win:'הצלחת בשלושת הסבבים!',wrong:'טעות ברצף, נסה שוב',start:'התחל',skip:'דלג ללא קנס'},
  en:{title:'Sequence memory',round:'Round',watch:'Watch the glowing sequence',repeat:'Repeat the sequence',win:'All three rounds complete!',wrong:'Wrong sequence, try again',start:'Start',skip:'Skip without penalty'},
