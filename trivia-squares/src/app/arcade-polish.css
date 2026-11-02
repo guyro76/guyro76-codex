@@ -236,3 +236,32 @@ main.trivia-app .stage-gift-sparks>span{
 @media(prefers-reduced-motion:reduce){
  main.trivia-app :is(.stage-celebration,.stage-gift-tray>span,.stage-gift-sparks>span){animation:none!important}
 }
+
+/* Journey tracker: compact progress, clear targets, no invented rewards. */
+main.trivia-app .progress-pulse{
+ margin:10px 0;padding:12px 16px;border-radius:18px;
+ border:1.5px solid rgba(219,239,255,.7);
+ background:linear-gradient(115deg,rgba(65,60,148,.91),rgba(26,79,132,.93));
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 9px 22px rgba(7,16,54,.25);
+ color:#fff;font-weight:800;
+}
+main.trivia-app .progress-pulse-heading,
+main.trivia-app .progress-pulse-stats,
+main.trivia-app .progress-pulse-goal{
+ display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+}
+main.trivia-app .progress-pulse-heading strong{font-size:clamp(16px,2vw,20px);font-weight:900}
+main.trivia-app .progress-pulse-stats{margin:7px 0;font-size:clamp(13px,1.7vw,15px)}
+main.trivia-app .progress-pulse-goal{font-size:13px;margin:5px 0 7px}
+main.trivia-app .progress-pulse-track{
+ height:12px;overflow:hidden;border-radius:100px;
+ background:#152858;border:1px solid rgba(220,241,255,.58);
+}
+main.trivia-app .progress-pulse-fill{
+ height:100%;border-radius:100px;
+ background:linear-gradient(90deg,#5ce5f2,#bda4ff,#ffe29b);
+ box-shadow:0 0 12px rgba(126,236,255,.55);
+ transition:width .45s ease-out;
+}
+@media(max-width:580px){main.trivia-app .progress-pulse{padding:10px 12px;margin:7px 0}}
+@media(prefers-reduced-motion:reduce){main.trivia-app .progress-pulse-fill{transition:none}}
