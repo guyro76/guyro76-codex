@@ -245,6 +245,8 @@ export function gameAudioState(): 'unsupported'|'locked'|'ready' {
 export function recoverGameAudioOnForeground(): void {
  if(typeof document==='undefined'||document.visibilityState!=='visible'||!audio)return;
  if(audio.state==='running'||masterMuted)return;
+ // Browser lifecycle callbacks may lack user activation. Only retry an existing
+ // context; never create one or override the player's mute preference.
  // Avoid repeated resume calls during rapid Android tab/app visibility changes.
  const now=Date.now();
  if(now-lastForegroundRetryAt<700)return;
