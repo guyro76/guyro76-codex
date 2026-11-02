@@ -48,6 +48,17 @@ export function topicForQuestion(category:string,text:string):QuestionTopic{
 export function parseTopicPreferences(raw:unknown):QuestionTopic[]{
  if(!Array.isArray(raw))return [...ALL_QUESTION_TOPICS];
  const set=new Set(raw.filter((x):x is QuestionTopic=>ALL_QUESTION_TOPICS.includes(x as QuestionTopic)));
+ // Preserve the complete-selection intent across taxonomy expansions.
+ // Older saved selections had no "languages" topic; do not add it to a deliberately
+ // narrowed selection. The 15/14/13-item cases correspond to successive prior
+ // all-selected catalogs, not a general size-based opt-in.
+ if(set.size===ALL_QUESTION_TOPICS.length-1 && !set.has('languages'))set.add('languages');
+ if(set.size===ALL_QUESTION_TOPICS.length-2 && !set.has('disney') && !set.has('languages')){
+  set.add('disney');set.add('languages');
+ }
+ if(set.size===ALL_QUESTION_TOPICS.length-3 && !set.has('eurovision') && !set.has('disney') && !set.has('languages')){
+  set.add('eurovision');set.add('disney');set.add('languages');
+ }
  // Existing players who had selected all topics also get the newly added category.
  // If every category was enabled in a previous app version, automatically
  // include the newly introduced Disney category so existing players benefit.
