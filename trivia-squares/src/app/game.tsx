@@ -20,6 +20,7 @@ import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
 import { spanishQuestions } from '../lib/spanishQuestions';
 import { languageQuestions } from '../lib/languageQuestions';
+import { languageForPronunciation, speakLanguageAnswer } from '../lib/languageSpeech';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
@@ -2148,7 +2149,13 @@ export default function TriviaGame() {
             onClick={()=>void activateTimeCharm()}>♾️ {tr('הפעל קמע זמן')} ({currentCharms})</button>}
         </div>
         <div className='answer-grid'>
-          {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{(locale==='he'?['א','ב','ג','ד']:locale==='ar'?['أ','ب','ج','د']:['A','B','C','D'])[i]}</span>{a}</button>)}
+          {question.answers.map((a, i) => <div className='language-answer-row' key={i}>
+            <button className='answer-option' disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{(locale==='he'?['א','ב','ג','ד']:locale==='ar'?['أ','ب','ج','د']:['A','B','C','D'])[i]}</span>{a}</button>
+            {languageForPronunciation(question.id) && <button type='button' className='language-speaker' disabled={busy}
+              aria-label={(locale==='he'?'השמע הגייה של ':locale==='ar'?'استمع إلى نطق ':locale==='ru'?'Произнести ':locale==='fr'?'Écouter la prononciation de ':locale==='es'?'Escuchar la pronunciación de ':'Hear pronunciation of ')+a}
+              title={locale==='he'?'השמעת הגייה':'Pronunciation'}
+              onClick={event=>{event.preventDefault();event.stopPropagation();const lang=languageForPronunciation(question.id);if(lang&&!speakLanguageAnswer(a,lang))setMessage(locale==='he'?'הדפדפן אינו תומך בהקראת מילים':'Speech playback is unavailable in this browser');}}>🔊</button>}
+          </div>)}
         </div>
         {typeof question.id==='number' && question.id>0 && <QuestionReportButton client={client} userId={user?.id||null} legalAccepted={legalAccepted}
           questionId={question.id} locale={locale}/>}
