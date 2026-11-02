@@ -148,3 +148,28 @@ main.trivia-app .language-answer-row .answer-option{overflow-wrap:anywhere}
 @media (prefers-reduced-transparency:reduce){
  main.trivia-app :is(.glass-panel,.arena-panel,.quiz-card,.skin-picker-panel){backdrop-filter:none;-webkit-backdrop-filter:none;background:#273b79}
 }
+
+/* Restrained arcade motion on top of futuristic glass. */
+@keyframes triviaGlassPulse{
+ 0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 8px 22px rgba(9,14,50,.28)}
+ 50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 9px 28px rgba(70,184,255,.38),0 0 14px rgba(162,121,255,.24)}
+}
+@keyframes triviaRewardPop{
+ 0%{transform:translateY(8px) scale(.94);opacity:.45}
+ 70%{transform:translateY(-2px) scale(1.025);opacity:1}
+ 100%{transform:translateY(0) scale(1);opacity:1}
+}
+@keyframes triviaAnswerGlow{
+ 0%{filter:brightness(1)}
+ 45%{filter:brightness(1.14) saturate(1.15)}
+ 100%{filter:brightness(1)}
+}
+main.trivia-app .capture-demo-card{animation:triviaGlassPulse 4.8s ease-in-out infinite}
+main.trivia-app :is(.feedback-correct,.feedback-wrong){animation:triviaRewardPop .35s cubic-bezier(.2,.85,.25,1) both}
+main.trivia-app .feedback-correct{animation:triviaRewardPop .35s cubic-bezier(.2,.85,.25,1) both,triviaAnswerGlow .65s ease-out .35s both}
+@media(hover:hover) and (pointer:fine){
+ main.trivia-app .answer-option:not(:disabled):hover{filter:brightness(1.12) saturate(1.13);box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 7px 20px rgba(78,164,255,.33)}
+}
+@media(prefers-reduced-motion:reduce){
+ main.trivia-app :is(.capture-demo-card,.feedback-correct,.feedback-wrong){animation:none!important}
+}
