@@ -136,3 +136,40 @@
  .trivia-welcome .welcome-features>div{padding:8px}
 }
 @media(prefers-reduced-motion:reduce){.trivia-welcome *, .trivia-welcome .welcome-atmosphere{animation:none!important;transition:none!important}}
+
+/* ===== Night Arcade Glass — default skin welcome (matches the in-game design) ===== */
+.trivia-welcome.welcome-skin-regular{
+  background:radial-gradient(120% 90% at 50% -10%,#1B2A63 0%,#12204A 38%,#0A0E24 100%);
+  font-family:'Rubik',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;color:#F4F6FF;
+}
+.trivia-welcome.welcome-skin-regular .welcome-atmosphere{opacity:1;animation:none;
+  background:radial-gradient(34% 30% at 88% 14%,rgba(255,79,123,.32),transparent 70%),
+             radial-gradient(32% 30% at 8% 82%,rgba(46,230,184,.22),transparent 70%)}
+.trivia-welcome.welcome-skin-regular :is(.welcome-kicker,.welcome-art-tag){display:none}
+.trivia-welcome.welcome-skin-regular .welcome-copy h1{font-weight:900;letter-spacing:-.03em;color:#F4F6FF}
+.trivia-welcome.welcome-skin-regular .welcome-highlight{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#F4F6FF;-webkit-text-fill-color:currentColor}
+.trivia-welcome.welcome-skin-regular .welcome-intro{color:rgba(244,246,255,.75);font-weight:600}
+.trivia-welcome.welcome-skin-regular .welcome-start{
+  background:linear-gradient(180deg,#FF86A2 0%,#FF4F7B 52%,#D9305A 100%);color:#FFFFFF;border:0;border-radius:20px;
+  font-weight:800;text-shadow:0 1px 0 rgba(120,10,40,.35);
+  box-shadow:0 6px 0 #A51E45,0 16px 30px rgba(255,79,123,.35),inset 0 2px 0 rgba(255,255,255,.45);
+  transition:transform .1s ease,box-shadow .1s ease}
+.trivia-welcome.welcome-skin-regular .welcome-start:active{transform:translateY(5px);box-shadow:0 1px 0 #A51E45,0 6px 14px rgba(255,79,123,.25)}
+.trivia-welcome.welcome-skin-regular :is(.welcome-learn,.welcome-language-select select,.welcome-skin-trigger,.welcome-features > div){
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#F4F6FF;
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.trivia-welcome.welcome-skin-regular .welcome-features > div{border-radius:20px}
+.trivia-welcome.welcome-skin-regular .welcome-features span{color:#FFC23D}
+.trivia-welcome.welcome-skin-regular .welcome-game-art{transform:none}
+.trivia-welcome.welcome-skin-regular .welcome-promise,.trivia-welcome.welcome-skin-regular .welcome-footer{color:rgba(244,246,255,.62)}
+@media (prefers-reduced-motion:reduce){.trivia-welcome.welcome-skin-regular .welcome-start{transition:none}}
+/* Soft colour light behind the board preview (CSS, so it is never clipped into a square). */
+.trivia-welcome.welcome-skin-regular .welcome-art-glow{display:block;position:absolute;inset:-6% -4%;z-index:0;pointer-events:none;filter:none;opacity:1;
+  background:radial-gradient(40% 36% at 78% 20%,rgba(255,79,123,.38),transparent 70%),radial-gradient(40% 36% at 20% 82%,rgba(46,230,184,.26),transparent 70%)}
+.trivia-welcome.welcome-skin-regular .welcome-board-visual{position:relative;z-index:1}
+
+/* Apple-style elegant primary button on the welcome screen */
+.trivia-welcome.welcome-skin-regular .welcome-start{background:linear-gradient(180deg,#FF6F92 0%,#F2416C 100%);border-radius:18px;text-shadow:none;
+  box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 14px 34px rgba(242,65,108,.4),0 3px 8px rgba(0,0,0,.25)}
+.trivia-welcome.welcome-skin-regular .welcome-start:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.trivia-welcome.welcome-skin-regular .welcome-start:active{transform:scale(.98);box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 6px 16px rgba(242,65,108,.3)}

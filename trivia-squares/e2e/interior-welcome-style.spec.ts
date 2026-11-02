@@ -11,36 +11,33 @@ test.beforeEach(async({page})=>{
  });
 });
 
-test('default in-game screen carries welcome gold-violet design with high-contrast labels',async({page})=>{
+test('default in-game screen uses the night arcade glass design with high-contrast labels',async({page})=>{
  await page.goto('/');
  const root=page.locator('main.trivia-app.skin-regular');
  await expect(root).toBeVisible();
  await expect(page.locator('.arena-panel .arena-inner svg.board')).toBeVisible();
  const theme=await page.evaluate(()=>{
-   const root=document.querySelector('main.trivia-app')!;
-   const hero=document.querySelector('main.trivia-app .game-topbar')!;
-   const arena=document.querySelector('main.trivia-app .arena')!;
-   const score=document.querySelector('main.trivia-app .scoreboard')!;
-   const heading=document.querySelector('main.trivia-app .game-topbar h1')!;
-   const color=document.querySelector('main.trivia-app .level-pill')!;
+   const q=(s:string)=>document.querySelector(s)!;
+   const panel=getComputedStyle(q('main.trivia-app .arena-panel'));
+   const top=getComputedStyle(q('main.trivia-app .game-topbar'));
    return {
-     accent:getComputedStyle(root).getPropertyValue('--entry-gold').trim(),
-     surface:getComputedStyle(root).getPropertyValue('--entry-surface').trim(),
-     heroBackground:getComputedStyle(hero).backgroundImage,
-     boardBackground:getComputedStyle(arena).backgroundImage,
-     scoreBackground:getComputedStyle(score).backgroundImage,
-     headingWeight:Number(getComputedStyle(heading).fontWeight),
-     levelColor:getComputedStyle(color).color,
+     panelBlur:(panel.backdropFilter||(panel as unknown as {webkitBackdropFilter:string}).webkitBackdropFilter||''),
+     topBlur:(top.backdropFilter||(top as unknown as {webkitBackdropFilter:string}).webkitBackdropFilter||''),
+     trayBackground:getComputedStyle(q('main.trivia-app .arena')).backgroundImage,
+     font:getComputedStyle(q('main.trivia-app .game-topbar h1')).fontFamily,
+     headingWeight:Number(getComputedStyle(q('main.trivia-app .game-topbar h1')).fontWeight),
+     levelColor:getComputedStyle(q('main.trivia-app .level-pill')).color,
+     primary:getComputedStyle(q('main.trivia-app .control-row .gold-button')).backgroundImage,
      overflowX:document.documentElement.scrollWidth>window.innerWidth+3
    };
  });
- expect(theme.accent).toBe('#FFC785');
- expect(theme.surface).toBe('#1B1545');
- expect(theme.heroBackground).toContain('linear-gradient');
- expect(theme.boardBackground).toContain('linear-gradient');
- expect(theme.scoreBackground).toContain('linear-gradient');
- expect(theme.headingWeight).toBeGreaterThanOrEqual(900);
- expect(theme.levelColor).toBe('rgb(41, 33, 78)');
+ expect(theme.panelBlur).toContain('blur');
+ expect(theme.topBlur).toContain('blur');
+ expect(theme.trayBackground).toContain('linear-gradient');
+ expect(theme.font).toContain('Rubik');
+ expect(theme.headingWeight).toBeGreaterThanOrEqual(800);
+ expect(theme.levelColor).toBe('rgb(43, 27, 0)');
+ expect(theme.primary).toContain('linear-gradient');
  expect(theme.overflowX).toBeFalsy();
 });
 

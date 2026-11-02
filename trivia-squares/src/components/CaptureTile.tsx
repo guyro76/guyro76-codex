@@ -11,6 +11,7 @@ type Props = {
   selectable?: boolean; onSelect?: () => void; locale: ActiveLocale; idPrefix?: string; fishEnabled?: boolean;
 };
 
+import {AVATAR_ART} from './GameImage';
 export default function CaptureTile({row,col,x,y,width,height,color,name,icon,style,selectable=false,onSelect,locale,idPrefix='board',fishEnabled=false}:Props) {
   const id = idPrefix+'-capture-' + row + '-' + col;
   const cx = x + width / 2, cy = y + height / 2;
@@ -118,7 +119,9 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
       x={x+width-23} y={y+3} width={19} height={19} pointerEvents='none' aria-hidden='true'>
       <div style={{display:'flex',alignItems:'center',justifyContent:'center',
         width:'100%',height:'100%',fontSize:Math.min(16,width*.23),fontWeight:900,
-        filter:'drop-shadow(0 1px 2px #101436)',lineHeight:1}}>{icon}</div>
+        filter:'drop-shadow(0 1px 2px #101436)',lineHeight:1}}>{AVATAR_ART[icon]
+          ? <img src={'/art/'+AVATAR_ART[icon]+'.webp'} alt='' draggable={false} style={{width:'100%',height:'100%',objectFit:'contain'}}/>
+          : icon}</div>
     </foreignObject>}
     <g className='capture-firework' aria-hidden='true' pointerEvents='none'>
       <circle className='capture-firework-ring' cx={cx} cy={cy} r={radius*.71}

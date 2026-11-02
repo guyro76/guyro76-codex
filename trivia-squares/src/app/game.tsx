@@ -32,6 +32,8 @@ import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLo
 import StageReward from '../components/StageReward';
 import QuestionReportButton from '../components/QuestionReportButton';
 import TriviaMark from '../components/TriviaMark';
+import GameArt from '../components/GameArt';
+import {GameImage,AvatarArt,type ObjectArt} from '../components/GameImage';
 import CaptureTile, {type CaptureStyle} from '../components/CaptureTile';
 import { readFishPreference, saveFishPreference } from '../components/CapturedSquareFish';
 import {reassignCapture,type LocalOwner,type LocalOwnerMode} from '../lib/captureOwnership';
@@ -117,13 +119,14 @@ const authorCredits:Record<ActiveLocale,string>={
 };
 
 const palettes = ['#358CFF', '#F97316', '#A855F7', '#10B981', '#EC4899', '#EAB308', '#EF4444', '#06B6D4'];
-const avatars = ['🦊', '🦁', '🐼', '🐲', '🦄', '👑', '🚀', '⭐'];
+const avatars = ['🦊', '🦁', '🐼', '🐲', '🦄', '👑', '🚀', '⭐', '🦉'];
 const worlds = [
   { size: 3, name: 'גן הפירות', subtitle: 'ההרפתקה מתחילה כאן', icon: '🍎', slug: 'orchard', badge: 'עולם 01', reward: 'פירות' },
   { size: 4, name: 'מכרות היהלומים', subtitle: 'גלו אוצרות מנצנצים', icon: '💎', slug: 'crystal', badge: 'עולם 02', reward: 'יהלומים' },
   { size: 5, name: 'ממלכת העננים', subtitle: 'הדרך עוברת בין הכוכבים', icon: '☁️', slug: 'clouds', badge: 'עולם 03', reward: 'בונוסים' },
   { size: 6, name: 'גלקסיית הכוכבים', subtitle: 'אתגר המאסטרים הגדול', icon: '🪐', slug: 'galaxy', badge: 'עולם 04', reward: 'גביעים' }
 ] as const;
+const WORLD_ART:Record<string,ObjectArt>={orchard:'apple',crystal:'gem',clouds:'cloud',galaxy:'planet'};
 const empty = (size: number, kind:'solo'|'local'='solo'): GameState => ({ rows: size, cols: size, mode: kind, turn: 'host', edges: {}, owners: {}, scores: { host: 0, guest: 0, bot: 0 } });
 const css = {
   main: {} as React.CSSProperties,
@@ -1561,7 +1564,7 @@ export default function TriviaGame() {
       {user && <div className='google-player-header' aria-label={tr('החשבון המחובר')}>
         {googlePhoto ? <img src={googlePhoto} referrerPolicy='no-referrer' alt={tr('תמונת הפרופיל שלך מ-Google')}
            style={{width:44,height:44,objectFit:'cover',borderRadius:'50%',border:'2px solid #FFE08A'}} />
-          : <span aria-hidden='true' style={{fontSize:28}}>{avatar}</span>}
+          : <AvatarArt avatar={avatar} size={40}/>}
         <span><strong>{googleName || name || 'שחקן מחובר'}</strong><small style={{display:'block',fontSize:11,color:'#DAE9FF'}}>{providerGoogle ? 'מחובר באמצעות Google' : 'מחובר לחשבון המשחק'}</small></span>
       </div>}
       <div className='game-topbar-actions'>
@@ -1578,13 +1581,13 @@ export default function TriviaGame() {
           }
           setMuted(!enable);
         }}>
-        <span aria-hidden='true'>{muted||volume===0?'🔇':'🔊'}</span>
+        <GameArt name={muted||volume===0?'speakerOff':'speaker'} size={26}/>
         <strong>{locale==='he'?'צליל':locale==='en'?'Sound':locale==='ru'?'Звук':locale==='fr'?'Son':locale==='es'?'Sonido':'الصوت'}</strong>
       </button>
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
         aria-label={tr('עיצוב המשחק')} title={tr('בחר סקין למשחק')}>
-        <span className='skin-palette-icon' aria-hidden='true'>🎨</span><span>{tr('עיצוב המשחק')}</span>
+        <span className='skin-palette-icon' aria-hidden='true'><GameArt name='palette' size={26}/></span><span>{tr('עיצוב המשחק')}</span>
       </button>
       {skinPickerOpen&&<section id='skin-picker-panel' className='skin-picker-panel' aria-label={tr('בחר סקין למשחק')}>
         <div className='skin-picker-title'>{tr('6 סקינים לבחירה · ההתקדמות נשמרת')}</div>
@@ -1603,31 +1606,31 @@ export default function TriviaGame() {
     <div className='game-grid'>
       <section className='glass-panel arena-panel'>
         <div className='arena-title'>
-          <div><h2>{world.icon} {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
+          <div><h2><GameImage name={WORLD_ART[world.slug]} size={44} className='world-emblem'/> {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
           <div className='arena-head-right'>
              {captureToast && <div key={captureToast.id} className='capture-win-toast' role='status' aria-live='polite'>
                <strong>🎆 {locale==='he'?'ריבוע נכבש!':locale==='es'?'¡Casilla conquistada!':locale==='fr'?'Case conquise !':locale==='ru'?'Клетка захвачена!':locale==='ar'?'تم الاستيلاء على المربع!':'Square captured!'}</strong>
                <span>🪙 +{captureToast.amount}</span>
              </div>}
              <div className='arena-quick-wallet' aria-label={locale==='he'?'פרסים וקרדיטים זמינים':locale==='es'?'Premios, créditos y puntos':locale==='fr'?'Récompenses et crédits':locale==='ru'?'Награды и монеты':locale==='ar'?'المكافآت والعملات':'Available game credits and charms'}>
-               <span title={locale==='he'?'קרדיטים זמינים':locale==='es'?'Créditos disponibles':locale==='fr'?'Crédits disponibles':locale==='ru'?'Доступные монеты':locale==='ar'?'العملات المتاحة':'Available credits'}>🪙 {currentCredits}</span>
-               <span title={locale==='he'?'נקודות ידע':locale==='es'?'Puntos de conocimiento':locale==='fr'?'Points de connaissance':locale==='ru'?'Баллы знаний':locale==='ar'?'نقاط المعرفة':'Knowledge points'}>🧠 {currentKnowledgePoints}</span>
-               <span title={locale==='he'?'קמעות זמן':'Time charms'}>⏳ {currentCharms}</span>
+               <span title={locale==='he'?'קרדיטים זמינים':locale==='es'?'Créditos disponibles':locale==='fr'?'Crédits disponibles':locale==='ru'?'Доступные монеты':locale==='ar'?'العملات المتاحة':'Available credits'}><GameImage name='coin' size={24}/><span className='wallet-value' data-testid='wallet-credits'>{currentCredits}</span></span>
+               <span title={locale==='he'?'נקודות ידע':locale==='es'?'Puntos de conocimiento':locale==='fr'?'Points de connaissance':locale==='ru'?'Баллы знаний':locale==='ar'?'نقاط المعرفة':'Knowledge points'}><GameImage name='bulb' size={24}/><span className='wallet-value' data-testid='wallet-knowledge'>{currentKnowledgePoints}</span></span>
+               <span title={locale==='he'?'קמעות זמן':'Time charms'}><GameImage name='stopwatch' size={24}/><span className='wallet-value' data-testid='wallet-charms'>{currentCharms}</span></span>
              </div>
              <button type='button' className='level-pill campaign-stages-toggle' aria-haspopup='dialog' disabled={!!question} onClick={()=>openGameMenu('stages')}
                aria-label={(locale==='he'?'בחירת שלב · ':locale==='en'?'Choose stage · ':locale==='ru'?'Выбор уровня · ':locale==='fr'?'Choisir le niveau · ':locale==='es'?'Elegir nivel · ':'اختيار المرحلة · ')+stageId+' / '+STAGE_COUNT}>
-               <span aria-hidden='true'>🗺️</span> {locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</button>
+               <GameImage name='flag' size={26}/> {locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</button>
            </div>
         </div>
         <ProgressPulse locale={locale} stage={stageId} captured={Object.values(state.owners).filter(owner=>owner==='host').length} streak={remote ? Number(state.streak?.[player]||0) : localComboStreak}/>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
-            <div className='portrait'>{remote && player === 'guest' ? opponentIcon : avatar}</div>
+            <div className='portrait'><AvatarArt avatar={remote && player === 'guest' ? opponentIcon : avatar} size={44}/></div>
             <div><div className='score-name'>{remote?.players?.host?.name || name || tr('שחקן 1')}</div><div className='score-num'>{state.scores.host}</div></div>
           </div>
-          <div className='versus'>{tr((state.mode === 'local' ? state.turn === 'host' : state.turn === player) ? 'התור שלך' : 'תור היריב')}<div style={{ fontSize: 17 }}>⚔️</div></div>
+          <div className='versus'>{tr((state.mode === 'local' ? state.turn === 'host' : state.turn === player) ? 'התור שלך' : 'תור היריב')}<GameArt name='versus' size={22}/></div>
           {state.mode!=='solo' && <div className='player-tile left-side other'>
-            <div className='portrait'>{state.mode === 'bot' ? '🤖' : state.mode==='local' ? guestAvatar : remote?.players?.guest?.avatar || '🐲'}</div>
+            <div className='portrait'><AvatarArt avatar={state.mode === 'bot' ? '🤖' : state.mode==='local' ? guestAvatar : remote?.players?.guest?.avatar || '🐲'} size={44}/></div>
             <div><div className='score-name'>{state.mode === 'bot' ? tr('המחשב') : state.mode==='local' ? guestName : remote?.players?.guest?.name || tr('שחקן 2')}</div><div className='score-num'>{state.scores.guest + state.scores.bot}</div></div>
           </div>}
         </div>
@@ -1702,14 +1705,14 @@ export default function TriviaGame() {
             placeholder={locale==='en'?'Player name':'שם השחקן'} onChange={e=>updatePlayerName(e.target.value)} />
         </div>}
         {!remote && state.mode==='local' && ownerMode!=='auto' && <p className='capture-tip'>{locale==='en'?'Tap any captured square to correct its owner.':'ניתן ללחוץ על ריבוע שנכבש כדי לשנות למי הוא שייך.'}</p>}
-        <div className='gesture-hint'><span className='draw-icon'>✍️</span>{tr(bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח')}</div>
+        <div className='gesture-hint'><span className='draw-icon'><GameArt name='marker' size={22}/></span>{tr(bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח')}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>{tr("שטחים שנכבשו")}</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
         {!online && <div role='alert' style={{background:'#D94C37',color:'#FFFFFF',padding:10,borderRadius:12,textAlign:'center',marginTop:12}}>
           {tr("📡 החיבור לרשת נותק. משחק מקומי עדיין זמין, ומשחק מחובר יתחדש עם חזרת החיבור.")}
         </div>}
         {finished && <section className='victory-panel' role='status' aria-label={locale==='en'?'Match result':'תוצאות המשחק'}>
-          <div className='victory-symbol' aria-hidden='true'>🏆</div>
+          <div className='victory-symbol' aria-hidden='true'><GameImage name='trophy' size={96}/></div>
           <h2 style={{margin:'5px 0',fontSize:'clamp(22px,3.8vw,31px)'}}>
             {state.mode==='solo' ? tr('אליפות! כל הריבועים נסגרו') : state.scores.host === state.scores.guest+state.scores.bot
               ? tr('תיקו גדול!') : state.scores.host>state.scores.guest+state.scores.bot ? tr('אליפות! כל הריבועים נסגרו') : tr('היריב ניצח הפעם')}
@@ -1729,8 +1732,8 @@ export default function TriviaGame() {
         </div>
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>{tr("ממתינים שהחבר ייכנס לחדר...")}</p>}
         <div className='control-row'>
-          <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>
-          <button className='glass-button' onClick={()=>{setTutorialPage(0);setShowTutorial(true)}}>{tr("❓ איך משחקים")}</button>
+          <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}><GameArt name='play' size={22}/> {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>
+          <button className='glass-button' onClick={()=>{setTutorialPage(0);setShowTutorial(true)}}><GameArt name='help' size={22}/> {tr("איך משחקים")}</button>
           {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>{tr("⭐ שאלת זהב!")}</button>}
           {availableBonus>0 && state.mode!=='online' && <button className='gold-button' disabled={busy||!!question} onClick={()=>setBonusSelect(v=>!v)}>
             ✨ {tr(bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס')} ({availableBonus})</button>}
@@ -2010,7 +2013,7 @@ export default function TriviaGame() {
           </div>
           <div style={{margin:'4px 0 9px',fontSize:12,color:'#E6F3FF'}}>{tr("תצוגת הטוש:")} <span style={{display:'inline-block',width:80,borderTop:'8px solid '+lineColor,borderRadius:9,verticalAlign:'middle'}}/></div>
           <div className='form-field'>{tr("סמל שיופיע בכל ריבוע")}</div>
-          <div className='avatar-row'>{avatars.map(a => <button className='avatar-choice' key={a} aria-label={tr('בחר אוואטר ')+a} aria-pressed={avatar === a} onClick={() => setAvatar(a)}>{a}</button>)}</div>
+          <div className='avatar-row'>{avatars.map(a => <button className='avatar-choice' key={a} aria-label={tr('בחר אוואטר ')+a} aria-pressed={avatar === a} onClick={() => setAvatar(a)}><AvatarArt avatar={a} size={34}/></button>)}</div>
           <section className='capture-personalization' aria-label={locale==='en'?'Square capture customization':'התאמה אישית לכיבוש הריבועים'}>
              <h3>{locale==='en'?'Captured square design':'עיצוב הריבוע שנכבש'}</h3>
              <div className='capture-style-options' role='group' aria-label={locale==='en'?'Capture visual style':'סגנון כיבוש'}>
@@ -2040,7 +2043,7 @@ export default function TriviaGame() {
                <div className='form-field'>{locale==='en'?'Player 2 icon':'סמל שחקן 2'}</div>
                <div className='avatar-row' role='group' aria-label={locale==='en'?'Player 2 avatar':'סמל שחקן 2'}>
                  {avatars.map(a=><button type='button' key={'guest-icon-'+a} className='avatar-choice'
-                   aria-label={a} aria-pressed={guestAvatar===a} onClick={()=>setGuestAvatar(a)}>{a}</button>)}
+                   aria-label={a} aria-pressed={guestAvatar===a} onClick={()=>setGuestAvatar(a)}><AvatarArt avatar={a} size={34}/></button>)}
                </div>
              </>}
              {mode!=='local' && <p className='smalltxt'>{locale==='en'?'Online and bot ownership is verified by the game engine to keep scores fair.':'במשחק מחובר או מול המחשב הבעלות נקבעת לפי מנוע המשחק כדי לשמור על ניקוד הוגן.'}</p>}
@@ -2138,12 +2141,12 @@ export default function TriviaGame() {
         <p>{locale==='en'?'Choose the player who gets the point.':'בחר למי לשייך את הריבוע והנקודה.'}</p>
         <div className='capture-owner-buttons'>
           <button type='button' className='capture-owner-choice' autoFocus onClick={()=>chooseCaptureOwner('host')}>
-            <span className='capture-owner-symbol' style={{borderColor:color}}>{avatar}</span>
+            <span className='capture-owner-symbol' style={{borderColor:color}}><AvatarArt avatar={avatar} size={44}/></span>
             <strong>{name || (locale==='en'?'Player 1':'שחקן 1')}</strong>
             <span className='capture-owner-caption'>{locale==='en'?'Player 1':'שחקן 1'}</span>
           </button>
           <button type='button' className='capture-owner-choice' onClick={()=>chooseCaptureOwner('guest')}>
-            <span className='capture-owner-symbol' style={{borderColor:guestColor}}>{guestAvatar}</span>
+            <span className='capture-owner-symbol' style={{borderColor:guestColor}}><AvatarArt avatar={guestAvatar} size={44}/></span>
             <strong>{guestName || (locale==='en'?'Player 2':'שחקן 2')}</strong>
             <span className='capture-owner-caption'>{locale==='en'?'Player 2':'שחקן 2'}</span>
           </button>

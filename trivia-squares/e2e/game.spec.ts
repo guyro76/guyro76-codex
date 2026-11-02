@@ -197,7 +197,7 @@ test('each subsequent question is new and never repeats the previous question',a
   expect(new Set(history).size).toBe(2);
 });
 
-test('required player name persists after reload and notebook grid remains translucent',async({page})=>{
+test('required player name persists after reload and the board tray remains translucent',async({page})=>{
   await page.goto('/');
   const guide=page.getByRole('dialog',{name:'הסבר משחק'});
   await expect(guide).toBeVisible();
@@ -215,10 +215,10 @@ test('required player name persists after reload and notebook grid remains trans
   await nav.getByRole('button',{name:/התאמה אישית/}).click();
   await expect(nav.getByLabel('כינוי שחקן')).toHaveValue('שחקנית הבודקת');
   await nav.getByRole('button',{name:'סגור תפריט'}).click();
-  const grid=page.locator('.arena-inner');
-  await expect(grid).toHaveCSS('background-size', /24px 24px/);
-  const rgb=await grid.evaluate(e=>getComputedStyle(e).backgroundColor);
-  expect(rgb).toMatch(/rgba\(/);
+  // The board sits in a translucent glass tray (night arcade design replaced the notebook grid).
+  const tray=page.locator('.arena');
+  const paint=await tray.evaluate(e=>getComputedStyle(e).backgroundImage);
+  expect(paint).toMatch(/rgba\(/);
 });
 
 test('new game reloads reviewed questions without repeating any previously displayed question',async({page})=>{
@@ -275,7 +275,7 @@ test('tutorial is an animated real rule demo with correct Hebrew and English cap
   await en.press('Escape');
   await expect(en).toHaveCount(0);
   await expect(page.locator('main.trivia-app')).toHaveAttribute('dir','ltr');
-  await page.getByRole('button',{name:'עברית',exact:true}).click();
+  await switchLanguage(page,'עברית');
   await expect(page.locator('main.trivia-app')).toHaveAttribute('dir','rtl');
 });
 

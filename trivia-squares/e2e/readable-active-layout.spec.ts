@@ -27,7 +27,8 @@ test('active desktop game keeps essential controls bold and readable without cli
    await expect(element).toHaveCount(1);
    const computed=await element.evaluate(e=>({size:parseFloat(getComputedStyle(e).fontSize),weight:parseInt(getComputedStyle(e).fontWeight,10)}));
    expect(computed.size,selector+' type size').toBeGreaterThanOrEqual(14);
-   expect(computed.weight,selector+' weight').toBeGreaterThanOrEqual(900);
+   // Owner requirement (docs/MASTER_REQUIREMENTS.md §1): bold fonts only, weight 700 and above.
+   expect(computed.weight,selector+' weight').toBeGreaterThanOrEqual(700);
  }
  const bounds=await page.evaluate(()=>{
    const rect=document.querySelector('svg.board')?.getBoundingClientRect();

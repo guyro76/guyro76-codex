@@ -38,8 +38,8 @@ test('an ordinary correct answer grants 5 credits and 10 knowledge points, inclu
     await expect(question).toHaveCount(0);
     await expect(page.locator('.status-line')).toContainText('+5 קרדיטים');
   }
-  await expect(page.locator('.arena-quick-wallet')).toContainText('🪙 5');
-  await expect(page.locator('.arena-quick-wallet')).toContainText('🧠 10');
+  await expect(page.getByTestId('wallet-credits')).toHaveText('5');
+  await expect(page.getByTestId('wallet-knowledge')).toHaveText('10');
   const read=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}'));
   expect((await read()).credits.host).toBe(5);
   expect((await read()).wallet.knowledge_points.host).toBe(10);
