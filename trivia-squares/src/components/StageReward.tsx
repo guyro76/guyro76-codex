@@ -138,7 +138,12 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     setPlaying(true);setNotice('');setGame(selected);
     if(selected==='wheel')setWheelTurns(t=>t+5+Math.floor(Math.random()*3));
     if(remoteMatchId&&client){
-      if(selected==='quiz'){claimRef.current=false;setPlaying(false);return;}
+      // These games currently award only through the local album. Never send
+      // unsupported game identifiers to the server-side reward RPC.
+      if(selected==='quiz'||selected==='tictactoe'||selected==='sequence'||selected==='pairs'){
+        setNotice(translate('האתגר הזה זמין כרגע במשחק מקומי בלבד.','This challenge is currently available in local games only.'));
+        claimRef.current=false;setPlaying(false);return;
+      }
       const {data,error}=await client.rpc('trivia_stage_play',{p_match:remoteMatchId,p_game:selected,p_guess:selected==='word'?guess.trim():null});
       if(error){setNotice(translate('לא ניתן לקבל את הפרס: ','Unable to award prize: ')+error.message);setPlaying(false);setBurstBalloon(null);setCakeCut(false);cakeTriggered.current=false;claimRef.current=false;return;}
       const result=String(data.prize||'');
