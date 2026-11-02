@@ -28,6 +28,7 @@ import StageReward from '../components/StageReward';
 import QuestionReportButton from '../components/QuestionReportButton';
 import TriviaMark from '../components/TriviaMark';
 import CaptureTile, {type CaptureStyle} from '../components/CaptureTile';
+import { readFishPreference, saveFishPreference } from '../components/CapturedSquareFish';
 import {reassignCapture,type LocalOwner,type LocalOwnerMode} from '../lib/captureOwnership';
 import TutorialPreview from '../components/TutorialPreview';
 import LocalQuestionBackup from '../components/LocalQuestionBackup';
@@ -168,6 +169,7 @@ export default function TriviaGame() {
   const [wrongAnswerFeedback,setWrongAnswerFeedback]=useState<WrongAnswerFeedback|null>(null);
   const [skin,setSkin]=useState<SkinId>('regular');
   const [skinPickerOpen,setSkinPickerOpen]=useState(false);
+  const [fishEnabled,setFishEnabled]=useState(false);
   const [selectedTopics,setSelectedTopics]=useState<QuestionTopic[]>([...ALL_QUESTION_TOPICS]);
   const toggleTopic=(id:QuestionTopic)=>setSelectedTopics(previous=>{
     const next=previous.includes(id)?previous.filter(t=>t!==id):[...previous,id];
@@ -425,6 +427,7 @@ export default function TriviaGame() {
        if(avatars.includes(savedCapture.guestAvatar||''))setGuestAvatar(savedCapture.guestAvatar!);
        setSelectedTopics(parseTopicPreferences(JSON.parse(localStorage.getItem('trivia-question-topics-v1')||'null')));
         recentQuestionTopics.current=readRecentQuestionTopics(JSON.parse(localStorage.getItem('trivia-recent-question-topics-v1')||'[]'));
+       setFishEnabled(readFishPreference());
        const storedSkin=localStorage.getItem('trivia-skin-v1');
        const migratedSkin:Record<string,SkinId>={royal:'regular',ocean:'urban',neon:'future',stone:'vintage',forest:'retro'};
        if(skins.some(item=>item.id===storedSkin))setSkin(storedSkin as SkinId);
@@ -1533,6 +1536,11 @@ export default function TriviaGame() {
           </svg>
         </div>
       </div>}
+      <button type='button' className='trivia-fish-toggle' aria-pressed={fishEnabled}
+        aria-label={locale==='he'?'דגים בריבועים':locale==='ar'?'أسماك في المربعات':locale==='ru'?'Рыбки в клетках':locale==='fr'?'Poissons dans les cases':locale==='es'?'Peces en las casillas':'Fish in squares'}
+        onClick={()=>setFishEnabled(previous=>{const next=!previous;saveFishPreference(next);return next;})}>
+        🐟 {fishEnabled?'✓':'○'}
+      </button>
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
         aria-label={tr('עיצוב המשחק')} title={tr('בחר סקין למשחק')}>
@@ -1684,7 +1692,7 @@ export default function TriviaGame() {
                   {owner
                     ? <CaptureTile row={r} col={c} x={x} y={y} width={w-10} height={h-10}
                         color={colors[owner]} name={ownerName} icon={ownerIcon} style={captureStyle}
-                        locale={locale} selectable={editable} onSelect={()=>setCapturePending({keys:[r+'-'+c],from:'edit'})}/>
+                        locale={locale} fishEnabled={fishEnabled} selectable={editable} onSelect={()=>setCapturePending({keys:[r+'-'+c],from:'edit'})}/>
                     : <rect x={x} y={y} width={w-10} height={h-10} rx='10' fill='url(#cellTint)'/>}
                   {bonusSelect && !owner && <rect x={x} y={y} width={w-10} height={h-10} rx='10'
                     role='button' tabIndex={0} aria-label={locale==='en'?'Capture square at row '+(r+1)+', column '+(c+1):'כבוש ריבוע בשורה '+(r+1)+' עמודה '+(c+1)}
