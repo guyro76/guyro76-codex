@@ -536,6 +536,8 @@ export default function TriviaGame() {
               Object.values(value.edges).includes('guest'));
             const migrating=obsoleteLocalGuest||corruptSoloGuest;
             const repaired=migrating?{...repairSoloBoard(value),mode:'solo' as const}:value;
+            localComboByPlayerRef.current={host:0,guest:0};
+            setLocalComboStreak(0);
             setLocal(repaired);setSize(repaired.rows);
             if(migrating){
               // Commit the repaired board immediately. A refresh must not undo it,
