@@ -3,8 +3,14 @@ import {useRef,useState} from 'react';
 import type {ActiveLocale} from '../lib/i18n';
 import {gestureCopy,markTarget,requiredTargets,type GestureGame} from '../lib/gestureIntermissions';
 import './gesture-intermission.css';
+import ScratchCard from './ScratchCard';
 
 export default function GestureIntermission({kind,locale,disabled,onComplete}:{kind:GestureGame;locale:ActiveLocale;disabled:boolean;onComplete:()=>void}){
+ if(kind==='scratch')return <ScratchCard locale={locale} disabled={disabled} onComplete={onComplete}/>;
+ return <TargetChallenge kind={kind} locale={locale} disabled={disabled} onComplete={onComplete}/>;
+}
+
+function TargetChallenge({kind,locale,disabled,onComplete}:{kind:GestureGame;locale:ActiveLocale;disabled:boolean;onComplete:()=>void}){
  const [marks,setMarks]=useState<number[]>([]);
  const marked=useRef<number[]>([]);
  const claimed=useRef(false);
