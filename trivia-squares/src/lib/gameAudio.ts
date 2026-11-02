@@ -9,6 +9,7 @@ let lastStrokeAt = -1;
 let pendingResume = false;
 let masterGain: GainNode | null = null;
 let masterMuted = false;
+let lastForegroundRetryAt = 0;
 
 /** Safari on iOS can default to ambient mode and silence game sounds with
  * the hardware Silent switch. Ask for playback while the player explicitly
@@ -243,7 +244,11 @@ export function gameAudioState(): 'unsupported'|'locked'|'ready' {
  * comes back to the game. Any later click still runs unlockGameAudio normally. */
 export function recoverGameAudioOnForeground(): void {
  if(typeof document==='undefined'||document.visibilityState!=='visible'||!audio)return;
- if(audio.state==='running')return;
+ if(audio.state==='running'||masterMuted)return;
+ // Avoid repeated resume calls during rapid Android tab/app visibility changes.
+ const now=Date.now();
+ if(now-lastForegroundRetryAt<700)return;
+ lastForegroundRetryAt=now;
  configureGamePlaybackSession();
  unlockGameAudio();
 }
