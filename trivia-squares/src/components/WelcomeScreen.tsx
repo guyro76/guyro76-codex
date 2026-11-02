@@ -6,6 +6,23 @@ import type {ActiveLocale} from '../lib/i18n';
 import './welcome-screen.css';
 
 const locales=['he','en','ru','fr','ar','es'] as const;
+const welcomeSkins=[
+ {id:'regular',colors:['#1F3265','#688FD8','#F9DA90']},
+ {id:'urban',colors:['#172935','#5A8C9C','#F4BD70']},
+ {id:'vintage',colors:['#583D36','#D1AC7C','#F7E9CE']},
+ {id:'retro',colors:['#302B5D','#FAAE4C','#71D4BC']},
+ {id:'pop',colors:['#F34594','#FFD952','#4994EA']},
+ {id:'future',colors:['#42117E','#F15A24','#E946CC']}
+] as const;
+type WelcomeSkin=typeof welcomeSkins[number]['id'];
+const skinLabels:Record<ActiveLocale,{trigger:string;title:string;names:Record<WelcomeSkin,string>}>={
+ he:{trigger:'בחרו סקין',title:'6 סקינים לבחירה · ההתקדמות נשמרת',names:{regular:'רגיל · מקורי',urban:'אורבני',vintage:'וינטג׳',retro:'רטרו',pop:'פופ צבעוני',future:'עתידני סגול-כתום'}},
+ en:{trigger:'Choose a skin',title:'6 skins · progress is saved',names:{regular:'Original',urban:'Urban',vintage:'Vintage',retro:'Retro',pop:'Pop Art',future:'Purple & Orange AI'}},
+ ru:{trigger:'Выбрать стиль',title:'6 тем · прогресс сохраняется',names:{regular:'Оригинальный',urban:'Городской',vintage:'Винтаж',retro:'Ретро',pop:'Поп-арт',future:'AI: фиолетовый и оранжевый'}},
+ fr:{trigger:'Choisir un thème',title:'6 thèmes · progression conservée',names:{regular:'Original',urban:'Urbain',vintage:'Vintage',retro:'Rétro',pop:'Pop Art',future:'IA violet et orange'}},
+ ar:{trigger:'اختر المظهر',title:'6 مظاهر · يتم حفظ التقدم',names:{regular:'الأصلي',urban:'حضري',vintage:'كلاسيكي',retro:'ريترو',pop:'فن البوب',future:'مستقبلي بنفسجي وبرتقالي'}},
+ es:{trigger:'Elegir diseño',title:'6 diseños · se guarda el progreso',names:{regular:'Original',urban:'Urbano',vintage:'Vintage',retro:'Retro',pop:'Arte pop',future:'IA violeta y naranja'}}
+};
 const dictionary={
  he:{brand:'טריוויה ריבועים',eyebrow:'חושבים. מחברים. כובשים.',titleA:'כל קו הוא',titleB:'שאלת טריוויה.',subtitle:'חברו שתי נקודות כמו עם טוש, ענו נכון על שאלות מפתיעות וצבעו את הדרך לניצחון. כל ריבוע הוא הישג חדש.',start:'מתחילים לשחק',learn:'איך משחקים?',step1:'מחברים נקודות',step2:'עונים נכון',step3:'כובשים ריבוע',hint:'בלי להוריד אפליקציה · 100 שלבים · 6 שפות',level:'100 שלבי הרפתקה',topics:'תרבות, סדרות, ספורט ועוד',footer:'חשיבה חדה. משחק ממכר.',instructions:'גררו בין שתי נקודות סמוכות, בחרו תשובה מתוך ארבע אפשרויות וסגרו ריבוע כדי לצבור נקודות. לכל שלב יש לוח משלו.',close:'הבנתי',preview:'המחשת לוח המשחק'},
  en:{brand:'TRIVIA SQUARES',eyebrow:'THINK. CONNECT. CONQUER.',titleA:'Every line',titleB:'unlocks a question.',subtitle:'Draw between two dots with a marker, answer clever trivia, and color your way to victory. Every square is an achievement.',start:'Start playing',learn:'How to play?',step1:'Connect the dots',step2:'Answer correctly',step3:'Claim a square',hint:'No app download · 100 stages · 6 languages',level:'100 adventure stages',topics:'Pop culture, TV, sport & more',footer:'Sharp minds. Great games.',instructions:'Drag between adjacent dots, choose the right answer out of four, and close a square to earn points. Each stage has its own board.',close:'Got it',preview:'Game-board preview'},
@@ -19,15 +36,46 @@ export default function WelcomeScreen({onStart,initialLocale='he'}:{onStart:()=>
  const [locale,setLocale]=useState<ActiveLocale>(initialLocale);
  useEffect(()=>{try{const stored=localStorage.getItem('trivia-language');if(locales.includes(stored as ActiveLocale))setLocale(stored as ActiveLocale)}catch{}},[]);
  const [showRules,setShowRules]=useState(false);
+ const [skin,setSkin]=useState<WelcomeSkin>('regular');
+ const [skinPickerOpen,setSkinPickerOpen]=useState(false);
+ useEffect(()=>{try{
+  const saved=localStorage.getItem('trivia-skin-v1');
+  if(welcomeSkins.some(item=>item.id===saved))setSkin(saved as WelcomeSkin);
+ }catch{}},[]);
+ const chooseSkin=(next:WelcomeSkin)=>{
+  setSkin(next);
+  setSkinPickerOpen(false);
+  try{localStorage.setItem('trivia-skin-v1',next)}catch{}
+ };
  const w=dictionary[locale];
  const rtl=locale==='he'||locale==='ar';
  const chooseLanguage=(next:ActiveLocale)=>{
   setLocale(next);
   try{localStorage.setItem('trivia-language',next)}catch{}
  };
- return <main className="trivia-welcome" dir={rtl?'rtl':'ltr'} lang={locale}>
+ return <main className={"trivia-welcome welcome-skin-"+skin} dir={rtl?'rtl':'ltr'} lang={locale}>
   <div className="welcome-atmosphere" aria-hidden="true"/>
   <header className="welcome-topbar">
+   <div className="welcome-skin-control">
+    <button type="button" className="welcome-skin-trigger" data-testid="welcome-skin-trigger"
+      aria-label={skinLabels[locale].trigger} title={skinLabels[locale].trigger}
+      aria-expanded={skinPickerOpen} aria-controls="welcome-skin-panel"
+      onClick={()=>setSkinPickerOpen(open=>!open)}>
+      <span aria-hidden="true">🎨</span><strong className="welcome-skin-trigger-label">{skinLabels[locale].trigger}</strong>
+    </button>
+    {skinPickerOpen&&<div id="welcome-skin-panel" className="welcome-skin-panel" role="group" aria-label={skinLabels[locale].title}>
+      <strong className="welcome-skin-title">{skinLabels[locale].title}</strong>
+      <div className="welcome-skin-grid">
+       {welcomeSkins.map(theme=><button key={theme.id} type="button" className="welcome-skin-option"
+        data-testid={"welcome-skin-"+theme.id} aria-pressed={skin===theme.id}
+        onClick={()=>chooseSkin(theme.id)}>
+        <span className="welcome-skin-swatch" aria-hidden="true" style={{background:'linear-gradient(135deg,'+theme.colors.join(',')+')'}}/>
+        <strong>{skinLabels[locale].names[theme.id]}</strong>
+        {skin===theme.id&&<span className="welcome-skin-check" aria-hidden="true">✓</span>}
+       </button>)}
+      </div>
+    </div>}
+   </div>
    <div className="welcome-brand"><TriviaMark size={44} label={w.brand}/><strong>{w.brand}</strong></div>
    <div className="welcome-language-select">
     <label htmlFor="welcome-language">{locale==='he'?'שפה':locale==='ar'?'اللغة':locale==='es'?'Idioma':'Language'}</label>
