@@ -1536,6 +1536,14 @@ export default function TriviaGame() {
           </svg>
         </div>
       </div>}
+      <style>{`
+        .trivia-fish-toggle{min-height:44px;min-width:52px;border:2px solid #ffe28a;border-radius:14px;background:#263d76;color:#fff;font-size:18px;font-weight:900;cursor:pointer;padding:8px 12px;touch-action:manipulation}
+        .trivia-fish-toggle[aria-pressed="true"]{background:#fce68c;color:#18254a}
+        .trivia-fish-toggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
+        .trivia-fish-svg text{animation:trivia-fish-svg-swim 4.5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+        @keyframes trivia-fish-svg-swim{from{transform:translateX(-8px) scaleX(1)}to{transform:translateX(12px) scaleX(-1)}}
+        @media(prefers-reduced-motion:reduce){.trivia-fish-svg text{animation:none}}
+      `}</style>
       <button type='button' className='trivia-fish-toggle' aria-pressed={fishEnabled}
         aria-label={locale==='he'?'דגים בריבועים':locale==='ar'?'أسماك في المربعات':locale==='ru'?'Рыбки в клетках':locale==='fr'?'Poissons dans les cases':locale==='es'?'Peces en las casillas':'Fish in squares'}
         onClick={()=>setFishEnabled(previous=>{const next=!previous;saveFishPreference(next);return next;})}>
