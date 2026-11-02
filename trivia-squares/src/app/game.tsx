@@ -22,6 +22,7 @@ import { internationalQuestions } from '../lib/internationalQuestions';
 import { spanishQuestions } from '../lib/spanishQuestions';
 import { languageQuestions } from '../lib/languageQuestions';
 import { languageForPronunciation, speakLanguageAnswer } from '../lib/languageSpeech';
+import { findLocalQuestion } from '../lib/localQuestionLookup';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
@@ -570,7 +571,7 @@ export default function TriviaGame() {
     try{
       const pending=JSON.parse(localStorage.getItem('trivia-local-question')||'null') as Question|null;
       if(pending?.id && pending?.edge && (
-        [...offlineQuestions,...englishQuestions,...freshLocalQuestionReserve,...internationalQuestions].some(q=>q.id===pending.id)||
+        Boolean(findLocalQuestion(pending.id))||
         cacheLocales.some(l=>remoteQuestionCache.current[l].some(q=>q.id===pending.id))
       )){
         setQuestion(pending);
@@ -981,9 +982,13 @@ export default function TriviaGame() {
       }
     } else {
       if (!edge) { setBusy(false); return; }
-      const q=[...englishQuestions,...offlineQuestions,...freshLocalQuestionReserve,...internationalQuestions,
-        ...cacheLocales.flatMap(l=>remoteQuestionCache.current[l])].find(v=>v.id===question.id);
-      if(!q){setMessage('לא נמצאה השאלה המקורית.');setBusy(false);return;}
+      const q=findLocalQuestion(question.id,cacheLocales.flatMap(l=>remoteQuestionCache.current[l]));
+      if(!q){
+        // Never leave the player stuck on a question that cannot be scored: close it and keep the line open.
+        setQuestion(null);setEdge(null);
+        setMessage(locale==='he'?'לא ניתן היה לבדוק את השאלה הזו. הקו נשאר פתוח, נסו לצייר שוב.':'This question could not be checked. The line stays open - draw again.');
+        setBusy(false);return;
+      }
       const correct = i === q.correct;
       if(question.kind==='premium_bonus'){
         const side:Side=question.premiumOwner || (local.mode==='solo'?'host':local.turn);
