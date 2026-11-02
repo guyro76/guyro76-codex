@@ -66,6 +66,49 @@
  color:#B7B2D5;font-size:12px;padding-top:8px;border-top:1px solid #E4CCFF26}
 .trivia-welcome .welcome-footer>div{display:flex;gap:16px}
 .trivia-welcome .welcome-footer a{color:#E8E0FF;text-decoration:none}
+/* First-visit skin picker: logical start is top-right in RTL, top-left in LTR. */
+.trivia-welcome .welcome-topbar{position:relative;z-index:30}
+.trivia-welcome .welcome-skin-control{position:relative;flex:0 0 auto}
+.trivia-welcome .welcome-skin-trigger{display:flex;align-items:center;justify-content:center;gap:8px;
+ min-width:48px;min-height:48px;padding:8px 12px;cursor:pointer;
+ background:rgba(44,34,93,.96);color:#FFFFFF;border:2px solid #E4CBFF;
+ border-radius:15px;box-shadow:0 6px 20px #09072E88;font-weight:900}
+.trivia-welcome .welcome-skin-trigger strong{font-size:15px;font-weight:900}
+.trivia-welcome .welcome-skin-trigger span{font-size:23px;line-height:1}
+.trivia-welcome .welcome-skin-panel{position:absolute;inset-inline-start:0;top:calc(100% + 10px);
+ z-index:50;width:min(365px,calc(100vw - 30px));max-height:65dvh;overflow-y:auto;
+ background:linear-gradient(140deg,rgba(51,38,106,.98),rgba(25,26,75,.99));
+ border:2px solid #DCC5FF;border-radius:19px;padding:14px;
+ box-shadow:0 20px 48px #080625BB;backdrop-filter:blur(14px)}
+.trivia-welcome .welcome-skin-title{display:block;color:#FFFFFF;font-size:16px;font-weight:900;margin-bottom:12px}
+.trivia-welcome .welcome-skin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.trivia-welcome .welcome-skin-option{display:flex;align-items:center;gap:8px;min-width:0;min-height:54px;
+ padding:8px;border-radius:13px;background:#25224E;color:#FFFFFF;border:2px solid #9387C2;
+ cursor:pointer;text-align:start;font-size:13px;font-weight:900}
+.trivia-welcome .welcome-skin-option strong{font-weight:900;line-height:1.25;overflow-wrap:anywhere}
+.trivia-welcome .welcome-skin-option[aria-pressed=true]{border-color:#FFDD86;background:#44336F;
+ box-shadow:inset 0 0 0 1px #FFDD86}
+.trivia-welcome .welcome-skin-swatch{width:32px;height:32px;border:1px solid #FFFFFFB3;
+ border-radius:10px;flex:0 0 auto;box-shadow:inset 0 1px #FFFFFF80}
+.trivia-welcome .welcome-skin-check{color:#FFE8A0;font-size:18px;margin-inline-start:auto;font-weight:900}
+.trivia-welcome.welcome-skin-urban{background:radial-gradient(ellipse at 80% 20%,#377A9180,transparent 65%),
+ linear-gradient(145deg,#152C39,#1D4C59 50%,#162B42)}
+.trivia-welcome.welcome-skin-vintage{background:radial-gradient(ellipse at 80% 20%,#D1AC7C55,transparent 65%),
+ linear-gradient(145deg,#443027,#684B3B 50%,#2C283B)}
+.trivia-welcome.welcome-skin-retro{background:radial-gradient(ellipse at 80% 20%,#71D4BC55,transparent 65%),
+ linear-gradient(145deg,#262153,#48366C 50%,#241C52)}
+.trivia-welcome.welcome-skin-pop{background:radial-gradient(ellipse at 80% 20%,#F3459477,transparent 65%),
+ linear-gradient(145deg,#521B65,#86317E 50%,#293E82)}
+.trivia-welcome.welcome-skin-future{background:radial-gradient(ellipse at 80% 20%,#F15A2477,transparent 65%),
+ linear-gradient(145deg,#30116E,#551A86 50%,#25104F)}
+@media(max-width:760px){
+ .trivia-welcome .welcome-topbar{gap:8px}
+ .trivia-welcome .welcome-skin-trigger{padding:7px;min-width:46px;min-height:46px}
+ .trivia-welcome .welcome-skin-trigger-label{display:none}
+ .trivia-welcome .welcome-brand{gap:6px}
+ .trivia-welcome .welcome-brand strong{font-size:clamp(12px,3vw,16px)}
+ .trivia-welcome .welcome-language-select select{max-width:106px;padding:7px 5px}
+}
 @keyframes welcomeOrbit{to{transform:translate(4%,-2%) rotate(8deg)}}
 @keyframes welcomeDraw{0%,12%{stroke-dashoffset:116}48%,82%{stroke-dashoffset:0}100%{stroke-dashoffset:116}}
 @keyframes welcomeFill{0%,33%,100%{opacity:.3}49%,78%{opacity:1}}
