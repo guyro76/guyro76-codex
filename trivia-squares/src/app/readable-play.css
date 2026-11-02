@@ -102,8 +102,28 @@ main.trivia-app .skin-picker-item :is(span, strong, small) {
 }
 
 /* Keep interactive question and answer text legible over animated themes. */
-main.trivia-app :is(.question-text, .question-title, .answer-option, .answer-button) {
+main.trivia-app :is(.question-text, .answer-option) {
   font-size: clamp(20px, 2.4vw, 28px);
   font-weight: 800;
   line-height: 1.4;
+}
+
+/* P0: stable reading surface for live question and answer controls. */
+main.trivia-app .question-text {
+  background-color: #ffffff;
+  color: #14213d;
+  text-shadow: none;
+  border-radius: 12px;
+  padding: 0.65em 0.8em;
+}
+main.trivia-app .answer-option {
+  background-color: #ffffff;
+  color: #14213d;
+  text-shadow: none;
+  border: 2px solid #324a70;
+  border-radius: 12px;
+}
+main.trivia-app .answer-option:focus-visible {
+  outline: 3px solid #b45309;
+  outline-offset: 3px;
 }
