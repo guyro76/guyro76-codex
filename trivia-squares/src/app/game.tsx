@@ -1204,6 +1204,7 @@ export default function TriviaGame() {
       localStorage.setItem('trivia-stage-run-id',nextRun);
       localStorage.setItem('trivia-stage-id-v1',String(nextId));
     }catch{}
+    localComboRef.current=0;setLocalComboStreak(0);
     setStageId(nextId);setSize(next.size);
     setStageStarted(false);setRemote(null);setLocal(empty(next.size,mode==='local'?'local':'solo'));
     setQuestion(null);setEdge(null);setTrace(null);gesture.current=null;
