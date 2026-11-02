@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import ProgressPulse from '../components/ProgressPulse';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicConfig';
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
@@ -1659,6 +1660,7 @@ export default function TriviaGame() {
              <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
            </div>
         </div>
+        <ProgressPulse locale={locale} stage={stageId} captured={Object.values(state.owners).filter(owner=>owner==='host').length} streak={state.streak?.host||0}/>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
             <div className='portrait'>{remote && player === 'guest' ? opponentIcon : avatar}</div>
