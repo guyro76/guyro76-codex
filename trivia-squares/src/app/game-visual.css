@@ -1,0 +1,324 @@
+/* =====================================================================
+   GAME VISUAL — "Night Arcade Glass" for the default skin (skin-regular).
+   Apple-grade glass for the chrome (top bar, console, sheets); all the
+   candy energy is spent on the board and the primary actions.
+   Geometry lives in game-layout.css. This file only paints.
+
+   Tokens
+     night   #0A0E24   page base
+     lagoon  #12204A   page mid
+     coral   #FF4F7B   primary action / heat
+     mint    #2EE6B8   success / progress
+     sun     #FFC23D   coins, rewards, focus
+     ink     #14183A   text on light tiles
+   ===================================================================== */
+
+:root{
+  --nx-night:#0A0E24;--nx-lagoon:#12204A;--nx-coral:#FF4F7B;--nx-coral-deep:#D9305A;
+  --nx-mint:#2EE6B8;--nx-sun:#FFC23D;--nx-ink:#14183A;
+  --nx-text:#F4F6FF;--nx-text-2:rgba(244,246,255,.72);
+  --nx-glass:rgba(255,255,255,.075);--nx-glass-strong:rgba(20,26,62,.78);
+  --nx-hair:rgba(255,255,255,.14);--nx-hair-soft:rgba(255,255,255,.08);
+  --nx-font:'Rubik',system-ui,-apple-system,'Segoe UI','Noto Sans Hebrew',Arial,sans-serif;
+}
+
+/* ---------- Page: deep night with colour light behind the glass ---------- */
+html body:has(main.trivia-app.skin-regular){
+  background:radial-gradient(120% 90% at 50% -10%,#1B2A63 0%,var(--nx-lagoon) 38%,var(--nx-night) 100%) fixed!important;
+  color:var(--nx-text)!important;
+}
+html body:has(main.trivia-app.skin-regular)::before{
+  content:'';position:fixed;inset:-15%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(38% 32% at 88% 12%,rgba(255,79,123,.38),transparent 70%),
+    radial-gradient(34% 30% at 8% 78%,rgba(46,230,184,.26),transparent 70%),
+    radial-gradient(40% 36% at 48% 58%,rgba(120,92,255,.22),transparent 72%);
+}
+html body main.trivia-app.trivia-app.skin-regular{
+  background:transparent!important;font-family:var(--nx-font)!important;color:var(--nx-text)!important;
+  -webkit-font-smoothing:antialiased;
+}
+html body main.trivia-app.trivia-app.skin-regular::before,
+html body main.trivia-app.trivia-app.skin-regular::after{display:none!important}
+html body main.trivia-app.trivia-app.skin-regular :is(button,input,select,textarea,h1,h2,h3,p,span,strong,small,label){font-family:var(--nx-font)!important}
+html body main.trivia-app.trivia-app.skin-regular :is(.score-num,.arena-quick-wallet span,.level-pill,.question-timer){font-variant-numeric:tabular-nums}
+
+/* ---------- Top bar: ultra-thin material ---------- */
+html body main.trivia-app.trivia-app.skin-regular .game-topbar{
+  background:rgba(10,14,36,.55)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(1.6)!important;backdrop-filter:blur(24px) saturate(1.6)!important;
+  border-bottom:1px solid var(--nx-hair-soft)!important;box-shadow:none!important;
+}
+html body main.trivia-app.trivia-app.skin-regular .game-topbar h1{
+  background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;
+  color:var(--nx-text)!important;font-weight:800!important;letter-spacing:-.01em;
+}
+html body main.trivia-app.trivia-app.skin-regular .game-topbar :is(.app-menu-trigger,.trivia-sound-toggle,.skin-palette-trigger){
+  background:rgba(255,255,255,.09)!important;color:var(--nx-text)!important;
+  border:1px solid var(--nx-hair)!important;border-radius:16px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16)!important;font-weight:700!important;
+  transition:transform .12s ease,background-color .12s ease;
+}
+html body main.trivia-app.trivia-app.skin-regular .game-topbar :is(.app-menu-trigger,.trivia-sound-toggle,.skin-palette-trigger):hover{background:rgba(255,255,255,.15)!important}
+html body main.trivia-app.trivia-app.skin-regular .game-topbar :is(.app-menu-trigger,.trivia-sound-toggle,.skin-palette-trigger):active{transform:scale(.96)!important}
+html body main.trivia-app.trivia-app.skin-regular .game-topbar .trivia-sound-toggle[aria-pressed='false']{opacity:.7}
+html body main.trivia-app.trivia-app.skin-regular .game-topbar .app-hamburger-lines i{background:var(--nx-text)!important}
+
+/* ---------- Console: one large regular-material glass surface ---------- */
+html body main.trivia-app.trivia-app.skin-regular .arena-panel{
+  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.045))!important;
+  -webkit-backdrop-filter:blur(30px) saturate(1.5)!important;backdrop-filter:blur(30px) saturate(1.5)!important;
+  border:1px solid var(--nx-hair)!important;border-radius:32px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 30px 80px rgba(2,4,20,.5)!important;
+}
+html body main.trivia-app.trivia-app.skin-regular .arena-panel::before,
+html body main.trivia-app.trivia-app.skin-regular .arena-panel::after{display:none!important}
+
+/* HUD: plain type on the glass, no boxes inside boxes */
+html body main.trivia-app.trivia-app.skin-regular .arena-title{border:0!important;background:none!important}
+html body main.trivia-app.trivia-app.skin-regular .arena-title h2{color:var(--nx-text)!important;font-weight:800!important;text-shadow:none!important;letter-spacing:-.01em}
+html body main.trivia-app.trivia-app.skin-regular .arena-title p{color:var(--nx-text-2)!important;font-weight:700!important;font-size:15px!important}
+html body main.trivia-app.trivia-app.skin-regular .arena-quick-wallet > span{
+  background:rgba(255,255,255,.08)!important;border:0!important;color:var(--nx-text)!important;
+  border-radius:999px!important;padding:6px 11px!important;font-weight:700!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)
+}
+html body main.trivia-app.trivia-app.skin-regular .arena-panel .arena-title .level-pill{
+  background:linear-gradient(180deg,#FFD873,var(--nx-sun))!important;color:#2B1B00!important;
+  border:0!important;border-radius:999px!important;font-weight:800!important;
+  box-shadow:0 3px 0 #C98A12,0 8px 18px rgba(255,194,61,.28),inset 0 1px 0 rgba(255,255,255,.6)!important;
+}
+html body main.trivia-app.trivia-app.skin-regular .arena-panel .arena-title .level-pill:active{transform:translateY(2px);box-shadow:0 1px 0 #C98A12!important}
+
+html body main.trivia-app.trivia-app.skin-regular .progress-pulse{
+  background:rgba(255,255,255,.05)!important;border:0!important;border-radius:20px!important;box-shadow:none!important;
+}
+html body main.trivia-app.trivia-app.skin-regular .progress-pulse :is(strong,span){color:var(--nx-text)!important}
+html body main.trivia-app.trivia-app.skin-regular :is(.progress-pulse-track,.level-progress){
+  background:rgba(255,255,255,.1)!important;border:0!important;border-radius:999px!important;height:10px!important;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.35)!important
+}
+html body main.trivia-app.trivia-app.skin-regular :is(.progress-pulse-fill,.level-progress-fill){
+  background:linear-gradient(90deg,var(--nx-mint),#8BF5D9)!important;box-shadow:0 0 14px rgba(46,230,184,.55)!important;border-radius:999px!important
+}
+
+html body main.trivia-app.trivia-app.skin-regular .scoreboard{background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
+html body main.trivia-app.trivia-app.skin-regular .scoreboard .player-tile{
+  background:rgba(255,255,255,.06)!important;border:0!important;border-radius:22px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)!important;
+}
+html body main.trivia-app.trivia-app.skin-regular .scoreboard .player-tile.other{background:rgba(255,79,123,.1)!important}
+html body main.trivia-app.trivia-app.skin-regular .scoreboard .portrait{
+  background:radial-gradient(circle at 35% 30%,#FFFFFF,#DDE4FF 60%,#AEB9EA)!important;border:0!important;border-radius:16px!important;
+  box-shadow:0 3px 0 rgba(0,0,0,.25),inset 0 -2px 0 rgba(0,0,0,.08)!important
+}
+html body main.trivia-app.trivia-app.skin-regular .scoreboard .score-name{color:var(--nx-text-2)!important;font-weight:700!important}
+html body main.trivia-app.trivia-app.skin-regular .scoreboard .score-num{color:var(--nx-text)!important;font-weight:900!important;text-shadow:none!important}
+html body main.trivia-app.trivia-app.skin-regular .scoreboard .versus{background:none!important;border:0!important;color:var(--nx-text-2)!important;font-weight:700!important}
+
+html body main.trivia-app.trivia-app.skin-regular :is(.gesture-hint,.status-line,.smalltxt){color:var(--nx-text-2)!important;font-weight:700!important;background:none!important;border:0!important}
+html body main.trivia-app.trivia-app.skin-regular .gesture-hint .draw-icon{background:rgba(255,194,61,.16)!important;box-shadow:none!important}
+
+/* ---------- The board: a recessed tray, the only "juicy" object on screen ---------- */
+html body main.trivia-app.trivia-app.skin-regular .arena{
+  background:linear-gradient(180deg,rgba(3,6,24,.72),rgba(10,16,48,.5))!important;
+  border:0!important;border-radius:30px!important;
+  box-shadow:inset 0 3px 14px rgba(0,0,0,.65),inset 0 -1px 0 rgba(255,255,255,.08),0 1px 0 rgba(255,255,255,.12)!important;
+  animation:none!important;
+}
+html body main.trivia-app.trivia-app.skin-regular .arena::before,
+html body main.trivia-app.trivia-app.skin-regular .arena::after,
+html body main.trivia-app.trivia-app.skin-regular .arena-inner::before,
+html body main.trivia-app.trivia-app.skin-regular .arena-inner::after{display:none!important}
+html body main.trivia-app.trivia-app.skin-regular .arena-inner{
+  background:none!important;border:0!important;box-shadow:none!important;border-radius:24px!important
+}
+html body main.trivia-app.trivia-app.skin-regular .arena .board{filter:none!important}
+
+/* ---------- Buttons: one jelly style for primary, glass for the rest ---------- */
+html body main.trivia-app.trivia-app.skin-regular .gold-button{
+  background:linear-gradient(180deg,#FF86A2 0%,var(--nx-coral) 52%,var(--nx-coral-deep) 100%)!important;
+  color:#FFFFFF!important;border:0!important;border-radius:18px!important;
+  font-weight:800!important;font-size:17px!important;letter-spacing:0;text-shadow:0 1px 0 rgba(120,10,40,.35)!important;
+  padding:14px 24px!important;min-height:52px!important;
+  box-shadow:0 5px 0 #A51E45,0 14px 26px rgba(255,79,123,.32),inset 0 2px 0 rgba(255,255,255,.45)!important;
+  transition:transform .1s ease,box-shadow .1s ease,filter .12s ease;
+}
+html body main.trivia-app.trivia-app.skin-regular .gold-button:hover:not(:disabled){filter:brightness(1.06)}
+html body main.trivia-app.trivia-app.skin-regular .gold-button:active:not(:disabled){transform:translateY(4px)!important;box-shadow:0 1px 0 #A51E45,0 6px 14px rgba(255,79,123,.25),inset 0 2px 0 rgba(255,255,255,.35)!important}
+html body main.trivia-app.trivia-app.skin-regular .gold-button:disabled{filter:saturate(.35) brightness(.85);opacity:.7;cursor:not-allowed}
+html body main.trivia-app.trivia-app.skin-regular .glass-button{
+  background:rgba(255,255,255,.08)!important;color:var(--nx-text)!important;
+  border:1px solid var(--nx-hair)!important;border-radius:16px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14)!important;font-weight:700!important;min-height:52px!important;
+}
+html body main.trivia-app.trivia-app.skin-regular .glass-button:hover:not(:disabled){background:rgba(255,255,255,.14)!important}
+
+/* ---------- Player name field ---------- */
+html body main.trivia-app.trivia-app.skin-regular .player-name-field{background:rgba(255,255,255,.05)!important;border:0!important;border-radius:20px!important}
+html body main.trivia-app.trivia-app.skin-regular .player-name-field label{color:var(--nx-text-2)!important;font-weight:700!important}
+html body main.trivia-app.trivia-app.skin-regular .player-name-field input{
+  background:rgba(255,255,255,.92)!important;color:var(--nx-ink)!important;border:0!important;border-radius:14px!important;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.12)!important;font-weight:700!important
+}
+html body main.trivia-app.trivia-app.skin-regular .player-name-field input:focus-visible{outline:3px solid var(--nx-sun)!important;outline-offset:2px}
+
+/* ---------- Question sheet: thick material, candy answer tiles ---------- */
+html body main.trivia-app.trivia-app.skin-regular .quiz-overlay{
+  background:rgba(5,8,25,.5)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.2)!important;backdrop-filter:blur(18px) saturate(1.2)!important;
+}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card{
+  background:linear-gradient(180deg,rgba(32,40,88,.86),rgba(18,24,60,.9))!important;
+  -webkit-backdrop-filter:blur(40px) saturate(1.6)!important;backdrop-filter:blur(40px) saturate(1.6)!important;
+  border:1px solid var(--nx-hair)!important;border-radius:32px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 40px 90px rgba(0,0,0,.55)!important;
+  color:var(--nx-text)!important;
+}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card h2{
+  color:var(--nx-text)!important;font-weight:800!important;font-size:clamp(22px,2.4vw,30px)!important;
+  line-height:1.3!important;letter-spacing:-.01em;text-shadow:none!important
+}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .quiz-badge{
+  background:rgba(255,194,61,.14)!important;color:#FFD873!important;border:0!important;border-radius:999px!important;
+  box-shadow:none!important;font-weight:700!important
+}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .question-timer{
+  background:none!important;border:0!important;box-shadow:none!important;color:var(--nx-text)!important;
+  font-size:30px!important;font-weight:800!important
+}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .question-timer .clock-label{font-size:14px!important;color:var(--nx-text-2)!important;font-weight:700!important}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .question-timer.urgent{color:#FF8FA8!important}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .answer-option{
+  background:linear-gradient(180deg,#FFFFFF 0%,#EEF1FF 100%)!important;color:var(--nx-ink)!important;
+  border:0!important;border-radius:20px!important;font-weight:700!important;
+  box-shadow:0 5px 0 #AEB7E0,0 14px 24px rgba(0,0,0,.28),inset 0 -2px 0 rgba(20,24,58,.06)!important;
+  transition:transform .1s ease,box-shadow .1s ease;
+}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .answer-option:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 7px 0 #AEB7E0,0 18px 28px rgba(0,0,0,.3)!important;background:linear-gradient(180deg,#FFFFFF,#F5F7FF)!important}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .answer-option:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 #AEB7E0,0 6px 12px rgba(0,0,0,.25)!important}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .answer-option:focus-visible{outline:3px solid var(--nx-sun)!important;outline-offset:3px}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .answer-letter{
+  background:linear-gradient(180deg,#FF86A2,var(--nx-coral))!important;color:#FFFFFF!important;border:0!important;
+  border-radius:12px!important;font-weight:800!important;box-shadow:0 2px 0 #A51E45!important
+}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .smalltxt{color:var(--nx-text-2)!important}
+
+/* ---------- Game menu: thick material sheet ---------- */
+html body main.trivia-app.trivia-app.skin-regular .app-menu-dialog::backdrop{
+  background:rgba(5,8,25,.45);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)
+}
+html body main.trivia-app.trivia-app.skin-regular .app-menu-shell{
+  background:linear-gradient(180deg,rgba(30,38,84,.9),rgba(16,22,56,.94))!important;
+  -webkit-backdrop-filter:blur(40px) saturate(1.5)!important;backdrop-filter:blur(40px) saturate(1.5)!important;
+  border:1px solid var(--nx-hair)!important;box-shadow:0 30px 80px rgba(0,0,0,.5)!important;color:var(--nx-text)!important
+}
+html body main.trivia-app.trivia-app.skin-regular .app-menu-tab{
+  background:rgba(255,255,255,.06)!important;border:1px solid var(--nx-hair-soft)!important;color:var(--nx-text)!important;
+  border-radius:16px!important;box-shadow:none!important;font-weight:700!important
+}
+html body main.trivia-app.trivia-app.skin-regular .app-menu-tab[aria-current='page']{
+  background:linear-gradient(180deg,#FF86A2,var(--nx-coral))!important;color:#FFFFFF!important;border-color:transparent!important;
+  box-shadow:0 3px 0 #A51E45!important
+}
+html body main.trivia-app.trivia-app.skin-regular .app-menu-settings .settings-group{background:rgba(255,255,255,.05);border-color:var(--nx-hair-soft)}
+html body main.trivia-app.trivia-app.skin-regular .app-menu-settings .settings-group h3{color:var(--nx-text);font-weight:800}
+
+/* Respect reduced motion: no press transforms or transitions. */
+@media (prefers-reduced-motion:reduce){
+  html body main.trivia-app.trivia-app.skin-regular :is(.gold-button,.glass-button,.answer-option,.level-pill,.app-menu-trigger,.trivia-sound-toggle,.skin-palette-trigger){transition:none!important;transform:none!important}
+}
+
+/* ---------- Refinements after visual review ---------- */
+/* World themes paint a 2px outline around the tray; the tray already has a lit rim. */
+html body main.trivia-app.trivia-app.skin-regular .arena{outline:none!important;
+  box-shadow:inset 0 3px 14px rgba(0,0,0,.65),inset 0 -1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,255,255,.07),0 1px 0 rgba(255,255,255,.12)!important}
+/* The progress card already shows captured squares; the second bar was a duplicate. */
+html body main.trivia-app.trivia-app.skin-regular .arena-panel > .level-progress,
+html body main.trivia-app.trivia-app.skin-regular .arena-panel > div:has(+ .level-progress){display:none!important}
+/* Saved-name confirmation is a quiet line, not another box. */
+html body main.trivia-app.trivia-app.skin-regular .player-name-field .player-name-autosaved{
+  background:none!important;border:0!important;padding:0!important;min-height:0!important;
+  color:var(--nx-mint)!important;font-size:13px!important;font-weight:700!important;text-align:start!important
+}
+html body main.trivia-app.trivia-app.skin-regular .player-name-field{padding:12px 14px!important}
+
+/* Empty cells: a faint gem tint per world so the board reads as a lit tray, not grey boxes. */
+html body main.trivia-app.trivia-app.skin-regular{--nx-cell:#8FA8FF}
+html body main.trivia-app.trivia-app.skin-regular.theme-orchard{--nx-cell:#3EE6A8}
+html body main.trivia-app.trivia-app.skin-regular.theme-crystal{--nx-cell:#B79BFF}
+html body main.trivia-app.trivia-app.skin-regular.theme-clouds{--nx-cell:#7FD3FF}
+html body main.trivia-app.trivia-app.skin-regular.theme-galaxy{--nx-cell:#FF8BD8}
+html body main.trivia-app.trivia-app.skin-regular svg.board .board-cell-empty{
+  fill:color-mix(in srgb,var(--nx-cell) 11%,transparent)!important;
+  stroke:color-mix(in srgb,var(--nx-cell) 30%,transparent)!important;stroke-opacity:1!important;
+}
+/* Secondary quiz actions stay quiet. */
+html body main.trivia-app.trivia-app.skin-regular .quiz-card :is(.question-report-button,.question-report-toggle,[class*='report']) > button,
+html body main.trivia-app.trivia-app.skin-regular .quiz-card button:is([class*='report']){
+  background:none!important;border:0!important;box-shadow:none!important;color:var(--nx-text-2)!important;
+  text-decoration:underline;text-underline-offset:3px;font-weight:700!important;min-height:44px
+}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .language-speaker{
+  background:rgba(255,255,255,.08)!important;border:1px solid var(--nx-hair)!important;border-radius:16px!important;
+  box-shadow:none!important;color:var(--nx-text)!important
+}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .control-row .glass-button{min-height:44px!important;font-size:15px!important}
+
+/* ---------- Illustrations (GameArt) — used by every skin ---------- */
+.game-art{display:inline-block;flex:none;vertical-align:middle;overflow:visible}
+main.trivia-app :is(.arena-quick-wallet > span,.level-pill,.gold-button,.glass-button,.versus,.trivia-sound-toggle,.skin-palette-trigger){display:inline-flex;align-items:center;justify-content:center;gap:6px}
+main.trivia-app .arena-title h2{display:flex;align-items:center;gap:10px}
+main.trivia-app .arena-title h2 .world-emblem{filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+main.trivia-app .versus{flex-direction:column}
+main.trivia-app .draw-icon{display:inline-flex;align-items:center;justify-content:center}
+
+/* Wallet value is plain text inside its chip (never a chip inside a chip), for every skin. */
+html body main.trivia-app.trivia-app .arena-quick-wallet .wallet-value{all:unset;font:inherit;font-weight:800;color:inherit;font-variant-numeric:tabular-nums}
+html body main.trivia-app.trivia-app .arena-quick-wallet{flex-wrap:nowrap!important}
+
+
+/* =====================================================================
+   Apple-inspired refinement (owner direction 2026-11-02): frosted glass,
+   gentle background blur, depth from soft shadows, elegant buttons.
+   Replaces the thick "jelly" lips with soft elevation.
+   ===================================================================== */
+html body main.trivia-app.trivia-app.skin-regular .gold-button{
+  background:linear-gradient(180deg,#FF6F92 0%,#F2416C 100%)!important;
+  border-radius:16px!important;text-shadow:none!important;letter-spacing:-.005em;
+  box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 10px 28px rgba(242,65,108,.38),0 2px 6px rgba(0,0,0,.25)!important;
+}
+html body main.trivia-app.trivia-app.skin-regular .gold-button:hover:not(:disabled){filter:brightness(1.06);transform:translateY(-1px)}
+html body main.trivia-app.trivia-app.skin-regular .gold-button:active:not(:disabled){transform:scale(.98)!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 4px 14px rgba(242,65,108,.3)!important}
+html body main.trivia-app.trivia-app.skin-regular .glass-button{
+  background:rgba(255,255,255,.1)!important;-webkit-backdrop-filter:blur(20px) saturate(1.4)!important;backdrop-filter:blur(20px) saturate(1.4)!important;
+  border:1px solid rgba(255,255,255,.18)!important;border-radius:16px!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 8px 22px rgba(0,0,0,.22)!important
+}
+html body main.trivia-app.trivia-app.skin-regular .glass-button:active:not(:disabled){transform:scale(.98)}
+html body main.trivia-app.trivia-app.skin-regular .arena-panel .arena-title .level-pill{
+  background:linear-gradient(180deg,#FFE29A,#FFC94A)!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 8px 20px rgba(255,194,61,.28),0 2px 5px rgba(0,0,0,.2)!important
+}
+html body main.trivia-app.trivia-app.skin-regular .arena-panel .arena-title .level-pill:active{transform:scale(.98);box-shadow:0 4px 12px rgba(255,194,61,.25)!important}
+/* Answers: frosted light glass cards with soft depth */
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .answer-option{
+  background:rgba(255,255,255,.93)!important;
+  box-shadow:0 1px 0 #FFFFFF inset,0 12px 30px rgba(0,0,0,.28),0 2px 6px rgba(0,0,0,.18)!important;border-radius:18px!important
+}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .answer-option:hover:not(:disabled){transform:translateY(-2px);background:#FFFFFF!important;
+  box-shadow:0 1px 0 #FFFFFF inset,0 18px 36px rgba(0,0,0,.32),0 3px 8px rgba(0,0,0,.2)!important}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .answer-option:active:not(:disabled){transform:scale(.985)}
+html body main.trivia-app.trivia-app.skin-regular .quiz-card .answer-letter{
+  background:linear-gradient(180deg,#FF6F92,#F2416C)!important;box-shadow:0 4px 10px rgba(242,65,108,.35)!important;border-radius:10px!important
+}
+html body main.trivia-app.trivia-app.skin-regular .app-menu-tab[aria-current='page']{box-shadow:0 8px 20px rgba(242,65,108,.35)!important}
+
+/* Real artwork: soft contact shadow so objects sit on the glass. */
+main.trivia-app .game-image{display:inline-block;object-fit:contain;flex:none;vertical-align:middle;
+  filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))}
+main.trivia-app .arena-title .world-emblem{filter:drop-shadow(0 10px 14px rgba(0,0,0,.45))}
+main.trivia-app .scoreboard .portrait{overflow:hidden;display:grid!important;place-items:center}
+html body main.trivia-app.trivia-app.skin-regular .scoreboard .portrait{background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.22),rgba(255,255,255,.06))!important;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 6px 16px rgba(0,0,0,.3)!important}
+main.trivia-app .avatar-choice{width:52px!important;height:52px!important;padding:3px!important;display:grid;place-items:center}
+main.trivia-app .avatar-choice .game-image{width:44px;height:44px}
+main.trivia-app .victory-symbol .game-image{width:96px;height:96px;filter:drop-shadow(0 14px 22px rgba(0,0,0,.5))}
+html body main.trivia-app.trivia-app .arena-quick-wallet > span > .wallet-value{background:none!important;border:0!important;padding:0!important;margin:0!important;box-shadow:none!important;min-width:0!important;border-radius:0!important;font-size:inherit!important;color:inherit!important}

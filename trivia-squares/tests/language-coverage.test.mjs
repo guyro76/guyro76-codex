@@ -10,7 +10,8 @@ test('literal game controls have a native translation in all six locales',async(
  const [game,english,extra,complete]=await Promise.all([
   read('../src/app/game.tsx'),read('../src/lib/i18n.ts'),read('../src/lib/i18nExtra.ts'),read('../src/lib/i18nCompleteness.ts')]);
  const keys=[...new Set([...game.matchAll(literalKeyRegex)].map(m=>m[1]||m[2]))];
- assert.ok(keys.length>=105,'Should audit at least 105 literal game UI texts');
+ // Floor guards the extraction regex. 104 after the in-game redesign removed the old hero tagline.
+ assert.ok(keys.length>=104,'Should audit at least 104 literal game UI texts');
  const en=english.slice(english.indexOf('export const englishDictionary'),english.indexOf('export function translate'));
  const es=extra.slice(extra.indexOf('"es": {'));
  const segments={ru:extra.slice(extra.indexOf('"ru": {'),extra.indexOf('"fr": {')),

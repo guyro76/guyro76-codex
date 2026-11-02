@@ -103,39 +103,68 @@ export default function WelcomeScreen({onStart,initialLocale='he'}:{onStart:()=>
     <div className="welcome-art-glow" aria-hidden="true"/>
     <svg className="welcome-board-visual" viewBox="0 0 540 500" aria-hidden="true" focusable="false">
       <defs>
-       <linearGradient id="welcome-card" x1="0" x2="1" y1="0" y2="1"><stop stopColor="#5D46C7"/><stop offset=".57" stopColor="#251C67"/><stop offset="1" stopColor="#161A4C"/></linearGradient>
-       <linearGradient id="welcome-ink" x1="0" x2="1" y1="0" y2="0"><stop stopColor="#FFB461"/><stop offset=".5" stopColor="#FF6D81"/><stop offset="1" stopColor="#FFDA7B"/></linearGradient>
-       <linearGradient id="welcome-spark" x1="0" x2="1" y1="0" y2="1"><stop stopColor="#FFE8A0"/><stop offset="1" stopColor="#FF9F58"/></linearGradient>
-       <filter id="welcome-glow"><feGaussianBlur stdDeviation="10"/></filter>
-       <filter id="welcome-shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="12" stdDeviation="19" floodColor="#04052A" floodOpacity=".5"/></filter>
-       <pattern id="welcome-paper" width="27" height="27" patternUnits="userSpaceOnUse"><path d="M 27 0 L 0 0 0 27" fill="none" stroke="#D8CFFF" strokeOpacity=".13" strokeWidth="1"/></pattern>
+       <radialGradient id="wl-dot" cx="36%" cy="30%" r="75%"><stop offset="0" stopColor="#FFFFFF"/><stop offset=".38" stopColor="#EEF3FF"/><stop offset=".82" stopColor="#A9BDEB"/><stop offset="1" stopColor="#7186C2"/></radialGradient>
+       <linearGradient id="wl-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFFFFF" stopOpacity=".16"/><stop offset="1" stopColor="#FFFFFF" stopOpacity=".05"/></linearGradient>
+       <linearGradient id="wl-tray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#03061A" stopOpacity=".85"/><stop offset="1" stopColor="#0B1238" stopOpacity=".7"/></linearGradient>
+       <linearGradient id="wl-liquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FF86A2"/><stop offset="1" stopColor="#D9305A"/></linearGradient>
+       <clipPath id="wl-cell"><rect x="326" y="109" width="75" height="75" rx="16"/></clipPath>
       </defs>
-      <circle cx="270" cy="250" r="220" fill="#D970FF" opacity=".19" filter="url(#welcome-glow)"/>
-      <g filter="url(#welcome-shadow)" transform="translate(43 12) rotate(-5 235 230)">
-       <rect x="25" y="20" width="430" height="440" rx="32" fill="url(#welcome-card)" stroke="#B4AAFF" strokeWidth="2"/>
-       <rect x="39" y="35" width="401" height="410" rx="22" fill="url(#welcome-paper)"/>
-       <rect x="100" y="92" width="280" height="290" rx="20" fill="#0C174A" stroke="#AE9FFF" strokeOpacity=".65" strokeWidth="2"/>
-       <g stroke="#A8B8FF" strokeWidth="5" strokeOpacity=".33" strokeLinecap="round">
-        <path d="M130 130H350M130 240H350M130 350H350M130 130V350M240 130V350M350 130V350"/>
-       </g>
-       <g className="welcome-square-fill">
-        <rect x="131" y="131" width="108" height="108" rx="10" fill="#AE61DE" fillOpacity=".8"/>
-        <path d="M185 150L192 174L215 185L192 193L185 216L176 193L155 185L176 174Z" fill="url(#welcome-spark)" stroke="#FFF1D0" strokeWidth="2"/>
-       </g>
-       <path className="welcome-drawn-edge" d="M240 130V240" stroke="#FF9D64" strokeWidth="12" strokeLinecap="round"/>
-       <path className="welcome-drawn-edge" d="M130 240H240" stroke="url(#welcome-ink)" strokeWidth="12" strokeLinecap="round"/>
-       <g fill="#EAF5FF" stroke="#7C73D5" strokeWidth="3.5">
-        <circle cx="130" cy="130" r="10"/><circle cx="240" cy="130" r="10"/><circle cx="350" cy="130" r="10"/>
-        <circle cx="130" cy="240" r="10"/><circle cx="240" cy="240" r="10"/><circle cx="350" cy="240" r="10"/>
-        <circle cx="130" cy="350" r="10"/><circle cx="240" cy="350" r="10"/><circle cx="350" cy="350" r="10"/>
-       </g>
-       <g transform="translate(287 273)" className="welcome-pen">
-        <path d="M0 0L33 -44L46 -35L11 8L0 14Z" fill="#FFB76D" stroke="#FFDDA3" strokeWidth="3" strokeLinejoin="round"/>
-        <path d="M0 14L1 0L11 8Z" fill="#EBF6FF"/>
-        <path d="M33 -44L41 -55L53 -46L46 -35Z" fill="#DE74E9"/>
-       </g>
-       <path d="M386 103L393 128L420 135L393 143L386 168L379 143L352 135L379 128Z" fill="#FFB76D" opacity=".88"/>
+      <rect x="62" y="32" width="416" height="436" rx="46" fill="url(#wl-glass)" stroke="#FFFFFF" strokeOpacity=".16"/>
+      <rect x="92" y="62" width="356" height="356" rx="34" fill="url(#wl-tray)"/>
+       <rect x="139" y="109" width="75" height="75" rx="16" fill="#3EE6A8" fillOpacity=".09" stroke="#3EE6A8" strokeOpacity=".22"/>
+       <rect x="232" y="109" width="76" height="75" rx="16" fill="#3EE6A8" fillOpacity=".09" stroke="#3EE6A8" strokeOpacity=".22"/>
+       <rect x="139" y="202" width="75" height="76" rx="16" fill="#3EE6A8" fillOpacity=".09" stroke="#3EE6A8" strokeOpacity=".22"/>
+       <rect x="232" y="202" width="76" height="76" rx="16" fill="#3EE6A8" fillOpacity=".09" stroke="#3EE6A8" strokeOpacity=".22"/>
+       <rect x="326" y="202" width="75" height="76" rx="16" fill="#3EE6A8" fillOpacity=".09" stroke="#3EE6A8" strokeOpacity=".22"/>
+       <rect x="139" y="296" width="75" height="75" rx="16" fill="#3EE6A8" fillOpacity=".09" stroke="#3EE6A8" strokeOpacity=".22"/>
+       <rect x="232" y="296" width="76" height="75" rx="16" fill="#3EE6A8" fillOpacity=".09" stroke="#3EE6A8" strokeOpacity=".22"/>
+       <rect x="326" y="296" width="75" height="75" rx="16" fill="#3EE6A8" fillOpacity=".09" stroke="#3EE6A8" strokeOpacity=".22"/>
+      <g className="welcome-square-fill" clipPath="url(#wl-cell)">
+       <rect x="326" y="109" width="75" height="75" fill="url(#wl-liquid)"/>
+       <path d="M320 128 Q338 118 356 128 T392 128 T428 128 V112 H320Z" fill="#FFB3C6" opacity=".55"/>
+       <circle cx="345" cy="165" r="5" fill="#FFFFFF" opacity=".45"/><circle cx="378" cy="150" r="3.5" fill="#FFFFFF" opacity=".4"/>
+       <image href="/art/fox.webp" x="335" y="117" width="58" height="58"/>
       </g>
+       <line x1="317" y1="100" x2="410" y2="100" stroke="#FF4F7B" strokeWidth="30" strokeOpacity=".2" strokeLinecap="round"/>
+       <line x1="317" y1="103" x2="410" y2="103" stroke="#02061A" strokeOpacity=".5" strokeWidth="16" strokeLinecap="round"/>
+       <line className="welcome-drawn-edge" x1="317" y1="100" x2="410" y2="100" stroke="#FF4F7B" strokeWidth="16" strokeLinecap="round"/>
+       <line x1="317" y1="97" x2="410" y2="97" stroke="#FFFFFF" strokeOpacity=".5" strokeWidth="4" strokeLinecap="round"/>
+       <line x1="410" y1="100" x2="410" y2="193" stroke="#FF4F7B" strokeWidth="30" strokeOpacity=".2" strokeLinecap="round"/>
+       <line x1="410" y1="103" x2="410" y2="196" stroke="#02061A" strokeOpacity=".5" strokeWidth="16" strokeLinecap="round"/>
+       <line className="welcome-drawn-edge" x1="410" y1="100" x2="410" y2="193" stroke="#FF4F7B" strokeWidth="16" strokeLinecap="round"/>
+       <line x1="410" y1="97" x2="410" y2="190" stroke="#FFFFFF" strokeOpacity=".5" strokeWidth="4" strokeLinecap="round"/>
+       <line x1="317" y1="193" x2="410" y2="193" stroke="#FF4F7B" strokeWidth="30" strokeOpacity=".2" strokeLinecap="round"/>
+       <line x1="317" y1="196" x2="410" y2="196" stroke="#02061A" strokeOpacity=".5" strokeWidth="16" strokeLinecap="round"/>
+       <line className="welcome-drawn-edge" x1="317" y1="193" x2="410" y2="193" stroke="#FF4F7B" strokeWidth="16" strokeLinecap="round"/>
+       <line x1="317" y1="190" x2="410" y2="190" stroke="#FFFFFF" strokeOpacity=".5" strokeWidth="4" strokeLinecap="round"/>
+       <line x1="317" y1="100" x2="317" y2="193" stroke="#FF4F7B" strokeWidth="30" strokeOpacity=".2" strokeLinecap="round"/>
+       <line x1="317" y1="103" x2="317" y2="196" stroke="#02061A" strokeOpacity=".5" strokeWidth="16" strokeLinecap="round"/>
+       <line className="welcome-drawn-edge" x1="317" y1="100" x2="317" y2="193" stroke="#FF4F7B" strokeWidth="16" strokeLinecap="round"/>
+       <line x1="317" y1="97" x2="317" y2="190" stroke="#FFFFFF" strokeOpacity=".5" strokeWidth="4" strokeLinecap="round"/>
+       <line x1="130" y1="287" x2="223" y2="287" stroke="#2EE6B8" strokeWidth="30" strokeOpacity=".2" strokeLinecap="round"/>
+       <line x1="130" y1="290" x2="223" y2="290" stroke="#02061A" strokeOpacity=".5" strokeWidth="16" strokeLinecap="round"/>
+       <line className="welcome-drawn-edge" x1="130" y1="287" x2="223" y2="287" stroke="#2EE6B8" strokeWidth="16" strokeLinecap="round"/>
+       <line x1="130" y1="284" x2="223" y2="284" stroke="#FFFFFF" strokeOpacity=".5" strokeWidth="4" strokeLinecap="round"/>
+       <line x1="223" y1="287" x2="223" y2="380" stroke="#2EE6B8" strokeWidth="30" strokeOpacity=".2" strokeLinecap="round"/>
+       <line x1="223" y1="290" x2="223" y2="383" stroke="#02061A" strokeOpacity=".5" strokeWidth="16" strokeLinecap="round"/>
+       <line className="welcome-drawn-edge" x1="223" y1="287" x2="223" y2="380" stroke="#2EE6B8" strokeWidth="16" strokeLinecap="round"/>
+       <line x1="223" y1="284" x2="223" y2="377" stroke="#FFFFFF" strokeOpacity=".5" strokeWidth="4" strokeLinecap="round"/>
+       <g><ellipse cx="130" cy="104" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="130" cy="100" r="12" fill="url(#wl-dot)"/><circle cx="126" cy="96" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="223" cy="104" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="223" cy="100" r="12" fill="url(#wl-dot)"/><circle cx="219" cy="96" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="317" cy="104" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="317" cy="100" r="12" fill="url(#wl-dot)"/><circle cx="313" cy="96" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="410" cy="104" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="410" cy="100" r="12" fill="url(#wl-dot)"/><circle cx="406" cy="96" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="130" cy="197" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="130" cy="193" r="12" fill="url(#wl-dot)"/><circle cx="126" cy="189" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="223" cy="197" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="223" cy="193" r="12" fill="url(#wl-dot)"/><circle cx="219" cy="189" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="317" cy="197" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="317" cy="193" r="12" fill="url(#wl-dot)"/><circle cx="313" cy="189" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="410" cy="197" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="410" cy="193" r="12" fill="url(#wl-dot)"/><circle cx="406" cy="189" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="130" cy="291" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="130" cy="287" r="12" fill="url(#wl-dot)"/><circle cx="126" cy="283" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="223" cy="291" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="223" cy="287" r="12" fill="url(#wl-dot)"/><circle cx="219" cy="283" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="317" cy="291" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="317" cy="287" r="12" fill="url(#wl-dot)"/><circle cx="313" cy="283" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="410" cy="291" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="410" cy="287" r="12" fill="url(#wl-dot)"/><circle cx="406" cy="283" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="130" cy="384" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="130" cy="380" r="12" fill="url(#wl-dot)"/><circle cx="126" cy="376" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="223" cy="384" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="223" cy="380" r="12" fill="url(#wl-dot)"/><circle cx="219" cy="376" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="317" cy="384" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="317" cy="380" r="12" fill="url(#wl-dot)"/><circle cx="313" cy="376" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
+       <g><ellipse cx="410" cy="384" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="410" cy="380" r="12" fill="url(#wl-dot)"/><circle cx="406" cy="376" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
     </svg>
     <div className="welcome-art-tag" aria-hidden="true"><span>✦</span> TRIVIA SQUARES <span>✦</span></div>
    </div>

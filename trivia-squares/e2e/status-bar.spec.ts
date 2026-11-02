@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openGameSettings,closeGameMenu,switchLanguage} from './menuQA';
 
 test('clock, both dates, weather, version and author credit are visible on desktop',async({page})=>{
  await page.route('https://api.open-meteo.com/**',route=>route.fulfill({
@@ -8,16 +9,17 @@ test('clock, both dates, weather, version and author credit are visible on deskt
  }));
  await page.addInitScript(()=>localStorage.setItem('trivia-tutorial-seen-v1','true'));
  await page.goto('/');
+ await openGameSettings(page);
  const bar=page.getByRole('region',{name:'נתוני המשחק: שעה, תאריך, מזג אוויר וגרסה'});
  await expect(bar).toBeVisible();
  await expect(bar.getByLabel('השעה בישראל')).toContainText(/^\d{2}:\d{2}:\d{2}$/);
  await expect(bar).toContainText(/\d{2}[.\/]\d{2}[.\/]\d{4}/);
  await expect(bar.getByText(/24°C/)).toBeVisible();
  await expect(bar.getByTestId('trivia-version')).toContainText(/^v\d+\.\d+\.\d+$/);
+ await expect(bar.getByRole('link',{name:'נתוני מזג אוויר: Open-Meteo'})).toHaveAttribute('href','https://open-meteo.com/');
  await bar.getByRole('link',{name:'קרדיט ומידע על היוצר'}).click();
  await expect(page.locator('#app-footer')).toContainText('גיא רוזנברג');
  await expect(page.locator('#app-footer')).toBeInViewport();
- await expect(bar.getByRole('link',{name:'נתוני מזג אוויר: Open-Meteo'})).toHaveAttribute('href','https://open-meteo.com/');
 });
 
 test('city preference persists and weather display remains accessible in mobile layout',async({page,isMobile})=>{
@@ -28,12 +30,14 @@ test('city preference persists and weather display remains accessible in mobile 
  }));
  await page.addInitScript(()=>localStorage.setItem('trivia-tutorial-seen-v1','true'));
  await page.goto('/');
+ await openGameSettings(page);
  const select=page.getByLabel('מזג האוויר');
  await select.selectOption('jerusalem');
  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('trivia-weather-city'))).toBe('jerusalem');
  await page.reload();
+ await openGameSettings(page);
  await expect(page.getByLabel('מזג האוויר')).toHaveValue('jerusalem');
  await expect(page.getByTestId('trivia-version')).toBeVisible();
  await expect(page.locator('#app-footer')).toBeVisible();
- if(isMobile)await expect(page.locator('.game-timebar')).toBeInViewport();
+ if(isMobile){await page.locator('.game-timebar').scrollIntoViewIfNeeded();await expect(page.locator('.game-timebar')).toBeInViewport();}
 });

@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openGameSettings,closeGameMenu,switchLanguage} from './menuQA';
 
 test('an actual sound test tap schedules original Web Audio oscillators on desktop and mobile',async({page})=>{
  await page.addInitScript(()=>{
@@ -17,6 +18,7 @@ test('an actual sound test tap schedules original Web Audio oscillators on deskt
   };
  });
  await page.goto('/');
+ await openGameSettings(page);
  const sound=page.getByTestId('trivia-audio-test');
  await expect(sound).toBeVisible();
  await sound.click();

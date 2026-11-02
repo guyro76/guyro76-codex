@@ -298,23 +298,6 @@ main.trivia-app .board{touch-action:none;user-select:none;-webkit-user-select:no
 @media(max-width:900px) and (max-height:480px) and (orientation:landscape){main.trivia-app.playing-layout{min-height:100dvh;height:auto!important;overflow-y:auto!important}main.trivia-app.playing-layout .arena{width:min(78dvh,100%,430px)!important;height:auto!important;max-height:none!important;aspect-ratio:1}}
 
 
-/* Compact active play: the stage is already accessible in the game menu and
-   arena heading. Removing the duplicate campaign strip preserves board room
-   without reducing bold answer text or hiding the gameplay controls. */
-@media (min-width:820px) and (min-height:680px) and (max-height:900px){
- main.trivia-app.playing-layout .campaign-section{display:none!important}
- main.trivia-app.playing-layout .arena{
-  width:clamp(270px,calc(100dvh - 500px),310px)!important;
-  min-width:270px!important;min-height:270px!important;
- }
-}
-@media (min-width:650px) and (max-width:819px) and (min-height:800px) and (max-height:1100px){
- main.trivia-app.playing-layout .campaign-section{display:none!important}
- main.trivia-app.playing-layout .arena{
-  width:clamp(270px,calc(100dvh - 730px),300px)!important;
-  min-width:270px!important;min-height:270px!important;
- }
-}
 
 /* Unified readable typography and keyboard accessibility across all skins. */
 main.trivia-app :is(p,span,li,small,dt,dd,output,summary,legend,option){font-weight:800}
