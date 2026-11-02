@@ -126,8 +126,9 @@ main.trivia-app .answer-option {
 /* P0 active quiz heading actually rendered as .quiz-card > h2, not .question-text.
    Limit the light surface to the question dialog so tutorial and feedback retain their styling. */
 main.trivia-app .quiz-card:has(> .question-timer) > h2 {
-  background-color: #ffffff;
-  color: #14213d;
+  background-color: #ffffff !important;
+  /* premium.css sets .quiz-card h2 color: white !important; override only the active question. */
+  color: #14213d !important;
   text-shadow: none;
   border-radius: 12px;
   padding: 0.65em 0.8em;
