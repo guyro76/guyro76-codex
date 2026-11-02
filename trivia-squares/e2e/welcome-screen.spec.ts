@@ -2,11 +2,11 @@ import {test,expect} from '@playwright/test';
 
 // An actual new family player sees the entry; existing saved games resume.
 test.use({storageState:{cookies:[],origins:[]}});
-test('first launch shows premium 100-level welcome, six languages, then opens the game',async({page})=>{
+test('first launch shows premium 200-level welcome, six languages, then opens the game',async({page})=>{
  await page.goto('/');
  await expect(page.locator('.trivia-welcome')).toBeVisible();
  await expect(page.locator('.welcome-board-visual')).toBeVisible();
- await expect(page.locator('.trivia-welcome')).toContainText('100');
+ await expect(page.locator('.trivia-welcome')).toContainText('200');
  await page.getByLabel('שפה').selectOption('en');
  await expect(page.locator('.trivia-welcome')).toHaveAttribute('lang','en');
  await page.locator('.welcome-start').click();
