@@ -26,7 +26,8 @@ import { findLocalQuestion } from '../lib/localQuestionLookup';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
-import {selectVariedQuestion,readRecentQuestionTopics} from '../lib/questionMix';
+import {selectVariedQuestion,readRecentQuestionTopics,RECENT_TOPIC_MEMORY,GEOGRAPHY_GAP,isGeographyQuestion} from '../lib/questionMix';
+import SuggestQuestionPrompt,{type QuestionSuggestion} from '../components/SuggestQuestionPrompt';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
 import QuestionReportButton from '../components/QuestionReportButton';
@@ -165,6 +166,7 @@ export default function TriviaGame() {
   };
   const [local, setLocal] = useState<GameState>(() => empty(3));
   const [localComboStreak,setLocalComboStreak]=useState(0);
+  const [suggestEdge,setSuggestEdge]=useState<string|null>(null);
   const localComboByPlayerRef=useRef({host:0,guest:0});
   const [stageRunId,setStageRunId] = useState('local-first');
   const [localReady, setLocalReady] = useState(false);
@@ -919,6 +921,13 @@ export default function TriviaGame() {
       // Never recycle seen questions to manufacture topic variety.
       const preferred=unseen.filter(q=>selectedTopics.includes(topicForQuestion(q.category,q.text)));
       const remaining=preferred.length?preferred:unseen;
+      // Owner rule: only one geography question, then a long run of other categories.
+      // When nothing but geography is left and a geography question was shown recently,
+      // ask the player to suggest a new question instead (a valid suggestion earns the line).
+      if(remaining.every(item=>isGeographyQuestion(item)) &&
+        recentQuestionTopics.current.slice(-GEOGRAPHY_GAP).includes('capitals')){
+        setSuggestEdge(key);return;
+      }
       // Enforce rotating broad topics rather than only raw category labels.
       // Fresh entropy per draw. A new game must not replay a fixed deck order.
       const chosen=selectVariedQuestion(remaining,recentQuestionTopics.current,()=>{
@@ -947,7 +956,7 @@ export default function TriviaGame() {
         setBusy(false);
       }
       lastQuestionCategory.current=q.category;
-      recentQuestionTopics.current=[...recentQuestionTopics.current,topicForQuestion(q.category,q.text)].slice(-8);
+      recentQuestionTopics.current=[...recentQuestionTopics.current,topicForQuestion(q.category,q.text)].slice(-RECENT_TOPIC_MEMORY);
       try{localStorage.setItem('trivia-recent-question-topics-v1',JSON.stringify(recentQuestionTopics.current))}catch{}
       usedLocalQuestionIds.current.add(q.id);
       rememberShownQuestion(q.text);
@@ -1062,8 +1071,12 @@ export default function TriviaGame() {
           selectedTopics.includes(topicForQuestion(item.category,item.text)) &&
           !usedLocalQuestionIds.current.has(item.id) &&
           !seenQuestionTexts.current.has(canonicalQuestion(item.text)));
-        const followUp=unused.length?unused[Math.floor(Math.random()*unused.length)]:null;
+        // The premium follow-up obeys the same topic rotation as every other question
+        // (it used to be a random pick from a bank that is ~95% city rows). Unseen questions only.
+        const followUp=selectVariedQuestion(unused,recentQuestionTopics.current)?.question||null;
         if(followUp){
+          recentQuestionTopics.current=[...recentQuestionTopics.current,topicForQuestion(followUp.category,followUp.text)].slice(-RECENT_TOPIC_MEMORY);
+          try{localStorage.setItem('trivia-recent-question-topics-v1',JSON.stringify(recentQuestionTopics.current))}catch{}
           usedLocalQuestionIds.current.add(followUp.id);rememberShownQuestion(followUp.text);
           try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
           setQuestion({id:followUp.id,text:followUp.text,answers:[...followUp.answers],locale,edge,
@@ -1077,6 +1090,31 @@ export default function TriviaGame() {
       setQuestion(null); setEdge(null);
     }
     setBusy(false);
+  }
+
+  function submitQuestionSuggestion(suggestion:QuestionSuggestion){
+    const key=suggestEdge;
+    if(!key||remote){setSuggestEdge(null);return;}
+    try{
+      const saved=JSON.parse(localStorage.getItem('trivia-my-question-suggestions-v1')||'[]');
+      const list=Array.isArray(saved)?saved:[];
+      list.push({...suggestion,locale,created_at:new Date().toISOString()});
+      localStorage.setItem('trivia-my-question-suggestions-v1',JSON.stringify(list.slice(-200)));
+    }catch{}
+    if(client&&user&&legalAccepted){
+      void client.rpc('trivia_submit_community_question',{p_locale:locale,p_category:'general',p_question:suggestion.text,
+        p_answers:suggestion.answers,p_correct_index:suggestion.correct,p_source_url:null});
+    }
+    const next=applyLocalAnswer(local,key,true,local.mode==='solo');
+    setLocal(next);
+    const gained=Object.keys(next.owners).filter(k=>!local.owners[k]).length;
+    if(gained){celebrateCapture(gained);setCaptureToast({id:Date.now(),amount:5+gained*10});play('capture');}
+    else play('correct');
+    // A contribution counts as a non-geography turn in the rotation.
+    recentQuestionTopics.current=[...recentQuestionTopics.current,'general' as QuestionTopic].slice(-RECENT_TOPIC_MEMORY);
+    try{localStorage.setItem('trivia-recent-question-topics-v1',JSON.stringify(recentQuestionTopics.current))}catch{}
+    setMessage(locale==='he'?'תודה! השאלה שלך נשמרה והקו שלך.':'Thank you! Your question was saved and the line is yours.');
+    setSuggestEdge(null);setEdge(null);
   }
 
   async function extendQuestionTime() {
@@ -2122,6 +2160,8 @@ export default function TriviaGame() {
           onClick={()=>setCapturePending(null)}>{locale==='en'?'Cancel':'ביטול'}</button>}
       </section>
     </div>}
+    {suggestEdge && !question && <SuggestQuestionPrompt locale={locale} onSubmit={submitQuestionSuggestion}
+      onSkip={()=>{setSuggestEdge(null);setEdge(null);}}/>}
     {showTutorial && <div className='quiz-overlay' role='presentation'>
       <section id='tutorial-modal' tabIndex={-1} className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('הסבר משחק')}
         onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();dismissTutorial()}}}
