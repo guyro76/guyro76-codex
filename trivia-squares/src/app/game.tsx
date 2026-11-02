@@ -10,7 +10,7 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween, edgeFromSwipe } from '
 import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
-import { playGameSound, unlockGameAudio, gameAudioState, recoverGameAudioOnForeground, type SoundCue } from '../lib/gameAudio';
+import { playGameSound, setGameAudioMuted, unlockGameAudio, gameAudioState, recoverGameAudioOnForeground, type SoundCue } from '../lib/gameAudio';
 import {answerFeedback} from '../lib/answerFeedback';
 import {gameplayGuidance} from '../lib/gameplayGuidance';
 import {viewportModeLabel,viewportPreviewLabel} from '../lib/viewportPreviewLabels';
@@ -286,6 +286,7 @@ export default function TriviaGame() {
   const [busy, setBusy] = useState(false);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(75);
+  useEffect(()=>{setGameAudioMuted(muted||volume===0)},[muted,volume]);
   const [audioTestStatus,setAudioTestStatus]=useState<'unknown'|'ready'|'locked'|'unsupported'>('unknown');
   useEffect(()=>{
     document.addEventListener('visibilitychange',recoverGameAudioOnForeground);
