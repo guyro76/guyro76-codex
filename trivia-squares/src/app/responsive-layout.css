@@ -170,7 +170,6 @@ main.trivia-app .quiz-card{max-height:calc(100dvh - 25px);overflow:auto}
  main.trivia-app .game-grid{grid-template-columns:1fr!important}
  main.trivia-app .settings-drawer-content{grid-template-columns:repeat(2,minmax(0,1fr))}
  main.trivia-app .settings-drawer-content .glass-panel{min-width:0}
- main.trivia-app.playing-layout .board{width:min(100%,calc(100dvh - 520px))!important;max-width:480px!important}
 }
 @media (max-width:649px) {
  main.trivia-app .hero-brand{gap:7px}
@@ -443,7 +442,6 @@ main.trivia-app .app-menu-heading{padding-block-start:max(17px,env(safe-area-ins
 /* App shell: portrait tablets on Chromium/Android/Safari must keep the board in view.
    Reward overlay is deliberately separate from gameplay sizing. */
 @media (min-width:650px) and (max-width:819px) and (min-height:800px){
- main.trivia-app.playing-layout .arena{max-height:min(calc(100dvh - 540px),475px)!important}
  main.trivia-app.playing-layout .arena-panel{overscroll-behavior:contain}
 }
 main.trivia-app .arena-head-right{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;min-width:0}
@@ -484,11 +482,6 @@ main.trivia-app .stage-reward-reopen{border:2px solid #FFDF9A;background:#264474
 /* QA 768x1024 (Android/iPad portrait): keep the complete board visible,
    including after a marker gesture activates compact play mode. */
 @media (min-width:650px) and (max-width:819px) and (min-height:800px){
- main.trivia-app.playing-layout .arena{
-   width:min(100%,calc(100dvh - 685px),425px)!important;
-   max-height:min(calc(100dvh - 685px),425px)!important;
-   flex-shrink:0!important;
- }
  main.trivia-app.playing-layout .arena-panel{gap:0!important;padding:4px!important}
  main.trivia-app.playing-layout .arena-title{min-height:0!important;margin:0!important}
  main.trivia-app.playing-layout .scoreboard{margin:0!important;gap:4px!important}

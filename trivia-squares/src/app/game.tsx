@@ -47,6 +47,8 @@ import './reward-ceremony.css';
 import './readable-play.css';
 import './capture-experience.css';
 import './arcade-polish.css';
+import './game-layout.css';
+import './game-visual.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
@@ -124,7 +126,7 @@ const worlds = [
 ] as const;
 const empty = (size: number, kind:'solo'|'local'='solo'): GameState => ({ rows: size, cols: size, mode: kind, turn: 'host', edges: {}, owners: {}, scores: { host: 0, guest: 0, bot: 0 } });
 const css = {
-  main: { maxWidth: 1100, margin: 'auto', padding: '16px' } as React.CSSProperties,
+  main: {} as React.CSSProperties,
   panel: { background: '#182858', border: '1px solid #5168A9', boxShadow: '0 15px 40px #080f2688', borderRadius: 22, padding: 18 } as React.CSSProperties,
   button: { padding: '12px 16px', background: '#FFDC5B', color: '#17244E', border: 0, borderRadius: 11, fontWeight: 900, cursor: 'pointer' } as React.CSSProperties,
   secondary: { padding: '12px 16px', background: '#334F91', color: '#FFFFFF', border: '1px solid #6A87C4', borderRadius: 11, fontWeight: 900, cursor: 'pointer' } as React.CSSProperties,
@@ -159,7 +161,7 @@ export default function TriviaGame() {
   const [stageRewardOpen,setStageRewardOpen]=useState(true);
   const [stageRewardReady,setStageRewardReady]=useState(false);
   const menuRef=useRef<HTMLDialogElement>(null);
-  const [menuSection,setMenuSection]=useState<'stages'|'modes'|'profile'|'rewards'|'account'>('stages');
+  const [menuSection,setMenuSection]=useState<'settings'|'stages'|'modes'|'profile'|'rewards'|'account'>('stages');
   const openGameMenu=(section:typeof menuSection='stages')=>{
     setMenuSection(section);
     if(!menuRef.current?.open)menuRef.current?.showModal();
@@ -1369,10 +1371,10 @@ export default function TriviaGame() {
   const drawLine = (key: string, x1: number, y1: number, x2: number, y2: number) => {
     const owner = state.edges[key];
     return <g key={key} pointerEvents='none'>
-      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={lineColors[owner]} strokeWidth='17' strokeOpacity='.26' strokeLinecap='round' />}
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? lineColors[owner] : '#B7D1F6'} strokeOpacity={owner ? .95 : .2} strokeWidth={owner ? 10 : 3} strokeLinecap='round' strokeDasharray={owner ? undefined : '1 11'}/>
-      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={lineColors[owner]} strokeOpacity='.42' strokeWidth='4' strokeLinecap='round' />}
-      {owner && <line x1={x1+1} y1={y1+1} x2={x2+1} y2={y2+1} stroke='#FFFFFF' strokeOpacity='.12' strokeWidth='1.5' strokeLinecap='round' />}
+      {owner && <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={lineColors[owner]} strokeWidth='18' strokeOpacity='.18' strokeLinecap='round' />}
+      {owner && <line x1={x1} y1={y1+1.6} x2={x2} y2={y2+1.6} stroke='#02061A' strokeOpacity='.45' strokeWidth='10' strokeLinecap='round' />}
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? lineColors[owner] : '#C9D8FF'} strokeOpacity={owner ? 1 : .16} strokeWidth={owner ? 10 : 2.5} strokeLinecap='round' strokeDasharray={owner ? undefined : '1 10'}/>
+      {owner && <line x1={x1} y1={y1-1.7} x2={x2} y2={y2-1.7} stroke='#FFFFFF' strokeOpacity='.5' strokeWidth='2.4' strokeLinecap='round' />}
     </g>;
   };
   const step = 288 / state.cols;
@@ -1417,7 +1419,6 @@ export default function TriviaGame() {
     name:locale==='es'?(SPANISH_STAGE_NAMES[stageId]||selectedStage.nameEn):locale==='he'?selectedStage.nameHe:selectedStage.nameEn,
     subtitle:locale==='es'?'Conecta puntos, responde y conquista todas las casillas del nivel.':locale==='he'?selectedStage.subtitleHe:selectedStage.subtitleEn
   };
-  const decorative = ['🍃', '💠', '✨', '🌠'][themeIndex];
   return <main data-preview-viewport={previewViewport} className={'trivia-app theme-' + world.slug + ' skin-' + skin + (stageStarted?' playing-layout':' setup-layout')} style={css.main} dir={localeDirection(locale)} lang={locale} onPointerDownCapture={()=>unlockGameAudio()} onKeyDownCapture={event=>{if(event.key==='Enter'||event.key===' ')unlockGameAudio()}}>
     <style>{`
       *{box-sizing:border-box} body{background:#111C48;color:white;font-family:Arial,'Noto Sans Hebrew',sans-serif;font-weight:800;margin:0}
@@ -1544,8 +1545,26 @@ export default function TriviaGame() {
       .tutorial-stroke{animation:drawTutorial 1.5s ease-in-out both}
       .claimed-tile{animation:tileClaim .36s cubic-bezier(.2,1.3,.4,1);transform-origin:center}
     `}</style>
-    <GameTimeBar locale={locale}/>
-    <div className='skin-picker-bar'>
+    <header className='game-topbar'>
+      <button type='button' className='app-menu-trigger'
+        aria-label={locale==='he'?'פתח תפריט משחק':locale==='en'?'Open game menu':locale==='ru'?'Открыть меню игры':locale==='fr'?'Ouvrir le menu du jeu':locale==='es'?'Abrir el menú del juego':'افتح قائمة اللعبة'}
+        aria-haspopup='dialog' onClick={()=>openGameMenu('stages')} disabled={!!question}>
+        <span aria-hidden='true' className='app-hamburger-lines'><i/><i/><i/></span>
+        <span className='app-menu-trigger-label'>{locale==='he'?'תפריט':locale==='en'?'Menu':locale==='ru'?'Меню':locale==='fr'?'Menu':locale==='es'?'Menú':'القائمة'}</span>
+      </button>
+      <div className='hero-brand'>
+        <TriviaMark label={locale==='he'?'לוגו טריוויה ריבועים':'Trivia Squares logo'} size={46}/>
+        <div className='hero-brand-titles'>
+          <h1>{tr('טריוויה ריבועים')}</h1>
+        </div>
+      </div>
+      {user && <div className='google-player-header' aria-label={tr('החשבון המחובר')}>
+        {googlePhoto ? <img src={googlePhoto} referrerPolicy='no-referrer' alt={tr('תמונת הפרופיל שלך מ-Google')}
+           style={{width:44,height:44,objectFit:'cover',borderRadius:'50%',border:'2px solid #FFE08A'}} />
+          : <span aria-hidden='true' style={{fontSize:28}}>{avatar}</span>}
+        <span><strong>{googleName || name || 'שחקן מחובר'}</strong><small style={{display:'block',fontSize:11,color:'#DAE9FF'}}>{providerGoogle ? 'מחובר באמצעות Google' : 'מחובר לחשבון המשחק'}</small></span>
+      </div>}
+      <div className='game-topbar-actions'>
       <button type='button' className='trivia-sound-toggle' data-testid='trivia-sound-toggle'
         aria-label={(locale==='he'?'צליל':locale==='en'?'Sound':locale==='ru'?'Звук':locale==='fr'?'Son':locale==='es'?'Sonido':'الصوت')+' - '+(muted?(locale==='he'?'הפעל צלילים':locale==='en'?'Turn sound on':locale==='ru'?'Включить звук':locale==='fr'?'Activer le son':locale==='es'?'Activar sonido':'تشغيل الصوت'):
            (locale==='he'?'השתק צלילים':locale==='en'?'Mute sound':locale==='ru'?'Выключить звук':locale==='fr'?'Couper le son':locale==='es'?'Silenciar sonido':'كتم الصوت'))}
@@ -1561,70 +1580,6 @@ export default function TriviaGame() {
         }}>
         <span aria-hidden='true'>{muted||volume===0?'🔇':'🔊'}</span>
         <strong>{locale==='he'?'צליל':locale==='en'?'Sound':locale==='ru'?'Звук':locale==='fr'?'Son':locale==='es'?'Sonido':'الصوت'}</strong>
-      </button>
-      <button type='button' className='trivia-audio-test'
-        data-testid='trivia-audio-test'
-        aria-label={locale==='he'?'בדוק צלילים':locale==='es'?'Probar sonido':locale==='fr'?'Tester le son':locale==='ru'?'Проверить звук':locale==='ar'?'اختبار الصوت':'Test sound'}
-        title={locale==='he'?'השמע צליל הדגמה':locale==='es'?'Reproducir sonido de prueba':locale==='fr'?'Écouter un son':locale==='ru'?'Проверить звук':locale==='ar'?'تشغيل صوت تجريبي':'Play sample sound'}
-        onClick={()=>{
-          unlockGameAudio();
-          if(muted)setMuted(false);
-          if(volume<85)setVolume(85);
-          const sampleVolume=Math.max(.85,volume/100);
-          playGameSound('liquid',{muted:false,volume:sampleVolume});
-          playGameSound('fireworks',{muted:false,volume:sampleVolume},1.13);
-          playGameSound('coin',{muted:false,volume:sampleVolume},1.64);
-          window.setTimeout(()=>setAudioTestStatus(gameAudioState()),300);
-          // Explicit status helps diagnose silent iPhone / Safari devices.
-          const state=gameAudioState();
-          setMessage(state==='unsupported'?
-            (locale==='he'?'המכשיר אינו תומך בהשמעת צליל בדפדפן.':'This browser does not support Web Audio.'):
-            locale==='he'?'בדיקת צליל: אמור להישמע צליל זיקוקים. בדוק עוצמת מכשיר ומצב שקט.':
-            locale==='es'?'Prueba de sonido: escucha los fuegos artificiales. Comprueba el volumen del teléfono.':
-            locale==='fr'?'Test sonore : écoutez les feux d’artifice et vérifiez le volume.':
-            locale==='ru'?'Проверка звука: послушайте фейерверк и проверьте громкость.':
-            locale==='ar'?'اختبار الصوت: استمع إلى الألعاب النارية وتحقق من مستوى الصوت.':
-            'Sound test: listen for the fireworks chime. Check device volume and mute settings.');
-        }}>
-        <span aria-hidden='true'>🔉</span><strong>{locale==='he'?'בדוק':locale==='es'?'Probar':locale==='fr'?'Tester':locale==='ru'?'Проверить':locale==='ar'?'اختبار':'Test'}</strong>
-      </button>
-      {audioTestStatus!=='unknown' && <span className='trivia-audio-state' data-testid='trivia-audio-state' role='status'>
-        {audioTestStatus==='ready'
-          ? (locale==='he'?'הצליל מופעל בדפדפן':locale==='es'?'Audio activo':locale==='fr'?'Son actif':locale==='ru'?'Звук активен':locale==='ar'?'الصوت نشط':'Audio engine active')
-          : (locale==='he'?'הצליל חסום - הקש שוב ובדוק השתקה':locale==='es'?'Audio bloqueado':locale==='fr'?'Son bloqué':locale==='ru'?'Звук заблокирован':locale==='ar'?'الصوت محظور':'Audio blocked - tap again')}
-      </span>}
-      <button type='button' className='capture-liquid-preview-button'
-        data-testid='trivia-liquid-preview'
-        onClick={()=>{
-          setLiquidPreviewRun(v=>v+1);
-          unlockGameAudio();
-          playGameSound('liquid',{muted,volume:volume/100});
-          playGameSound('fireworks',{muted,volume:volume/100},1.27);
-        }}>
-        <strong>{locale==='he'?'💧 הדגמת מילוי':locale==='es'?'💧 Ver llenado':locale==='fr'?'💧 Voir le remplissage':locale==='ru'?'💧 Показать заливку':locale==='ar'?'💧 عرض التعبئة':'💧 Preview liquid fill'}</strong>
-      </button>
-      {liquidPreviewRun>0 && <div className='capture-demo-overlay' role='status' aria-live='polite' data-testid='trivia-liquid-overlay'>
-        <div className='capture-demo-card'>
-          <strong>{locale==='he'?'הריבוע מתמלא בנוזל':locale==='es'?'La casilla se llena':locale==='fr'?'La case se remplit':locale==='ru'?'Клетка заполняется':locale==='ar'?'المربع يمتلئ':'Square filling with liquid'}</strong>
-          <svg key={liquidPreviewRun} className='capture-demo-svg' viewBox='0 0 120 120' aria-label={locale==='he'?'הדמיית מילוי ריבוע בנוזל':'Liquid fill demonstration'}>
-            <CaptureTile row={0} col={0} x={10} y={10} width={100} height={100}
-              color={color} name={name||'Player'} icon={avatar}
-              style={captureStyle} locale={locale} idPrefix={'liquid-demo-'+liquidPreviewRun}/>
-          </svg>
-        </div>
-      </div>}
-      <style>{`
-        .trivia-fish-toggle{min-height:44px;min-width:52px;border:2px solid #ffe28a;border-radius:14px;background:#263d76;color:#fff;font-size:18px;font-weight:900;cursor:pointer;padding:8px 12px;touch-action:manipulation}
-        .trivia-fish-toggle[aria-pressed="true"]{background:#fce68c;color:#18254a}
-        .trivia-fish-toggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
-        .trivia-fish-svg text{animation:trivia-fish-svg-swim 4.5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
-        @keyframes trivia-fish-svg-swim{from{transform:translateX(-8px) scaleX(1)}to{transform:translateX(12px) scaleX(-1)}}
-        @media(prefers-reduced-motion:reduce){.trivia-fish-svg text{animation:none}}
-      `}</style>
-      <button type='button' className='trivia-fish-toggle' aria-pressed={fishEnabled}
-        aria-label={locale==='he'?'דגים בריבועים':locale==='ar'?'أسماك في المربعات':locale==='ru'?'Рыбки в клетках':locale==='fr'?'Poissons dans les cases':locale==='es'?'Peces en las casillas':'Fish in squares'}
-        onClick={()=>setFishEnabled(previous=>{const next=!previous;saveFishPreference(next);return next;})}>
-        🐟 {fishEnabled?'✓':'○'}
       </button>
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
@@ -1642,79 +1597,8 @@ export default function TriviaGame() {
           </button>)}
         </div>
       </section>}
-    </div>
-    <nav className='viewport-preview-switch' aria-label={viewportPreviewLabel(locale)}>
-      {(['auto','desktop','tablet','mobile'] as const).map(mode=><button key={mode} type='button' aria-pressed={previewViewport===mode} onClick={()=>setPreviewViewport(mode)}>{viewportModeLabel(locale,mode)}</button>)}
-    </nav>
-    <header className='hero'>
-      <button type='button' className='app-menu-trigger'
-        aria-label={locale==='he'?'פתח תפריט משחק':locale==='en'?'Open game menu':locale==='ru'?'Открыть меню игры':locale==='fr'?'Ouvrir le menu du jeu':locale==='es'?'Abrir el menú del juego':'افتح قائمة اللعبة'}
-        aria-haspopup='dialog' onClick={()=>openGameMenu('stages')} disabled={!!question}>
-        <span aria-hidden='true' className='app-hamburger-lines'><i/><i/><i/></span>
-        <span className='app-menu-trigger-label'>{locale==='he'?'תפריט':locale==='en'?'Menu':locale==='ru'?'Меню':locale==='fr'?'Menu':locale==='es'?'Menú':'القائمة'}</span>
-      </button>
-      {user && <div className='google-player-header' aria-label={tr('החשבון המחובר')}>
-        {googlePhoto ? <img src={googlePhoto} referrerPolicy='no-referrer' alt={tr('תמונת הפרופיל שלך מ-Google')}
-           style={{width:44,height:44,objectFit:'cover',borderRadius:'50%',border:'2px solid #FFE08A'}} />
-          : <span aria-hidden='true' style={{fontSize:28}}>{avatar}</span>}
-        <span><strong>{googleName || name || 'שחקן מחובר'}</strong><small style={{display:'block',fontSize:11,color:'#DAE9FF'}}>{providerGoogle ? 'מחובר באמצעות Google' : 'מחובר לחשבון המשחק'}</small></span>
-      </div>}
-      <div className='locale-switch' role='group' aria-label={locale==='he'?'בחירת שפת המשחק':'Game language'}>
-        <button type='button' lang='he' aria-pressed={locale==='he'} disabled={!!question}
-          className='locale-option' onClick={()=>setLocale('he')}>{tr("עברית")}</button>
-        <button type='button' lang='en' aria-pressed={locale==='en'} disabled={!!question}
-          className='locale-option' onClick={()=>setLocale('en')}>English</button>
-        <button type='button' lang='ru' aria-pressed={locale==='ru'} disabled={!!question} className='locale-option'
-          onClick={()=>setLocale('ru')}>Русский</button>
-        <button type='button' lang='fr' aria-pressed={locale==='fr'} disabled={!!question} className='locale-option'
-          onClick={()=>setLocale('fr')}>Français</button>
-        <button type='button' lang='ar' aria-pressed={locale==='ar'} disabled={!!question} className='locale-option'
-          onClick={()=>setLocale('ar')}>العربية</button>
-        <button type='button' lang='es' aria-pressed={locale==='es'} disabled={!!question} className='locale-option'
-          onClick={()=>setLocale('es')}>Español</button>
-      </div>
-      <div className='hero-brand'>
-        <TriviaMark label={locale==='he'?'לוגו טריוויה ריבועים':'Trivia Squares logo'} size={46}/>
-        <div className='hero-brand-titles'>
-          <div className='eyebrow'>✦ TRIVIA SQUARES · ADVENTURE ✦</div>
-          <h1>{tr('טריוויה ריבועים')}</h1>
-        </div>
-      </div>
-      <p>{tr("חברו נקודות, ענו נכון, כבשו ריבועים והפכו לאלופי הטריוויה!")}</p>
-      <div className='hero-name'>
-        <label htmlFor='quick-player-name'>{tr("שם שחקן (חובה)")}</label>
-        <input id='quick-player-name' type='text' minLength={2} maxLength={32} required
-          value={name} onChange={e=>updatePlayerName(e.target.value)}
-          placeholder={tr('הקלד שם לפני המשחק')} autoComplete='nickname'/>
-        {validName && nameSavedOnDevice && <span className='player-name-autosaved' role='status'>
-          {locale==='en'?(nameSyncedToAccount?'Name saved on device and account':'Name saved automatically on this device'):(nameSyncedToAccount?'השם נשמר במכשיר ובחשבון':'השם נשמר אוטומטית במכשיר')}
-        </span>}
       </div>
     </header>
-
-    <section className='campaign-section' aria-label={locale==='es'?'Cien niveles consecutivos':locale==='en'?'One hundred sequential stages':'מאה שלבים לפי סדר'}>
-      <div className='campaign-heading'>
-        <h2>{locale==='es'?'Aventura: 100 niveles':locale==='en'?'Adventure: 100 stages':'הרפתקה: 100 שלבים'}</h2>
-        <span>{locale==='es'?'Completados: ':locale==='en'?'Completed: ':'הושלמו: '}{completedStage} / {STAGE_COUNT}</span>
-      </div>
-      <div className='campaign-progress' role='progressbar' aria-valuemin={0} aria-valuemax={STAGE_COUNT} aria-valuenow={completedStage}
-           aria-label={locale==='es'?'Niveles completados':locale==='en'?'Completed campaign stages':'שלבים שהושלמו'}>
-        <span style={{width:(completedStage/STAGE_COUNT*100)+'%'}}/>
-      </div>
-      <button type='button' className='campaign-stages-toggle' aria-haspopup='dialog'
-        onClick={()=>openGameMenu('stages')}>
-        {locale==='he'?'🗺️ בחירת שלב · '+stageId+' / '+STAGE_COUNT:
-         locale==='en'?'Choose stage · '+stageId+' / '+STAGE_COUNT:
-         locale==='ru'?'Выбор уровня · '+stageId+' / '+STAGE_COUNT:
-         locale==='fr'?'Choisir le niveau · '+stageId+' / '+STAGE_COUNT:
-         locale==='es'?'Elegir nivel · '+stageId+' / '+STAGE_COUNT:
-         'اختيار المرحلة · '+stageId+' / '+STAGE_COUNT}
-        <span aria-hidden='true'>▾</span>
-      </button>
-      <p className='campaign-rule'>{locale==='en'
-        ?'Stages unlock one at a time. Finish every square of the current board to open the next stage.'
-        :'כל שלב נפתח רק אחרי שסוגרים את כל הריבועים בשלב שלפניו. אי אפשר לדלג על שלבים.'}</p>
-    </section>
 
     <div className='game-grid'>
       <section className='glass-panel arena-panel'>
@@ -1730,7 +1614,9 @@ export default function TriviaGame() {
                <span title={locale==='he'?'נקודות ידע':locale==='es'?'Puntos de conocimiento':locale==='fr'?'Points de connaissance':locale==='ru'?'Баллы знаний':locale==='ar'?'نقاط المعرفة':'Knowledge points'}>🧠 {currentKnowledgePoints}</span>
                <span title={locale==='he'?'קמעות זמן':'Time charms'}>⏳ {currentCharms}</span>
              </div>
-             <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
+             <button type='button' className='level-pill campaign-stages-toggle' aria-haspopup='dialog' disabled={!!question} onClick={()=>openGameMenu('stages')}
+               aria-label={(locale==='he'?'בחירת שלב · ':locale==='en'?'Choose stage · ':locale==='ru'?'Выбор уровня · ':locale==='fr'?'Choisir le niveau · ':locale==='es'?'Elegir nivel · ':'اختيار المرحلة · ')+stageId+' / '+STAGE_COUNT}>
+               <span aria-hidden='true'>🗺️</span> {locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</button>
            </div>
         </div>
         <ProgressPulse locale={locale} stage={stageId} captured={Object.values(state.owners).filter(owner=>owner==='host').length} streak={remote ? Number(state.streak?.[player]||0) : localComboStreak}/>
@@ -1762,8 +1648,9 @@ export default function TriviaGame() {
             >
               <defs>
                 <filter id='lineGlow' x='-50%' y='-50%' width='200%' height='200%'><feGaussianBlur stdDeviation='4' /></filter>
-                <radialGradient id='dotGlow'><stop offset='0%' stopColor='#FFFFFF'/><stop offset='58%' stopColor='#D7EAFF'/><stop offset='100%' stopColor='#7BA9ED'/></radialGradient>
-                <linearGradient id='cellTint' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stopColor='#FFFFFF' stopOpacity='.12'/><stop offset='100%' stopColor='#FFFFFF' stopOpacity='.015'/></linearGradient>
+                <radialGradient id='dotGlow' cx='36%' cy='30%' r='75%'><stop offset='0%' stopColor='#FFFFFF'/><stop offset='38%' stopColor='#EEF3FF'/><stop offset='82%' stopColor='#A9BDEB'/><stop offset='100%' stopColor='#7186C2'/></radialGradient>
+                <radialGradient id='dotGold' cx='36%' cy='30%' r='75%'><stop offset='0%' stopColor='#FFF8DC'/><stop offset='40%' stopColor='#FFD866'/><stop offset='100%' stopColor='#E39A17'/></radialGradient>
+                <linearGradient id='cellTint' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stopColor='#FFFFFF' stopOpacity='.075'/><stop offset='100%' stopColor='#FFFFFF' stopOpacity='.02'/></linearGradient>
               </defs>
               {Array.from({ length: state.rows }, (_, r) => Array.from({ length: state.cols }, (_, c) => {
                 const owner = state.owners[r + '-' + c];
@@ -1779,14 +1666,12 @@ export default function TriviaGame() {
                     ? <CaptureTile row={r} col={c} x={x} y={y} width={w-10} height={h-10}
                         color={colors[owner]} name={ownerName} icon={ownerIcon} style={captureStyle}
                         locale={locale} fishEnabled={fishEnabled} selectable={editable} onSelect={()=>setCapturePending({keys:[r+'-'+c],from:'edit'})}/>
-                    : <rect x={x} y={y} width={w-10} height={h-10} rx='10' fill='url(#cellTint)'/>}
+                    : <rect className='board-cell-empty' x={x} y={y} width={w-10} height={h-10} rx='12' fill='url(#cellTint)' stroke='#FFFFFF' strokeOpacity='.06' strokeWidth='1'/>}
                   {bonusSelect && !owner && <rect x={x} y={y} width={w-10} height={h-10} rx='10'
                     role='button' tabIndex={0} aria-label={locale==='en'?'Capture square at row '+(r+1)+', column '+(c+1):'כבוש ריבוע בשורה '+(r+1)+' עמודה '+(c+1)}
                     onClick={()=>void claimBonusSquare(r,c)}
                     onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();void claimBonusSquare(r,c)}}}
                     fill='#FFE18C' fillOpacity='.22' stroke='#FFE18C' strokeWidth='3' strokeDasharray='6 4' style={{cursor:'pointer'}} />}
-                  {!owner && <text x={x+(w-10)/2} y={y+h*.62} textAnchor='middle'
-                    fontSize={Math.min(24,w*.3)} opacity='.22' aria-hidden='true'>{decorative}</text>}
                 </g>;
               }))}
               {Array.from({ length: state.rows + 1 }, (_, r) => Array.from({ length: state.cols }, (_, c) => drawLine('h-' + r + '-' + c, 20 + c * step, 20 + r * step, 20 + (c + 1) * step, 20 + r * step)))}
@@ -1801,8 +1686,10 @@ export default function TriviaGame() {
                 const selected = trace?.start.row === r && trace?.start.col === c || trace?.end?.row === r && trace?.end?.col === c || keyboardStart?.row === r && keyboardStart?.col === c;
                 const px = dotXY(dot, state.rows, state.cols);
                 return <g key={'dot-' + r + '-' + c}>
-                  <circle cx={px.x} cy={px.y} r={selected ? 13 : 10} fill='#BBD9FF' fillOpacity={selected ? '.35' : '.16'} pointerEvents='none' />
-                  <circle cx={px.x} cy={px.y} r={selected ? 7.3 : 5.5} fill={selected ? '#FFE48A' : 'url(#dotGlow)'} stroke={selected ? '#FFFFFF' : '#D9EAFF'} strokeWidth='1.5' pointerEvents='none' />
+                  {selected && <circle cx={px.x} cy={px.y} r='14' fill='#FFD866' fillOpacity='.28' pointerEvents='none' />}
+                  <ellipse cx={px.x} cy={px.y+2.2} rx={selected ? 7.6 : 6.2} ry={selected ? 5.4 : 4.4} fill='#02061A' fillOpacity='.5' pointerEvents='none' />
+                  <circle cx={px.x} cy={px.y} r={selected ? 8 : 6.4} fill={selected ? 'url(#dotGold)' : 'url(#dotGlow)'} pointerEvents='none' />
+                  <circle cx={px.x-(selected?2.4:1.9)} cy={px.y-(selected?2.6:2.1)} r={selected ? 2 : 1.6} fill='#FFFFFF' fillOpacity='.95' pointerEvents='none' />
                   <circle cx={px.x} cy={px.y} r='13' fill='transparent' role='button' tabIndex={canPlay ? 0 : -1} aria-label={locale==='en'?'Dot row '+(r+1)+', column '+(c+1):'נקודה '+(r+1)+', '+(c+1)} onKeyDown={event => onDotKeyDown(event, dot)} />
                 </g>;
               }))}
@@ -1843,23 +1730,20 @@ export default function TriviaGame() {
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>{tr("ממתינים שהחבר ייכנס לחדר...")}</p>}
         <div className='control-row'>
           <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}>🎮 {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>
-          <button className='glass-button' onClick={() => {
-            unlockGameAudio();
-            if (muted) playGameSound('correct',{muted:false,volume:volume/100});
-            setMuted(v=>!v);
-          }} aria-pressed={muted} aria-label={tr(muted ? 'הפעל צלילים' : 'השתק צלילים')}>
-            {tr(muted ? '🔇 הפעל צלילים' : '🔊 השתק צלילים')}
-          </button>
-          <label className='glass-button' style={{display:'inline-flex',gap:7,alignItems:'center'}} htmlFor='game-volume'>
-            {tr("עוצמה")} <input id='game-volume' type='range' min='0' max='100' step='5'
-              aria-label={tr('עוצמת הצלילים במשחק')} value={volume} onChange={e=>setVolume(Number(e.target.value))}
-              style={{width:80,accentColor:'#FFE38F'}} /> {volume}%
-          </label>
           <button className='glass-button' onClick={()=>{setTutorialPage(0);setShowTutorial(true)}}>{tr("❓ איך משחקים")}</button>
           {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>{tr("⭐ שאלת זהב!")}</button>}
           {availableBonus>0 && state.mode!=='online' && <button className='gold-button' disabled={busy||!!question} onClick={()=>setBonusSelect(v=>!v)}>
             ✨ {tr(bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס')} ({availableBonus})</button>}
           {finished && stageId<STAGE_COUNT && <button className='glass-button' disabled={stageId>completedStage} onClick={advanceStage}>{locale==='en'?'Next stage →':'השלב הבא ←'}</button>}
+        </div>
+        <div className='hero-name player-name-field'>
+          <label htmlFor='quick-player-name'>{tr("שם שחקן (חובה)")}</label>
+          <input id='quick-player-name' type='text' minLength={2} maxLength={32} required
+            value={name} onChange={e=>updatePlayerName(e.target.value)}
+            placeholder={tr('הקלד שם לפני המשחק')} autoComplete='nickname'/>
+          {validName && nameSavedOnDevice && <span className='player-name-autosaved' role='status'>
+            {locale==='en'?(nameSyncedToAccount?'Name saved on device and account':'Name saved automatically on this device'):(nameSyncedToAccount?'השם נשמר במכשיר ובחשבון':'השם נשמר אוטומטית במכשיר')}
+          </span>}
         </div>
         {finished && !stageRewardOpen && <button className='stage-reward-reopen'
           type='button' onClick={()=>setStageRewardOpen(true)}>
@@ -1901,6 +1785,11 @@ export default function TriviaGame() {
             </div>
             <nav className='app-menu-tabs' aria-label={locale==='he'?'ניווט במשחק':locale==='es'?'Navegación del juego':'Game navigation'}>
               <button type='button' className='app-menu-tab app-menu-play' onClick={()=>menuRef.current?.close()}><span aria-hidden='true'>◈</span><span>{locale==='he'?'חזרה ללוח':locale==='en'?'Back to board':locale==='ru'?'К игре':locale==='fr'?'Retour au jeu':locale==='es'?'Volver al tablero':'العودة للعبة'}</span></button>
+            <button type='button' className='app-menu-tab' aria-current={menuSection==='settings'?'page':undefined}
+              onClick={()=>setMenuSection('settings')} data-section='settings'>
+              <span aria-hidden='true'>⚙</span>
+              <span>{locale==='he'?'הגדרות':locale==='en'?'Settings':locale==='ru'?'Настройки':locale==='fr'?'Réglages':locale==='es'?'Ajustes':'الإعدادات'}</span>
+            </button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='stages'?'page':undefined}
               onClick={()=>setMenuSection('stages')} data-section='stages'>
               <span aria-hidden='true'>▦</span>
@@ -1928,8 +1817,111 @@ export default function TriviaGame() {
             </button>
             </nav>
             <div className='app-menu-content' data-active-section={menuSection}>
+              <section className='app-menu-pane app-menu-settings' hidden={menuSection!=='settings'} aria-label={locale==='he'?'הגדרות':locale==='en'?'Settings':locale==='ru'?'Настройки':locale==='fr'?'Réglages':locale==='es'?'Ajustes':'الإعدادات'}>
+                <h2 className='panel-title'>{locale==='he'?'הגדרות':locale==='en'?'Settings':locale==='ru'?'Настройки':locale==='fr'?'Réglages':locale==='es'?'Ajustes':'الإعدادات'}</h2>
+                <div className='settings-group'>
+                  <h3>{locale==='he'?'שפה':locale==='en'?'Language':locale==='ru'?'Язык':locale==='fr'?'Langue':locale==='es'?'Idioma':'اللغة'}</h3>
+                  <div className='locale-switch' role='group' aria-label={locale==='he'?'בחירת שפת המשחק':'Game language'}>
+                    <button type='button' lang='he' aria-pressed={locale==='he'} disabled={!!question}
+                      className='locale-option' onClick={()=>setLocale('he')}>{tr("עברית")}</button>
+                    <button type='button' lang='en' aria-pressed={locale==='en'} disabled={!!question}
+                      className='locale-option' onClick={()=>setLocale('en')}>English</button>
+                    <button type='button' lang='ru' aria-pressed={locale==='ru'} disabled={!!question} className='locale-option'
+                      onClick={()=>setLocale('ru')}>Русский</button>
+                    <button type='button' lang='fr' aria-pressed={locale==='fr'} disabled={!!question} className='locale-option'
+                      onClick={()=>setLocale('fr')}>Français</button>
+                    <button type='button' lang='ar' aria-pressed={locale==='ar'} disabled={!!question} className='locale-option'
+                      onClick={()=>setLocale('ar')}>العربية</button>
+                    <button type='button' lang='es' aria-pressed={locale==='es'} disabled={!!question} className='locale-option'
+                      onClick={()=>setLocale('es')}>Español</button>
+                  </div>
+                </div>
+                <div className='settings-group'>
+                  <h3>{locale==='he'?'צליל ותצוגה':locale==='en'?'Sound and display':locale==='ru'?'Звук и вид':locale==='fr'?'Son et affichage':locale==='es'?'Sonido y pantalla':'الصوت والعرض'}</h3>
+                  <div className='settings-row'>
+                    <label className='glass-button settings-volume' htmlFor='game-volume'>
+                      {tr("עוצמה")} <input id='game-volume' type='range' min='0' max='100' step='5'
+                        aria-label={tr('עוצמת הצלילים במשחק')} value={volume} onChange={e=>setVolume(Number(e.target.value))} /> {volume}%
+                    </label>
+                  <button type='button' className='trivia-audio-test'
+                    data-testid='trivia-audio-test'
+                    aria-label={locale==='he'?'בדוק צלילים':locale==='es'?'Probar sonido':locale==='fr'?'Tester le son':locale==='ru'?'Проверить звук':locale==='ar'?'اختبار الصوت':'Test sound'}
+                    title={locale==='he'?'השמע צליל הדגמה':locale==='es'?'Reproducir sonido de prueba':locale==='fr'?'Écouter un son':locale==='ru'?'Проверить звук':locale==='ar'?'تشغيل صوت تجريبي':'Play sample sound'}
+                    onClick={()=>{
+                      unlockGameAudio();
+                      if(muted)setMuted(false);
+                      if(volume<85)setVolume(85);
+                      const sampleVolume=Math.max(.85,volume/100);
+                      playGameSound('liquid',{muted:false,volume:sampleVolume});
+                      playGameSound('fireworks',{muted:false,volume:sampleVolume},1.13);
+                      playGameSound('coin',{muted:false,volume:sampleVolume},1.64);
+                      window.setTimeout(()=>setAudioTestStatus(gameAudioState()),300);
+                      // Explicit status helps diagnose silent iPhone / Safari devices.
+                      const state=gameAudioState();
+                      setMessage(state==='unsupported'?
+                        (locale==='he'?'המכשיר אינו תומך בהשמעת צליל בדפדפן.':'This browser does not support Web Audio.'):
+                        locale==='he'?'בדיקת צליל: אמור להישמע צליל זיקוקים. בדוק עוצמת מכשיר ומצב שקט.':
+                        locale==='es'?'Prueba de sonido: escucha los fuegos artificiales. Comprueba el volumen del teléfono.':
+                        locale==='fr'?'Test sonore : écoutez les feux d’artifice et vérifiez le volume.':
+                        locale==='ru'?'Проверка звука: послушайте фейерверк и проверьте громкость.':
+                        locale==='ar'?'اختبار الصوت: استمع إلى الألعاب النارية وتحقق من مستوى الصوت.':
+                        'Sound test: listen for the fireworks chime. Check device volume and mute settings.');
+                    }}>
+                    <span aria-hidden='true'>🔉</span><strong>{locale==='he'?'בדוק':locale==='es'?'Probar':locale==='fr'?'Tester':locale==='ru'?'Проверить':locale==='ar'?'اختبار':'Test'}</strong>
+                  </button>
+                  {audioTestStatus!=='unknown' && <span className='trivia-audio-state' data-testid='trivia-audio-state' role='status'>
+                    {audioTestStatus==='ready'
+                      ? (locale==='he'?'הצליל מופעל בדפדפן':locale==='es'?'Audio activo':locale==='fr'?'Son actif':locale==='ru'?'Звук активен':locale==='ar'?'الصوت نشط':'Audio engine active')
+                      : (locale==='he'?'הצליל חסום - הקש שוב ובדוק השתקה':locale==='es'?'Audio bloqueado':locale==='fr'?'Son bloqué':locale==='ru'?'Звук заблокирован':locale==='ar'?'الصوت محظور':'Audio blocked - tap again')}
+                  </span>}
+                  <button type='button' className='capture-liquid-preview-button'
+                    data-testid='trivia-liquid-preview'
+                    onClick={()=>{
+                      setLiquidPreviewRun(v=>v+1);
+                      unlockGameAudio();
+                      playGameSound('liquid',{muted,volume:volume/100});
+                      playGameSound('fireworks',{muted,volume:volume/100},1.27);
+                    }}>
+                    <strong>{locale==='he'?'💧 הדגמת מילוי':locale==='es'?'💧 Ver llenado':locale==='fr'?'💧 Voir le remplissage':locale==='ru'?'💧 Показать заливку':locale==='ar'?'💧 عرض التعبئة':'💧 Preview liquid fill'}</strong>
+                  </button>
+                  {liquidPreviewRun>0 && <div className='capture-demo-overlay' role='status' aria-live='polite' data-testid='trivia-liquid-overlay'>
+                    <div className='capture-demo-card'>
+                      <strong>{locale==='he'?'הריבוע מתמלא בנוזל':locale==='es'?'La casilla se llena':locale==='fr'?'La case se remplit':locale==='ru'?'Клетка заполняется':locale==='ar'?'المربع يمتلئ':'Square filling with liquid'}</strong>
+                      <svg key={liquidPreviewRun} className='capture-demo-svg' viewBox='0 0 120 120' aria-label={locale==='he'?'הדמיית מילוי ריבוע בנוזל':'Liquid fill demonstration'}>
+                        <CaptureTile row={0} col={0} x={10} y={10} width={100} height={100}
+                          color={color} name={name||'Player'} icon={avatar}
+                          style={captureStyle} locale={locale} idPrefix={'liquid-demo-'+liquidPreviewRun}/>
+                      </svg>
+                    </div>
+                  </div>}
+                  <style>{`
+                    .trivia-fish-toggle{min-height:44px;min-width:52px;border:2px solid #ffe28a;border-radius:14px;background:#263d76;color:#fff;font-size:18px;font-weight:900;cursor:pointer;padding:8px 12px;touch-action:manipulation}
+                    .trivia-fish-toggle[aria-pressed="true"]{background:#fce68c;color:#18254a}
+                    .trivia-fish-toggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
+                    .trivia-fish-svg text{animation:trivia-fish-svg-swim 4.5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+                    @keyframes trivia-fish-svg-swim{from{transform:translateX(-8px) scaleX(1)}to{transform:translateX(12px) scaleX(-1)}}
+                    @media(prefers-reduced-motion:reduce){.trivia-fish-svg text{animation:none}}
+                  `}</style>
+                  <button type='button' className='trivia-fish-toggle' aria-pressed={fishEnabled}
+                    aria-label={locale==='he'?'דגים בריבועים':locale==='ar'?'أسماك في المربعات':locale==='ru'?'Рыбки в клетках':locale==='fr'?'Poissons dans les cases':locale==='es'?'Peces en las casillas':'Fish in squares'}
+                    onClick={()=>setFishEnabled(previous=>{const next=!previous;saveFishPreference(next);return next;})}>
+                    🐟 {fishEnabled?'✓':'○'}
+                  </button>
+                  </div>
+                </div>
+                <div className='settings-group'>
+                  <h3>{locale==='he'?'תצוגה מקדימה למכשיר':locale==='en'?'Device preview':'Preview'}</h3>
+                <nav className='viewport-preview-switch' aria-label={viewportPreviewLabel(locale)}>
+                  {(['auto','desktop','tablet','mobile'] as const).map(mode=><button key={mode} type='button' aria-pressed={previewViewport===mode} onClick={()=>setPreviewViewport(mode)}>{viewportModeLabel(locale,mode)}</button>)}
+                </nav>
+                </div>
+                <div className='settings-group settings-info' onClick={event=>{if((event.target as HTMLElement).closest('a[href^="#"]'))menuRef.current?.close()}}>
+                  <GameTimeBar locale={locale}/>
+                </div>
+              </section>
               <section className='app-menu-pane' hidden={menuSection!=='stages'} aria-label={locale==='he'?'בחירת שלב':'Choose stage'}>
                 <h2 className='panel-title'>{locale==='he'?'השלבים שלי · '+completedStage+' הושלמו':locale==='es'?'Mis niveles · '+completedStage+' completados':locale==='en'?'Campaign stages · '+completedStage+' completed': 'Stages'}</h2>
+                <p className='campaign-rule'>{locale==='en'?'Stages unlock one at a time. Finish every square of the current board to open the next stage.':'כל שלב נפתח רק אחרי שסוגרים את כל הריבועים בשלב שלפניו. אי אפשר לדלג על שלבים.'}</p>
       <nav className='campaign-chapter-nav' aria-label={locale==='he'?'בחירת פרק':locale==='es'?'Elegir capítulo':locale==='en'?'Choose chapter':locale==='fr'?'Choisir un chapitre':locale==='ru'?'Выбрать главу':'اختيار الفصل'}>
         <button type='button' onClick={()=>setCampaignChapter(v=>Math.max(1,v-1))}
            disabled={campaignChapter===1} aria-label='Previous chapter'>‹</button>

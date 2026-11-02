@@ -1,0 +1,264 @@
+/* =====================================================================
+   GAME LAYOUT — single owner of the in-game screen geometry.
+   Imported last from game.tsx. Older files (premium, responsive-layout,
+   arcade-polish, welcome-interior-theme, readable-play) still own colours,
+   skins and typography, but NOT the size/placement of the shell, top bar,
+   board or side column. Do not add board width/height rules elsewhere.
+
+   Selector prefix `html body main.trivia-app.trivia-app` (0,2,3) is
+   intentionally stronger than the legacy `main.trivia-app.playing-layout`
+   (0,2,1) rules so that layout no longer depends on file order or on a
+   new !important war.
+   ===================================================================== */
+
+:root{
+  --gl-top:64px;            /* top bar height */
+  --gl-gap:clamp(10px,1.6vw,22px);
+  --gl-side:clamp(300px,27vw,380px);
+  --gl-pad:max(10px,env(safe-area-inset-left),env(safe-area-inset-right));
+  /* Board edge: fits the viewport height on landscape screens, full width on portrait. */
+  --gl-board:min(100%,calc(100dvh - 300px),860px);
+}
+
+/* ---------- Shell: one page scroll, no nested scroll, no horizontal scroll ---------- */
+html body main.trivia-app.trivia-app{
+  max-width:1480px!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:100dvh!important;
+  margin:0 auto!important;
+  padding:0 var(--gl-pad) max(12px,env(safe-area-inset-bottom))!important;
+  overflow:visible!important;
+  overflow-x:clip!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:var(--gl-gap)!important;
+}
+
+/* Anything scrolled into view (focus, anchors, scrollIntoView) clears the sticky top bar. */
+html{scroll-padding-top:calc(var(--gl-top) + 12px)}
+html body main.trivia-app.trivia-app svg.board{scroll-margin-top:calc(var(--gl-top) + 12px)}
+
+/* ---------- Top bar ---------- */
+html body main.trivia-app.trivia-app .game-topbar{
+  position:sticky;top:0;z-index:20; /* below every overlay (quiz/tutorial 30, rewards 110) */
+  display:flex;align-items:center;gap:10px;
+  min-height:var(--gl-top);
+  margin:0 calc(var(--gl-pad) * -1);
+  padding:max(8px,env(safe-area-inset-top)) var(--gl-pad) 8px;
+  background:linear-gradient(180deg,rgba(23,16,58,.94),rgba(32,22,78,.88));
+  -webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3);
+  border-bottom:1px solid rgba(255,226,160,.28);
+  box-shadow:0 10px 30px rgba(6,4,26,.45),inset 0 -1px 0 rgba(255,255,255,.06);
+}
+html body main.trivia-app.trivia-app .game-topbar .hero-brand{
+  display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto;margin:0;
+}
+html body main.trivia-app.trivia-app .game-topbar .hero-brand-titles{min-width:0}
+html body main.trivia-app.trivia-app .game-topbar h1{
+  margin:0!important;padding:0!important;
+  font-size:clamp(19px,2.1vw,26px)!important;line-height:1.1!important;font-weight:900!important;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:linear-gradient(92deg,#FFF3C4,#FFC56B 55%,#FF9CC9);
+  -webkit-background-clip:text;background-clip:text;color:transparent!important;
+  text-shadow:none!important;
+}
+html body main.trivia-app.trivia-app .game-topbar .trivia-brand-mark{width:40px;height:40px;flex:none}
+html body main.trivia-app.trivia-app .game-topbar .app-menu-trigger{
+  position:static!important;inset:auto!important;transform:none!important;
+  flex:none;display:inline-flex;align-items:center;gap:8px;
+  min-height:46px!important;min-width:46px;padding:0 14px!important;margin:0!important;
+  border-radius:15px!important;
+  background:linear-gradient(180deg,#4B2E93,#2E1C66)!important;
+  border:2px solid rgba(255,220,140,.7)!important;color:#FFF6DA!important;
+  box-shadow:0 4px 0 #1A0F40,0 8px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25)!important;
+}
+html body main.trivia-app.trivia-app .game-topbar .app-menu-trigger:active{transform:translateY(2px)!important;box-shadow:0 2px 0 #1A0F40!important}
+html body main.trivia-app.trivia-app .game-topbar .google-player-header{
+  display:flex;align-items:center;gap:8px;flex:none;min-width:0;max-width:220px;
+  padding:3px 10px 3px 4px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16)
+}
+html body main.trivia-app.trivia-app .game-topbar .google-player-header strong{display:block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body main.trivia-app.trivia-app .game-topbar-actions{
+  position:relative;display:flex;align-items:center;gap:8px;flex:none;
+}
+html body main.trivia-app.trivia-app .game-topbar-actions :is(.trivia-sound-toggle,.skin-palette-trigger){
+  display:inline-flex!important;align-items:center;justify-content:center;gap:6px;
+  min-height:46px!important;min-width:46px!important;padding:0 12px!important;margin:0!important;
+  border-radius:15px!important;font-size:15px!important;font-weight:900!important;
+  background:linear-gradient(180deg,#FFE9A6,#FFC25A)!important;color:#2A1650!important;
+  border:0!important;
+  box-shadow:0 4px 0 #B7762A,0 8px 16px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.7)!important;
+}
+html body main.trivia-app.trivia-app .game-topbar-actions .trivia-sound-toggle[aria-pressed='false']{
+  background:linear-gradient(180deg,#5A4A86,#3B2D63)!important;color:#FFF!important;box-shadow:0 4px 0 #20163D!important
+}
+html body main.trivia-app.trivia-app .game-topbar-actions :is(.trivia-sound-toggle,.skin-palette-trigger):active{transform:translateY(2px)}
+html body main.trivia-app.trivia-app .game-topbar-actions .skin-picker-panel{
+  position:absolute!important;top:calc(100% + 10px)!important;inset-inline-end:0!important;inset-inline-start:auto!important;
+  width:min(340px,calc(100vw - 24px))!important;z-index:60!important;margin:0!important;
+}
+
+/* Compact top bar on phones: icons only, keep 46px touch targets. */
+@media (max-width:640px){
+  :root{--gl-top:58px}
+  html body main.trivia-app.trivia-app .game-topbar{gap:7px}
+  html body main.trivia-app.trivia-app .game-topbar .app-menu-trigger-label,
+  html body main.trivia-app.trivia-app .game-topbar-actions :is(.trivia-sound-toggle,.skin-palette-trigger) > :not([aria-hidden='true']),
+  html body main.trivia-app.trivia-app .game-topbar .google-player-header > span{display:none!important}
+  html body main.trivia-app.trivia-app .game-topbar .app-menu-trigger{padding:0!important;justify-content:center}
+  html body main.trivia-app.trivia-app .game-topbar .trivia-brand-mark{width:34px;height:34px}
+  html body main.trivia-app.trivia-app .game-topbar .google-player-header{padding:2px;max-width:none}
+}
+
+/* ---------- Game grid: the arena panel is the page; the aside only hosts the menu dialog ---------- */
+html body main.trivia-app.trivia-app .game-grid{
+  display:block!important;width:100%!important;margin:0!important;padding:0!important;gap:0!important;
+}
+html body main.trivia-app.trivia-app .side-stack{display:contents!important}
+
+html body main.trivia-app.trivia-app .arena-panel{
+  width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;
+  padding:clamp(10px,1.6vw,22px)!important;
+  display:flex!important;flex-direction:column!important;gap:10px!important;
+  height:auto!important;max-height:none!important;overflow:visible!important;
+}
+html body main.trivia-app.trivia-app .arena-panel > *{margin-block:0!important;min-width:0}
+
+/* ---------- The board: always square, always the largest thing on screen ---------- */
+html body main.trivia-app.trivia-app:is(.playing-layout,.setup-layout) .arena{
+  width:var(--gl-board)!important;
+  max-width:100%!important;min-width:0!important;
+  height:auto!important;max-height:none!important;min-height:0!important;
+  aspect-ratio:1/1!important;
+  margin:0 auto!important;padding:clamp(6px,1vw,12px)!important;
+  flex:none!important;
+  box-sizing:border-box!important;
+}
+html body main.trivia-app.trivia-app:is(.playing-layout,.setup-layout) .arena-inner{
+  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;
+  min-width:0!important;min-height:0!important;aspect-ratio:1/1!important;margin:0!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+html body main.trivia-app.trivia-app:is(.playing-layout,.setup-layout) .arena-inner > svg.board{
+  display:block!important;width:100%!important;height:100%!important;
+  max-width:none!important;max-height:none!important;min-width:0!important;aspect-ratio:1/1!important;
+  touch-action:none;
+}
+
+/* ---------- Landscape tablets and desktops: board | side column, no page scroll in normal play ---------- */
+@media (min-width:900px) and (orientation:landscape){
+  :root{--gl-board:min(calc(100dvh - var(--gl-top) - 2 * var(--gl-gap) - 2 * clamp(10px,1.6vw,22px) - 6px),calc(100vw - var(--gl-side) - 7 * var(--gl-gap)),900px)}
+  html body main.trivia-app.trivia-app .arena-panel{
+    display:grid!important;
+    grid-template-columns:var(--gl-board) minmax(0,1fr)!important;
+    grid-template-rows:repeat(15,auto) minmax(0,1fr)!important;
+    column-gap:clamp(16px,2.2vw,34px)!important;row-gap:10px!important;
+    align-items:start!important;align-content:start!important;
+  }
+  html body main.trivia-app.trivia-app .arena-panel > *{grid-column:2!important}
+  html body main.trivia-app.trivia-app:is(.playing-layout,.setup-layout) .arena-panel > .arena{
+    grid-column:1!important;grid-row:1 / -1!important;align-self:start!important;width:100%!important
+  }
+  html body main.trivia-app.trivia-app .arena-panel .control-row{justify-content:flex-start!important}
+}
+
+/* ---------- Portrait tablets: board as large as the width allows, HUD stays above ---------- */
+@media (min-width:641px) and (orientation:portrait){
+  :root{--gl-board:min(100%,calc(100dvh - 330px),760px)}
+}
+
+/* ---------- Phones: board is full width ---------- */
+@media (max-width:640px) and (orientation:portrait){
+  :root{--gl-board:100%}
+  html body main.trivia-app.trivia-app .arena-panel{padding:8px!important;gap:8px!important;border-radius:20px!important}
+}
+
+/* Phones and portrait tablets: the HUD above the board is one tight block so the board starts high on screen. */
+@media (max-width:640px), (orientation:portrait) and (max-width:1100px){
+  html body main.trivia-app.trivia-app .arena-title p,
+  html body main.trivia-app.trivia-app .progress-pulse-heading,
+  html body main.trivia-app.trivia-app .progress-pulse-goal{display:none!important}
+  html body main.trivia-app.trivia-app .arena-title h2{font-size:21px!important}
+  html body main.trivia-app.trivia-app .arena-title{flex-wrap:nowrap!important}
+  html body main.trivia-app.trivia-app .arena-head-right{flex-wrap:nowrap!important;gap:4px!important}
+  html body main.trivia-app.trivia-app .arena-quick-wallet span{padding:3px 6px!important;font-size:12px!important}
+  html body main.trivia-app.trivia-app .level-pill{white-space:nowrap;padding:4px 10px!important;font-size:13px!important}
+  html body main.trivia-app.trivia-app .progress-pulse{padding:8px 12px!important;gap:6px!important;margin:0!important}
+  html body main.trivia-app.trivia-app .progress-pulse-stats{margin:0!important}
+  html body main.trivia-app.trivia-app .scoreboard .player-tile{padding:6px 10px!important;min-height:0!important}
+  html body main.trivia-app.trivia-app .scoreboard .score-num{font-size:26px!important;line-height:1!important}
+  html body main.trivia-app.trivia-app .scoreboard .portrait{width:40px!important;height:40px!important;font-size:22px!important}
+}
+
+/* Short landscape phones: let the page scroll instead of squeezing the board. */
+@media (max-height:480px) and (orientation:landscape){
+  :root{--gl-board:min(100%,calc(100dvh - 24px))}
+  html body main.trivia-app.trivia-app .game-topbar{position:relative}
+}
+
+/* ---------- HUD rows ---------- */
+html body main.trivia-app.trivia-app .arena-title{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  gap:10px!important;flex-wrap:wrap!important;min-height:0!important;padding:0!important
+}
+html body main.trivia-app.trivia-app .arena-title > div:first-child{min-width:0;flex:1 1 180px}
+html body main.trivia-app.trivia-app .arena-title h2{
+  margin:0!important;font-size:clamp(20px,2.1vw,30px)!important;line-height:1.2!important;
+  overflow-wrap:anywhere
+}
+html body main.trivia-app.trivia-app .arena-title p{margin:2px 0 0!important}
+html body main.trivia-app.trivia-app .scoreboard{display:flex!important;align-items:stretch!important;gap:8px!important;flex-wrap:nowrap!important}
+html body main.trivia-app.trivia-app .scoreboard > *{min-width:0}
+html body main.trivia-app.trivia-app .scoreboard .player-tile{flex:1 1 0!important;min-width:0!important}
+html body main.trivia-app.trivia-app .scoreboard .score-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body main.trivia-app.trivia-app .scoreboard .versus{flex:0 0 auto!important;writing-mode:horizontal-tb!important;white-space:nowrap}
+html body main.trivia-app.trivia-app .control-row{display:flex!important;flex-wrap:wrap!important;gap:8px!important;justify-content:center}
+html body main.trivia-app.trivia-app .control-row > *{flex:0 1 auto;min-width:0;white-space:normal}
+html body main.trivia-app.trivia-app .gesture-hint{margin:0!important}
+
+/* Footer stays at the end of the page, never inside the play area. */
+html body main.trivia-app.trivia-app #app-footer{margin-top:auto!important}
+
+/* ---------- Settings pane inside the game menu ---------- */
+.app-menu-settings .settings-group{
+  display:flex;flex-direction:column;gap:10px;margin:0 0 14px;padding:14px;
+  border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)
+}
+.app-menu-settings .settings-group h3{margin:0;font-size:16px;font-weight:900;color:#FFE6A4}
+.app-menu-settings .settings-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.app-menu-settings .settings-volume{display:inline-flex!important;align-items:center;gap:8px}
+.app-menu-settings .settings-volume input{width:110px;accent-color:#FFE38F}
+.app-menu-settings .locale-switch{display:flex;flex-wrap:wrap;gap:6px}
+.app-menu-settings .viewport-preview-switch{position:static!important;margin:0!important;display:flex;flex-wrap:wrap;gap:6px}
+.app-menu-settings .settings-info .game-timebar{margin:0!important;position:static!important}
+
+/* ---------- Top bar stays identical before and during play ---------- */
+html body main.trivia-app.trivia-app .game-topbar .hero-brand{flex:1 1 auto!important;justify-content:center!important}
+
+/* ---------- Question card: answers fill a clean 2×2 grid (1 column on narrow phones) ---------- */
+html body main.trivia-app.trivia-app .quiz-card .answer-grid{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;
+  width:100%!important;justify-items:stretch!important;align-items:stretch!important
+}
+html body main.trivia-app.trivia-app .quiz-card .answer-grid > .language-answer-row{display:flex!important;gap:8px;width:100%!important;min-width:0}
+html body main.trivia-app.trivia-app .quiz-card .answer-grid .answer-option{flex:1 1 auto!important;width:100%!important;min-width:0!important;min-height:64px!important;font-size:clamp(16px,1.5vw,19px)!important}
+@media (max-width:520px){
+  html body main.trivia-app.trivia-app .quiz-card .answer-grid{grid-template-columns:minmax(0,1fr)!important;gap:9px!important}
+}
+
+/* ---------- Player name: always editable, compact, never above the board on phones ---------- */
+html body main.trivia-app.trivia-app .player-name-field{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 14px;
+  border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,226,160,.3)
+}
+html body main.trivia-app.trivia-app .player-name-field label{font-size:15px;font-weight:900;color:#FFE6A4;white-space:nowrap}
+html body main.trivia-app.trivia-app .player-name-field input{
+  flex:1 1 160px;min-width:0;min-height:46px;padding:0 14px;border-radius:12px;
+  border:2px solid rgba(255,226,160,.75);background:#FFFDF6;color:#22134A;font-size:17px;font-weight:800
+}
+html body main.trivia-app.trivia-app .player-name-field .player-name-autosaved{flex-basis:100%;font-size:13px;color:#B9F5D2}
+html body main.trivia-app.trivia-app .level-pill.campaign-stages-toggle{
+  cursor:pointer;display:inline-flex!important;align-items:center;gap:6px;min-height:40px;width:auto!important;margin:0!important;
+}
+html body main.trivia-app.trivia-app .level-pill.campaign-stages-toggle:disabled{cursor:default;opacity:.85}

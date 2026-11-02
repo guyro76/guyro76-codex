@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openGameSettings,closeGameMenu,switchLanguage} from './menuQA';
 
 test('fifth stage draws guaranteed loot then automatically opens a new localized bonus quiz; a reward cannot be collected twice',async({page})=>{
  await page.addInitScript(()=>{
@@ -67,6 +68,7 @@ test('captured square shows animated liquid, bold nickname, customized icon, and
  }));
  expect(animated.name).toContain('captureLiquidSlowFill');
  expect(animated.duration).toBeGreaterThanOrEqual(1.5);
+ await openGameSettings(page);
  const testButton=page.getByTestId('trivia-audio-test');
  await expect(testButton).toBeVisible();
  await testButton.click();

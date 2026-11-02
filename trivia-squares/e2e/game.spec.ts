@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import {openGameSettings,closeGameMenu,switchLanguage} from './menuQA';
 import {answerDisplayedLocalQuestion,useOfflineQuestionFixtures} from './localQuestionFixture';
 import {languageQuestions} from '../src/lib/languageQuestions';
 
@@ -257,7 +258,7 @@ test('tutorial is an animated real rule demo with correct Hebrew and English cap
   await he.getByRole('button',{name:'הבא ←'}).click();
   await expect(he.getByRole('img',{name:/ריבוע שהושלם/})).toBeVisible();
   await he.getByRole('button',{name:'דלג או סיים'}).click();
-  await page.getByRole('button',{name:'English',exact:true}).click();
+  await switchLanguage(page,'English');
   const open=page.getByRole('button',{name:/How to play/});
   await open.click();
   const en=page.getByRole('dialog',{name:'How to play'});
@@ -343,8 +344,8 @@ test('100 campaign stages are navigated in groups of five without skipping curre
  await expect(nav.locator('[data-stage="100"]')).toBeDisabled();
  await nav.locator('#campaign-chapter-select').selectOption('1');
  await expect(nav.locator('[data-stage="1"]')).toHaveAttribute('aria-current','step');
+ await expect(nav.getByText(/כל שלב נפתח רק אחרי שסוגרים/)).toBeVisible();
  await nav.getByRole('button',{name:'סגור תפריט'}).click();
- await expect(page.getByText(/כל שלב נפתח רק אחרי שסוגרים/)).toBeVisible();
  await draw(page,[1,1],[1,2]);
  await expect(page.getByRole('dialog',{name:'שאלת טריוויה'})).toBeVisible();
 });
@@ -357,7 +358,7 @@ test('live clock shows Hebrew date only in Hebrew and copyright switches with lo
  await expect(page.locator('.game-version .game-status-kicker')).toContainText('גרסת המשחק');
  await expect(page.locator('.game-author-credit')).toContainText('גיא רוזנברג');
  await expect(page.locator('.game-author-credit')).toContainText('© 2026');
- await page.locator('.locale-switch').getByRole('button',{name:'English'}).click();
+ await switchLanguage(page,'English');
  await expect(bar.locator('.game-live-clock small')).toHaveCount(0);
  await expect(page.locator('.game-author-credit')).toContainText('Designed and developed by Guy Rosenberg');
  await expect(page.locator('.game-version .game-status-kicker')).toContainText('GAME VERSION');

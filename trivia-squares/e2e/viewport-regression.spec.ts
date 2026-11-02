@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openGameSettings,closeGameMenu,switchLanguage} from './menuQA';
 
 /** Real viewport geometry and the in-app 4-mode preview control.
  * Chromium coverage is not a substitute for physical iPad/iPhone Safari.
@@ -45,6 +46,7 @@ test('viewport preview switches automatically, desktop, tablet and mobile withou
   localStorage.setItem('trivia-player-name','טסטר');
  });
  await page.goto('/');
+ await openGameSettings(page);
  const previews=page.getByRole('navigation',{name:'בדיקת תצוגה במכשירים'});
  await expect(previews).toBeVisible();
  const options=[['auto','אוטומטי'],['desktop','מחשב'],['tablet','טאבלט'],['mobile','נייד']] as const;

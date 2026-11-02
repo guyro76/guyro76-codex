@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openGameSettings,closeGameMenu,switchLanguage} from './menuQA';
 
 test('the liquid fill is clearly visible and replayable, without awarding squares',async({page})=>{
  await page.addInitScript(()=>{
@@ -7,6 +8,7 @@ test('the liquid fill is clearly visible and replayable, without awarding square
   localStorage.setItem('trivia-player-name','טסטר');
  });
  await page.goto('/');
+ await openGameSettings(page);
  const preview=page.getByTestId('trivia-liquid-preview');
  await expect(preview).toBeVisible();
  await preview.click();
@@ -51,6 +53,7 @@ test('sound check starts a full multi-effect sequence and reports engine state',
   };
  });
  await page.goto('/');
+ await openGameSettings(page);
  await page.getByTestId('trivia-audio-test').click();
  await expect.poll(()=>page.evaluate(()=>(window as Window&{__soundPreviewOsc?:number}).__soundPreviewOsc||0)).toBeGreaterThanOrEqual(8);
  await expect(page.getByTestId('trivia-audio-state')).toContainText('הצליל מופעל בדפדפן',{timeout:4500});

@@ -18,10 +18,10 @@ test('default in-game screen carries welcome gold-violet design with high-contra
  await expect(page.locator('.arena-panel .arena-inner svg.board')).toBeVisible();
  const theme=await page.evaluate(()=>{
    const root=document.querySelector('main.trivia-app')!;
-   const hero=document.querySelector('main.trivia-app .hero')!;
+   const hero=document.querySelector('main.trivia-app .game-topbar')!;
    const arena=document.querySelector('main.trivia-app .arena')!;
    const score=document.querySelector('main.trivia-app .scoreboard')!;
-   const heading=document.querySelector('main.trivia-app .hero h1')!;
+   const heading=document.querySelector('main.trivia-app .game-topbar h1')!;
    const color=document.querySelector('main.trivia-app .level-pill')!;
    return {
      accent:getComputedStyle(root).getPropertyValue('--entry-gold').trim(),

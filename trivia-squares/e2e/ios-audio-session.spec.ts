@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openGameSettings,closeGameMenu,switchLanguage} from './menuQA';
 
 test('sound test requests playback audio session to avoid silent-switch-muted Web Audio on supported iOS Safari',async({page})=>{
  await page.addInitScript(()=>{
@@ -10,6 +11,7 @@ test('sound test requests playback audio session to avoid silent-switch-muted We
   Object.defineProperty(navigator,'audioSession',{configurable:true,value:{type:'ambient'}});
  });
  await page.goto('/');
+ await openGameSettings(page);
  await page.getByTestId('trivia-audio-test').click();
  await expect.poll(()=>page.evaluate(()=>
   (navigator as Navigator & {audioSession?:{type:string}}).audioSession?.type)).toBe('playback');
@@ -24,6 +26,7 @@ test('liquid preview remains available after Safari playback mode is enabled',as
   Object.defineProperty(navigator,'audioSession',{configurable:true,value:{type:'ambient'}});
  });
  await page.goto('/');
+ await openGameSettings(page);
  await page.getByTestId('trivia-liquid-preview').click();
  await expect(page.getByTestId('trivia-liquid-overlay')).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>
