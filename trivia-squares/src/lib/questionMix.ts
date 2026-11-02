@@ -2,6 +2,11 @@ import {topicForQuestion,type QuestionTopic} from './questionTopics.ts';
 
 export type QuestionForMix={category:string;text:string};
 const GEOGRAPHY='capitals';
+/** Owner rule (2026-11-02): one geography question, then a long run of other categories. */
+export const GEOGRAPHY_GAP=7;
+/** No topic may come back within this many questions when other topics are available. */
+export const TOPIC_REPEAT_GAP=3;
+export const RECENT_TOPIC_MEMORY=8;
 const LOCATION_PATTERN=/\b(?:which city|where (?:is|are)|in which city|dans quelle ville|in welcher stadt|в каком городе|en qu[eé] ciudad|¿d[oó]nde|quelle ville)\b|באיזו עיר|באיזה עיר|באיזו מדינה|איפה נמצאת|היכן נמצאת|באיזה מקום|в каком городе|в какой стране|dans quel pays|dans quelle ville|¿en qué ciudad|¿en qué país|في أي مدينة|في أي دولة|أين تقع/iu;
 
 /** Topics rotate across questions, not across SQL categories. A massive city bank
@@ -19,14 +24,16 @@ export function selectVariedQuestion<T extends QuestionForMix>(
  }
  let topics=[...buckets.keys()];
  const nonGeography=topics.filter(t=>t!==GEOGRAPHY);
- const recent=recentTopics.slice(-8);
+ const recent=recentTopics.slice(-RECENT_TOPIC_MEMORY);
  const last=recent[recent.length-1];
  // When other topics are available, enforce a maximum of one geography question
  // in any four-question window. If the bank only contains geography, keep
  // playing rather than giving a free stroke or deleting saved history.
- if(nonGeography.length&&recent.slice(-3).includes(GEOGRAPHY))
+ if(nonGeography.length&&recent.slice(-GEOGRAPHY_GAP).includes(GEOGRAPHY))
    topics=topics.filter(t=>t!==GEOGRAPHY);
- if(topics.length>1&&last)topics=topics.filter(t=>t!==last);
+ const fresh=topics.filter(t=>!recent.slice(-TOPIC_REPEAT_GAP).includes(t));
+ if(fresh.length)topics=fresh;
+ else if(topics.length>1&&last)topics=topics.filter(t=>t!==last);
  if(!topics.length)topics=[...buckets.keys()];
  const minExposure=Math.min(...topics.map(t=>recent.filter(x=>x===t).length));
  topics=topics.filter(t=>recent.filter(x=>x===t).length===minExposure);
@@ -45,7 +52,7 @@ export function readRecentQuestionTopics(raw:unknown):QuestionTopic[]{
   'tv_film','disney','music','eurovision','israel_politics','capitals','aviation','cars',
   'sports','science','nature','history','food','arts','languages','general'
  ]);
- return Array.isArray(raw)?raw.filter((v):v is QuestionTopic=>allowed.has(v as QuestionTopic)).slice(-8):[];
+ return Array.isArray(raw)?raw.filter((v):v is QuestionTopic=>allowed.has(v as QuestionTopic)).slice(-RECENT_TOPIC_MEMORY):[];
 }
 
 export function isGeographyQuestion(q:QuestionForMix):boolean{
