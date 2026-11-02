@@ -97,3 +97,54 @@ main.trivia-app button:disabled{cursor:not-allowed;opacity:.7}
 @media(forced-colors:active){
  main.trivia-app :is(.glass-panel,.arena-panel,.quiz-card,.answer-option,.language-speaker){border:2px solid CanvasText}
 }
+
+/* Futuristic glassmorphism direction, accessible and responsive. */
+main.trivia-app{
+ --glass-ice:#dffaff;
+ --glass-purple:#a78bfa;
+ --glass-border:rgba(211,237,255,.55);
+ --glass-panel:linear-gradient(145deg,rgba(64,84,157,.84),rgba(35,43,102,.9));
+}
+main.trivia-app :is(.glass-panel,.arena-panel,.quiz-card,.skin-picker-panel,.settings-drawer-content>.glass-panel){
+ border:1.5px solid var(--glass-border);
+ background-image:var(--glass-panel);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 14px 35px rgba(9,14,50,.35);
+ backdrop-filter:blur(16px) saturate(135%);
+ -webkit-backdrop-filter:blur(16px) saturate(135%);
+}
+main.trivia-app :is(button,input,select,textarea,[role="button"]){
+ font-weight:800;
+}
+main.trivia-app :is(h1,h2,h3,strong,.answer-option,.wallet-item,.campaign-stages-toggle){
+ font-weight:900;
+}
+main.trivia-app :is(.answer-option,.skin-palette-trigger,.trivia-fish-toggle,.language-speaker){
+ border:2px solid rgba(225,242,255,.72);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 5px 16px rgba(9,14,50,.32);
+}
+main.trivia-app :is(button,[role="button"],a,input,select,textarea):focus-visible{
+ outline:3px solid #ffe58f!important;
+ outline-offset:3px;
+}
+main.trivia-app :is(.answer-option,.language-speaker,.skin-palette-trigger,.trivia-fish-toggle){
+ min-height:48px;
+}
+main.trivia-app .answer-option{color:#fff;line-height:1.35;text-wrap:pretty}
+main.trivia-app .answer-option:disabled{opacity:.75}
+main.trivia-app .language-answer-row{min-width:0}
+main.trivia-app .language-answer-row .answer-option{overflow-wrap:anywhere}
+@media (max-width:640px){
+ main.trivia-app :is(.glass-panel,.arena-panel,.quiz-card){border-radius:18px}
+ main.trivia-app .language-answer-row{gap:6px}
+ main.trivia-app .language-speaker{flex-basis:48px}
+}
+@media (min-width:1024px){
+ main.trivia-app .quiz-card{width:min(92vw,680px)}
+ main.trivia-app .arena-panel{min-width:0}
+}
+@media (forced-colors:active){
+ main.trivia-app :is(.glass-panel,.arena-panel,.quiz-card,.answer-option,button){border:2px solid CanvasText;box-shadow:none}
+}
+@media (prefers-reduced-transparency:reduce){
+ main.trivia-app :is(.glass-panel,.arena-panel,.quiz-card,.skin-picker-panel){backdrop-filter:none;-webkit-backdrop-filter:none;background:#273b79}
+}
