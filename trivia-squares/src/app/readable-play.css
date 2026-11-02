@@ -127,3 +127,26 @@ main.trivia-app .answer-option:focus-visible {
   outline: 3px solid #b45309;
   outline-offset: 3px;
 }
+
+/* Six-language type system: explicit glyph coverage, bold-only hierarchy. */
+main.trivia-app {
+  font-family: 'Heebo', 'Noto Sans Hebrew', 'Arial', sans-serif;
+  font-synthesis: weight;
+}
+main.trivia-app:lang(he) {
+  font-family: 'Heebo', 'Noto Sans Hebrew', 'Arial', sans-serif;
+}
+main.trivia-app:lang(ar) {
+  font-family: 'Noto Sans Arabic', 'Tahoma', 'Arial', sans-serif;
+  line-height: 1.55;
+}
+main.trivia-app:is(:lang(en), :lang(fr), :lang(es), :lang(ru)) {
+  font-family: 'Inter', 'Noto Sans', 'Arial', sans-serif;
+}
+main.trivia-app :is(button, input, select, textarea) {
+  font-family: inherit;
+}
+main.trivia-app :is(.question-text, .answer-option, .locale-option, .skin-picker-item) {
+  font-weight: 800 !important;
+  overflow-wrap: anywhere;
+}
