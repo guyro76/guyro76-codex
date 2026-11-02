@@ -1002,6 +1002,16 @@ export default function TriviaGame() {
       }
       const next = applyLocalAnswer(local, edge, correct, local.mode==='solo');
       setLocal(next);
+      // Celebrate only the moment a streak crosses a milestone; never replay
+      // on render, refresh, or a resumed saved game.
+      if(correct){
+        const side=local.mode==='solo'?'host':local.turn==='guest'?'guest':'host';
+        const before=Number(local.streak?.[side]||0);
+        const after=Number(next.streak?.[side]||0);
+        if(before<10 && after>=10)play('combo10');
+        else if(before<5 && after>=5)play('combo5');
+        else if(before<3 && after>=3)play('combo3');
+      }
       const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
       const gained = newSquares.length;
       if(gained){celebrateCapture(gained);setCaptureToast({id:Date.now(),amount:5+gained*10});}
