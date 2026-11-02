@@ -24,7 +24,7 @@ test('all supported locale names are represented in topic declaration',()=>{
 // These checks enforce metadata and answer-to-source alignment, not a claim that
 // the entire database has received independent human fact review.
 const languageSource=readFileSync(join(process.cwd(),'src/lib/languageQuestions.ts'),'utf8');
-const languageLiteral=languageSource.match(/export const languageQuestions:LanguageQuestion\\[\\]=(\\[[\\s\\S]*\\]);\\s*$/);
+const languageLiteral=languageSource.match(/export const languageQuestions:LanguageQuestion\[\]=(\[[\s\S]*\]);\s*$/);
 assert.ok(languageLiteral,'language question array is present');
 const languageBank=JSON.parse(languageLiteral[1]);
 test('language question provenance is complete and answers match cited dictionary terms',()=>{
@@ -39,7 +39,7 @@ test('language question provenance is complete and answers match cited dictionar
   assert.ok(Number.isInteger(q.correct)&&q.correct>=0&&q.correct<4,'valid answer index '+q.id);
   const url=new URL(q.sourceUrl);
   assert.ok(['dictionary.cambridge.org','www.larousse.fr','www.treccani.it'].includes(url.hostname),'reviewed dictionary '+q.id);
-  const term=url.pathname.split('/').pop().replace(/\\d+$/,'').replace(/[-_]/g,' ').toLocaleLowerCase();
+  const term=url.pathname.split('/').pop().replace(/\d+$/,'').replace(/[-_]/g,' ').toLocaleLowerCase();
   assert.ok(q.answers[q.correct].toLocaleLowerCase().includes(term),'source term matches correct answer '+q.id);
  }
 });
