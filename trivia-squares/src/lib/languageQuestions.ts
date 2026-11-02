@@ -1,6 +1,6 @@
 // Curated starter questions for the language-learning category.
 // Pronunciations in Hebrew are approximations; Latin spellings are authoritative.
-export type LanguageQuestion={id:number;locale:'he'|'en'|'es'|'fr'|'ru'|'ar';category:string;text:string;answers:string[];correct:number;difficulty:number};
+export type LanguageQuestion={id:number;locale:'he'|'en'|'es'|'fr'|'ru'|'ar';category:string;text:string;answers:string[];correct:number;difficulty:number;sourceUrl:string};
 export const languageQuestions:LanguageQuestion[]=[
   {
     "id": 970000,
@@ -14,7 +14,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "פור פאבור (Por favor)"
     ],
     "correct": 0,
-    "difficulty": 1
+    "difficulty": 1,
+    "sourceUrl": "https://dictionary.cambridge.org/dictionary/spanish-english/hola"
   },
   {
     "id": 970001,
@@ -28,7 +29,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "סיל וו פלה (S'il vous plaît)"
     ],
     "correct": 1,
-    "difficulty": 2
+    "difficulty": 2,
+    "sourceUrl": "https://www.larousse.fr/dictionnaires/francais/merci/50583"
   },
   {
     "id": 970002,
@@ -42,7 +44,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "גרציה (Grazie)"
     ],
     "correct": 2,
-    "difficulty": 3
+    "difficulty": 3,
+    "sourceUrl": "https://www.treccani.it/vocabolario/buongiorno1/"
   },
   {
     "id": 970003,
@@ -56,7 +59,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Por favor"
     ],
     "correct": 0,
-    "difficulty": 1
+    "difficulty": 1,
+    "sourceUrl": "https://dictionary.cambridge.org/dictionary/spanish-english/hola"
   },
   {
     "id": 970004,
@@ -70,7 +74,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Bonsoir"
     ],
     "correct": 1,
-    "difficulty": 2
+    "difficulty": 2,
+    "sourceUrl": "https://www.larousse.fr/dictionnaires/francais/merci/50583"
   },
   {
     "id": 970005,
@@ -84,7 +89,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Grazie"
     ],
     "correct": 2,
-    "difficulty": 3
+    "difficulty": 3,
+    "sourceUrl": "https://www.treccani.it/vocabolario/buongiorno1/"
   },
   {
     "id": 970006,
@@ -98,7 +104,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Bonsoir"
     ],
     "correct": 1,
-    "difficulty": 1
+    "difficulty": 1,
+    "sourceUrl": "https://www.larousse.fr/dictionnaires/francais/merci/50583"
   },
   {
     "id": 970007,
@@ -112,7 +119,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Buonanotte"
     ],
     "correct": 2,
-    "difficulty": 2
+    "difficulty": 2,
+    "sourceUrl": "https://dictionary.cambridge.org/dictionary/italian-english/ciao"
   },
   {
     "id": 970008,
@@ -126,7 +134,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Goodbye"
     ],
     "correct": 2,
-    "difficulty": 3
+    "difficulty": 3,
+    "sourceUrl": "https://dictionary.cambridge.org/dictionary/english/good-morning"
   },
   {
     "id": 970009,
@@ -140,7 +149,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Por favor"
     ],
     "correct": 1,
-    "difficulty": 1
+    "difficulty": 1,
+    "sourceUrl": "https://dictionary.cambridge.org/dictionary/spanish-english/hola"
   },
   {
     "id": 970010,
@@ -154,7 +164,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Thank you"
     ],
     "correct": 3,
-    "difficulty": 2
+    "difficulty": 2,
+    "sourceUrl": "https://www.larousse.fr/dictionnaires/anglais-francais/thank_you/617905"
   },
   {
     "id": 970011,
@@ -168,7 +179,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Ciao"
     ],
     "correct": 0,
-    "difficulty": 3
+    "difficulty": 3,
+    "sourceUrl": "https://dictionary.cambridge.org/dictionary/italian-english/buona-notte"
   },
   {
     "id": 970012,
@@ -182,7 +194,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Por favor"
     ],
     "correct": 2,
-    "difficulty": 1
+    "difficulty": 1,
+    "sourceUrl": "https://dictionary.cambridge.org/dictionary/spanish-english/hola"
   },
   {
     "id": 970013,
@@ -196,7 +209,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Au revoir"
     ],
     "correct": 1,
-    "difficulty": 2
+    "difficulty": 2,
+    "sourceUrl": "https://www.larousse.fr/dictionnaires/francais/merci/50583"
   },
   {
     "id": 970014,
@@ -210,7 +224,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Thank you"
     ],
     "correct": 1,
-    "difficulty": 3
+    "difficulty": 3,
+    "sourceUrl": "https://dictionary.cambridge.org/dictionary/english/good-morning"
   },
   {
     "id": 970015,
@@ -224,7 +239,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Por favor"
     ],
     "correct": 1,
-    "difficulty": 1
+    "difficulty": 1,
+    "sourceUrl": "https://dictionary.cambridge.org/dictionary/spanish-english/hola"
   },
   {
     "id": 970016,
@@ -238,7 +254,8 @@ export const languageQuestions:LanguageQuestion[]=[
       "Au revoir"
     ],
     "correct": 2,
-    "difficulty": 2
+    "difficulty": 2,
+    "sourceUrl": "https://www.larousse.fr/dictionnaires/francais/merci/50583"
   },
   {
     "id": 970017,
@@ -252,6 +269,7 @@ export const languageQuestions:LanguageQuestion[]=[
       "Goodbye"
     ],
     "correct": 2,
-    "difficulty": 3
+    "difficulty": 3,
+    "sourceUrl": "https://dictionary.cambridge.org/dictionary/english/good-morning"
   }
 ];
