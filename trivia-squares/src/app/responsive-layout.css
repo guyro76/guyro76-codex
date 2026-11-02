@@ -506,3 +506,9 @@ main.trivia-app .board{touch-action:none;user-select:none;-webkit-user-select:no
 main.trivia-app button{touch-action:manipulation}
 @media (pointer:coarse){main.trivia-app .stage-reward-dismiss{min-height:44px;min-width:44px}}
 @media(max-width:900px) and (orientation:landscape) and (max-height:480px){main.trivia-app.playing-layout{height:auto!important;min-height:100dvh;overflow-y:auto!important}main.trivia-app.playing-layout .arena{width:min(78dvh,100%,430px)!important;max-height:none!important;aspect-ratio:1}}
+
+/* Android input safety: prevent viewport zoom when focusing game form fields. */
+@media (pointer:coarse) and (max-width:900px){
+ main.trivia-app input,main.trivia-app textarea,main.trivia-app select{font-size:16px!important}
+ main.trivia-app button:focus-visible{outline:3px solid #ffe58f;outline-offset:3px}
+}
