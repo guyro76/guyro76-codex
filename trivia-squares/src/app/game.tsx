@@ -1660,7 +1660,7 @@ export default function TriviaGame() {
              <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
            </div>
         </div>
-        <ProgressPulse locale={locale} stage={stageId} captured={Object.values(state.owners).filter(owner=>owner==='host').length} streak={state.streak?.host||0}/>
+        <ProgressPulse locale={locale} stage={stageId} captured={Object.values(state.owners).filter(owner=>owner==='host').length} streak={remote ? Number(state.streak?.[player]||0) : Number(state.streak?.host||0)}/>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
             <div className='portrait'>{remote && player === 'guest' ? opponentIcon : avatar}</div>
