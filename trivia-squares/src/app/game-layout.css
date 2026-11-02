@@ -37,6 +37,8 @@ html body main.trivia-app.trivia-app{
 
 /* Anything scrolled into view (focus, anchors, scrollIntoView) clears the sticky top bar. */
 html{scroll-padding-top:calc(var(--gl-top) + 12px)}
+/* The board must never be moving while a finger lands on it: scrolls on the game screen are instant. */
+html:has(main.trivia-app){scroll-behavior:auto}
 html body main.trivia-app.trivia-app svg.board{scroll-margin-top:calc(var(--gl-top) + 12px)}
 
 /* ---------- Top bar ---------- */
