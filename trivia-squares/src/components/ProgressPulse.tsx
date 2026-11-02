@@ -16,8 +16,10 @@ export default function ProgressPulse({locale,stage,captured,streak}:Props){
  const next=Math.max(3,Math.ceil((count+1)/3)*3);
  const previous=next-3;
  const progress=Math.max(0,Math.min(100,((count-previous)/3)*100));
+ const combo=streak>=10?10:streak>=5?5:streak>=3?3:0;
  return <section className='progress-pulse' aria-label={t.title}>
   <div className='progress-pulse-heading'><strong>{t.title}</strong><span>{t.stage} {stage}</span></div>
+  {combo>0 && <div className={'progress-pulse-combo combo-tier-'+combo} role='status' aria-live='polite'><span aria-hidden='true'>✦</span> COMBO x{Math.floor(streak)} <span aria-hidden='true'>✦</span></div>}
   <div className='progress-pulse-stats'>
    <span>{t.squares}: <strong>{count}</strong></span>
    <span>{t.streak}: <strong>{Math.max(0,Math.floor(streak))}</strong></span>
