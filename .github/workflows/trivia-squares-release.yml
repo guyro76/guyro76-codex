@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       commit:
-        description: "Manual fallback: exact authorized feature/trivia-squares commit SHA; VERCEL_TOKEN required"
+        description: "Manual fallback: exact authorized main or feature/trivia-squares commit SHA; VERCEL_TOKEN required"
         required: true
         type: string
 
@@ -59,9 +59,11 @@ jobs:
           COMMIT: ${{ steps.sha.outputs.sha }}
         run: |
           set -euo pipefail
-          git fetch --no-tags --depth=100 origin feature/trivia-squares
-          git merge-base --is-ancestor "$COMMIT" origin/feature/trivia-squares ||
-            { echo "::error::Commit not on authorized feature/trivia-squares branch"; exit 1; }
+          git fetch --no-tags --depth=100 origin main feature/trivia-squares
+          if ! git merge-base --is-ancestor "$COMMIT" origin/main && ! git merge-base --is-ancestor "$COMMIT" origin/feature/trivia-squares; then
+            echo "::error::Commit not on authorized main or feature/trivia-squares branch"
+            exit 1
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
