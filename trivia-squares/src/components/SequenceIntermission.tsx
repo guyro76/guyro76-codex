@@ -22,6 +22,7 @@ export default function SequenceIntermission({locale,onWin,onSkip,onTone}:{local
  const [phase,setPhase]=useState<'idle'|'watch'|'repeat'|'won'>('idle');
  const [error,setError]=useState(false);
  const timer=useRef<ReturnType<typeof setTimeout>[]>([]);
+ const awarded=useRef(false);
  const clear=()=>{timer.current.forEach(clearTimeout);timer.current=[];};
  useEffect(()=>()=>{timer.current.forEach(clearTimeout)},[]);
  const show=(seq:number[])=>{
@@ -32,15 +33,15 @@ export default function SequenceIntermission({locale,onWin,onSkip,onTone}:{local
   });
   timer.current.push(setTimeout(()=>{setLit(-1);setPhase('repeat')},350+seq.length*760));
  };
- const start=()=>{setRound(1);show(sequence(3))};
+ const start=()=>{awarded.current=false;setRound(1);show(sequence(3))};
  const press=(pad:number)=>{
-  if(phase!=='repeat')return;
+  if(phase!=='repeat'||awarded.current)return;
   onTone?.(pad);
   if(pattern[cursor]!==pad){setError(true);setCursor(0);return;}
   setError(false);
   if(cursor+1===pattern.length){
-   if(round===3){setPhase('won');onWin();return;}
-   setRound(round+1);show(sequence(round+3));
+   if(round===3){setPhase('won');if(!awarded.current){awarded.current=true;onWin();}return;}
+   setRound(round+1);show([...pattern,Math.floor(Math.random()*4)]);
   }else setCursor(cursor+1);
  };
  return <section aria-label={t.title} dir={locale==='he'||locale==='ar'?'rtl':'ltr'} style={{textAlign:'center',fontWeight:800}}>
