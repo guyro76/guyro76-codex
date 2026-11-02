@@ -2,7 +2,7 @@
 
 // Browser-native speech synthesis: no third-party API, network request or paid credits.
 // Only enabled for curated language-learning questions with known target languages.
-const spokenLanguages=['es','fr','it','es','fr','it','fr','it','en','es','en','it','es','fr','en','es','fr','en'] as const;
+export const spokenLanguages=['es','fr','it','es','fr','it','fr','it','en','es','en','it','es','fr','en','es','fr','en'] as const;
 export function languageForPronunciation(questionId:number|undefined):string|null{
  if(!Number.isInteger(questionId)||questionId===undefined)return null;
  const index=questionId-970000;
@@ -22,7 +22,9 @@ export function speakLanguageAnswer(answer:string,language:string):boolean{
  utterance.pitch=1;
  const voice=synth.getVoices().find(v=>v.lang.toLowerCase()===language.toLowerCase())
    ||synth.getVoices().find(v=>v.lang.toLowerCase().startsWith(language.toLowerCase()+'-'));
- if(voice)utterance.voice=voice;
+ // Never speak in an unrelated language: some browsers silently substitute English.
+ if(!voice)return false;
+ utterance.voice=voice;
  synth.cancel();
  synth.speak(utterance);
  return true;
