@@ -8,6 +8,7 @@ import {intermissionText,intermissionWord,intermissionPrize,intermissionCard,int
 import GestureIntermission from './GestureIntermission';
 import TicTacToeIntermission from './TicTacToeIntermission';
 import SequenceIntermission from './SequenceIntermission';
+import PairsIntermission from './PairsIntermission';
 import {gestureCopy,gestureGames,type GestureGame} from '../lib/gestureIntermissions';
 import {intermissionBonusQuestion} from '../lib/intermissionBonus';
 
@@ -65,7 +66,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   const [card,setCard]=useState<StageCard|null>(null);
   const [playing,setPlaying]=useState(false);
   const [played,setPlayed]=useState(false);
-  const [game,setGame]=useState<'wheel'|'word'|'balloons'|'cake'|'quiz'|'tictactoe'|'sequence'|GestureGame|null>(null);
+  const [game,setGame]=useState<'wheel'|'word'|'balloons'|'cake'|'quiz'|'tictactoe'|'sequence'|'pairs'|GestureGame|null>(null);
   const [celebrating,setCelebrating]=useState(true);
   const [bonusPicked,setBonusPicked]=useState<number|null>(null);
   const claimRef=useRef(false);
@@ -131,7 +132,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   const shownCard=card?displayCard(card):null;
   const showPrize=(value:string)=>intermissionPrize(locale,value);
   const bonus=intermissionBonusQuestion(locale,stageNumber);
-  const finish=useCallback(async(selected:'wheel'|'word'|'balloons'|'cake'|'quiz'|'tictactoe'|'sequence'|GestureGame,answerIndex?:number)=>{
+  const finish=useCallback(async(selected:'wheel'|'word'|'balloons'|'cake'|'quiz'|'tictactoe'|'sequence'|'pairs'|GestureGame,answerIndex?:number)=>{
     if(!card||played||playing||claimRef.current)return;
     claimRef.current=true;
     setPlaying(true);setNotice('');setGame(selected);
@@ -145,7 +146,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     }else{
       const correct=selected==='quiz'?answerIndex===bonus.correct:
         selected==='word'?guess.trim().normalize('NFC')===word.answer.normalize('NFC'):true;
-      const rewards=(selected==='tictactoe'||selected==='sequence')?['30 קרדיטים']:selected==='quiz'?(correct?['30 קרדיטים']:['2 פירות']):
+      const rewards=(selected==='tictactoe'||selected==='sequence'||selected==='pairs')?['30 קרדיטים']:selected==='quiz'?(correct?['30 קרדיטים']:['2 פירות']):
         selected==='word'?(correct?['15 קרדיטים']:['2 פירות']):['10 קרדיטים','5 פירות','יהלום אחד','קמע זמן אחד'];
       const result=rewards[Math.floor(Math.random()*rewards.length)];
       const next=readLocalAlbum().map(item=>item.matchId===stageKey?{...item,played:true,game:selected,prize:result}:item);
@@ -190,12 +191,14 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
           <button type='button' onClick={()=>setGame('balloons')}><strong>🎈 {mini('balloonsTitle')}</strong><span>{mini('balloonsSubtitle')}</span></button>
           <button type='button' onClick={()=>setGame('cake')}><strong>🎂 {mini('cakeTitle')}</strong><span>{mini('cakeSubtitle')}</span></button>
           {gestureGames.map(kind=><button key={kind} type='button' data-testid={'choose-'+kind} onClick={()=>setGame(kind)}><strong>{gestureCopy[locale][kind]}</strong></button>)}
+          {!remoteMatchId && <button type='button' onClick={()=>setGame('pairs')}><strong>🃏 {locale==='he'?'זיכרון זוגות':locale==='es'?'Parejas de memoria':locale==='fr'?'Paires mémoire':locale==='ru'?'Парная память':locale==='ar'?'ذاكرة الأزواج':'Memory pairs'}</strong></button>}
           {!remoteMatchId && <button type='button' onClick={()=>setGame('sequence')}><strong>✨ {locale==='he'?'זיכרון רצפים':locale==='es'?'Memoria de secuencias':locale==='fr'?'Mémoire des séquences':locale==='ru'?'Память последовательностей':locale==='ar'?'ذاكرة التسلسل':'Sequence memory'}</strong></button>}
           {!remoteMatchId && <button type='button' onClick={()=>setGame('tictactoe')}><strong>❎ {locale==='he'?'איקס עיגול מול המחשב':locale==='es'?'Tres en raya':locale==='fr'?'Morpion':locale==='ru'?'Крестики-нолики':locale==='ar'?'إكس أو':'Tic-tac-toe'}</strong></button>}
           {!remoteMatchId && <button type='button' onClick={()=>setGame('quiz')}><strong>🧠 {translate('שאלת בונוס','Bonus trivia question')}</strong><span>{translate('שאלה נוספת ופרס גדול','One more question for a bigger prize')}</span></button>}
         </div>}
         {!played && !celebrating && game && <p className='stage-challenge-selected' data-testid='selected-intermission'>{translate('האתגר שלך:','Your challenge:')} {gestureGames.includes(game as GestureGame)?gestureCopy[locale][game as GestureGame]:game==='quiz'?translate('🧠 שאלת בונוס','🧠 Bonus trivia'):game==='word'?translate('🔠 נחש את המילה','🔠 Guess the word'):game==='wheel'?translate('🎡 גלגל ההפתעות','🎡 Prize wheel'):game==='cake'?'🎂 '+mini('cakeTitle'):'🎈 '+mini('balloonsTitle')}</p>}
         {game && gestureGames.includes(game as GestureGame) && !played && !celebrating && <GestureIntermission key={stageKey+game} kind={game as GestureGame} locale={locale} disabled={playing} onComplete={()=>{onSound('slice');void finish(game);}}/>}
+        {game==='pairs'&&!played&&!celebrating&&!remoteMatchId&&<PairsIntermission key={stageKey+'-pairs'} locale={locale} onWin={()=>void finish('pairs')} onSkip={()=>setGame(null)}/>}
         {game==='sequence'&&!played&&!celebrating&&!remoteMatchId&&<SequenceIntermission key={stageKey+'-sequence'} locale={locale} onWin={()=>void finish('sequence')} onSkip={()=>setGame(null)} onTone={()=>onSound('pop')}/>}
         {game==='tictactoe'&&!played&&!celebrating&&!remoteMatchId&&<TicTacToeIntermission key={stageKey+'-tictactoe'} locale={locale} onWin={()=>void finish('tictactoe')} onSkip={()=>setGame(null)}/>}
         {game==='quiz'&&!played&&!celebrating&&<div className='stage-bonus-quiz' data-testid='bonus-question'>
