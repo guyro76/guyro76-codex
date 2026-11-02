@@ -19,13 +19,13 @@ function chooseComputerMove(board:Cell[]):number {
  if(corners.length)return corners[Math.floor(Math.random()*corners.length)];
  return available[Math.floor(Math.random()*available.length)]??-1;
 }
-const labels:Record<ActiveLocale,{title:string,turn:string,win:string,lose:string,draw:string,retry:string,skip:string}>={
- he:{title:'איקס עיגול נגד המחשב',turn:'התור שלך: X',win:'ניצחת! כל הכבוד',lose:'המחשב ניצח',draw:'תיקו!',retry:'משחק חדש',skip:'דלג ללא קנס'},
- en:{title:'Tic-tac-toe vs computer',turn:'Your turn: X',win:'You won!',lose:'Computer won',draw:'Draw!',retry:'Play again',skip:'Skip without penalty'},
- ru:{title:'Крестики-нолики с компьютером',turn:'Ваш ход: X',win:'Победа!',lose:'Компьютер победил',draw:'Ничья!',retry:'Играть снова',skip:'Пропустить без штрафа'},
- fr:{title:'Morpion contre ordinateur',turn:'À vous : X',win:'Gagné !',lose:'Ordinateur gagnant',draw:'Égalité !',retry:'Rejouer',skip:'Passer sans pénalité'},
- es:{title:'Tres en raya contra la computadora',turn:'Tu turno: X',win:'¡Ganaste!',lose:'Ganó la computadora',draw:'¡Empate!',retry:'Jugar otra vez',skip:'Omitir sin penalización'},
- ar:{title:'إكس أو ضد الكمبيوتر',turn:'دورك: X',win:'فزت!',lose:'فاز الكمبيوتر',draw:'تعادل!',retry:'العب مجدداً',skip:'تخطي دون عقوبة'}
+const labels:Record<ActiveLocale,{title:string,turn:string,win:string,lose:string,draw:string,retry:string,skip:string,empty:string}>={
+ he:{title:'איקס עיגול נגד המחשב',turn:'התור שלך: X',win:'ניצחת! כל הכבוד',lose:'המחשב ניצח',draw:'תיקו!',retry:'משחק חדש',skip:'דלג ללא קנס',empty:'ריק'},
+ en:{title:'Tic-tac-toe vs computer',turn:'Your turn: X',win:'You won!',lose:'Computer won',draw:'Draw!',retry:'Play again',skip:'Skip without penalty',empty:'empty'},
+ ru:{title:'Крестики-нолики с компьютером',turn:'Ваш ход: X',win:'Победа!',lose:'Компьютер победил',draw:'Ничья!',retry:'Играть снова',skip:'Пропустить без штрафа',empty:'пусто'},
+ fr:{title:'Morpion contre ordinateur',turn:'À vous : X',win:'Gagné !',lose:'Ordinateur gagnant',draw:'Égalité !',retry:'Rejouer',skip:'Passer sans pénalité',empty:'vide'},
+ es:{title:'Tres en raya contra la computadora',turn:'Tu turno: X',win:'¡Ganaste!',lose:'Ganó la computadora',draw:'¡Empate!',retry:'Jugar otra vez',skip:'Omitir sin penalización',empty:'vacío'},
+ ar:{title:'إكس أو ضد الكمبيوتر',turn:'دورك: X',win:'فزت!',lose:'فاز الكمبيوتر',draw:'تعادل!',retry:'العب مجدداً',skip:'تخطي دون عقوبة',empty:'فارغ'}
 };
 export default function TicTacToeIntermission({locale,onWin,onSkip}:{locale:ActiveLocale,onWin:()=>void,onSkip:()=>void}){
  const [board,setBoard]=useState<Cell[]>(Array(9).fill(null));
@@ -48,7 +48,7 @@ export default function TicTacToeIntermission({locale,onWin,onSkip}:{locale:Acti
   <p role='status' aria-live='polite'>{finalWinner==='X'?copy.win:finalWinner==='O'?copy.lose:tie?copy.draw:copy.turn}</p>
   <div role='group' aria-label={copy.title} style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:8,maxWidth:310,margin:'12px auto'}}>
    {board.map((value,i)=><button key={i} type='button' disabled={done||ended||Boolean(value)}
-    aria-label={String(i+1)+': '+(value||'empty')} onClick={()=>move(i)}
+    aria-label={String(i+1)+': '+(value||copy.empty)} onClick={()=>move(i)}
     style={{aspectRatio:'1',fontSize:38,fontWeight:900,borderRadius:15,border:'2px solid #6a4aff',background:'#f5efff',color:'#28174e',minHeight:64}}>
     {value||'·'}</button>)}
   </div>
