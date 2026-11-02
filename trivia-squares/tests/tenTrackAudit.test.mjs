@@ -10,14 +10,14 @@ const src=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 const exists=path=>access(new URL('../'+path,import.meta.url));
 const languages=['he','en','ru','fr','ar','es'];
 
-test('QA 01 - campaign has exactly 100 sequential levels',()=>{
- assert.equal(STAGE_COUNT,100);
- assert.deepEqual(CAMPAIGN_STAGES.map(s=>s.id),Array.from({length:100},(_,i)=>i+1));
+test('QA 01 - campaign has exactly 200 sequential levels',()=>{
+ assert.equal(STAGE_COUNT,200);
+ assert.deepEqual(CAMPAIGN_STAGES.map(s=>s.id),Array.from({length:200},(_,i)=>i+1));
  assert.ok(CAMPAIGN_STAGES.every(s=>s.size>=3&&s.size<=6));
 });
-test('QA 02 - twenty navigable chapters of five stages each',()=>{
+test('QA 02 - forty navigable chapters of five stages each',()=>{
  const groups=Map.groupBy(CAMPAIGN_STAGES,s=>s.chapter);
- assert.equal(groups.size,20);
+ assert.equal(groups.size,40);
  assert.ok([...groups.values()].every(stages=>stages.length===5));
 });
 test('QA 03 - prior saved progress stage nine cannot jump ahead',()=>{
