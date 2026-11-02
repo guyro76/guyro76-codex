@@ -17,6 +17,8 @@ export const questionTopics=[
  {id:'food',he:'אוכל, מטבח ופירות',en:'Food & cooking',ru:'Еда и кухня',fr:'Cuisine',ar:'الطعام والمطبخ',es:'Comida y cocina'},
  {id:'arts',he:'ספרות, אמנות ומשחקים',en:'Arts, books & games',ru:'Искусство и книги',fr:'Arts et livres',ar:'الفنون والكتب',es:'Arte, literatura y juegos'},
  {id:'languages',he:'איך אומרים? שפות העולם',en:'How do you say it? Languages',ru:'Как сказать? Языки мира',fr:'Comment dit-on ? Langues',ar:'كيف نقولها؟ لغات العالم',es:'¿Cómo se dice? Idiomas'},
+ {id:'israel_geography',he:'גאוגרפיה של ישראל',en:'Geography of Israel',ru:'География Израиля',fr:'Géographie d’Israël',ar:'جغرافيا إسرائيل',es:'Geografía de Israel'},
+ {id:'bible',he:'גיבורי התנ״ך',en:'Bible heroes',ru:'Герои Библии',fr:'Héros de la Bible',ar:'شخصيات الكتاب المقدس',es:'Héroes de la Biblia'},
  {id:'general',he:'ידע כללי והעשרה',en:'General knowledge',ru:'Общие знания',fr:'Culture générale',ar:'معرفة عامة',es:'Cultura general'}
 ] as const;
 export type QuestionTopic=typeof questionTopics[number]['id'];
@@ -25,6 +27,10 @@ export function topicForQuestion(category:string,text:string):QuestionTopic{
  const c=String(category).toLocaleLowerCase();
  const q=String(text).toLocaleLowerCase();
  const both=c+' '+q;
+ // Owner-requested categories are matched on the curated category label first, so
+ // Israeli geography is its own topic and is not capped like world geography.
+ if(/גאוגרפיה של ישראל|geography of israel/.test(c))return 'israel_geography';
+ if(/תנ״ך|תנ"ך|bible/.test(c))return 'bible';
  if(/איך אומרים|איך אומרים את|how do you say|how to say|language translation|pronunciation|как сказать|как произнести|comment dit.on|cómo se dice|como se dice|كيف نقول|كيف تقول|traducción de palabras|תרגום מילים/.test(both))return 'languages';
  if(/תעופה|טיס|חברת תעופה|airline|aviation|aircraft|авиац|compagnie aérienne|طيران/.test(both))return 'aviation';
  if(/מכונ|רכב|יצרנית|רכבי|automobile|car brand|automo|автомоб|سيار/.test(both))return 'cars';
@@ -45,28 +51,24 @@ export function topicForQuestion(category:string,text:string):QuestionTopic{
  if(/ישראל|israel|израил|إسرائيل/.test(both))return 'israel_politics';
  return 'general';
 }
+/** Topics added after the 16-topic catalog. Players who had every topic selected
+ *  in any earlier catalog keep "everything selected" and receive these too. */
+const ADDED_AFTER_16=['israel_geography','bible'] as const;
+const CATALOG_16=ALL_QUESTION_TOPICS.filter(t=>!(ADDED_AFTER_16 as readonly string[]).includes(t));
+const without=(ids:readonly string[])=>CATALOG_16.filter(t=>!ids.includes(t));
+const LEGACY_FULL_SELECTIONS:readonly (readonly QuestionTopic[])[]=[
+ CATALOG_16,
+ without(['languages']),
+ without(['disney']),
+ without(['disney','languages']),
+ without(['eurovision','disney']),
+ without(['eurovision','disney','languages'])
+];
 export function parseTopicPreferences(raw:unknown):QuestionTopic[]{
  if(!Array.isArray(raw))return [...ALL_QUESTION_TOPICS];
  const set=new Set(raw.filter((x):x is QuestionTopic=>ALL_QUESTION_TOPICS.includes(x as QuestionTopic)));
- // Preserve the complete-selection intent across taxonomy expansions.
- // Older saved selections had no "languages" topic; do not add it to a deliberately
- // narrowed selection. The 15/14/13-item cases correspond to successive prior
- // all-selected catalogs, not a general size-based opt-in.
- if(set.size===ALL_QUESTION_TOPICS.length-1 && !set.has('languages'))set.add('languages');
- if(set.size===ALL_QUESTION_TOPICS.length-2 && !set.has('disney') && !set.has('languages')){
-  set.add('disney');set.add('languages');
- }
- if(set.size===ALL_QUESTION_TOPICS.length-3 && !set.has('eurovision') && !set.has('disney') && !set.has('languages')){
-  set.add('eurovision');set.add('disney');set.add('languages');
- }
- // Existing players who had selected all topics also get the newly added category.
- // If every category was enabled in a previous app version, automatically
- // include the newly introduced Disney category so existing players benefit.
- // Deliberately narrowed topic selections remain unchanged.
- if(set.size===ALL_QUESTION_TOPICS.length-1 && !set.has('disney'))set.add('disney');
- // Old pre-Eurovision all-selected players should receive both new categories.
- if(set.size===ALL_QUESTION_TOPICS.length-2 && !set.has('eurovision') && !set.has('disney')){
-  set.add('eurovision');set.add('disney');
- }
+ // Preserve the complete-selection intent across taxonomy expansions; a deliberately
+ // narrowed selection stays exactly as the player chose it.
+ if(LEGACY_FULL_SELECTIONS.some(full=>full.length===set.size&&full.every(t=>set.has(t))))return [...ALL_QUESTION_TOPICS];
  return set.size?ALL_QUESTION_TOPICS.filter(t=>set.has(t)):[...ALL_QUESTION_TOPICS];
 }

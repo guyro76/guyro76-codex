@@ -21,6 +21,7 @@ import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
 import { spanishQuestions } from '../lib/spanishQuestions';
 import { languageQuestions } from '../lib/languageQuestions';
+import { curatedHebrewQuestions } from '../lib/curatedHebrewQuestions';
 import { languageForPronunciation, speakLanguageAnswer } from '../lib/languageSpeech';
 import { findLocalQuestion } from '../lib/localQuestionLookup';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
@@ -388,7 +389,7 @@ export default function TriviaGame() {
   const world = worlds.find(w => w.slug === selectedStage.theme) || worlds[0];
   const questionBank = (locale==='he'||locale==='en')
     ? [
-      ...(locale === 'en' ? englishQuestions : offlineQuestions),
+      ...(locale === 'en' ? englishQuestions : [...offlineQuestions,...curatedHebrewQuestions]),
       ...freshLocalQuestions(locale,countLocalReserve(locale))
     ]
     : locale==='es'?spanishQuestions:internationalQuestions.filter(q=>q.locale===locale);

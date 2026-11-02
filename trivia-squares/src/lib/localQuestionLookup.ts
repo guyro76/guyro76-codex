@@ -4,6 +4,7 @@ import { internationalQuestions } from './internationalQuestions.ts';
 import { spanishQuestions } from './spanishQuestions.ts';
 import { languageQuestions } from './languageQuestions.ts';
 import { freshLocalQuestionReserve } from './freshQuestions.ts';
+import { curatedHebrewQuestions } from './curatedHebrewQuestions.ts';
 
 export type LocalAnswerKey = { id: number; correct: number };
 
@@ -12,7 +13,7 @@ export type LocalAnswerKey = { id: number; correct: number };
  *  (language and Spanish banks were missing), tapping an answer silently did nothing. */
 export const bundledQuestionBanks: readonly (readonly LocalAnswerKey[])[] = [
   englishQuestions, offlineQuestions, freshLocalQuestionReserve,
-  internationalQuestions, spanishQuestions, languageQuestions,
+  internationalQuestions, spanishQuestions, languageQuestions, curatedHebrewQuestions,
 ];
 
 export function findLocalQuestion<T extends LocalAnswerKey>(id: number | undefined, extra: readonly T[] = []): LocalAnswerKey | T | undefined {

@@ -27,5 +27,6 @@ test('avoid duplicate prompts in each locale',()=>{
 });
 test('recent topic history accepts the language topic',()=>{
  const mix=readFileSync(join(process.cwd(),'src/lib/questionMix.ts'),'utf8');
- assert.match(mix,/'languages','general'/);
+ assert.match(mix,/'languages',/);
+ assert.match(mix,/'general'/);
 });

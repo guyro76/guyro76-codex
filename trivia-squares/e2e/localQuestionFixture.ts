@@ -2,6 +2,7 @@ import {type Locator,type Page} from '@playwright/test';
 import {offlineQuestions} from '../src/lib/offlineQuestions';
 import {freshLocalQuestionReserve} from '../src/lib/freshQuestions';
 import {languageQuestions} from '../src/lib/languageQuestions';
+import {curatedHebrewQuestions} from '../src/lib/curatedHebrewQuestions';
 
 /** Keep offline-questions E2E deterministic while leaving production
  * question selection, topic rotation and the actual gameplay unchanged.
@@ -21,7 +22,7 @@ export async function useOfflineQuestionFixtures(page:Page):Promise<void>{
   });
 }
 
-const bank=[...offlineQuestions,...freshLocalQuestionReserve,...languageQuestions];
+const bank=[...offlineQuestions,...freshLocalQuestionReserve,...languageQuestions,...curatedHebrewQuestions];
 function escapeRegex(text:string):string{return text.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&');}
 
 /** The old tests hard-coded Australia / Canberra as the FIRST question.
