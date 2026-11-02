@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import {answerDisplayedLocalQuestion,useOfflineQuestionFixtures} from './localQuestionFixture';
+import {languageQuestions} from '../src/lib/languageQuestions';
 
 async function ready(page: Page) {
   await useOfflineQuestionFixtures(page);
@@ -424,10 +425,12 @@ test('previously exhausted topic preferences switch to unused other topics witho
 });
 
 test('exhausted offline question bank never gives free strokes and preserves stage seven',async({page})=>{
-  await page.addInitScript(()=>{
-    // Hebrew authored IDs are below 100,000; simulate an experienced player's
-    // permanent history across many sessions. This must never brick stage 7.
-    localStorage.setItem('trivia-used-question-ids',JSON.stringify(Array.from({length:100000},(_,i)=>i)));
+  // Exhaust both legacy IDs and the new six-language starter bank.
+  // The test must not grant free strokes when a new local category is added.
+  await page.addInitScript((extraQuestionIds:number[])=>{
+    localStorage.setItem('trivia-used-question-ids',JSON.stringify([
+      ...Array.from({length:100000},(_,i)=>i),...extraQuestionIds
+    ]));
     localStorage.setItem('trivia-tutorial-seen-v1','true');
     localStorage.setItem('trivia-player-name','עדי');
     localStorage.setItem('trivia-mode-v2','solo');
@@ -437,7 +440,7 @@ test('exhausted offline question bank never gives free strokes and preserves sta
       rows:4,cols:4,mode:'solo',turn:'host',
       edges:{'h-0-0':'host'},owners:{},scores:{host:0,guest:0,bot:0}
     }));
-  });
+  },languageQuestions.map(q=>q.id));
   await page.goto('/');
   await expect(page.locator('.level-pill')).toContainText('7');
   // Offline mode can never silently bypass a trivia question.
