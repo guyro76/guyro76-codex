@@ -1,0 +1,30 @@
+/* Optional fish stays inside each captured tile, never the entire board. */
+.trivia-fish-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+}
+.trivia-fish {
+  position: absolute;
+  display: block;
+  left: 10%;
+  bottom: 12%;
+  font-size: clamp(12px, 2vw, 21px);
+  line-height: 1;
+  opacity: .72;
+  animation: trivia-fish-swim 5.4s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes trivia-fish-swim {
+  from { transform: translateX(0) scaleX(1); }
+  48% { transform: translateX(25px) translateY(-7px) scaleX(1); }
+  52% { transform: translateX(25px) translateY(-7px) scaleX(-1); }
+  to { transform: translateX(0) translateY(2px) scaleX(-1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trivia-fish { animation: none; }
+}
