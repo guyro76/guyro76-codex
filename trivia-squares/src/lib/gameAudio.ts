@@ -53,16 +53,16 @@ export function unlockGameAudio():void {
   const ctx=context();
   if(!ctx || ctx.state==='running' || pendingResume)return;
   pendingResume=true;
-  void ctx.resume().then(()=>{
-    // Touch input on some WebViews requires a source to be connected after resume.
-    if(ctx.state==='running'){
-      const oscillator=ctx.createOscillator();
-      const gain=ctx.createGain();
-      gain.gain.value=0;
-      oscillator.connect(gain).connect(ctx.destination);
-      oscillator.start();oscillator.stop(ctx.currentTime+.005);
-    }
-  }).catch(()=>{}).finally(()=>{pendingResume=false;});
+  // Start a silent source synchronously inside the user gesture. Some mobile
+  // WebViews discard activation before the asynchronous resume resolves.
+  try{
+    const oscillator=ctx.createOscillator();
+    const gain=ctx.createGain();
+    gain.gain.value=0;
+    oscillator.connect(gain).connect(ctx.destination);
+    oscillator.start();oscillator.stop(ctx.currentTime+.012);
+  }catch{}
+  void ctx.resume().catch(()=>{}).finally(()=>{pendingResume=false;});
 }
 
 function tone(ctx: AudioContext, hz: number, at: number, duration: number, gain: number, wave: OscillatorType = 'sine') {
