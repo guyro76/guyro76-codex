@@ -315,3 +315,10 @@ main.trivia-app .board{touch-action:none;user-select:none;-webkit-user-select:no
   min-width:270px!important;min-height:270px!important;
  }
 }
+
+/* Unified readable typography and keyboard accessibility across all skins. */
+main.trivia-app :is(p,span,li,small,dt,dd,output,summary,legend,option){font-weight:800}
+main.trivia-app :is(button,input,select,textarea){font:inherit;font-weight:800}
+main.trivia-app :is(button,[role='button'],input,select,textarea):focus-visible{outline:3px solid #ffe58e;outline-offset:3px}
+main.trivia-app :is(button,input,select,textarea){letter-spacing:normal}
+@media(max-width:580px){main.trivia-app :is(button,input,select,textarea){font-size:max(16px,1em)}}
