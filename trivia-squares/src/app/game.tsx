@@ -163,6 +163,8 @@ export default function TriviaGame() {
     if(!menuRef.current?.open)menuRef.current?.showModal();
   };
   const [local, setLocal] = useState<GameState>(() => empty(3));
+  const [localComboStreak,setLocalComboStreak]=useState(0);
+  const localComboRef=useRef(0);
   const [stageRunId,setStageRunId] = useState('local-first');
   const [localReady, setLocalReady] = useState(false);
   const [online, setOnline] = useState(true);
@@ -1002,12 +1004,13 @@ export default function TriviaGame() {
       }
       const next = applyLocalAnswer(local, edge, correct, local.mode==='solo');
       setLocal(next);
-      // Celebrate only the moment a streak crosses a milestone; never replay
-      // on render, refresh, or a resumed saved game.
+      // Local engine has no persisted streak: track consecutive correct
+      // answers independently, resetting on mistakes and on new stages.
+      const before=localComboRef.current;
+      const after=correct?before+1:0;
+      localComboRef.current=after;
+      setLocalComboStreak(after);
       if(correct){
-        const side=local.mode==='solo'?'host':local.turn==='guest'?'guest':'host';
-        const before=Number(local.streak?.[side]||0);
-        const after=Number(next.streak?.[side]||0);
         if(before<10 && after>=10)play('combo10');
         else if(before<5 && after>=5)play('combo5');
         else if(before<3 && after>=3)play('combo3');
@@ -1670,7 +1673,7 @@ export default function TriviaGame() {
              <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
            </div>
         </div>
-        <ProgressPulse locale={locale} stage={stageId} captured={Object.values(state.owners).filter(owner=>owner==='host').length} streak={remote ? Number(state.streak?.[player]||0) : Number(state.streak?.host||0)}/>
+        <ProgressPulse locale={locale} stage={stageId} captured={Object.values(state.owners).filter(owner=>owner==='host').length} streak={remote ? Number(state.streak?.[player]||0) : localComboStreak}/>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
             <div className='portrait'>{remote && player === 'guest' ? opponentIcon : avatar}</div>
