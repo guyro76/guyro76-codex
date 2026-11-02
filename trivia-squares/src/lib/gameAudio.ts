@@ -72,7 +72,7 @@ function tone(ctx: AudioContext, hz: number, at: number, duration: number, gain:
   envelope.gain.setValueAtTime(0.0001, at);
   // Stronger but safely limited effects: prior sub-10% gain was barely audible
   // on mobile speakers even with in-game volume set to 65%.
-  envelope.gain.exponentialRampToValueAtTime(Math.min(.30,Math.max(0.0002,gain*1.75)), at + 0.013);
+  envelope.gain.exponentialRampToValueAtTime(Math.min(.19,Math.max(0.0002,gain*1.15)), at + 0.013);
   envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
   osc.connect(envelope).connect(masterGain || ctx.destination);
   osc.start(at);
@@ -125,6 +125,8 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
     marker(ctx, volume);
     return;
   }
+  // Reserve headroom for layered cues (answer + coins + capture) to avoid
+  // clipping and harsh volume spikes on small phone speakers.
   const t = ctx.currentTime + 0.005 + Math.max(0,Math.min(2,delaySeconds));
   const note = (freq: number, offset: number, dur: number, level: number, wave: OscillatorType = 'sine') =>
     tone(ctx, freq, t + offset, dur, level * volume, wave);
