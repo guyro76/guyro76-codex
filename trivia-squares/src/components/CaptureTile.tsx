@@ -8,10 +8,10 @@ export type CaptureStyle = 'lumen' | 'neon' | 'seal' | 'prism' | 'token';
 type Props = {
   row: number; col: number; x: number; y: number; width: number; height: number;
   color: string; name: string; icon: string; style: CaptureStyle;
-  selectable?: boolean; onSelect?: () => void; locale: ActiveLocale; idPrefix?: string;
+  selectable?: boolean; onSelect?: () => void; locale: ActiveLocale; idPrefix?: string; fishEnabled?: boolean;
 };
 
-export default function CaptureTile({row,col,x,y,width,height,color,name,icon,style,selectable=false,onSelect,locale,idPrefix='board'}:Props) {
+export default function CaptureTile({row,col,x,y,width,height,color,name,icon,style,selectable=false,onSelect,locale,idPrefix='board',fishEnabled=false}:Props) {
   const id = idPrefix+'-capture-' + row + '-' + col;
   const cx = x + width / 2, cy = y + height / 2;
   const radius = Math.min(width,height) * .265;
@@ -76,6 +76,9 @@ export default function CaptureTile({row,col,x,y,width,height,color,name,icon,st
         <circle className='capture-bubble' cx={x+width*.58} cy={y+height*.81} r={Math.max(1,width*.02)} fill='#FFFFFF' fillOpacity='.62'/>
       </g>
     </g>
+    {fishEnabled && <g clipPath={'url(#'+id+'-vessel)'} pointerEvents='none' aria-hidden='true' className='trivia-fish-svg'>
+      <text x={x+width*.24} y={y+height*.73} fontSize={Math.max(11,Math.min(21,width*.23))} opacity='.74'>🐟</text>
+    </g>}
     <rect className='capture-inset' x={x+3} y={y+3} width={width-6} height={height-6}
       rx={Math.min(10,width*.14)} fill='none' stroke={'url(#'+id+'-metal)'} strokeWidth='.9'/>
     {style==='neon' && <rect x={x+5} y={y+5} width={width-10} height={height-10}
