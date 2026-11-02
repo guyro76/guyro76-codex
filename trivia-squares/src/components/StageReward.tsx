@@ -119,7 +119,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     const t=window.setTimeout(()=>{
       setCelebrating(false);
       if(!played)setGame(current=>current||(
-        !remoteMatchId && stageNumber%5===0?'quiz':
+        !remoteMatchId && stageNumber%5===0?(['pairs','sequence','tictactoe'] as const)[(Math.floor(stageNumber/5)-1)%3]:
         (['word','wheel','balloons','cake','scratch','sword','scissors'] as const)[((stageNumber-1)-Math.floor((stageNumber-1)/5))%7]
       ));
     },1800);
