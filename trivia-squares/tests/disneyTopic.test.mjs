@@ -7,11 +7,12 @@ test('Disney is a separately selectable, native category in all six languages',(
  const disney=questionTopics.find(topic=>topic.id==='disney');
  assert.ok(disney);
  for(const lang of ['he','en','ru','fr','ar','es'])assert.ok(disney[lang].length>=5,lang);
- assert.equal(questionTopics.length,16);
+ assert.equal(questionTopics.length,18);
  assert.equal(ALL_QUESTION_TOPICS.filter(id=>id==='disney').length,1);
 });
 test('previous all-selected preferences gain Languages without changing narrow selections',()=>{
- const allBeforeLanguages=ALL_QUESTION_TOPICS.filter(id=>id!=='languages');
+ const CATALOG_16=ALL_QUESTION_TOPICS.filter(id=>id!=='israel_geography'&&id!=='bible');
+ const allBeforeLanguages=CATALOG_16.filter(id=>id!=='languages');
  assert.equal(allBeforeLanguages.length,15);
  assert.deepEqual(parseTopicPreferences(allBeforeLanguages),ALL_QUESTION_TOPICS);
  const beforeDisneyAndLanguages=allBeforeLanguages.filter(id=>id!=='disney');
@@ -34,7 +35,7 @@ test('old player preferences are respected and newly created profiles see all to
  const selected=['tv_film','music','history'];
  assert.deepEqual(parseTopicPreferences(selected),selected);
  assert.ok(!parseTopicPreferences(selected).includes('disney'));
- const previouslyAll=ALL_QUESTION_TOPICS.filter(id=>id!=='disney');
+ const previouslyAll=ALL_QUESTION_TOPICS.filter(id=>id!=='disney'&&id!=='israel_geography'&&id!=='bible');
  assert.deepEqual(parseTopicPreferences(previouslyAll),ALL_QUESTION_TOPICS,
   'previously all-selected players receive the new Disney topic');
  const previouslyAllBeforeEuro=previouslyAll.filter(id=>id!=='eurovision');
