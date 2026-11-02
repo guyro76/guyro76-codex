@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {selectVariedQuestion,isGeographyQuestion} from '../src/lib/questionMix.ts';
 
-const canon=t=>t.normalize('NFKC').toLocaleLowerCase().replace(/[^\\p{L}\\p{N}]+/gu,' ').trim();
+const canon=t=>t.normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 const city=i=>({id:i,category:'גאוגרפיה',text:'באיזו מדינה נמצאת העיר '+i+'?'});
 const music=i=>({id:10000+i,category:'מוזיקה ישראלית',text:'מי שר את השיר מספר '+i+'?'});
 const film=i=>({id:20000+i,category:'קולנוע',text:'באיזה סרט מופיעה הדמות '+i+'?'});
