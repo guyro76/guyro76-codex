@@ -1,8 +1,8 @@
 import {test,expect} from '@playwright/test';
 import {answerDisplayedLocalQuestion,useOfflineQuestionFixtures} from './localQuestionFixture';
+import {drawAdjacentForQA} from './gestureQA';
 
-test('active quiz and wrong-answer review retain readable semantic contrast',async({page},info)=>{
-  test.skip(info.project.name!=='chromium-desktop','Focused desktop contrast regression; locale/mobile matrix runs separately');
+test('active quiz and wrong-answer review retain readable semantic contrast on desktop and mobile',async({page})=>{
   await useOfflineQuestionFixtures(page);
   await page.addInitScript(()=>{
     localStorage.setItem('trivia-welcome-dismissed-v1','1');
@@ -13,16 +13,7 @@ test('active quiz and wrong-answer review retain readable semantic contrast',asy
   const board=page.locator('svg.board');
   await expect(board).toBeVisible();
   await board.scrollIntoViewIfNeeded();
-  const dot=async(row:number,col:number)=>{
-    const bounds=await page.locator('svg.board circle[aria-label="נקודה '+row+', '+col+'"]').boundingBox();
-    if(!bounds)throw new Error('Missing board dot');
-    return {x:bounds.x+bounds.width/2,y:bounds.y+bounds.height/2};
-  };
-  const start=await dot(1,1),end=await dot(1,2);
-  await page.mouse.move(start.x,start.y);
-  await page.mouse.down();
-  await page.mouse.move(end.x,end.y,{steps:12});
-  await page.mouse.up();
+  await drawAdjacentForQA(page,[1,1],[1,2]);
   const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(quiz).toBeVisible();
   await expect(quiz.locator('h2')).toHaveCSS('background-color','rgb(255, 255, 255)');
