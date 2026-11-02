@@ -16,6 +16,7 @@ export const questionTopics=[
  {id:'history',he:'היסטוריה ותרבות',en:'History & culture',ru:'История и культура',fr:'Histoire et culture',ar:'التاريخ والثقافة',es:'Historia y cultura'},
  {id:'food',he:'אוכל, מטבח ופירות',en:'Food & cooking',ru:'Еда и кухня',fr:'Cuisine',ar:'الطعام والمطبخ',es:'Comida y cocina'},
  {id:'arts',he:'ספרות, אמנות ומשחקים',en:'Arts, books & games',ru:'Искусство и книги',fr:'Arts et livres',ar:'الفنون والكتب',es:'Arte, literatura y juegos'},
+ {id:'languages',he:'איך אומרים? שפות העולם',en:'How do you say it? Languages',ru:'Как сказать? Языки мира',fr:'Comment dit-on ? Langues',ar:'كيف نقولها؟ لغات العالم',es:'¿Cómo se dice? Idiomas'},
  {id:'general',he:'ידע כללי והעשרה',en:'General knowledge',ru:'Общие знания',fr:'Culture générale',ar:'معرفة عامة',es:'Cultura general'}
 ] as const;
 export type QuestionTopic=typeof questionTopics[number]['id'];
@@ -24,6 +25,7 @@ export function topicForQuestion(category:string,text:string):QuestionTopic{
  const c=String(category).toLocaleLowerCase();
  const q=String(text).toLocaleLowerCase();
  const both=c+' '+q;
+ if(/איך אומרים|איך אומרים את|how do you say|how to say|language translation|pronunciation|как сказать|как произнести|comment dit.on|cómo se dice|como se dice|كيف نقول|كيف تقول|traducción de palabras|תרגום מילים/.test(both))return 'languages';
  if(/תעופה|טיס|חברת תעופה|airline|aviation|aircraft|авиац|compagnie aérienne|طيران/.test(both))return 'aviation';
  if(/מכונ|רכב|יצרנית|רכבי|automobile|car brand|automo|автомоб|سيار/.test(both))return 'cars';
  if(/כנסת|ממשלה|פוליטיק|ראש ממשלה|נשיא ישראל|בחירות|politic|knesset|политик|السياس/.test(both))return 'israel_politics';
