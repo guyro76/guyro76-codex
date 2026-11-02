@@ -26,7 +26,7 @@ import { findLocalQuestion } from '../lib/localQuestionLookup';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
-import {selectVariedQuestion,readRecentQuestionTopics,withRecycledVariety} from '../lib/questionMix';
+import {selectVariedQuestion,readRecentQuestionTopics} from '../lib/questionMix';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import StageReward from '../components/StageReward';
 import QuestionReportButton from '../components/QuestionReportButton';
@@ -195,8 +195,7 @@ export default function TriviaGame() {
   const rememberShownQuestion=useCallback((text:string)=>{
     const fingerprint=canonicalQuestion(text);
     if(!fingerprint)return;
-    // Re-adding moves a recycled question to the end, so history stays ordered oldest → newest.
-    seenQuestionTexts.current.delete(fingerprint);
+    if(seenQuestionTexts.current.has(fingerprint))return;
     seenQuestionTexts.current.add(fingerprint);
     try{localStorage.setItem('trivia-question-text-history-v1',JSON.stringify([...seenQuestionTexts.current]))}catch{}
   },[]);
@@ -916,10 +915,8 @@ export default function TriviaGame() {
         setMessage(questionAvailabilityMessage(locale,'offlineExhausted'));
         return;
       }
-      // The server bank is ~95% generated "which country/city" rows. Once a player has seen
-      // every varied question, recycle the oldest varied ones instead of a run of cities.
-      unseen=withRecycledVariety(unseen,[...effectiveQuestionBank,...cultureQuestions,...remoteQuestionCache.current[locale]],
-        [...seenQuestionTexts.current],canonicalQuestion);
+      // Only questions not present in the persistent text/ID history are eligible.
+      // Never recycle seen questions to manufacture topic variety.
       const preferred=unseen.filter(q=>selectedTopics.includes(topicForQuestion(q.category,q.text)));
       const remaining=preferred.length?preferred:unseen;
       // Enforce rotating broad topics rather than only raw category labels.

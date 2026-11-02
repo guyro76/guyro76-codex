@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {selectVariedQuestion,withRecycledVariety,isGeographyQuestion} from '../src/lib/questionMix.ts';
+import {selectVariedQuestion,isGeographyQuestion} from '../src/lib/questionMix.ts';
 
 const canon=t=>t.normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 const city=i=>({id:i,category:'גאוגרפיה',text:'באיזו מדינה נמצאת העיר '+i+'?'});
@@ -12,36 +12,37 @@ test('city rows are classified as geography',()=>{
  assert.equal(isGeographyQuestion(music(1)),false);
 });
 
-test('when only city questions are unseen, old varied questions are recycled',()=>{
+test('topic rotation favors varied unseen questions when they exist',()=>{
+ const unseen=[city(1),city(2),music(1),film(1)];
+ const topics=[];let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+ const chosen=[];
+ for(let draw=0;draw<unseen.length;draw++){
+  const pool=unseen.filter(q=>!chosen.includes(q));
+  const selection=selectVariedQuestion(pool,topics,rnd);
+  assert.ok(selection);
+  assert.ok(!chosen.includes(selection.question));
+  chosen.push(selection.question);topics.push(selection.topic);
+ }
+ assert.equal(new Set(chosen.map(q=>canon(q.text))).size,unseen.length);
+});
+
+test('exhausted varied bank never reintroduces a previously seen question',()=>{
+ const seen=[...Array.from({length:40},(_,i)=>music(i)),...Array.from({length:40},(_,i)=>film(i))];
  const unseen=Array.from({length:100},(_,i)=>city(i));
- const bank=[...Array.from({length:30},(_,i)=>music(i)),...Array.from({length:30},(_,i)=>film(i)),...unseen];
- const seenOrder=[...bank.slice(0,60).map(q=>canon(q.text))];
- const pool=withRecycledVariety(unseen,bank,seenOrder,canon,10);
- const extra=pool.slice(unseen.length);
- assert.ok(extra.length>0);
- assert.ok(extra.every(q=>!isGeographyQuestion(q)));
- // oldest seen first, the 10 most recent are protected
- assert.equal(extra[0].text,music(0).text);
- for(const q of bank.slice(50,60))assert.ok(!extra.includes(q),'recent question recycled: '+q.text);
-});
-
-test('variety pool is untouched when unseen already has non-geography questions',()=>{
- const unseen=[city(1),music(1)];
- assert.deepEqual(withRecycledVariety(unseen,[music(2)],[],canon),unseen);
-});
-
-test('20 draws from a city-only unseen pool contain at most one geography question in any four',()=>{
- const unseen=Array.from({length:200},(_,i)=>city(i));
- const bank=[...Array.from({length:40},(_,i)=>music(i)),...Array.from({length:40},(_,i)=>film(i)),...unseen];
- let seen=bank.slice(0,80).map(q=>canon(q.text));
- let remaining=[...unseen];const topics=[];const kinds=[];
- let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+ const seenTexts=new Set(seen.map(q=>canon(q.text)));
+ const eligible=[...seen,...unseen].filter(q=>!seenTexts.has(canon(q.text)));
+ assert.equal(eligible.length,100);
+ let remaining=[...eligible],seed=13;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+ const drawn=new Set();
  for(let draw=0;draw<20;draw++){
-  const pool=withRecycledVariety(remaining,bank,seen,canon,20);
-  const chosen=selectVariedQuestion(pool,topics,rnd);
-  topics.push(chosen.topic);kinds.push(isGeographyQuestion(chosen.question));
-  const key=canon(chosen.question.text);seen=[...seen.filter(t=>t!==key),key];
+  const chosen=selectVariedQuestion(remaining,[],rnd);
+  assert.ok(chosen);
+  const key=canon(chosen.question.text);
+  assert.ok(!seenTexts.has(key),'recycled an already-seen question');
+  assert.ok(!drawn.has(key),'repeated a question in the same game');
+  drawn.add(key);
   remaining=remaining.filter(q=>q!==chosen.question);
  }
- for(let i=0;i+4<=kinds.length;i++)assert.ok(kinds.slice(i,i+4).filter(Boolean).length<=1,'window '+i+': '+kinds.slice(i,i+4));
+ assert.equal(drawn.size,20);
+ assert.ok([...drawn].every(key=>key.includes('באיזו מדינה')));
 });
