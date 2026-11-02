@@ -164,7 +164,6 @@ export default function TriviaGame() {
   };
   const [local, setLocal] = useState<GameState>(() => empty(3));
   const [localComboStreak,setLocalComboStreak]=useState(0);
-  const localComboRef=useRef(0);
   const localComboByPlayerRef=useRef({host:0,guest:0});
   const [stageRunId,setStageRunId] = useState('local-first');
   const [localReady, setLocalReady] = useState(false);
@@ -767,7 +766,7 @@ export default function TriviaGame() {
       const nextRun='local-'+crypto.randomUUID();
       setStageRunId(nextRun);
       try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
-      localComboRef.current=0;localComboByPlayerRef.current={host:0,guest:0};setLocalComboStreak(0);
+      localComboByPlayerRef.current={host:0,guest:0};setLocalComboStreak(0);
       setRemote(null); setLocal(empty(selectedStage.size,mode==='local'?'local':'solo')); setLocalFreeze({host:false,guest:false});
       setStageStarted(true);
       setMessage(added>0
@@ -1013,8 +1012,8 @@ export default function TriviaGame() {
       const before=localComboByPlayerRef.current[answerSide];
       const after=correct?before+1:0;
       localComboByPlayerRef.current[answerSide]=after;
-      localComboRef.current=after;
-      setLocalComboStreak(after);
+      const nextSide=next.mode==='solo'?'host':next.turn==='guest'?'guest':'host';
+      setLocalComboStreak(localComboByPlayerRef.current[nextSide]);
       if(correct){
         if(before<10 && after>=10)play('combo10');
         else if(before<5 && after>=5)play('combo5');
@@ -1209,7 +1208,7 @@ export default function TriviaGame() {
       localStorage.setItem('trivia-stage-run-id',nextRun);
       localStorage.setItem('trivia-stage-id-v1',String(nextId));
     }catch{}
-    localComboRef.current=0;localComboByPlayerRef.current={host:0,guest:0};setLocalComboStreak(0);
+    localComboByPlayerRef.current={host:0,guest:0};setLocalComboStreak(0);
     setStageId(nextId);setSize(next.size);
     setStageStarted(false);setRemote(null);setLocal(empty(next.size,mode==='local'?'local':'solo'));
     setQuestion(null);setEdge(null);setTrace(null);gesture.current=null;
