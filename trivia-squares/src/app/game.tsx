@@ -1497,6 +1497,7 @@ export default function TriviaGame() {
            (locale==='he'?'השתק צלילים':locale==='en'?'Mute sound':locale==='ru'?'Выключить звук':locale==='fr'?'Couper le son':locale==='es'?'Silenciar sonido':'كتم الصوت'))}
         aria-pressed={!muted&&volume>0} onClick={()=>{
           const enable=muted||volume===0;
+          setGameAudioMuted(!enable);
           if(enable){
             unlockGameAudio();
             if(volume===0)setVolume(70);
