@@ -494,3 +494,9 @@ main.trivia-app .stage-reward-reopen{border:2px solid #FFDF9A;background:#264474
  main.trivia-app.playing-layout .scoreboard{margin:0!important;gap:4px!important}
  main.trivia-app.playing-layout .gesture-hint{margin:0 auto!important}
 }
+
+/* Android Chromium and Samsung Internet touch compatibility. */
+main.trivia-app .board{touch-action:none;user-select:none;-webkit-user-select:none}
+main.trivia-app button{touch-action:manipulation}
+@media(pointer:coarse){main.trivia-app .stage-reward-dismiss{min-height:44px;min-width:44px}}
+@media(max-width:900px) and (orientation:landscape) and (max-height:480px){main.trivia-app.playing-layout{min-height:100dvh;height:auto!important;overflow-y:auto!important}main.trivia-app.playing-layout .arena{width:min(78dvh,100%,430px)!important;height:auto!important;max-height:none!important;aspect-ratio:1}}
