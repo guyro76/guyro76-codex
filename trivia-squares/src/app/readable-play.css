@@ -123,6 +123,30 @@ main.trivia-app .answer-option {
   border: 2px solid #324a70;
   border-radius: 12px;
 }
+/* P0 active quiz heading actually rendered as .quiz-card > h2, not .question-text.
+   Limit the light surface to the question dialog so tutorial and feedback retain their styling. */
+main.trivia-app .quiz-card:has(> .question-timer) > h2 {
+  background-color: #ffffff;
+  color: #14213d;
+  text-shadow: none;
+  border-radius: 12px;
+  padding: 0.65em 0.8em;
+  overflow-wrap: anywhere;
+}
+
+/* Existing premium.css sets !important on generic .answer-option surfaces.
+   Restore semantic correct/wrong feedback contrast at higher specificity. */
+main.trivia-app .answer-option.feedback-answer.feedback-correct {
+  background: #d8ffe8 !important;
+  color: #0c5232 !important;
+  border-color: #19a65a !important;
+}
+main.trivia-app .answer-option.feedback-answer.feedback-wrong {
+  background: #ffe3e0 !important;
+  color: #80212c !important;
+  border-color: #dc3c4a !important;
+}
+
 main.trivia-app .answer-option:focus-visible {
   outline: 3px solid #b45309;
   outline-offset: 3px;
