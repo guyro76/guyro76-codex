@@ -303,8 +303,8 @@ main.trivia-app .side-stack .app-menu-dialog[open]{overflow:hidden}
 main.trivia-app .campaign-stages-toggle{min-height:40px}
 @media(min-width:820px) and (min-height:680px){
  main.trivia-app.playing-layout .arena{
-  width:min(100%,calc(100dvh - 325px),600px)!important;
-  max-height:calc(100dvh - 325px)!important
+  width:min(100%,calc(100dvh - 430px),600px)!important;
+  max-height:calc(100dvh - 430px)!important
  }
  main.trivia-app.playing-layout .campaign-stages-toggle{
   position:static;min-height:29px;max-width:280px;font-size:11px
@@ -485,8 +485,8 @@ main.trivia-app .stage-reward-reopen{border:2px solid #FFDF9A;background:#264474
    including after a marker gesture activates compact play mode. */
 @media (min-width:650px) and (max-width:819px) and (min-height:800px){
  main.trivia-app.playing-layout .arena{
-   width:min(100%,calc(100dvh - 595px),425px)!important;
-   max-height:min(calc(100dvh - 595px),425px)!important;
+   width:min(100%,calc(100dvh - 685px),425px)!important;
+   max-height:min(calc(100dvh - 685px),425px)!important;
    flex-shrink:0!important;
  }
  main.trivia-app.playing-layout .arena-panel{gap:0!important;padding:4px!important}
