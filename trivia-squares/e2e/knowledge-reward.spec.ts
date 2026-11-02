@@ -28,8 +28,16 @@ test('an ordinary correct answer grants 5 credits and 10 knowledge points, inclu
   const question=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(question).toBeVisible();
   await answerDisplayedLocalQuestion(question,true);
-  await expect(question).toHaveCount(0);
-  await expect(page.locator('.status-line')).toContainText('+5 קרדיטים');
+  // Every correct answer pays the base reward. A premium question may
+  // immediately open a second bonus question, so the dialog need not close.
+  await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}')?.credits?.host)).toBe(5);
+  if(await question.count()){
+    await expect(question.locator('.quiz-badge')).toContainText('פרימיום');
+    await expect(page.locator('.status-line')).toContainText('תשובת פרימיום נכונה');
+  }else{
+    await expect(question).toHaveCount(0);
+    await expect(page.locator('.status-line')).toContainText('+5 קרדיטים');
+  }
   await expect(page.locator('.arena-quick-wallet')).toContainText('🪙 5');
   await expect(page.locator('.arena-quick-wallet')).toContainText('🧠 10');
   const read=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}'));

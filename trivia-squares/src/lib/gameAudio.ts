@@ -3,12 +3,13 @@
  * No audio downloads, copyrighted samples, user tracking or microphone permission.
  * The Web Audio context is created only after a player interaction.
  */
-export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond' | 'pop' | 'slice' | 'liquid' | 'fireworks';
+export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond' | 'pop' | 'slice' | 'liquid' | 'fireworks' | 'combo3' | 'combo5' | 'combo10';
 let audio: AudioContext | null = null;
 let lastStrokeAt = -1;
 let pendingResume = false;
 let masterGain: GainNode | null = null;
 let masterMuted = false;
+let lastForegroundRetryAt = 0;
 
 /** Safari on iOS can default to ambient mode and silence game sounds with
  * the hardware Silent switch. Ask for playback while the player explicitly
@@ -52,16 +53,16 @@ export function unlockGameAudio():void {
   const ctx=context();
   if(!ctx || ctx.state==='running' || pendingResume)return;
   pendingResume=true;
-  void ctx.resume().then(()=>{
-    // Touch input on some WebViews requires a source to be connected after resume.
-    if(ctx.state==='running'){
-      const oscillator=ctx.createOscillator();
-      const gain=ctx.createGain();
-      gain.gain.value=0;
-      oscillator.connect(gain).connect(ctx.destination);
-      oscillator.start();oscillator.stop(ctx.currentTime+.005);
-    }
-  }).catch(()=>{}).finally(()=>{pendingResume=false;});
+  // Start a silent source synchronously inside the user gesture. Some mobile
+  // WebViews discard activation before the asynchronous resume resolves.
+  try{
+    const oscillator=ctx.createOscillator();
+    const gain=ctx.createGain();
+    gain.gain.value=0;
+    oscillator.connect(gain).connect(ctx.destination);
+    oscillator.start();oscillator.stop(ctx.currentTime+.012);
+  }catch{}
+  void ctx.resume().catch(()=>{}).finally(()=>{pendingResume=false;});
 }
 
 function tone(ctx: AudioContext, hz: number, at: number, duration: number, gain: number, wave: OscillatorType = 'sine') {
@@ -72,7 +73,7 @@ function tone(ctx: AudioContext, hz: number, at: number, duration: number, gain:
   envelope.gain.setValueAtTime(0.0001, at);
   // Stronger but safely limited effects: prior sub-10% gain was barely audible
   // on mobile speakers even with in-game volume set to 65%.
-  envelope.gain.exponentialRampToValueAtTime(Math.min(.30,Math.max(0.0002,gain*1.75)), at + 0.013);
+  envelope.gain.exponentialRampToValueAtTime(Math.min(.19,Math.max(0.0002,gain*1.15)), at + 0.013);
   envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
   osc.connect(envelope).connect(masterGain || ctx.destination);
   osc.start(at);
@@ -125,11 +126,24 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
     marker(ctx, volume);
     return;
   }
+  // Reserve headroom for layered cues (answer + coins + capture) to avoid
+  // clipping and harsh volume spikes on small phone speakers.
   const t = ctx.currentTime + 0.005 + Math.max(0,Math.min(2,delaySeconds));
   const note = (freq: number, offset: number, dur: number, level: number, wave: OscillatorType = 'sine') =>
     tone(ctx, freq, t + offset, dur, level * volume, wave);
 
   switch (cue) {
+    case 'combo3':
+      [659.25,830.61,987.77].forEach((hz,i)=>note(hz,i*.075,.18,.10,'triangle'));
+      break;
+    case 'combo5':
+      [659.25,830.61,987.77,1318.51].forEach((hz,i)=>note(hz,i*.075,.21,.11,'sine'));
+      note(1760,.32,.26,.075,'triangle');
+      break;
+    case 'combo10':
+      [523.25,659.25,783.99,1046.5,1318.51,1567.98].forEach((hz,i)=>note(hz,i*.085,.24,.12,'triangle'));
+      note(2093,.54,.32,.09,'sine');
+      break;
     case 'coin':
       // Two crisp metallic bounces, like coins dropping into a bank.
       note(1244.51,0,.075,.16,'triangle');
@@ -230,7 +244,13 @@ export function gameAudioState(): 'unsupported'|'locked'|'ready' {
  * comes back to the game. Any later click still runs unlockGameAudio normally. */
 export function recoverGameAudioOnForeground(): void {
  if(typeof document==='undefined'||document.visibilityState!=='visible'||!audio)return;
- if(audio.state==='running')return;
+ if(audio.state==='running'||masterMuted)return;
+ // Browser lifecycle callbacks may lack user activation. Only retry an existing
+ // context; never create one or override the player's mute preference.
+ // Avoid repeated resume calls during rapid Android tab/app visibility changes.
+ const now=Date.now();
+ if(now-lastForegroundRetryAt<700)return;
+ lastForegroundRetryAt=now;
  configureGamePlaybackSession();
  unlockGameAudio();
 }

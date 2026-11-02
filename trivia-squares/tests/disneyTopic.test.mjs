@@ -7,8 +7,18 @@ test('Disney is a separately selectable, native category in all six languages',(
  const disney=questionTopics.find(topic=>topic.id==='disney');
  assert.ok(disney);
  for(const lang of ['he','en','ru','fr','ar','es'])assert.ok(disney[lang].length>=5,lang);
- assert.equal(questionTopics.length,15);
+ assert.equal(questionTopics.length,16);
  assert.equal(ALL_QUESTION_TOPICS.filter(id=>id==='disney').length,1);
+});
+test('previous all-selected preferences gain Languages without changing narrow selections',()=>{
+ const allBeforeLanguages=ALL_QUESTION_TOPICS.filter(id=>id!=='languages');
+ assert.equal(allBeforeLanguages.length,15);
+ assert.deepEqual(parseTopicPreferences(allBeforeLanguages),ALL_QUESTION_TOPICS);
+ const beforeDisneyAndLanguages=allBeforeLanguages.filter(id=>id!=='disney');
+ assert.deepEqual(parseTopicPreferences(beforeDisneyAndLanguages),ALL_QUESTION_TOPICS);
+ const beforeEurovisionDisneyLanguages=beforeDisneyAndLanguages.filter(id=>id!=='eurovision');
+ assert.deepEqual(parseTopicPreferences(beforeEurovisionDisneyLanguages),ALL_QUESTION_TOPICS);
+ assert.deepEqual(parseTopicPreferences(['music','tv_film']),['tv_film','music']);
 });
 test('Disney questions classify correctly without absorbing unrelated films',()=>{
  for(const [category,text] of [

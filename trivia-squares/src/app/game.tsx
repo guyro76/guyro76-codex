@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import ProgressPulse from '../components/ProgressPulse';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../lib/supabasePublicConfig';
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
@@ -9,7 +10,7 @@ import { Dot, BoardPoint, dotXY, nearestDot, edgeBetween, edgeFromSwipe } from '
 import { applyLocalAnswer, repairSoloBoard } from '../lib/engine';
 import {awardPremiumSquares} from '../lib/premiumCaptures';
 import {normalizedPlayerName,selectPlayerName,validPlayerName} from '../lib/playerName';
-import { playGameSound, unlockGameAudio, gameAudioState, recoverGameAudioOnForeground, type SoundCue } from '../lib/gameAudio';
+import { playGameSound, setGameAudioMuted, unlockGameAudio, gameAudioState, recoverGameAudioOnForeground, type SoundCue } from '../lib/gameAudio';
 import {answerFeedback} from '../lib/answerFeedback';
 import {gameplayGuidance} from '../lib/gameplayGuidance';
 import {viewportModeLabel,viewportPreviewLabel} from '../lib/viewportPreviewLabels';
@@ -19,6 +20,8 @@ import { offlineQuestions } from '../lib/offlineQuestions';
 import { englishQuestions } from '../lib/englishQuestions';
 import { internationalQuestions } from '../lib/internationalQuestions';
 import { spanishQuestions } from '../lib/spanishQuestions';
+import { languageQuestions } from '../lib/languageQuestions';
+import { languageForPronunciation, speakLanguageAnswer } from '../lib/languageSpeech';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
@@ -28,6 +31,7 @@ import StageReward from '../components/StageReward';
 import QuestionReportButton from '../components/QuestionReportButton';
 import TriviaMark from '../components/TriviaMark';
 import CaptureTile, {type CaptureStyle} from '../components/CaptureTile';
+import { readFishPreference, saveFishPreference } from '../components/CapturedSquareFish';
 import {reassignCapture,type LocalOwner,type LocalOwnerMode} from '../lib/captureOwnership';
 import TutorialPreview from '../components/TutorialPreview';
 import LocalQuestionBackup from '../components/LocalQuestionBackup';
@@ -40,6 +44,7 @@ import './welcome-interior-theme.css';
 import './reward-ceremony.css';
 import './readable-play.css';
 import './capture-experience.css';
+import './arcade-polish.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
@@ -158,6 +163,8 @@ export default function TriviaGame() {
     if(!menuRef.current?.open)menuRef.current?.showModal();
   };
   const [local, setLocal] = useState<GameState>(() => empty(3));
+  const [localComboStreak,setLocalComboStreak]=useState(0);
+  const localComboByPlayerRef=useRef({host:0,guest:0});
   const [stageRunId,setStageRunId] = useState('local-first');
   const [localReady, setLocalReady] = useState(false);
   const [online, setOnline] = useState(true);
@@ -168,6 +175,7 @@ export default function TriviaGame() {
   const [wrongAnswerFeedback,setWrongAnswerFeedback]=useState<WrongAnswerFeedback|null>(null);
   const [skin,setSkin]=useState<SkinId>('regular');
   const [skinPickerOpen,setSkinPickerOpen]=useState(false);
+  const [fishEnabled,setFishEnabled]=useState(false);
   const [selectedTopics,setSelectedTopics]=useState<QuestionTopic[]>([...ALL_QUESTION_TOPICS]);
   const toggleTopic=(id:QuestionTopic)=>setSelectedTopics(previous=>{
     const next=previous.includes(id)?previous.filter(t=>t!==id):[...previous,id];
@@ -278,10 +286,17 @@ export default function TriviaGame() {
   const [busy, setBusy] = useState(false);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(75);
+  useEffect(()=>{setGameAudioMuted(muted||volume===0)},[muted,volume]);
   const [audioTestStatus,setAudioTestStatus]=useState<'unknown'|'ready'|'locked'|'unsupported'>('unknown');
   useEffect(()=>{
     document.addEventListener('visibilitychange',recoverGameAudioOnForeground);
-    return()=>document.removeEventListener('visibilitychange',recoverGameAudioOnForeground);
+    window.addEventListener('pageshow',recoverGameAudioOnForeground);
+    window.addEventListener('focus',recoverGameAudioOnForeground);
+    return()=>{
+      document.removeEventListener('visibilitychange',recoverGameAudioOnForeground);
+      window.removeEventListener('pageshow',recoverGameAudioOnForeground);
+      window.removeEventListener('focus',recoverGameAudioOnForeground);
+    };
   },[]);
   const [liquidPreviewRun,setLiquidPreviewRun]=useState(0);
   const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
@@ -368,7 +383,7 @@ export default function TriviaGame() {
       ...freshLocalQuestions(locale,countLocalReserve(locale))
     ]
     : locale==='es'?spanishQuestions:internationalQuestions.filter(q=>q.locale===locale);
-  const effectiveQuestionBank=[...questionBank,...remoteQuestionCache.current[locale]];
+  const effectiveQuestionBank=[...questionBank,...languageQuestions.filter(q=>q.locale===locale),...remoteQuestionCache.current[locale]];
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
 
@@ -425,6 +440,7 @@ export default function TriviaGame() {
        if(avatars.includes(savedCapture.guestAvatar||''))setGuestAvatar(savedCapture.guestAvatar!);
        setSelectedTopics(parseTopicPreferences(JSON.parse(localStorage.getItem('trivia-question-topics-v1')||'null')));
         recentQuestionTopics.current=readRecentQuestionTopics(JSON.parse(localStorage.getItem('trivia-recent-question-topics-v1')||'[]'));
+       setFishEnabled(readFishPreference());
        const storedSkin=localStorage.getItem('trivia-skin-v1');
        const migratedSkin:Record<string,SkinId>={royal:'regular',ocean:'urban',neon:'future',stone:'vintage',forest:'retro'};
        if(skins.some(item=>item.id===storedSkin))setSkin(storedSkin as SkinId);
@@ -520,6 +536,8 @@ export default function TriviaGame() {
               Object.values(value.edges).includes('guest'));
             const migrating=obsoleteLocalGuest||corruptSoloGuest;
             const repaired=migrating?{...repairSoloBoard(value),mode:'solo' as const}:value;
+            localComboByPlayerRef.current={host:0,guest:0};
+            setLocalComboStreak(0);
             setLocal(repaired);setSize(repaired.rows);
             if(migrating){
               // Commit the repaired board immediately. A refresh must not undo it,
@@ -756,6 +774,7 @@ export default function TriviaGame() {
       const nextRun='local-'+crypto.randomUUID();
       setStageRunId(nextRun);
       try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
+      localComboByPlayerRef.current={host:0,guest:0};setLocalComboStreak(0);
       setRemote(null); setLocal(empty(selectedStage.size,mode==='local'?'local':'solo')); setLocalFreeze({host:false,guest:false});
       setStageStarted(true);
       setMessage(added>0
@@ -995,6 +1014,19 @@ export default function TriviaGame() {
       }
       const next = applyLocalAnswer(local, edge, correct, local.mode==='solo');
       setLocal(next);
+      // Local engine has no persisted streak: track consecutive correct
+      // answers independently, resetting on mistakes and on new stages.
+      const answerSide=local.mode==='solo'?'host':local.turn==='guest'?'guest':'host';
+      const before=localComboByPlayerRef.current[answerSide];
+      const after=correct?before+1:0;
+      localComboByPlayerRef.current[answerSide]=after;
+      const nextSide=next.mode==='solo'?'host':next.turn==='guest'?'guest':'host';
+      setLocalComboStreak(localComboByPlayerRef.current[nextSide]);
+      if(correct){
+        if(before<10 && after>=10)play('combo10');
+        else if(before<5 && after>=5)play('combo5');
+        else if(before<3 && after>=3)play('combo3');
+      }
       const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
       const gained = newSquares.length;
       if(gained){celebrateCapture(gained);setCaptureToast({id:Date.now(),amount:5+gained*10});}
@@ -1184,6 +1216,7 @@ export default function TriviaGame() {
       localStorage.setItem('trivia-stage-run-id',nextRun);
       localStorage.setItem('trivia-stage-id-v1',String(nextId));
     }catch{}
+    localComboByPlayerRef.current={host:0,guest:0};setLocalComboStreak(0);
     setStageId(nextId);setSize(next.size);
     setStageStarted(false);setRemote(null);setLocal(empty(next.size,mode==='local'?'local':'solo'));
     setQuestion(null);setEdge(null);setTrace(null);gesture.current=null;
@@ -1472,6 +1505,7 @@ export default function TriviaGame() {
            (locale==='he'?'השתק צלילים':locale==='en'?'Mute sound':locale==='ru'?'Выключить звук':locale==='fr'?'Couper le son':locale==='es'?'Silenciar sonido':'كتم الصوت'))}
         aria-pressed={!muted&&volume>0} onClick={()=>{
           const enable=muted||volume===0;
+          setGameAudioMuted(!enable);
           if(enable){
             unlockGameAudio();
             if(volume===0)setVolume(70);
@@ -1533,6 +1567,19 @@ export default function TriviaGame() {
           </svg>
         </div>
       </div>}
+      <style>{`
+        .trivia-fish-toggle{min-height:44px;min-width:52px;border:2px solid #ffe28a;border-radius:14px;background:#263d76;color:#fff;font-size:18px;font-weight:900;cursor:pointer;padding:8px 12px;touch-action:manipulation}
+        .trivia-fish-toggle[aria-pressed="true"]{background:#fce68c;color:#18254a}
+        .trivia-fish-toggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
+        .trivia-fish-svg text{animation:trivia-fish-svg-swim 4.5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+        @keyframes trivia-fish-svg-swim{from{transform:translateX(-8px) scaleX(1)}to{transform:translateX(12px) scaleX(-1)}}
+        @media(prefers-reduced-motion:reduce){.trivia-fish-svg text{animation:none}}
+      `}</style>
+      <button type='button' className='trivia-fish-toggle' aria-pressed={fishEnabled}
+        aria-label={locale==='he'?'דגים בריבועים':locale==='ar'?'أسماك في المربعات':locale==='ru'?'Рыбки в клетках':locale==='fr'?'Poissons dans les cases':locale==='es'?'Peces en las casillas':'Fish in squares'}
+        onClick={()=>setFishEnabled(previous=>{const next=!previous;saveFishPreference(next);return next;})}>
+        🐟 {fishEnabled?'✓':'○'}
+      </button>
       <button type='button' className='skin-palette-trigger' aria-expanded={skinPickerOpen}
         aria-controls='skin-picker-panel' onClick={()=>setSkinPickerOpen(v=>!v)}
         aria-label={tr('עיצוב המשחק')} title={tr('בחר סקין למשחק')}>
@@ -1640,6 +1687,7 @@ export default function TriviaGame() {
              <div className='level-pill'>{locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</div>
            </div>
         </div>
+        <ProgressPulse locale={locale} stage={stageId} captured={Object.values(state.owners).filter(owner=>owner==='host').length} streak={remote ? Number(state.streak?.[player]||0) : localComboStreak}/>
         <div className='scoreboard'>
           <div className='player-tile right-side'>
             <div className='portrait'>{remote && player === 'guest' ? opponentIcon : avatar}</div>
@@ -1684,7 +1732,7 @@ export default function TriviaGame() {
                   {owner
                     ? <CaptureTile row={r} col={c} x={x} y={y} width={w-10} height={h-10}
                         color={colors[owner]} name={ownerName} icon={ownerIcon} style={captureStyle}
-                        locale={locale} selectable={editable} onSelect={()=>setCapturePending({keys:[r+'-'+c],from:'edit'})}/>
+                        locale={locale} fishEnabled={fishEnabled} selectable={editable} onSelect={()=>setCapturePending({keys:[r+'-'+c],from:'edit'})}/>
                     : <rect x={x} y={y} width={w-10} height={h-10} rx='10' fill='url(#cellTint)'/>}
                   {bonusSelect && !owner && <rect x={x} y={y} width={w-10} height={h-10} rx='10'
                     role='button' tabIndex={0} aria-label={locale==='en'?'Capture square at row '+(r+1)+', column '+(c+1):'כבוש ריבוע בשורה '+(r+1)+' עמודה '+(c+1)}
@@ -2130,7 +2178,13 @@ export default function TriviaGame() {
             onClick={()=>void activateTimeCharm()}>♾️ {tr('הפעל קמע זמן')} ({currentCharms})</button>}
         </div>
         <div className='answer-grid'>
-          {question.answers.map((a, i) => <button className='answer-option' key={i} disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{(locale==='he'?['א','ב','ג','ד']:locale==='ar'?['أ','ب','ج','د']:['A','B','C','D'])[i]}</span>{a}</button>)}
+          {question.answers.map((a, i) => <div className='language-answer-row' key={i}>
+            <button className='answer-option' disabled={busy} autoFocus={i === 0} onClick={() => void answer(i)}><span className='answer-letter'>{(locale==='he'?['א','ב','ג','ד']:locale==='ar'?['أ','ب','ج','د']:['A','B','C','D'])[i]}</span>{a}</button>
+            {languageForPronunciation(question.id) && <button type='button' className='language-speaker' disabled={busy}
+              aria-label={(locale==='he'?'השמע הגייה של ':locale==='ar'?'استمع إلى نطق ':locale==='ru'?'Произнести ':locale==='fr'?'Écouter la prononciation de ':locale==='es'?'Escuchar la pronunciación de ':'Hear pronunciation of ')+a}
+              title={locale==='he'?'השמעת הגייה':'Pronunciation'}
+              onClick={event=>{event.preventDefault();event.stopPropagation();const lang=languageForPronunciation(question.id);if(lang&&!speakLanguageAnswer(a,lang))setMessage(locale==='he'?'הדפדפן אינו תומך בהקראת מילים':'Speech playback is unavailable in this browser');}}>🔊</button>}
+          </div>)}
         </div>
         {typeof question.id==='number' && question.id>0 && <QuestionReportButton client={client} userId={user?.id||null} legalAccepted={legalAccepted}
           questionId={question.id} locale={locale}/>}
