@@ -40,6 +40,7 @@ import './welcome-interior-theme.css';
 import './reward-ceremony.css';
 import './readable-play.css';
 import './capture-experience.css';
+import './arcade-polish.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
