@@ -21,7 +21,7 @@ One deployable application under trivia-squares/. Keep modular source code, not 
 - [ ] Implement and verify every feature above with test evidence, including new #77-#84.
 - [ ] Check database migrations are safe and idempotent; never reset existing players.
 - [ ] Run strict typecheck, build, gameplay unit tests, Playwright desktop/mobile, accessibility, six-language and six-skin matrix on ONE commit SHA.
-- [ ] Real iPhone Safari audio/touch, tablet and desktop visual review.
+- [ ] Real iPhone Safari audio/touch, Android Chrome and Samsung Internet touch/audio/landscape/RTL, tablet and desktop visual review.
 - [ ] Real OAuth and multiplayer tests using two independent accounts, reconnect, failed answers, replay/duplicate attempts.
 - [ ] Verify question-source audit, non-geography diversity, translation quality and actual counts.
 - [ ] Verify privacy/security compliance, public domain and production environment configuration.
