@@ -766,6 +766,7 @@ export default function TriviaGame() {
       const nextRun='local-'+crypto.randomUUID();
       setStageRunId(nextRun);
       try{localStorage.setItem('trivia-stage-run-id',nextRun)}catch{}
+      localComboRef.current=0;setLocalComboStreak(0);
       setRemote(null); setLocal(empty(selectedStage.size,mode==='local'?'local':'solo')); setLocalFreeze({host:false,guest:false});
       setStageStarted(true);
       setMessage(added>0
