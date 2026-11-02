@@ -63,4 +63,17 @@ test('all six locales and skins keep readable picker targets without horizontal 
   await expect(page.locator('html')).toHaveAttribute('lang','es');
   await palette.click();
   await expect(page.locator('#skin-picker-panel button.skin-picker-item').nth(5)).toHaveAttribute('aria-pressed','true');
+  await palette.click();
+  // Exercise both tablet orientations in addition to the configured desktop and mobile projects.
+  for(const viewport of [{width:768,height:1024},{width:1024,height:768}]){
+    await page.setViewportSize(viewport);
+    await expect(page.locator('svg.board')).toBeVisible();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth)).toBeLessThanOrEqual(2);
+    await palette.click();
+    const options=page.locator('#skin-picker-panel button.skin-picker-item');
+    await expect(options).toHaveCount(6);
+    const minimumHeight=await options.first().evaluate(el=>el.getBoundingClientRect().height);
+    expect(minimumHeight).toBeGreaterThanOrEqual(44);
+    await palette.click();
+  }
 });
