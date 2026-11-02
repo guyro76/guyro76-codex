@@ -34,10 +34,11 @@ export default function SequenceIntermission({locale,onWin,onSkip,onTone}:{local
   timer.current.push(setTimeout(()=>{setLit(-1);setPhase('repeat')},350+seq.length*760));
  };
  const start=()=>{awarded.current=false;setRound(1);show(sequence(3))};
+ const retry=()=>{setError(false);show(pattern)};
  const press=(pad:number)=>{
   if(phase!=='repeat'||awarded.current)return;
   onTone?.(pad);
-  if(pattern[cursor]!==pad){setError(true);setCursor(0);return;}
+  if(pattern[cursor]!==pad){setError(true);setCursor(0);setPhase('idle');return;}
   setError(false);
   if(cursor+1===pattern.length){
    if(round===3){setPhase('won');if(!awarded.current){awarded.current=true;onWin();}return;}
@@ -52,7 +53,7 @@ export default function SequenceIntermission({locale,onWin,onSkip,onTone}:{local
     style={{height:112,borderRadius:22,border:'4px solid #fff',background:colors[i],color:'#fff',fontSize:38,fontWeight:900,opacity:phase==='watch'&&lit!==i?.35:1,transform:lit===i?'scale(1.08)':'scale(1)',boxShadow:lit===i?'0 0 24px #fff':'0 5px 14px #0003'}}>{symbol}</button>)}
   </div>
   {error&&<p role='alert'>{t.wrong}</p>}
-  {phase==='idle'&&<button type='button' onClick={start}>{t.start}</button>}
+  {phase==='idle'&&<button type='button' onClick={error?retry:start}>{error?t.watch:t.start}</button>}
   {phase==='repeat'&&<button type='button' onClick={()=>show(pattern)}>{t.watch}</button>}
   <button type='button' onClick={()=>{clear();onSkip()}}>{t.skip}</button>
  </section>;
