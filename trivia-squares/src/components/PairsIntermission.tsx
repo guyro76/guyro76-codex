@@ -1,5 +1,5 @@
 'use client';
-import {useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import type {ActiveLocale} from '../lib/i18n';
 
 const symbols=['★','♥','◆','☀','♣','✿'];
@@ -22,6 +22,8 @@ export default function PairsIntermission({locale,onWin,onSkip}:{locale:ActiveLo
  const [found,setFound]=useState<number[]>([]);
  const [locked,setLocked]=useState(false);
  const [complete,setComplete]=useState(false);
+ const mismatchTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+ useEffect(()=>()=>{if(mismatchTimer.current!==null)clearTimeout(mismatchTimer.current)},[]);
  const t=copy[locale]||copy.en;
  const pick=(i:number)=>{
   if(locked||complete||found.includes(deck[i])||open.includes(i))return;
@@ -32,6 +34,8 @@ export default function PairsIntermission({locale,onWin,onSkip}:{locale:ActiveLo
    if(next.length===symbols.length){setComplete(true);onWin();}
   }else{
    setOpen([first,i]);setLocked(true);
+   if(mismatchTimer.current!==null)clearTimeout(mismatchTimer.current);
+   mismatchTimer.current=setTimeout(()=>{setOpen([]);setLocked(false);mismatchTimer.current=null},950);
   }
  };
  return <section aria-label={t.title} dir={locale==='he'||locale==='ar'?'rtl':'ltr'} style={{fontWeight:800,textAlign:'center'}}>
@@ -48,7 +52,7 @@ export default function PairsIntermission({locale,onWin,onSkip}:{locale:ActiveLo
     </button>;
    })}
   </div>
-  {locked&&<button type='button' onClick={()=>{setOpen([]);setLocked(false)}}>{locale==='he'?'נסה זוג נוסף':locale==='es'?'Intentar otro par':locale==='fr'?'Autre paire':locale==='ru'?'Другая пара':locale==='ar'?'جرب زوجاً آخر':'Try another pair'}</button>}
+
   <button type='button' onClick={onSkip}>{t.skip}</button>
  </section>;
 }
