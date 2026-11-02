@@ -3,7 +3,7 @@
  * No audio downloads, copyrighted samples, user tracking or microphone permission.
  * The Web Audio context is created only after a player interaction.
  */
-export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond' | 'pop' | 'slice' | 'liquid' | 'fireworks';
+export type SoundCue = 'marker' | 'draw' | 'correct' | 'wrong' | 'capture' | 'bonus' | 'win' | 'turn' | 'clock' | 'coin' | 'fruit' | 'star' | 'diamond' | 'pop' | 'slice' | 'liquid' | 'fireworks' | 'combo3' | 'combo5' | 'combo10';
 let audio: AudioContext | null = null;
 let lastStrokeAt = -1;
 let pendingResume = false;
@@ -130,6 +130,17 @@ export function playGameSound(cue: SoundCue, opts: { muted: boolean; volume: num
     tone(ctx, freq, t + offset, dur, level * volume, wave);
 
   switch (cue) {
+    case 'combo3':
+      [659.25,830.61,987.77].forEach((hz,i)=>note(hz,i*.075,.18,.10,'triangle'));
+      break;
+    case 'combo5':
+      [659.25,830.61,987.77,1318.51].forEach((hz,i)=>note(hz,i*.075,.21,.11,'sine'));
+      note(1760,.32,.26,.075,'triangle');
+      break;
+    case 'combo10':
+      [523.25,659.25,783.99,1046.5,1318.51,1567.98].forEach((hz,i)=>note(hz,i*.085,.24,.12,'triangle'));
+      note(2093,.54,.32,.09,'sine');
+      break;
     case 'coin':
       // Two crisp metallic bounces, like coins dropping into a bank.
       note(1244.51,0,.075,.16,'triangle');
