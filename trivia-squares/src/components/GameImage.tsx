@@ -2,10 +2,10 @@
  *  Files live in /public/art. Player avatars are still stored as their emoji codes for
  *  backwards compatibility with saved profiles; this maps them to the real artwork. */
 export type ObjectArt='apple'|'gem'|'cloud'|'planet'|'coin'|'bulb'|'stopwatch'|'flag'|'trophy';
-export type AvatarArtName='fox'|'lion'|'panda'|'dragon'|'unicorn'|'crown'|'rocket'|'star'|'owl';
+export type AvatarArtName='fox'|'lion'|'panda'|'dragon'|'unicorn'|'crown'|'rocket'|'star'|'owl'|'robot';
 
 export const AVATAR_ART:Record<string,AvatarArtName>={
- '🦊':'fox','🦁':'lion','🐼':'panda','🐲':'dragon','🦄':'unicorn','👑':'crown','🚀':'rocket','⭐':'star','🦉':'owl'
+ '🦊':'fox','🦁':'lion','🐼':'panda','🐲':'dragon','🦄':'unicorn','👑':'crown','🚀':'rocket','⭐':'star','🦉':'owl','🤖':'robot'
 };
 
 type ImgProps={size?:number;alt?:string;className?:string};
