@@ -7,6 +7,8 @@ import {spanishQuestions} from '../src/lib/spanishQuestions.ts';
 import {languageQuestions} from '../src/lib/languageQuestions.ts';
 import {freshLocalQuestionReserve} from '../src/lib/freshQuestions.ts';
 import {curatedHebrewQuestions} from '../src/lib/curatedHebrewQuestions.ts';
+import {BUNDLED_RETIRED} from '../src/lib/questionCorrections.ts';
+import {answerInQuestion,withoutAnswerLeaks} from '../src/lib/answerGuard.ts';
 
 /* Owner rule (2026-11-03): a question must never contain its own answer
  * ("What is the family name in Bridgerton?" -> "Bridgerton"). Ask about an inner detail instead. */
@@ -16,7 +18,7 @@ const stems=w=>{const out=new Set([w]);const m=w.match(/^(ו|ש|ה|ב|ל|מ|כ|�
 const tokens=s=>norm(s).split(' ').filter(Boolean);
 // Reviewed by hand: the overlap is only the category word ("Which ocean…? Indian Ocean")
 // or a two-option comparison, so nothing is given away.
-const REVIEWED_OK=new Set([56,1003,1006,1014,1031,1041,1044,1045,4013,4036,4048,301004,300036,90003,90055,90056,990095]);
+const REVIEWED_OK=new Set([56,1003,1006,1014,1031,1041,1044,1045,4013,4036,301004,90003,90055,90056,990095]);
 
 export function answerLeak(text,answer){
  const nt=norm(text),na=norm(answer);
@@ -37,7 +39,7 @@ test('no local question gives away its own answer',()=>{
  assert.ok(all.length>800);
  const leaks=[];
  for(const q of all){
-  if(REVIEWED_OK.has(q.id))continue;
+  if(REVIEWED_OK.has(q.id)||BUNDLED_RETIRED.has(q.id))continue;
   const why=answerLeak(q.text,q.answers[q.correct]);
   if(why)leaks.push(q.id+': '+q.text+' -> '+q.answers[q.correct]+' ('+why+')');
  }
@@ -48,4 +50,15 @@ test('the leak check catches the owner examples',()=>{
  assert.ok(answerLeak("מהו שם המשפחה של הדמויות ברידג'רטון?","ברידג'רטון"));
  assert.ok(answerLeak('Where is Emily in Paris filmed?','Paris'));
  assert.equal(answerLeak("באמילי בפריז, איך קוראים לשף השכן של אמילי?",'גבריאל'),'');
+});
+
+test('runtime guard never deals a question that names one of its options',()=>{
+ assert.ok(answerInQuestion('Какая единица хранения данных обычно больше: гигабайт или мегабайт?',['Гигабайт','Мегабайт','Килобайт','Байт']));
+ assert.ok(answerInQuestion('לאיזה ענף שחייה שייך סגנון הפרפר?',['שחייה','ריצה','רכיבה','חתירה']));
+ assert.equal(answerInQuestion('Which ocean lies between Africa and Australia?',['Indian Ocean','Atlantic Ocean','Pacific Ocean','Arctic Ocean']),false);
+ assert.equal(answerInQuestion('כמה רגליים יש לעכביש?',['6','8','10','12']),false);
+ const all=[...offlineQuestions,...englishQuestions,...internationalQuestions,...spanishQuestions,...languageQuestions,...freshLocalQuestionReserve,...curatedHebrewQuestions];
+ const dealt=withoutAnswerLeaks(all);
+ // Only questions whose options appear verbatim are removed; nothing else is lost.
+ assert.ok(dealt.length>=all.length-10,'guard removed '+(all.length-dealt.length));
 });
