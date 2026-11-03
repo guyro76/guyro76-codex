@@ -2,6 +2,8 @@
 
 import {useEffect,useState} from 'react';
 import TriviaMark from './TriviaMark';
+import GameArt from './GameArt';
+import {GameImage} from './GameImage';
 import type {ActiveLocale} from '../lib/i18n';
 import './welcome-screen.css';
 
@@ -61,7 +63,7 @@ export default function WelcomeScreen({onStart,initialLocale='he'}:{onStart:()=>
       aria-label={skinLabels[locale].trigger} title={skinLabels[locale].trigger}
       aria-expanded={skinPickerOpen} aria-controls="welcome-skin-panel"
       onClick={()=>setSkinPickerOpen(open=>!open)}>
-      <span aria-hidden="true">🎨</span><strong className="welcome-skin-trigger-label">{skinLabels[locale].trigger}</strong>
+      <GameArt name="palette" size={22}/><strong className="welcome-skin-trigger-label">{skinLabels[locale].trigger}</strong>
     </button>
     {skinPickerOpen&&<div id="welcome-skin-panel" className="welcome-skin-panel" role="group" aria-label={skinLabels[locale].title}>
       <strong className="welcome-skin-title">{skinLabels[locale].title}</strong>
@@ -86,13 +88,13 @@ export default function WelcomeScreen({onStart,initialLocale='he'}:{onStart:()=>
   </header>
   <section className="welcome-hero" aria-label={w.brand}>
    <div className="welcome-copy">
-    <span className="welcome-kicker"><span className="welcome-kicker-star" aria-hidden="true">✦</span>{w.eyebrow}</span>
+    <span className="welcome-kicker">{w.eyebrow}</span>
     <h1><span>{w.titleA}</span><span className="welcome-highlight">{w.titleB}</span></h1>
     <p className="welcome-intro">{w.subtitle}</p>
     <div className="welcome-actions">
-     <button className="welcome-start" type="button" onClick={onStart}>{w.start}<span aria-hidden="true">✦</span></button>
+     <button className="welcome-start" type="button" onClick={onStart}>{w.start}<GameArt name="play" size={20}/></button>
      <button className="welcome-learn" type="button" aria-expanded={showRules} aria-controls="welcome-instructions"
-       onClick={()=>setShowRules(x=>!x)}>{w.learn}<span aria-hidden="true">ⓘ</span></button>
+       onClick={()=>setShowRules(x=>!x)}>{w.learn}<GameArt name="help" size={20}/></button>
     </div>
     {showRules&&<div id="welcome-instructions" className="welcome-instructions" role="region">
       <p>{w.instructions}</p><button type="button" onClick={()=>setShowRules(false)}>{w.close}</button>
@@ -166,13 +168,13 @@ export default function WelcomeScreen({onStart,initialLocale='he'}:{onStart:()=>
        <g><ellipse cx="317" cy="384" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="317" cy="380" r="12" fill="url(#wl-dot)"/><circle cx="313" cy="376" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
        <g><ellipse cx="410" cy="384" rx="12" ry="8" fill="#02061A" opacity=".55"/><circle cx="410" cy="380" r="12" fill="url(#wl-dot)"/><circle cx="406" cy="376" r="3.4" fill="#FFFFFF" opacity=".95"/></g>
     </svg>
-    <div className="welcome-art-tag" aria-hidden="true"><span>✦</span> TRIVIA SQUARES <span>✦</span></div>
+    <div className="welcome-art-tag" aria-hidden="true">TRIVIA SQUARES</div>
    </div>
   </section>
   <div className="welcome-features" aria-label={w.level}>
-   <div><span aria-hidden="true">✎</span><strong>{w.step1}</strong></div>
-   <div><span aria-hidden="true">?</span><strong>{w.step2}</strong></div>
-   <div><span aria-hidden="true">▣</span><strong>{w.step3}</strong></div>
+   <div><GameArt name="marker" size={26}/><strong>{w.step1}</strong></div>
+   <div><GameImage name="bulb" size={28}/><strong>{w.step2}</strong></div>
+   <div><GameImage name="trophy" size={28}/><strong>{w.step3}</strong></div>
   </div>
   <footer className="welcome-footer"><span>{w.footer}</span><div>
     <a href={locale==='he'?'/privacy':'/en/privacy'}>{locale==='he'?'פרטיות':'Privacy'}</a>

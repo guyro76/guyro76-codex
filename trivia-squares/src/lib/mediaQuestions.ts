@@ -117,14 +117,9 @@ export const englishMediaQuestions:MediaQuestion[]=[
   {
     "id": 4008,
     "category": "Movies",
-    "text": "What is the name of Shrek's talkative donkey companion?",
-    "answers": [
-      "Puss in Boots",
-      "Dragon",
-      "Donkey",
-      "Pinocchio"
-    ],
-    "correct": 2,
+    "text": "Which actor voiced Donkey in the Shrek films?",
+    "answers": ["Eddie Murphy", "Mike Myers", "Chris Rock", "Antonio Banderas"],
+    "correct": 0,
     "locale": "en",
     "difficulty": 3
   },
@@ -159,13 +154,8 @@ export const englishMediaQuestions:MediaQuestion[]=[
   {
     "id": 4011,
     "category": "Movies",
-    "text": "Which film franchise brings dinosaurs to a theme park?",
-    "answers": [
-      "Jumanji",
-      "Jurassic Park",
-      "Transformers",
-      "Men in Black"
-    ],
+    "text": "Who directed the original 1993 Jurassic Park film?",
+    "answers": ["James Cameron", "Steven Spielberg", "George Lucas", "Ridley Scott"],
     "correct": 1,
     "locale": "en",
     "difficulty": 3
@@ -425,14 +415,9 @@ export const englishMediaQuestions:MediaQuestion[]=[
   {
     "id": 4030,
     "category": "Television",
-    "text": "Which young character in Stranger Things is known as Eleven?",
-    "answers": [
-      "Eleven",
-      "Max",
-      "Nancy",
-      "Joyce"
-    ],
-    "correct": 0,
+    "text": "Which breakfast food does Eleven love in Stranger Things?",
+    "answers": ["Pancakes", "Eggo waffles", "Cereal", "Toast"],
+    "correct": 1,
     "locale": "en",
     "difficulty": 1
   },
@@ -523,14 +508,9 @@ export const englishMediaQuestions:MediaQuestion[]=[
   {
     "id": 4037,
     "category": "Television",
-    "text": "Which Addams Family character stars in the series Wednesday?",
-    "answers": [
-      "Morticia Addams",
-      "Pugsley Addams",
-      "Grandmama",
-      "Wednesday Addams"
-    ],
-    "correct": 3,
+    "text": "Which school does Wednesday Addams attend in the series Wednesday?",
+    "answers": ["Hogwarts", "Nevermore Academy", "Riverdale High", "Hawkins High"],
+    "correct": 1,
     "locale": "en",
     "difficulty": 2
   },
@@ -579,27 +559,17 @@ export const englishMediaQuestions:MediaQuestion[]=[
   {
     "id": 4041,
     "category": "Television",
-    "text": "Who coaches an English football team in Ted Lasso?",
-    "answers": [
-      "Michael Scott",
-      "Don Draper",
-      "Jack Ryan",
-      "Ted Lasso"
-    ],
-    "correct": 3,
+    "text": "Which sport did Ted Lasso coach in the US before moving to England?",
+    "answers": ["Baseball", "Basketball", "American football", "Ice hockey"],
+    "correct": 2,
     "locale": "en",
     "difficulty": 3
   },
   {
     "id": 4042,
     "category": "Television",
-    "text": "Which cartoon follows the underwater adventures of SpongeBob SquarePants?",
-    "answers": [
-      "SpongeBob SquarePants",
-      "Adventure Time",
-      "Regular Show",
-      "Steven Universe"
-    ],
+    "text": "In which underwater city does SpongeBob SquarePants live?",
+    "answers": ["Bikini Bottom", "Atlantis", "Coral Bay", "Shell City"],
     "correct": 0,
     "locale": "en",
     "difficulty": 1
@@ -607,14 +577,9 @@ export const englishMediaQuestions:MediaQuestion[]=[
   {
     "id": 4043,
     "category": "Television",
-    "text": "What is the name of the young blue heeler in Bluey?",
-    "answers": [
-      "Bingo",
-      "Bluey",
-      "Chilli",
-      "Muffin"
-    ],
-    "correct": 1,
+    "text": "What is the name of Bluey's dad in the series Bluey?",
+    "answers": ["Bandit", "Rad", "Stripe", "Chilli"],
+    "correct": 0,
     "locale": "en",
     "difficulty": 2
   },
@@ -1547,13 +1512,8 @@ export const hebrewMediaQuestions:MediaQuestion[]=[
   {
     "id": 8027,
     "category": "סדרות טלוויזיה",
-    "text": "איזו דמות בסדרה דברים מוזרים ידועה בכינוי אילבן?",
-    "answers": [
-      "מקס",
-      "אילבן",
-      "ננסי",
-      "ג'ויס"
-    ],
+    "text": "מה המאכל האהוב על אילבן בסדרה 'דברים מוזרים'?",
+    "answers": ["פיצה", "וופלים של אגו", "פנקייק", "גלידה"],
     "correct": 1,
     "locale": "he",
     "difficulty": 1
@@ -1617,14 +1577,9 @@ export const hebrewMediaQuestions:MediaQuestion[]=[
   {
     "id": 8032,
     "category": "סדרות טלוויזיה",
-    "text": "מי הדמות הראשית בסדרה וונסדיי?",
-    "answers": [
-      "מורטישה אדמס",
-      "פאגסלי אדמס",
-      "וונסדיי אדמס",
-      "איניד בייטס"
-    ],
-    "correct": 2,
+    "text": "באיזו פנימייה לומדת וונסדיי אדמס בסדרה 'וונסדיי'?",
+    "answers": ["הוגוורטס", "נברמור", "ריברדייל", "הוקינס"],
+    "correct": 1,
     "locale": "he",
     "difficulty": 3
   },
@@ -1687,14 +1642,9 @@ export const hebrewMediaQuestions:MediaQuestion[]=[
   {
     "id": 8037,
     "category": "סדרות טלוויזיה",
-    "text": "איזו דמות היא גיבורת הסדרה בלואי?",
-    "answers": [
-      "בינגו",
-      "צ'ילי",
-      "מאפין",
-      "בלואי"
-    ],
-    "correct": 3,
+    "text": "מה שמה של אחותה הקטנה של בלואי בסדרה 'בלואי'?",
+    "answers": ["בינגו", "מאפין", "סוקס", "צ'ילי"],
+    "correct": 0,
     "locale": "he",
     "difficulty": 2
   },
@@ -1771,13 +1721,8 @@ export const hebrewMediaQuestions:MediaQuestion[]=[
   {
     "id": 8043,
     "category": "סדרות טלוויזיה",
-    "text": "איזו סדרה עוקבת אחרי החברים רוס ורייצ'ל?",
-    "answers": [
-      "איך פגשתי את אמא",
-      "חברים",
-      "המפץ הגדול",
-      "משפחה מודרנית"
-    ],
+    "text": "בסדרה 'חברים', באיזו עיר מתגוררים החברים?",
+    "answers": ["לוס אנג'לס", "ניו יורק", "שיקגו", "בוסטון"],
     "correct": 1,
     "locale": "he",
     "difficulty": 2
@@ -1785,14 +1730,9 @@ export const hebrewMediaQuestions:MediaQuestion[]=[
   {
     "id": 8044,
     "category": "סדרות טלוויזיה",
-    "text": "באיזו סדרה מופיע מנהל המשרד מייקל סקוט?",
-    "answers": [
-      "חברים",
-      "שובר שורות",
-      "המשרד",
-      "סיינפלד"
-    ],
-    "correct": 2,
+    "text": "בסדרה 'המשרד', באיזו עיר נמצא הסניף של דנדר מיפלין?",
+    "answers": ["סקרנטון", "פילדלפיה", "בוסטון", "שיקגו"],
+    "correct": 0,
     "locale": "he",
     "difficulty": 3
   },
@@ -2387,14 +2327,9 @@ export const hebrewMediaQuestions:MediaQuestion[]=[
   {
     "id": 8087,
     "category": "מוזיקה ישראלית",
-    "text": "איזה מוזיקאי הקים את הפרויקט של עידן רייכל?",
-    "answers": [
-      "מתי כספי",
-      "עידן רייכל",
-      "דני סנדרסון",
-      "שלום חנוך"
-    ],
-    "correct": 1,
+    "text": "איזו להקה צבאית ביצעה לראשונה את 'שיר לשלום'?",
+    "answers": ["להקת הנח\"ל", "להקת פיקוד מרכז", "להקת חיל הים", "להקת פיקוד צפון"],
+    "correct": 0,
     "locale": "he",
     "difficulty": 1
   },

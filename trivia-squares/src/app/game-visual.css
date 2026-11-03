@@ -322,3 +322,9 @@ main.trivia-app .avatar-choice{width:52px!important;height:52px!important;paddin
 main.trivia-app .avatar-choice .game-image{width:44px;height:44px}
 main.trivia-app .victory-symbol .game-image{width:96px;height:96px;filter:drop-shadow(0 14px 22px rgba(0,0,0,.5))}
 html body main.trivia-app.trivia-app .arena-quick-wallet > span > .wallet-value{background:none!important;border:0!important;padding:0!important;margin:0!important;box-shadow:none!important;min-width:0!important;border-radius:0!important;font-size:inherit!important;color:inherit!important}
+
+/* Appeal on a marked answer: sits next to "continue", never steals its prominence. */
+html body main.trivia-app .answer-feedback-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-top:14px}
+html body main.trivia-app .answer-feedback-actions .answer-feedback-continue{margin:0}
+html body main.trivia-app .answer-appeal-button{min-height:44px;padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px}
+html body main.trivia-app .answer-appeal-status{margin:10px 0 0;text-align:center;color:rgba(244,246,255,.82)}

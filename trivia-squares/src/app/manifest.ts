@@ -1,6 +1,6 @@
 import type {MetadataRoute} from 'next';
 
-/** Installable browser app. Pilot is free, without advertising or checkout. */
+/** Installable browser app (also the source for the Android TWA). Pilot is free, without advertising or checkout. */
 export default function manifest():MetadataRoute.Manifest{
   return {
     id:'/',
@@ -11,8 +11,8 @@ export default function manifest():MetadataRoute.Manifest{
     scope:'/',
     display:'standalone',
     orientation:'any',
-    background_color:'#0B1737',
-    theme_color:'#42218F',
+    background_color:'#0A0E24',
+    theme_color:'#0A0E24',
     lang:'he',
     dir:'rtl',
     categories:['games','entertainment','education'],

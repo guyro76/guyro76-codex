@@ -23,13 +23,20 @@ import { spanishQuestions } from '../lib/spanishQuestions';
 import { languageQuestions } from '../lib/languageQuestions';
 import { curatedHebrewQuestions } from '../lib/curatedHebrewQuestions';
 import { languageForPronunciation, speakLanguageAnswer } from '../lib/languageSpeech';
-import { findLocalQuestion } from '../lib/localQuestionLookup';
+import { findLocalQuestion,isBundledQuestion } from '../lib/localQuestionLookup';
+import {applyQuestionCorrections,loadCachedQuestionCorrections,setQuestionCorrections,type CorrectionRow} from '../lib/questionCorrections';
+import {submitAppeal,fetchAppealStatuses,claimAppealCompensation,storedAppeals,saveAppeals,appealText,APPEAL_CREDITS,type AppealSource} from '../lib/answerAppeals';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
+import { RUSSIAN_STAGE_NAMES } from '../lib/russianStageNames';
+import { FRENCH_STAGE_NAMES } from '../lib/frenchStageNames';
+import { ARABIC_STAGE_NAMES } from '../lib/arabicStageNames';
+const LOCAL_STAGE_NAMES={es:SPANISH_STAGE_NAMES,ru:RUSSIAN_STAGE_NAMES,fr:FRENCH_STAGE_NAMES,ar:ARABIC_STAGE_NAMES} as const;
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
 import {selectVariedQuestion,readRecentQuestionTopics,RECENT_TOPIC_MEMORY,GEOGRAPHY_GAP,isGeographyQuestion} from '../lib/questionMix';
 import SuggestQuestionPrompt,{type QuestionSuggestion} from '../components/SuggestQuestionPrompt';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
+import {stripPictographs} from '../lib/displayText';
 import StageReward from '../components/StageReward';
 import QuestionReportButton from '../components/QuestionReportButton';
 import TriviaMark from '../components/TriviaMark';
@@ -65,7 +72,8 @@ function canonicalQuestion(text:string):string {
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local' | 'solo';
 type Question = { text: string; answers: string[]; edge?: string; id?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus' | 'premium_bonus'; premium?: boolean; premiumOwner?: Side; deadline_at?: string | null; extensions?: number };
-type WrongAnswerFeedback = { text:string; answers:string[]; selectedIndex:number; correctIndex:number | null };
+type WrongAnswerFeedback = { text:string; answers:string[]; selectedIndex:number; correctIndex:number | null;
+  questionId?:number; source?:AppealSource; edge?:string|null; board?:string|null };
 type LocalSourceQuestion={id:number;text:string;answers:string[];correct:number;category:string;difficulty:number;locale:ActiveLocale};
 const cacheLocales:ActiveLocale[]=['he','en','ru','fr','ar','es'];
 const blankQuestionCache=():Record<ActiveLocale,LocalSourceQuestion[]>=>({he:[],en:[],ru:[],fr:[],ar:[],es:[]});
@@ -149,7 +157,10 @@ export default function TriviaGame() {
   const [locale, setLocale] = useState<ActiveLocale>('he');
   const [previewViewport,setPreviewViewport]=useState<'auto'|'desktop'|'tablet'|'mobile'>('auto');
   const [languageLoaded, setLanguageLoaded] = useState(false);
-  const tr = useCallback((value: string) => translate(locale,value),[locale]);
+  const tr = useCallback((value: string) => stripPictographs(translate(locale,value)),[locale]);
+  /** Inline text in all six languages (for strings that are not dictionary keys). */
+  const L6=(m:Record<ActiveLocale,string>)=>m[locale]||m.en;
+  const stageName=(s:{id:number;nameHe:string;nameEn:string})=>locale==='he'?s.nameHe:locale==='en'?s.nameEn:(LOCAL_STAGE_NAMES[locale][s.id]||s.nameEn);
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [policiesAcknowledged, setPoliciesAcknowledged] = useState(false);
@@ -159,6 +170,8 @@ export default function TriviaGame() {
   const [stageId,setStageId]=useState(1);
   const [campaignChapter,setCampaignChapter]=useState(1);
   useEffect(()=>setCampaignChapter(Math.ceil(stageId/5)),[stageId]);
+  const stageIdRef=useRef(1);
+  useEffect(()=>{stageIdRef.current=stageId},[stageId]);
   const [localStageCompleted,setLocalStageCompleted]=useState(0);
   const [serverStageCompleted,setServerStageCompleted]=useState(0);
   const [stageStarted,setStageStarted]=useState(false);
@@ -356,6 +369,73 @@ export default function TriviaGame() {
   const googleName = providerGoogle ? String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim().slice(0,70) : '';
   const googlePhotoRaw = providerGoogle ? String(user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '') : '';
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
+  // Appeals and question reports: corrections from the hourly review engine, and decisions on this device's appeals.
+  const [appealState,setAppealState]=useState<'idle'|'sending'|'sent'|'failed'>('idle');
+  useEffect(()=>{setAppealState('idle')},[wrongAnswerFeedback]);
+  const appealSyncRef=useRef(false);
+  useEffect(()=>{
+    loadCachedQuestionCorrections();
+    if(!client)return;
+    let stopped=false;
+    const sync=async()=>{
+      if(appealSyncRef.current||stopped)return;
+      appealSyncRef.current=true;
+      try{
+        const {data}=await client.rpc('trivia_bundled_question_corrections');
+        if(Array.isArray(data))setQuestionCorrections(data as CorrectionRow[]);
+        if(!storedAppeals().length)return;
+        const rows=await fetchAppealStatuses(client);
+        if(!rows)return;
+        const mine=storedAppeals();
+        let changed=false;
+        for(const row of rows){
+          const saved=mine.find(a=>a.id===Number(row.id));
+          if(!saved||saved.notified||row.status==='pending')continue;
+          saved.status=row.status;changed=true;
+          const words=appealText(locale);
+          if(row.status==='rejected'||row.kind==='report'){saved.notified=true;if(row.kind==='appeal')setMessage(words.rejected+(row.decision_note?' '+row.decision_note:''));continue}
+          if(row.compensation_claimed){saved.notified=true;continue}
+          const claim=await claimAppealCompensation(client,saved.id);
+          if(!claim.ok)continue;
+          saved.notified=true;
+          let lineBack=false;
+          if(!claim.serverCredited){
+            setLocalCredits(prev=>({...prev,host:prev.host+APPEAL_CREDITS}));
+            if(saved.edge&&saved.board){
+              const edgeKey=saved.edge;const boardKey=saved.board;
+              setLocal(prev=>{
+                const same=boardKey===stageIdRef.current+':'+prev.rows+'x'+prev.cols;
+                const open=!prev.edges[edgeKey]&&Object.keys(prev.owners).length<prev.rows*prev.cols;
+                if(!same||!open||(prev.mode!=='solo'&&prev.turn!=='host'))return prev;
+                lineBack=true;
+                return applyLocalAnswer(prev,edgeKey,true,prev.mode==='solo');
+              });
+            }
+          }else{
+            const {data:update}=await client.rpc('trivia_my_profile');
+            if(update?.progress)setProgress(update.progress as Progress);
+          }
+          setMessage(lineBack?words.approvedLine:words.approved);
+          playGameSound('coin',{muted,volume:volume/100},0);
+        }
+        if(changed)saveAppeals(mine);
+      }catch{}finally{appealSyncRef.current=false}
+    };
+    void sync();
+    const timer=window.setInterval(()=>void sync(),5*60*1000);
+    const onVisible=()=>{if(document.visibilityState==='visible')void sync()};
+    document.addEventListener('visibilitychange',onVisible);
+    return ()=>{stopped=true;window.clearInterval(timer);document.removeEventListener('visibilitychange',onVisible)};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[client,locale]);
+  async function sendAppeal(){
+    const fb=wrongAnswerFeedback;
+    if(!client||!fb||typeof fb.questionId!=='number'||fb.questionId<=0||appealState==='sending'||appealState==='sent')return;
+    setAppealState('sending');
+    const result=await submitAppeal(client,{kind:'appeal',source:fb.source||'bundled',questionId:fb.questionId,locale,
+      text:fb.text,answers:fb.answers,chosen:fb.selectedIndex,shownCorrect:fb.correctIndex,edge:fb.edge??null,board:fb.board??null});
+    setAppealState(result.ok?'sent':'failed');
+  }
   const canPlay = validName && localReady && !showTutorial && !capturePending && !wrongAnswerFeedback && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
   const finished = !capturePending && !question && !wrongAnswerFeedback && Object.keys(state.owners).length === state.rows * state.cols;
   // Do not cover the last liquid-fill capture. Show the stage minigame prominently
@@ -387,13 +467,13 @@ export default function TriviaGame() {
   const showTimer = Boolean(question) && question?.deadline_at !== null && !timeFreezeActive;
   const timerText = secondsLeft === null ? '01:00' : String(Math.floor(secondsLeft/60)).padStart(2,'0')+':'+String(secondsLeft%60).padStart(2,'0');
   const world = worlds.find(w => w.slug === selectedStage.theme) || worlds[0];
-  const questionBank = (locale==='he'||locale==='en')
+  const questionBank = applyQuestionCorrections((locale==='he'||locale==='en')
     ? [
       ...(locale === 'en' ? englishQuestions : [...offlineQuestions,...curatedHebrewQuestions]),
       ...freshLocalQuestions(locale,countLocalReserve(locale))
     ]
-    : locale==='es'?spanishQuestions:internationalQuestions.filter(q=>q.locale===locale);
-  const effectiveQuestionBank=[...questionBank,...languageQuestions.filter(q=>q.locale===locale),...remoteQuestionCache.current[locale]];
+    : locale==='es'?spanishQuestions:internationalQuestions.filter(q=>q.locale===locale));
+  const effectiveQuestionBank=[...questionBank,...applyQuestionCorrections(languageQuestions.filter(q=>q.locale===locale)),...remoteQuestionCache.current[locale]];
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
 
@@ -986,7 +1066,8 @@ export default function TriviaGame() {
         if(data.correct===false){
           const idx=Number(data.correct_index);
           setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,
-            correctIndex:Number.isInteger(idx)&&idx>=0&&idx<question.answers.length?idx:null});
+            correctIndex:Number.isInteger(idx)&&idx>=0&&idx<question.answers.length?idx:null,
+            questionId:question.id,source:'server',edge:null,board:null});
         }
         if (data.finished) play('win');
         else if (data.bonus && data.correct) play('bonus');
@@ -1026,14 +1107,16 @@ export default function TriviaGame() {
             ? 'פרימיום! כבשת '+captured.captured.length+' ריבועים, ניקוד ופרסים כפולים.'
             : 'Premium bonus! '+captured.captured.length+' extra captures, double points and prizes.');
         }else{
-          setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,correctIndex:q.correct});
+          setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,correctIndex:q.correct,
+          questionId:question.id,source:isBundledQuestion(question.id)?'bundled':'server',edge,board:stageId+':'+local.rows+'x'+local.cols});
           play('wrong');
           setMessage(locale==='he'?'שאלת הפרימיום לא נענתה נכון. אפשר ללמוד את התשובה ולהמשיך.':'Premium bonus missed. Review the answer and continue.');
         }
         setQuestion(null);setEdge(null);setBusy(false);return;
       }
       if(!correct){
-        setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,correctIndex:q.correct});
+        setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,correctIndex:q.correct,
+          questionId:question.id,source:isBundledQuestion(question.id)?'bundled':'server',edge,board:stageId+':'+local.rows+'x'+local.cols});
       }
       const next = applyLocalAnswer(local, edge, correct, local.mode==='solo');
       setLocal(next);
@@ -1420,7 +1503,7 @@ export default function TriviaGame() {
   };
   const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
   const displayWorld={
-    name:locale==='es'?(SPANISH_STAGE_NAMES[stageId]||selectedStage.nameEn):locale==='he'?selectedStage.nameHe:selectedStage.nameEn,
+    name:stageName(selectedStage),
     subtitle:locale==='es'?'Conecta puntos, responde y conquista todas las casillas del nivel.':locale==='he'?selectedStage.subtitleHe:selectedStage.subtitleEn
   };
   return <main data-preview-viewport={previewViewport} className={'trivia-app theme-' + world.slug + ' skin-' + skin + (stageStarted?' playing-layout':' setup-layout')} style={css.main} dir={localeDirection(locale)} lang={locale} onPointerDownCapture={()=>unlockGameAudio()} onKeyDownCapture={event=>{if(event.key==='Enter'||event.key===' ')unlockGameAudio()}}>
@@ -1474,7 +1557,7 @@ export default function TriviaGame() {
       .arena.crystal{background:radial-gradient(circle at 18% 15%,#E3AFFF80,transparent 42%),radial-gradient(circle at 80% 80%,#95A6FF65,transparent 44%),linear-gradient(145deg,#30245E,#263B78)}
       .arena.clouds{background:radial-gradient(circle at 25% 15%,#D0FCFF9C,transparent 45%),radial-gradient(circle at 85% 80%,#B1BDFF82,transparent 47%),linear-gradient(145deg,#4079A4,#435C9F)}
       .arena.galaxy{background:radial-gradient(circle at 15% 10%,#BD74FF9C,transparent 43%),radial-gradient(circle at 85% 75%,#3D9AFF6B,transparent 41%),linear-gradient(140deg,#1C225D,#473075)}
-      .arena:before{content:'✧ ✦ · ✧ · ✦ · ✧';position:absolute;top:9px;left:8px;right:8px;color:#FFFFFF35;font-size:17px;letter-spacing:18px;text-align:center;pointer-events:none}
+      .arena:before{content:'';position:absolute;top:9px;left:8px;right:8px;color:#FFFFFF35;font-size:17px;letter-spacing:18px;text-align:center;pointer-events:none}
       .arena:after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.18;background-image:radial-gradient(#FFFFFF 1px,transparent 1px);background-size:25px 25px;mask-image:linear-gradient(130deg,#000 10%,transparent 85%)}
       .arena-inner{
         position:relative;z-index:1;border-radius:19px;overflow:hidden;
@@ -1610,8 +1693,8 @@ export default function TriviaGame() {
           <div><h2><GameImage name={WORLD_ART[world.slug]} size={44} className='world-emblem'/> {displayWorld.name}</h2><p>{displayWorld.subtitle} • {state.rows * state.cols} {tr(' ריבועים').trim()}</p></div>
           <div className='arena-head-right'>
              {captureToast && <div key={captureToast.id} className='capture-win-toast' role='status' aria-live='polite'>
-               <strong>🎆 {locale==='he'?'ריבוע נכבש!':locale==='es'?'¡Casilla conquistada!':locale==='fr'?'Case conquise !':locale==='ru'?'Клетка захвачена!':locale==='ar'?'تم الاستيلاء على المربع!':'Square captured!'}</strong>
-               <span>🪙 +{captureToast.amount}</span>
+               <strong>{locale==='he'?'ריבוע נכבש!':locale==='es'?'¡Casilla conquistada!':locale==='fr'?'Case conquise !':locale==='ru'?'Клетка захвачена!':locale==='ar'?'تم الاستيلاء على المربع!':'Square captured!'}</strong>
+               <span><GameImage name='coin' size={20}/> +{captureToast.amount}</span>
              </div>}
              <div className='arena-quick-wallet' aria-label={locale==='he'?'פרסים וקרדיטים זמינים':locale==='es'?'Premios, créditos y puntos':locale==='fr'?'Récompenses et crédits':locale==='ru'?'Награды и монеты':locale==='ar'?'المكافآت والعملات':'Available game credits and charms'}>
                <span title={locale==='he'?'קרדיטים זמינים':locale==='es'?'Créditos disponibles':locale==='fr'?'Crédits disponibles':locale==='ru'?'Доступные монеты':locale==='ar'?'العملات المتاحة':'Available credits'}><GameImage name='coin' size={24}/><span className='wallet-value' data-testid='wallet-credits'>{currentCredits}</span></span>
@@ -1620,7 +1703,7 @@ export default function TriviaGame() {
              </div>
              <button type='button' className='level-pill campaign-stages-toggle' aria-haspopup='dialog' disabled={!!question} onClick={()=>openGameMenu('stages')}
                aria-label={(locale==='he'?'בחירת שלב · ':locale==='en'?'Choose stage · ':locale==='ru'?'Выбор уровня · ':locale==='fr'?'Choisir le niveau · ':locale==='es'?'Elegir nivel · ':'اختيار المرحلة · ')+stageId+' / '+STAGE_COUNT}>
-               <GameImage name='flag' size={26}/> {locale==='es'?'Nivel ':locale==='en'?'Stage ':'שלב '}{stageId} / {STAGE_COUNT}</button>
+               <GameImage name='flag' size={26}/> {locale==='es'?'Nivel ':locale==='en'?'Stage ':locale==='ru'?'Этап ':locale==='fr'?'Niveau ':locale==='ar'?'المرحلة ':'שלב '}{stageId} / {STAGE_COUNT}</button>
            </div>
         </div>
         <ProgressPulse locale={locale} stage={stageId} captured={Object.values(state.owners).filter(owner=>owner==='host').length} streak={remote ? Number(state.streak?.[player]||0) : localComboStreak}/>
@@ -1701,9 +1784,9 @@ export default function TriviaGame() {
           </div>
         </div>
         {!validName && <div className='board-start-hint' role='status'>
-          <label htmlFor='board-start-name'>{locale==='en'?'Enter your name to unlock marker drawing':'כדי לצייר קו ראשון, הכנס שם שחקן'}</label>
+          <label htmlFor='board-start-name'>{locale==='en'?'Enter your name to unlock marker drawing':locale==='ru'?'Введите имя игрока, чтобы нарисовать первую линию':locale==='fr'?'Entrez votre nom pour tracer le premier trait':locale==='ar'?'أدخل اسم اللاعب لرسم الخط الأول':locale==='es'?'Escribe tu nombre para trazar la primera línea':'כדי לצייר קו ראשון, הכנס שם שחקן'}</label>
           <input id='board-start-name' type='text' minLength={2} maxLength={32} value={name}
-            placeholder={locale==='en'?'Player name':'שם השחקן'} onChange={e=>updatePlayerName(e.target.value)} />
+            placeholder={L6({he:'שם השחקן',en:'Player name',ru:'Имя игрока',fr:'Nom du joueur',ar:'اسم اللاعب',es:'Nombre del jugador'})} onChange={e=>updatePlayerName(e.target.value)} />
         </div>}
         {!remote && state.mode==='local' && ownerMode!=='auto' && <p className='capture-tip'>{locale==='en'?'Tap any captured square to correct its owner.':'ניתן ללחוץ על ריבוע שנכבש כדי לשנות למי הוא שייך.'}</p>}
         <div className='gesture-hint'><span className='draw-icon'><GameArt name='marker' size={22}/></span>{tr(bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח')}</div>
@@ -1719,7 +1802,7 @@ export default function TriviaGame() {
               ? tr('תיקו גדול!') : state.scores.host>state.scores.guest+state.scores.bot ? tr('אליפות! כל הריבועים נסגרו') : tr('היריב ניצח הפעם')}
           </h2>
           <div style={{fontSize:16,color:'#FFEAA6',marginBottom:12}}>
-            {'⭐'.repeat(state.scores.host>state.scores.guest+state.scores.bot?3:state.scores.host===state.scores.guest+state.scores.bot?2:1)}
+            {Array.from({length:state.scores.host>state.scores.guest+state.scores.bot?3:state.scores.host===state.scores.guest+state.scores.bot?2:1},(_,i)=><GameImage key={i} name='star' size={30}/>)}
           </div>
           <p style={{margin:'6px 0',color:'#FFFFFF'}}>{name||tr('שחקן 1')}: {state.scores.host} {tr('נקודות')}{state.mode==='solo'?'':' · '+(state.mode==='local'?guestName:tr('יריב'))+': '+(state.scores.guest+state.scores.bot)+' '+tr('נקודות')}</p>
           <p className='smalltxt'>{tr("🍎 במשחק מחובר צוברים פירות וקרדיטים, ובניצחון גם יהלומים והתקדמות.")}</p>
@@ -1737,7 +1820,7 @@ export default function TriviaGame() {
           <button className='glass-button' onClick={()=>{setTutorialPage(0);setShowTutorial(true)}}><GameArt name='help' size={22}/> {tr("איך משחקים")}</button>
           {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>{tr("⭐ שאלת זהב!")}</button>}
           {availableBonus>0 && state.mode!=='online' && <button className='gold-button' disabled={busy||!!question} onClick={()=>setBonusSelect(v=>!v)}>
-            ✨ {tr(bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס')} ({availableBonus})</button>}
+            {tr(bonusSelect?'בטל כיבוש בונוס':'כיבוש בונוס')} ({availableBonus})</button>}
           {finished && stageId<STAGE_COUNT && <button className='glass-button' disabled={stageId>completedStage} onClick={advanceStage}>{locale==='en'?'Next stage →':'השלב הבא ←'}</button>}
         </div>
         <div className='hero-name player-name-field'>
@@ -1751,7 +1834,7 @@ export default function TriviaGame() {
         </div>
         {finished && !stageRewardOpen && <button className='stage-reward-reopen'
           type='button' onClick={()=>setStageRewardOpen(true)}>
-          {locale==='he'?'🎁 פתח שוב את משחק הביניים והפרסים':locale==='es'?'🎁 Abrir premios y minijuego':locale==='fr'?'🎁 Ouvrir les récompenses et le mini-jeu':locale==='ru'?'🎁 Открыть награды и мини-игру':locale==='ar'?'🎁 فتح المكافآت واللعبة المصغرة':'🎁 Open stage rewards and minigame'}
+          {locale==='he'?'פתח שוב את משחק הביניים והפרסים':locale==='es'?'Abrir premios y minijuego':locale==='fr'?'Ouvrir les récompenses et le mini-jeu':locale==='ru'?'Открыть награды и мини-игру':locale==='ar'?'فتح المكافآت واللعبة المصغرة':'Open stage rewards and minigame'}
         </button>}
         {finished && stageRewardReady && stageRewardOpen && typeof document !== 'undefined' && document.querySelector('main.trivia-app') && createPortal(<div className='stage-reward-modal-layer'
           role='dialog' aria-modal='true' aria-label={locale==='he'?'משחק הביניים ופרסי השלב':locale==='es'?'Minijuego y recompensas del nivel':locale==='fr'?'Mini-jeu et récompenses du niveau':locale==='ru'?'Мини-игра и награды этапа':locale==='ar'?'اللعبة المصغرة ومكافآت المرحلة':'Stage minigame and rewards'}
@@ -1788,35 +1871,29 @@ export default function TriviaGame() {
               <button type='button' className='app-menu-close' aria-label={locale==='he'?'סגור תפריט':locale==='es'?'Cerrar menú':'Close menu'} onClick={()=>menuRef.current?.close()}>✕</button>
             </div>
             <nav className='app-menu-tabs' aria-label={locale==='he'?'ניווט במשחק':locale==='es'?'Navegación del juego':'Game navigation'}>
-              <button type='button' className='app-menu-tab app-menu-play' onClick={()=>menuRef.current?.close()}><span aria-hidden='true'>◈</span><span>{locale==='he'?'חזרה ללוח':locale==='en'?'Back to board':locale==='ru'?'К игре':locale==='fr'?'Retour au jeu':locale==='es'?'Volver al tablero':'العودة للعبة'}</span></button>
+              <button type='button' className='app-menu-tab app-menu-play' onClick={()=>menuRef.current?.close()}><span>{locale==='he'?'חזרה ללוח':locale==='en'?'Back to board':locale==='ru'?'К игре':locale==='fr'?'Retour au jeu':locale==='es'?'Volver al tablero':'العودة للعبة'}</span></button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='settings'?'page':undefined}
               onClick={()=>setMenuSection('settings')} data-section='settings'>
-              <span aria-hidden='true'>⚙</span>
               <span>{locale==='he'?'הגדרות':locale==='en'?'Settings':locale==='ru'?'Настройки':locale==='fr'?'Réglages':locale==='es'?'Ajustes':'الإعدادات'}</span>
             </button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='stages'?'page':undefined}
               onClick={()=>setMenuSection('stages')} data-section='stages'>
-              <span aria-hidden='true'>▦</span>
               <span>{locale==='he'?"שלבים":locale==='en'?"Stages":locale==='ru'?"Уровни":locale==='fr'?"Niveaux":locale==='es'?"Niveles":"المراحل"}</span>
             </button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='modes'?'page':undefined}
               onClick={()=>setMenuSection('modes')} data-section='modes'>
-              <span aria-hidden='true'>🎮</span>
               <span>{locale==='he'?"מצבי משחק":locale==='en'?"Play modes":locale==='ru'?"Режимы":locale==='fr'?"Modes de jeu":locale==='es'?"Modos de juego":"أوضاع اللعب"}</span>
             </button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='profile'?'page':undefined}
               onClick={()=>setMenuSection('profile')} data-section='profile'>
-              <span aria-hidden='true'>🎨</span>
               <span>{locale==='he'?"התאמה אישית":locale==='en'?"Customize":locale==='ru'?"Профиль":locale==='fr'?"Personnalisation":locale==='es'?"Personalización":"التخصيص"}</span>
             </button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='rewards'?'page':undefined}
               onClick={()=>setMenuSection('rewards')} data-section='rewards'>
-              <span aria-hidden='true'>★</span>
               <span>{locale==='he'?"הישגים":locale==='en'?"Rewards":locale==='ru'?"Награды":locale==='fr'?"Récompenses":locale==='es'?"Recompensas":"المكافآت"}</span>
             </button>
             <button type='button' className='app-menu-tab' aria-current={menuSection==='account'?'page':undefined}
               onClick={()=>setMenuSection('account')} data-section='account'>
-              <span aria-hidden='true'>♙</span>
               <span>{locale==='he'?"חשבון":locale==='en'?"Account":locale==='ru'?"Аккаунт":locale==='fr'?"Compte":locale==='es'?"Cuenta":"الحساب"}</span>
             </button>
             </nav>
@@ -1871,7 +1948,7 @@ export default function TriviaGame() {
                         locale==='ar'?'اختبار الصوت: استمع إلى الألعاب النارية وتحقق من مستوى الصوت.':
                         'Sound test: listen for the fireworks chime. Check device volume and mute settings.');
                     }}>
-                    <span aria-hidden='true'>🔉</span><strong>{locale==='he'?'בדוק':locale==='es'?'Probar':locale==='fr'?'Tester':locale==='ru'?'Проверить':locale==='ar'?'اختبار':'Test'}</strong>
+                    <strong>{locale==='he'?'בדוק':locale==='es'?'Probar':locale==='fr'?'Tester':locale==='ru'?'Проверить':locale==='ar'?'اختبار':'Test'}</strong>
                   </button>
                   {audioTestStatus!=='unknown' && <span className='trivia-audio-state' data-testid='trivia-audio-state' role='status'>
                     {audioTestStatus==='ready'
@@ -1886,7 +1963,7 @@ export default function TriviaGame() {
                       playGameSound('liquid',{muted,volume:volume/100});
                       playGameSound('fireworks',{muted,volume:volume/100},1.27);
                     }}>
-                    <strong>{locale==='he'?'💧 הדגמת מילוי':locale==='es'?'💧 Ver llenado':locale==='fr'?'💧 Voir le remplissage':locale==='ru'?'💧 Показать заливку':locale==='ar'?'💧 عرض التعبئة':'💧 Preview liquid fill'}</strong>
+                    <strong>{locale==='he'?'הדגמת מילוי':locale==='es'?'Ver llenado':locale==='fr'?'Voir le remplissage':locale==='ru'?'Показать заливку':locale==='ar'?'عرض التعبئة':'Preview liquid fill'}</strong>
                   </button>
                   {liquidPreviewRun>0 && <div className='capture-demo-overlay' role='status' aria-live='polite' data-testid='trivia-liquid-overlay'>
                     <div className='capture-demo-card'>
@@ -1909,7 +1986,7 @@ export default function TriviaGame() {
                   <button type='button' className='trivia-fish-toggle' aria-pressed={fishEnabled}
                     aria-label={locale==='he'?'דגים בריבועים':locale==='ar'?'أسماك في المربعات':locale==='ru'?'Рыбки в клетках':locale==='fr'?'Poissons dans les cases':locale==='es'?'Peces en las casillas':'Fish in squares'}
                     onClick={()=>setFishEnabled(previous=>{const next=!previous;saveFishPreference(next);return next;})}>
-                    🐟 {fishEnabled?'✓':'○'}
+                    {fishEnabled?'✓ ':'○ '}{locale==='he'?'דגים בריבועים':locale==='ar'?'أسماك في المربعات':locale==='ru'?'Рыбки в клетках':locale==='fr'?'Poissons dans les cases':locale==='es'?'Peces en las casillas':'Fish in squares'}
                   </button>
                   </div>
                 </div>
@@ -1925,7 +2002,7 @@ export default function TriviaGame() {
               </section>
               <section className='app-menu-pane' hidden={menuSection!=='stages'} aria-label={locale==='he'?'בחירת שלב':'Choose stage'}>
                 <h2 className='panel-title'>{locale==='he'?'השלבים שלי · '+completedStage+' הושלמו':locale==='es'?'Mis niveles · '+completedStage+' completados':locale==='en'?'Campaign stages · '+completedStage+' completed': 'Stages'}</h2>
-                <p className='campaign-rule'>{locale==='en'?'Stages unlock one at a time. Finish every square of the current board to open the next stage.':'כל שלב נפתח רק אחרי שסוגרים את כל הריבועים בשלב שלפניו. אי אפשר לדלג על שלבים.'}</p>
+                <p className='campaign-rule'>{L6({he:'כל שלב נפתח רק אחרי שסוגרים את כל הריבועים בשלב שלפניו. אי אפשר לדלג על שלבים.',en:'Stages unlock one at a time. Finish every square of the current board to open the next stage.',ru:'Этапы открываются по одному. Закройте все клетки текущего поля, чтобы открыть следующий этап.',fr:'Les niveaux se débloquent un par un. Fermez toutes les cases du plateau actuel pour ouvrir le niveau suivant.',ar:'تُفتح المراحل واحدة تلو الأخرى. أغلق كل مربعات اللوحة الحالية لفتح المرحلة التالية.',es:'Los niveles se desbloquean de uno en uno. Cierra todas las casillas del tablero actual para abrir el siguiente nivel.'})}</p>
       <nav className='campaign-chapter-nav' aria-label={locale==='he'?'בחירת פרק':locale==='es'?'Elegir capítulo':locale==='en'?'Choose chapter':locale==='fr'?'Choisir un chapitre':locale==='ru'?'Выбрать главу':'اختيار الفصل'}>
         <button type='button' onClick={()=>setCampaignChapter(v=>Math.max(1,v-1))}
            disabled={campaignChapter===1} aria-label='Previous chapter'>‹</button>
@@ -1950,9 +2027,9 @@ export default function TriviaGame() {
              aria-current={isSelected?'step':undefined}
              aria-disabled={!enabled} disabled={!enabled} data-stage={stage.id} data-locked={!unlocked}
              onClick={()=>{chooseStage(stage.id);menuRef.current?.close()}}>
-            <span className='campaign-stage-number'>{isSelected?'✦ ':unlocked?'': '🔒 '}{String(stage.id).padStart(2,'0')}</span>
-            <strong className='campaign-stage-icon' aria-hidden='true'>{stage.icon}</strong>
-            <span className='campaign-stage-title'>{locale==='he'?stage.nameHe:locale==='es'?(SPANISH_STAGE_NAMES[stage.id]||'Nivel '+stage.id):locale==='en'?stage.nameEn:locale==='ru'?'Этап '+stage.id:locale==='fr'?'Défi '+stage.id:'التحدي '+stage.id}</span>
+            <span className='campaign-stage-number'>{String(stage.id).padStart(2,'0')}</span>
+            <strong className='campaign-stage-icon' aria-hidden='true'><GameImage name={WORLD_ART[stage.theme]||'apple'} size={34}/></strong>
+            <span className='campaign-stage-title'>{stageName(stage)}</span>
             <small>{unlocked?(locale==='he'?'לוח ':locale==='es'?'Tablero ':locale==='ru'?'Поле ':locale==='fr'?'Grille ':locale==='ar'?'لوحة ':'Board ')+stage.size+'×'+stage.size:(locale==='he'?'נעול':locale==='es'?'Bloqueado':locale==='ru'?'Закрыто':locale==='fr'?'Verrouillé':locale==='ar'?'مغلق':'Locked')}</small>
           </button>
         })}
@@ -1970,10 +2047,10 @@ export default function TriviaGame() {
                  if(value==='solo'&&!remote){setLocal(prev=>({...repairSoloBoard(prev),mode:'solo'}));setCapturePending(null)}
                  if(value==='local'&&!remote){setLocal(prev=>({...prev,mode:'local'}))}
                  if(value!=='local'&&value!=='solo'&&stageId>serverStageCompleted+1){setStageId(serverStageCompleted+1);setSize(stageFor(Math.min(STAGE_COUNT,serverStageCompleted+1)).size)} }}>
-                {modeLabels[value][locale]}</button>)}
+                {stripPictographs(modeLabels[value][locale])}</button>)}
           </div>
           <details className='question-topic-panel' open={!stageStarted}>
-            <summary>☑️ {tr('נושאי השאלות שלי')} <span className='question-topic-count'>({selectedTopics.length}/{questionTopics.length})</span></summary>
+            <summary>{tr('נושאי השאלות שלי')} <span className='question-topic-count'>({selectedTopics.length}/{questionTopics.length})</span></summary>
             <p className='smalltxt'>{tr('בחרו נושאים לפני המשחק או בכל שלב. הבחירה נשמרת גם לאחר יציאה. נדרש נושא אחד לפחות.')}</p>
             <div className='question-topic-options' role='group' aria-label={tr('נושאי השאלות')}>
               {questionTopics.map(t=><label className='question-topic-option' key={t.id}>
@@ -1985,7 +2062,7 @@ export default function TriviaGame() {
           </details>
           <div className='form-field'>{tr('גודל לוח')}</div>
           <output id='board-size' className='form-input stage-board-size' aria-label={locale==='en'?'Current board size':'גודל הלוח הנוכחי'}>
-            {selectedStage.size} × {selectedStage.size} · {locale==='en'?'Determined by stage':'נקבע לפי שלב'}
+            {selectedStage.size} × {selectedStage.size} · {L6({he:'נקבע לפי שלב',en:'Determined by stage',ru:'Зависит от этапа',fr:'Selon le niveau',ar:'حسب المرحلة',es:'Según el nivel'})}
           </output>
           {inviteLink && <div style={{ marginTop: 13 }}>
             <div className='smalltxt'>{tr("קישור לחדר הפרטי")}</div>
@@ -2016,11 +2093,11 @@ export default function TriviaGame() {
           <div className='form-field'>{tr("סמל שיופיע בכל ריבוע")}</div>
           <div className='avatar-row'>{avatars.map(a => <button className='avatar-choice' key={a} aria-label={tr('בחר אוואטר ')+a} aria-pressed={avatar === a} onClick={() => setAvatar(a)}><AvatarArt avatar={a} size={34}/></button>)}</div>
           <section className='capture-personalization' aria-label={locale==='en'?'Square capture customization':'התאמה אישית לכיבוש הריבועים'}>
-             <h3>{locale==='en'?'Captured square design':'עיצוב הריבוע שנכבש'}</h3>
+             <h3>{L6({he:'עיצוב הריבוע שנכבש',en:'Captured square design',ru:'Оформление захваченной клетки',fr:'Style des cases conquises',ar:'تصميم المربع المستولى عليه',es:'Diseño de la casilla conquistada'})}</h3>
              <div className='capture-style-options' role='group' aria-label={locale==='en'?'Capture visual style':'סגנון כיבוש'}>
                {([['lumen','אור יוקרתי','Lumen glow'],['neon','ניאון','Neon'],['seal','חותמת מתכת','Metal seal'],['prism','קריסטל','Prism'],['token','סמל שחקן','Player token']] as const).map(([key,he,en])=><button key={key}
                  type='button' className='capture-style-option' aria-pressed={captureStyle===key} onClick={()=>setCaptureStyle(key)}>
-                 <span className={'capture-style-preview preview-'+key} aria-hidden='true'>✦</span><strong>{locale==='en'?en:he}</strong>
+                 <span className={'capture-style-preview preview-'+key} aria-hidden='true'/><strong>{L6(({lumen:{he,en,ru:'Сияние',fr:'Halo lumineux',ar:'توهج فاخر',es:'Brillo de lujo'},neon:{he,en,ru:'Неон',fr:'Néon',ar:'نيون',es:'Neón'},seal:{he,en,ru:'Металлическая печать',fr:'Sceau métallique',ar:'ختم معدني',es:'Sello metálico'},prism:{he,en,ru:'Кристалл',fr:'Cristal',ar:'كريستال',es:'Cristal'},token:{he,en,ru:'Значок игрока',fr:'Jeton du joueur',ar:'رمز اللاعب',es:'Ficha del jugador'}} as Record<string,Record<ActiveLocale,string>>)[key])}</strong>
                </button>)}
              </div>
              {mode==='local' && <>
@@ -2033,7 +2110,7 @@ export default function TriviaGame() {
                </select>
                <h3>{locale==='en'?'Second player — required name':'משתתף נוסף — חובה להזין שם'}</h3>
                <label className='form-field' htmlFor='local-guest-name'>{locale==='en'?'Real second player name':'שם המשתתף הנוסף'}</label>
-               <input className='form-input' id='local-guest-name' maxLength={32} value={guestName} placeholder={locale==='en'?'A real player name':'לדוגמה: עדי'}
+               <input className='form-input' id='local-guest-name' maxLength={32} value={guestName} placeholder={L6({he:'לדוגמה: עדי',en:'A real player name',ru:'Например: Ади',fr:'Par exemple : Adi',ar:'مثال: عدي',es:'Por ejemplo: Adi'})}
                   onChange={e=>setGuestName(e.target.value.slice(0,32))}/>
                 {!hasActualOpponent(guestName,name)&&<p className='smalltxt'>ללא שם של משתתף אמיתי, בחרו ״משחק עצמאי״. לא יוקצה יותר ניקוד לשחקן 2 אוטומטי.</p>}
                <div className='form-field'>{locale==='en'?'Player 2 capture color':'צבע הכיבוש של שחקן 2'}</div>
@@ -2041,13 +2118,13 @@ export default function TriviaGame() {
                  {palettes.map(c=><button key={'guest-'+c} type='button' className='swatch'
                     style={{background:c}} aria-label={c} aria-pressed={guestColor===c} onClick={()=>setGuestColor(c)}/>) }
                </div>
-               <div className='form-field'>{locale==='en'?'Player 2 icon':'סמל שחקן 2'}</div>
+               <div className='form-field'>{L6({he:'סמל שחקן 2',en:'Player 2 icon',ru:'Значок игрока 2',fr:'Icône du joueur 2',ar:'رمز اللاعب 2',es:'Icono del jugador 2'})}</div>
                <div className='avatar-row' role='group' aria-label={locale==='en'?'Player 2 avatar':'סמל שחקן 2'}>
                  {avatars.map(a=><button type='button' key={'guest-icon-'+a} className='avatar-choice'
                    aria-label={a} aria-pressed={guestAvatar===a} onClick={()=>setGuestAvatar(a)}><AvatarArt avatar={a} size={34}/></button>)}
                </div>
              </>}
-             {mode!=='local' && <p className='smalltxt'>{locale==='en'?'Online and bot ownership is verified by the game engine to keep scores fair.':'במשחק מחובר או מול המחשב הבעלות נקבעת לפי מנוע המשחק כדי לשמור על ניקוד הוגן.'}</p>}
+             {mode!=='local' && <p className='smalltxt'>{L6({he:'במשחק מחובר או מול המחשב הבעלות נקבעת לפי מנוע המשחק כדי לשמור על ניקוד הוגן.',en:'Online and bot ownership is verified by the game engine to keep scores fair.',ru:'В онлайн-игре и против компьютера владение клетками определяет игровой движок, чтобы счёт был честным.',fr:'En ligne et contre l’ordinateur, la propriété des cases est vérifiée par le moteur du jeu pour un score équitable.',ar:'في اللعب عبر الإنترنت أو ضد الكمبيوتر يحدد محرك اللعبة ملكية المربعات للحفاظ على نتيجة عادلة.',es:'En línea y contra la computadora, el motor del juego verifica la propiedad de las casillas para que la puntuación sea justa.'})}</p>}
            </section>
            <label className='form-field' style={{ display: 'flex', gap: 10, alignItems: 'center' }}><input type='checkbox' style={{ width: 18, height: 18, accentColor: '#FFDE85' }} checked={remember} onChange={e => setRemember(e.target.checked)} /> {tr("זכור את הבחירות שלי תמיד")}</label>
           <button className='glass-button' style={{ marginTop: 13 }} disabled={!validName} onClick={() => void saveProfile()}>{tr("שמור שם, צבע טוש ועיצוב אישי")}</button>
@@ -2056,19 +2133,19 @@ export default function TriviaGame() {
           <h2 className='panel-title'>{tr("💎 אוצרות והישגים")}</h2>
            <a href="/suggest" className="glass-button" style={{display:'inline-flex',alignItems:'center',margin:'8px 0 12px',
              fontWeight:900,textDecoration:'none',color:'#FFFFFF',background:'#294D84',border:'2px solid #FDE4A5'}}>
-             {locale==='he'?'🧠 הצע שאלה חדשה וקבל קרדיטים':locale==='en'?'🧠 Suggest a question for credits':
-              locale==='ru'?'🧠 Предложить вопрос за кредиты':locale==='fr'?'🧠 Proposer une question pour gagner des crédits':
-              locale==='es'?'🧠 Propón una pregunta y gana créditos':'🧠 اقترح سؤالاً واكسب رصيدًا'}
+             {locale==='he'?'הצע שאלה חדשה וקבל קרדיטים':locale==='en'?'Suggest a question for credits':
+              locale==='ru'?'Предложить вопрос за кредиты':locale==='fr'?'Proposer une question pour gagner des crédits':
+              locale==='es'?'Propón una pregunta y gana créditos':'اقترح سؤالاً واكسب رصيدًا'}
            </a>
           <div className='wallet'>
             {([['🍎','פירות',remote?progress.fruits:(localReady?localWallet.fruits:0)],['💎','יהלומים',remote?progress.diamonds:(localReady?localWallet.diamonds:0)],['🪙','קרדיטים',currentCredits],['⭐','כוכבים',remote?(progress.stars||0):(localReady?localWallet.stars:0)],['❤️','לבבות',progress.hearts]] as const).map(([a,label,count]) =>
-              <div className='wallet-item' key={label}><span aria-hidden='true' style={{ fontSize: 24 }}>{a}</span><strong>{count}</strong><span>{tr(label)}</span></div>)}
+              <div className='wallet-item' key={label}>{({'🍎':'apple','💎':'gem','🪙':'coin','⭐':'star'} as Record<string,ObjectArt|'star'>)[a]?<GameImage name={({'🍎':'apple','💎':'gem','🪙':'coin','⭐':'star'} as Record<string,ObjectArt|'star'>)[a]} size={28}/>:null}<strong>{count}</strong><span>{tr(label)}</span></div>)}
           </div>
           <p className='smalltxt' style={{margin:'10px 0 5px'}}>{tr("⏳ כל שאלה: דקה. אפשר לקנות עוד 30 שניות ב־25 קרדיטים, פעם אחת לשאלה.")}</p>
           <p className='smalltxt' style={{margin:'0 0 9px'}}>{tr("♾️ קמע זמן מבטל את הטיימר עבורך עד סוף השלב. זוכים בקמע עם ניצחון במשחק מחובר או מקומי.")}</p>
           <p className='smalltxt' style={{margin:'0 0 8px'}}>{tr('קרדיטים זמינים: ')}{currentCredits} | {tr('קמעות זמן: ')}{currentCharms} {timeFreezeActive?tr('· ללא שעון כרגע'):''}</p>
           {!timeFreezeActive && currentCharms>0 && <button className='glass-button' disabled={busy} onClick={()=>void activateTimeCharm()}>{tr("הפעל קמע זמן עד סוף השלב")}</button>}
-          <p className='smalltxt' style={{marginBottom:0}}>🔥 {tr('רצף תשובות: ')}{streak} | ⭐ {tr('כיבושי בונוס: ')}{availableBonus}</p>
+          <p className='smalltxt' style={{marginBottom:0}}>{tr('רצף תשובות: ')}{streak} | {tr('כיבושי בונוס: ')}{availableBonus}</p>
           <p className='smalltxt' style={{marginBottom:0}}>{tr("אחרי שלוש תשובות נכונות תקבל שאלת זהב. הצלחה מעניקה שני אסימוני כיבוש. המשחק התחרותי נשאר ללא בונוסים משני ניקוד.")}</p>
         </section>
         <section className='glass-panel app-menu-pane' hidden={menuSection!=='account'}>
@@ -2095,10 +2172,13 @@ export default function TriviaGame() {
           </>
             : client ? <>
               <p className='smalltxt' style={{lineHeight:1.8,background:'#2E467A',borderRadius:12,padding:10}}>
-                {locale==='en'
-                   ? 'Registration is only needed for connected play. We collect your email and account ID. Your nickname, score and progress are saved to your account. You can play locally without signing up. Data is stored using Supabase and the website runs on Vercel.'
-                   : 'הרשמה נדרשת רק למשחקים מחוברים. נאסוף כתובת מייל ומזהה חשבון, ובמשחק נשמור כינוי, תוצאה והתקדמות. המסירה לבחירתך; ללא הרשמה ניתן לשחק מקומית. הפרטים נשמרים בעזרת Supabase והאתר מאוחסן ב-Vercel.'}
-                <a href={locale==='en'?'/en/privacy':'/privacy'} style={{color:'#FFE5A5'}}> {tr("למדיניות הפרטיות המלאה")}</a>.
+                {L6({en:'Registration is only needed for connected play. We collect your email and account ID. Your nickname, score and progress are saved to your account. You can play locally without signing up. Data is stored using Supabase and the website runs on Vercel.',
+                   he:'הרשמה נדרשת רק למשחקים מחוברים. נאסוף כתובת מייל ומזהה חשבון, ובמשחק נשמור כינוי, תוצאה והתקדמות. המסירה לבחירתך; ללא הרשמה ניתן לשחק מקומית. הפרטים נשמרים בעזרת Supabase והאתר מאוחסן ב-Vercel.',
+                   ru:'Регистрация нужна только для онлайн-игры. Мы сохраняем адрес электронной почты и идентификатор аккаунта, а в игре — ник, результат и прогресс. Это добровольно: без регистрации можно играть локально. Данные хранятся в Supabase, сайт размещён на Vercel.',
+                   fr:'L’inscription n’est nécessaire que pour jouer en ligne. Nous enregistrons votre e-mail et l’identifiant du compte, ainsi que votre pseudo, votre score et votre progression. C’est facultatif : sans inscription, vous pouvez jouer en local. Les données sont stockées avec Supabase et le site est hébergé par Vercel.',
+                   ar:'التسجيل مطلوب فقط للعب عبر الإنترنت. نحفظ بريدك الإلكتروني ومعرّف الحساب، وفي اللعبة الاسم المستعار والنتيجة والتقدم. التسجيل اختياري: يمكنك اللعب محليًا دون تسجيل. تُحفظ البيانات في Supabase ويُستضاف الموقع على Vercel.',
+                   es:'El registro solo es necesario para jugar en línea. Guardamos tu correo y el identificador de la cuenta, y en el juego tu apodo, puntuación y progreso. Es opcional: sin registro puedes jugar en local. Los datos se guardan con Supabase y el sitio está alojado en Vercel.'})}
+                <a href={locale==='he'?'/privacy':'/en/privacy'} style={{color:'#FFE5A5'}}> {tr("למדיניות הפרטיות המלאה")}</a>.
               </p>
               <label style={{display:'flex',gap:9,alignItems:'flex-start',margin:'10px 0'}}>
                 <input type='checkbox' checked={adultConfirmed} onChange={e=>setAdultConfirmed(e.target.checked)} style={{width:20,height:20,flexShrink:0}} />
@@ -2201,15 +2281,23 @@ export default function TriviaGame() {
           </div>)}
         </div>
         {wrongAnswerFeedback.correctIndex===null&&<p className='smalltxt' role='status'>{tr('לא ניתן לאמת כרגע את התשובה הנכונה. אפשר להמשיך במשחק.')}</p>}
-        <button className='gold-button answer-feedback-continue' type='button' autoFocus
-          onClick={()=>setWrongAnswerFeedback(null)}>{tr('המשך למשחק')}</button>
+        <div className='answer-feedback-actions'>
+          <button className='gold-button answer-feedback-continue' type='button' autoFocus
+            onClick={()=>setWrongAnswerFeedback(null)}>{tr('המשך למשחק')}</button>
+          {client&&typeof wrongAnswerFeedback.questionId==='number'&&wrongAnswerFeedback.questionId>0&&wrongAnswerFeedback.correctIndex!==null&&
+            <button className='glass-button answer-appeal-button' type='button' data-testid='answer-appeal'
+              disabled={appealState==='sending'||appealState==='sent'} onClick={()=>void sendAppeal()}>
+              {appealState==='sending'?appealText(locale).sending:appealText(locale).appeal}</button>}
+        </div>
+        {(appealState==='sent'||appealState==='failed')&&<p className='smalltxt answer-appeal-status' role='status'>
+          {appealState==='sent'?appealText(locale).sent:appealText(locale).failed}</p>}
       </section>
     </div>}
     {question && <div className='quiz-overlay' role='presentation'>
       <section className='quiz-card' role='dialog' aria-modal='true' aria-label={tr('שאלת טריוויה')}>
-        <span className='quiz-badge'>{question.kind==='premium_bonus'?'💎 '+tr('שאלת פרימיום · ניקוד ופרסים כפולים'):question.premium?'✨ '+tr('שאלת פרימיום · תשובה נכונה תפתח בונוס'):tr(question.kind==='bonus'?'✨ שאלת זהב: הזדמנות לשני כיבושים ✨':'⭐ רק תשובה נכונה תסגור את הקו ⭐')}</span>
+        <span className='quiz-badge'>{question.kind==='premium_bonus'?tr('שאלת פרימיום · ניקוד ופרסים כפולים'):question.premium?tr('שאלת פרימיום · תשובה נכונה תפתח בונוס'):tr(question.kind==='bonus'?'✨ שאלת זהב: הזדמנות לשני כיבושים ✨':'⭐ רק תשובה נכונה תסגור את הקו ⭐')}</span>
         <div className={'question-timer '+((secondsLeft??60)<=10?'urgent':'')} role='timer' aria-live='off'>
-          <span className='hourglass-spin' aria-hidden='true'>⌛</span>
+          <span className='question-timer-art' aria-hidden='true'><GameImage name='stopwatch' size={30}/></span>
           {question.deadline_at===null || timeFreezeActive
             ? <span>∞ <span className='clock-label'>{tr("קמע זמן פעיל עד סוף השלב")}</span></span>
             : <span>{timerText} <span className='clock-label'>{tr("נותרו לענות")}</span></span>}
@@ -2217,7 +2305,7 @@ export default function TriviaGame() {
         <h2>{question.text}</h2>
         <div className='control-row' style={{marginBottom:13}}>
           {showTimer && <button className='glass-button' disabled={busy || currentCredits<25 || (question.extensions||0)>=1 || (secondsLeft??0)<=0}
-            onClick={()=>void extendQuestionTime()}>⏳ {tr('+30 שניות · 25 קרדיטים')} ({currentCredits})</button>}
+            onClick={()=>void extendQuestionTime()}>{tr('+30 שניות · 25 קרדיטים')} ({currentCredits})</button>}
           {!timeFreezeActive && currentCharms>0 && <button className='gold-button' disabled={busy}
             onClick={()=>void activateTimeCharm()}>♾️ {tr('הפעל קמע זמן')} ({currentCharms})</button>}
         </div>
@@ -2231,7 +2319,8 @@ export default function TriviaGame() {
           </div>)}
         </div>
         {typeof question.id==='number' && question.id>0 && <QuestionReportButton client={client} userId={user?.id||null} legalAccepted={legalAccepted}
-          questionId={question.id} locale={locale}/>}
+          questionId={question.id} locale={locale} questionText={question.text} answers={question.answers}
+          source={remote?'server':isBundledQuestion(question.id)?'bundled':'server'}/>}
         <p className='smalltxt' style={{ textAlign: 'center', marginBottom: 0 }}>{tr(question.kind==='premium_bonus'?'תשובה נכונה מעניקה עד שני כיבושים סמוכים, ניקוד ופרסים כפולים. אם נשאר ריבוע אחד ייכבש רק הוא.':question.kind==='bonus'?'תשובה נכונה מעניקה שני אסימוני כיבוש זהב':'תשובה שגויה משאירה את הקו פתוח ומעבירה את התור')}</p>
       </section>
     </div>}

@@ -452,20 +452,7 @@ export const spanishQuestions:SpanishQuestion[]=[
   ],
   "correct": 0
  },
- {
-  "id": 44186,
-  "locale": "es",
-  "category": "Series israelíes",
-  "difficulty": 2,
-  "text": "¿Qué actriz interpretó a la tía Hanna en la serie Krovim Krovim?",
-  "answers": [
-   "Hanna Maron",
-   "Tiki Dayan",
-   "Laura Rivlin",
-   "Rivka Michaeli"
-  ],
-  "correct": 0
- },
+ 
  {
   "id": 44187,
   "locale": "es",
@@ -578,20 +565,7 @@ export const spanishQuestions:SpanishQuestion[]=[
   ],
   "correct": 2
  },
- {
-  "id": 44195,
-  "locale": "es",
-  "category": "Series israelíes",
-  "difficulty": 2,
-  "text": "¿Qué actriz interpretó a Tiki en Krovim Krovim?",
-  "answers": [
-   "Laura Rivlin",
-   "Tiki Dayan",
-   "Hanna Maron",
-   "Galia Kedem"
-  ],
-  "correct": 1
- },
+ 
  {
   "id": 44196,
   "locale": "es",
@@ -807,14 +781,9 @@ export const spanishQuestions:SpanishQuestion[]=[
   "locale": "es",
   "category": "Capitales del mundo",
   "difficulty": 2,
-  "text": "¿Cuál es la capital de Brasil?",
-  "answers": [
-   "London",
-   "Canberra",
-   "Brasília",
-   "New Delhi"
-  ],
-  "correct": 2
+  "text": "¿Cuál es la capital de Canadá?",
+  "answers": ["Toronto", "Ottawa", "Vancouver", "Montreal"],
+  "correct": 1
  },
  {
   "id": 44212,
@@ -942,20 +911,7 @@ export const spanishQuestions:SpanishQuestion[]=[
   ],
   "correct": 0
  },
- {
-  "id": 44221,
-  "locale": "es",
-  "category": "Series israelíes",
-  "difficulty": 2,
-  "text": "¿Quién interpretó a Yehoram en Krovim Krovim?",
-  "answers": [
-   "Yehoram Gaon",
-   "Ilan Dar",
-   "Muli Segev",
-   "Doron Nesher"
-  ],
-  "correct": 0
- },
+ 
  {
   "id": 44222,
   "locale": "es",
@@ -1586,20 +1542,7 @@ export const spanishQuestions:SpanishQuestion[]=[
   ],
   "correct": 2
  },
- {
-  "id": 44267,
-  "locale": "es",
-  "category": "Series israelíes",
-  "difficulty": 2,
-  "text": "¿Qué actor interpretó a Ilan en Krovim Krovim?",
-  "answers": [
-   "Ilan Dar",
-   "Yehoram Gaon",
-   "Doron Nesher",
-   "Muli Segev"
-  ],
-  "correct": 0
- },
+ 
  {
   "id": 44268,
   "locale": "es",

@@ -50,15 +50,6 @@ function condition(code:number,locale:ActiveLocale){
  else if(code>=95)name='Thunderstorms';
  return weatherTranslations[locale][name];
 }
-function weatherIcon(code:number,day:number){
- if(code===0)return day===1?'☀️':'🌙';
- if(code<=3)return '⛅';
- if(code<=48)return '🌫️';
- if(code<=67)return '🌧️';
- if(code<=77)return '❄️';
- if(code<=82)return '🌦️';
- return '⛈️';
-}
 export default function GameTimeBar({locale}:{locale:ActiveLocale}){
  const [now,setNow]=useState<Date|null>(null);
  const [cityId,setCityId]=useState('harish');
@@ -130,7 +121,7 @@ export default function GameTimeBar({locale}:{locale:ActiveLocale}){
      </select>
      <strong className='game-weather-display' aria-live='polite'>
        {weatherLoading?words.loading:weatherError||!weather?words.unavailable:
-         weatherIcon(weather.weather_code,weather.is_day)+' '+Math.round(weather.temperature_2m)+'°C · '+condition(weather.weather_code,locale)}
+         Math.round(weather.temperature_2m)+'°C · '+condition(weather.weather_code,locale)}
      </strong>
      <a className='game-weather-source' href='https://open-meteo.com/' target='_blank' rel='noopener noreferrer'>{words.source}</a>
    </div>

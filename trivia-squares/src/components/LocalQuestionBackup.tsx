@@ -9,7 +9,16 @@ type Backup={format:'trivia-squares-history';version:1;exportedAt:string;questio
 export default function LocalQuestionBackup({locale,onRestored}:{locale:ActiveLocale;onRestored:(questions:string[])=>void}){
   const input=useRef<HTMLInputElement>(null);
   const [status,setStatus]=useState('');
-  const en=locale==='en';
+  // Status messages fall back to English outside Hebrew; the visible labels are native in all six languages.
+  const en=locale!=='he';
+  const L={
+    he:{summary:'גיבוי ושחזור היסטוריית שאלות',body:'ללא חשבון, מחיקת נתוני הדפדפן תמחק גם את ההיסטוריה המקומית. אפשר להוריד גיבוי ולשחזר אותו כאן, או להתחבר כדי לסנכרן בין מכשירים.',download:'הורד גיבוי שאלות',restore:'שחזר גיבוי',file:'בחר קובץ גיבוי היסטוריה'},
+    en:{summary:'Question history backup & restore',body:'Without an account, clearing browser data erases the local history. Download a backup and restore it here later, or sign in to sync across devices.',download:'Download history backup',restore:'Restore a backup',file:'Choose history backup file'},
+    ru:{summary:'Резервная копия истории вопросов',body:'Без аккаунта очистка данных браузера удалит и локальную историю. Скачайте копию и восстановите её здесь позже или войдите, чтобы синхронизировать устройства.',download:'Скачать копию',restore:'Восстановить копию',file:'Выберите файл копии'},
+    fr:{summary:'Sauvegarde de l’historique des questions',body:'Sans compte, effacer les données du navigateur efface aussi l’historique local. Téléchargez une sauvegarde pour la restaurer ici plus tard, ou connectez-vous pour synchroniser vos appareils.',download:'Télécharger la sauvegarde',restore:'Restaurer une sauvegarde',file:'Choisir le fichier de sauvegarde'},
+    ar:{summary:'نسخ احتياطي لسجل الأسئلة',body:'بدون حساب، يؤدي مسح بيانات المتصفح إلى حذف السجل المحلي أيضًا. نزّل نسخة احتياطية واستعدها هنا لاحقًا، أو سجّل الدخول للمزامنة بين الأجهزة.',download:'تنزيل النسخة الاحتياطية',restore:'استعادة نسخة احتياطية',file:'اختر ملف النسخة الاحتياطية'},
+    es:{summary:'Copia de seguridad del historial de preguntas',body:'Sin cuenta, borrar los datos del navegador elimina también el historial local. Descarga una copia y restáurala aquí más tarde, o inicia sesión para sincronizar dispositivos.',download:'Descargar copia',restore:'Restaurar copia',file:'Elegir archivo de copia'}
+  }[locale];
   function exportBackup(){
     try{
       const parsed=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
@@ -51,15 +60,13 @@ export default function LocalQuestionBackup({locale,onRestored}:{locale:ActiveLo
     }finally{if(input.current)input.current.value='';}
   }
   return <details className='local-history-backup'>
-    <summary>{en?'Question history backup & restore':'גיבוי ושחזור היסטוריית שאלות'}</summary>
-    <p>{en
-      ?'Without an account, clearing browser data erases the local history. Download a backup and restore it here later, or sign in to sync across devices.'
-      :'ללא חשבון, מחיקת נתוני הדפדפן תמחק גם את ההיסטוריה המקומית. אפשר להוריד גיבוי ולשחזר אותו כאן, או להתחבר כדי לסנכרן בין מכשירים.'}</p>
+    <summary>{L.summary}</summary>
+    <p>{L.body}</p>
     <div className='control-row'>
-      <button type='button' className='glass-button' onClick={exportBackup}>{en?'Download history backup':'הורד גיבוי שאלות'}</button>
-      <button type='button' className='glass-button' onClick={()=>input.current?.click()}>{en?'Restore a backup':'שחזר גיבוי'}</button>
+      <button type='button' className='glass-button' onClick={exportBackup}>{L.download}</button>
+      <button type='button' className='glass-button' onClick={()=>input.current?.click()}>{L.restore}</button>
       <input ref={input} id='guest-history-file' type='file' accept='.json,application/json' style={{display:'none'}}
-        onChange={event=>void importBackup(event.target.files?.[0])} aria-label={en?'Choose history backup file':'בחר קובץ גיבוי היסטוריה'} />
+        onChange={event=>void importBackup(event.target.files?.[0])} aria-label={L.file} />
     </div>
     <p role='status' aria-live='polite'>{status}</p>
   </details>;
