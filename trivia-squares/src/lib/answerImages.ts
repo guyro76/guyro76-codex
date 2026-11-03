@@ -13,4 +13,7 @@ export const ANSWER_IMAGES:Readonly<Record<number,AnswerImage>>={
   990089:{src:'/answer-images/990089.webp',w:640,h:640,author:"Matúš Motlo",license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',page:'https://commons.wikimedia.org/wiki/File:The_Sun_in_white_light.jpg'},
   990091:{src:'/answer-images/990091.webp',w:429,h:640,author:"Leonardo da Vinci",license:'Public domain',licenseUrl:'',page:'https://commons.wikimedia.org/wiki/File:Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg'},
   990092:{src:'/answer-images/990092.webp',w:425,h:640,author:"Thurundir",license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',page:'https://commons.wikimedia.org/wiki/File:Gorille_des_plaines_de_l%27ouest_%C3%A0_l%27Espace_Zoologique.jpg'},
+  990004:{src:'/answer-images/990004.webp',w:640,h:480,author:"Hagai Agmon-Snir",license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',page:'https://commons.wikimedia.org/wiki/File:MakhteshRamonMar262022_01.jpg'},
+  990009:{src:'/answer-images/990009.webp',w:640,h:480,author:"لا روسا",license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',page:'https://commons.wikimedia.org/wiki/File:Dead_Sea_beach_00.JPG'},
+  990011:{src:'/answer-images/990011.webp',w:640,h:427,author:"Jotpe",license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',page:'https://commons.wikimedia.org/wiki/File:View_of_Agamon_Hula.JPG'},
 };
