@@ -24,6 +24,8 @@ import { languageQuestions } from '../lib/languageQuestions';
 import { curatedHebrewQuestions } from '../lib/curatedHebrewQuestions';
 import { languageForPronunciation, speakLanguageAnswer } from '../lib/languageSpeech';
 import { findLocalQuestion,isBundledQuestion } from '../lib/localQuestionLookup';
+import {ANSWER_IMAGES} from '../lib/answerImages';
+import AnswerImage from '../components/AnswerImage';
 import {applyQuestionCorrections,loadCachedQuestionCorrections,setQuestionCorrections,type CorrectionRow} from '../lib/questionCorrections';
 import {submitAppeal,fetchAppealStatuses,claimAppealCompensation,storedAppeals,saveAppeals,appealText,APPEAL_CREDITS,type AppealSource} from '../lib/answerAppeals';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
@@ -371,6 +373,9 @@ export default function TriviaGame() {
   const googlePhoto = /^https:\/\//i.test(googlePhotoRaw) ? googlePhotoRaw : '';
   // Appeals and question reports: corrections from the hourly review engine, and decisions on this device's appeals.
   const [appealState,setAppealState]=useState<'idle'|'sending'|'sent'|'failed'>('idle');
+  // After a correct answer that has a free-licensed photo: a short, dismissible reveal card.
+  const [answerReveal,setAnswerReveal]=useState<{id:number;answer:string}|null>(null);
+  useEffect(()=>{if(!answerReveal)return;const t=window.setTimeout(()=>setAnswerReveal(null),5200);return()=>window.clearTimeout(t)},[answerReveal]);
   useEffect(()=>{setAppealState('idle')},[wrongAnswerFeedback]);
   const appealSyncRef=useRef(false);
   useEffect(()=>{
@@ -1114,6 +1119,7 @@ export default function TriviaGame() {
         }
         setQuestion(null);setEdge(null);setBusy(false);return;
       }
+      if(correct&&typeof question.id==='number'&&ANSWER_IMAGES[question.id])setAnswerReveal({id:question.id,answer:question.answers[q.correct]});
       if(!correct){
         setWrongAnswerFeedback({text:question.text,answers:[...question.answers],selectedIndex:i,correctIndex:q.correct,
           questionId:question.id,source:isBundledQuestion(question.id)?'bundled':'server',edge,board:stageId+':'+local.rows+'x'+local.cols});
@@ -2270,6 +2276,11 @@ export default function TriviaGame() {
         </div>
       </section>
     </div>}
+    {answerReveal&&ANSWER_IMAGES[answerReveal.id]&&!question&&<aside className='answer-reveal' role='status' aria-live='polite' data-testid='answer-reveal'>
+      <div className='answer-reveal-head'><span><strong>{L6({he:'נכון!',en:'Correct!',ru:'Верно!',fr:'Exact !',ar:'صحيح!',es:'¡Correcto!'})}</strong> {answerReveal.answer}</span>
+        <button type='button' aria-label={L6({he:'סגור',en:'Close',ru:'Закрыть',fr:'Fermer',ar:'إغلاق',es:'Cerrar'})} onClick={()=>setAnswerReveal(null)}>✕</button></div>
+      <AnswerImage image={ANSWER_IMAGES[answerReveal.id]} locale={locale} alt={answerReveal.answer} compact/>
+    </aside>}
     {wrongAnswerFeedback && <div className='quiz-overlay answer-feedback-overlay' role='presentation'>
       <section className='quiz-card answer-feedback-card' role='dialog' aria-modal='true' aria-labelledby='wrong-answer-title'
         aria-describedby='wrong-answer-description' tabIndex={-1}>
@@ -2284,6 +2295,9 @@ export default function TriviaGame() {
             <span>{answer}</span>
           </div>)}
         </div>
+        {typeof wrongAnswerFeedback.questionId==='number'&&ANSWER_IMAGES[wrongAnswerFeedback.questionId]&&wrongAnswerFeedback.correctIndex!==null&&
+          <AnswerImage image={ANSWER_IMAGES[wrongAnswerFeedback.questionId]} locale={locale}
+            alt={wrongAnswerFeedback.answers[wrongAnswerFeedback.correctIndex]}/>}
         {wrongAnswerFeedback.correctIndex===null&&<p className='smalltxt' role='status'>{tr('לא ניתן לאמת כרגע את התשובה הנכונה. אפשר להמשיך במשחק.')}</p>}
         <div className='answer-feedback-actions'>
           <button className='gold-button answer-feedback-continue' type='button' autoFocus
