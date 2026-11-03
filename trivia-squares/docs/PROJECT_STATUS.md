@@ -28,6 +28,7 @@ Statuses: TODO · IN_PROGRESS · CODE_COMPLETE · TESTED · DEPLOYED · VERIFIED
 | Ultra QA (independent, live site) | VERIFIED | Verdict "ready with fixes"; all high/medium findings fixed, low items listed below |
 | Robot artwork for the computer opponent (Gemini, transparent WebP) — PR #105 | DEPLOYED | Live: /art/robot.webp 384px, mapping in the production bundle; bot mode needs a signed-in account, so not hand-played |
 | Ultra QA low items: 16 duplicate questions no longer dealt, device preview behind ?devtools=1, menu subtitle in 6 languages — PR #106 | VERIFIED | CI 14/14; live: preview hidden by default and shown with ?devtools=1, Arabic menu title translated, duplicate list in production bundle |
+| Faster first screen: welcome screen in the server HTML, game loads as its own chunk; returning players skip the welcome before first paint — PR #108 | VERIFIED | Home first-load JS 358 → 115 kB; live Lighthouse mobile perf 0.86–0.93 (was 0.78–0.80), LCP 1.8–2.4 s (was 3.8 s), a11y/BP/SEO 1.0, desktop perf 1.0; live at 390/768/1366/1920: welcome → board, board 340/679/587/876 px, no horizontal scroll, no page errors, returning players see no welcome flash; full E2E 182/182 locally, CI 14/14 |
 
 ## Decisions waiting for the owner
 1. Publishing on Google Play: $25 developer fee, then a 12-tester × 14-day closed test (`docs/ANDROID_PLAY_RELEASE_HE.md`).
@@ -35,7 +36,7 @@ Statuses: TODO · IN_PROGRESS · CODE_COMPLETE · TESTED · DEPLOYED · VERIFIED
 3. Legal launch blockers in `docs/ISRAEL_LEGAL_COMPLIANCE_HE.md`: operator identity and contact address in the privacy policy, external legal review, minors policy.
 
 ## Open items (next)
-1. Mobile LCP ~3.8s: the home page ships 358 kB of first-load JS because every language's question bank is bundled; split banks per locale (needs care: the answer lookup imports all banks).
+1. Game chunk is 184 kB gzip (all six question banks inside). Splitting banks per locale would save roughly 25 kB gzip for Hebrew players; low priority after #108.
 2. Checked and closed: Arabic chapter navigation fits one row at 390px; time-sensitive questions are all date-anchored ("until 2026", "October 2026 chart"), so they stay true.
 3. Question bank: most server rows are one generated "which country/city" template; more verified non-geography content needed (no invented facts).
 4. Older skins (urban, vintage, retro, pop, future) still carry legacy styling.
