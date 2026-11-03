@@ -11,7 +11,9 @@ import {curatedHebrewQuestions} from '../src/lib/curatedHebrewQuestions';
 const canon=(t:string)=>t.normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 const varied=[...offlineQuestions.filter(q=>!(q as {locale?:string}).locale||(q as {locale?:string}).locale==='he'),
  ...freshLocalQuestionReserve.filter(q=>q.locale==='he'),...languageQuestions.filter(q=>q.locale==='he'),...curatedHebrewQuestions];
-const cities=Array.from({length:100},(_,i)=>({id:i+1,locale:'he',category:'גאוגרפיה',
+// Keep these synthetic city IDs off the premium boundary after the remote +1_000_000_000 offset.
+// This test checks the geography/suggestion cadence, not the separate premium-bonus path.
+const cities=Array.from({length:100},(_,i)=>({id:i*11+2,locale:'he',category:'גאוגרפיה',
  text:'באיזו מדינה נמצאת העיר בדיקה'+(i+1)+'?',answers:['צרפת','איטליה','ספרד','גרמניה'],correct:0,difficulty:2}));
 const answerKey=new Map<string,number>([...varied.map(q=>[q.text,q.correct] as [string,number]),...cities.map(q=>[q.text,q.correct] as [string,number])]);
 
