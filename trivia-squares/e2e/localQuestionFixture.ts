@@ -28,6 +28,8 @@ export async function useOfflineQuestionFixtures(page:Page):Promise<void>{
   await page.route('**/rest/v1/rpc/trivia_submit_answer_appeal**',stub('9001'));
   await page.route('**/rest/v1/rpc/trivia_my_appeals**',stub('[]'));
   await page.route('**/rest/v1/rpc/trivia_bundled_question_corrections**',stub('[]'));
+  // Server-side answer checks: tests use their own fixture answers, never the live bank.
+  await page.route('**/rest/v1/rpc/trivia_check_local_answer**',stub('{"found":false}'));
 }
 
 const bank=[...offlineQuestions,...freshLocalQuestionReserve,...languageQuestions,...curatedHebrewQuestions];

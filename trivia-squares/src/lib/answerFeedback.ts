@@ -1,10 +1,10 @@
 import type {ActiveLocale} from './i18n';
 
-export type AnswerFeedbackOptions={correct:boolean;gained:number;bonus?:boolean};
+export type AnswerFeedbackOptions={correct:boolean;gained:number;bonus?:boolean;solo?:boolean};
 
 /** Native-language, numerically accurate feedback for local and online games.
  * The server remains authoritative for scores; this function only formats text. */
-export function answerFeedback(locale:ActiveLocale,{correct,gained,bonus=false}:AnswerFeedbackOptions):string{
+export function answerFeedback(locale:ActiveLocale,{correct,gained,bonus=false,solo=false}:AnswerFeedbackOptions):string{
  const squares=Math.max(0,Math.trunc(gained));
  const credits=5+squares*10;
  if(bonus){
@@ -17,6 +17,15 @@ export function answerFeedback(locale:ActiveLocale,{correct,gained,bonus=false}:
    es:['¡Pregunta dorada superada! Ganaste dos capturas extra.','Pregunta dorada fallida. Inténtalo después de una nueva racha.']
   };
   return messages[locale][correct?0:1];
+ }
+ if(!correct&&solo){
+  // Solo play has no other player: the line simply stays open.
+  const wrongSolo:Record<ActiveLocale,string>={
+   he:'תשובה שגויה. הקו נשאר פתוח, אפשר לנסות קו אחר.',en:'Wrong answer. The line stays open, try another one.',
+   ru:'Неверный ответ. Линия остаётся открытой, попробуйте другую.',fr:'Mauvaise réponse. Le trait reste libre, essayez-en un autre.',
+   ar:'إجابة غير صحيحة. يبقى الخط مفتوحًا، جرّب خطًا آخر.',es:'Respuesta incorrecta. La línea queda libre, prueba otra.'
+  };
+  return wrongSolo[locale];
  }
  if(!correct){
   const wrong:Record<ActiveLocale,string>={

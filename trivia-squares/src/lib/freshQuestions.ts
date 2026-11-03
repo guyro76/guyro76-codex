@@ -34,14 +34,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90002,
     "category": "עולם וטבע",
-    "text": "באיזו יבשת נמצאת מדינת צ'ילה?",
-    "answers": [
-      "אירופה",
-      "אפריקה",
-      "אסיה",
-      "דרום אמריקה"
-    ],
-    "correct": 3,
+    "text": "מהי בירת צ׳ילה?",
+    "answers": ["ולפראיסו", "סנטיאגו", "לימה", "לה פאס"],
+    "correct": 1,
     "difficulty": 3
   },
   {
@@ -76,28 +71,18 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90005,
     "category": "עולם וטבע",
-    "text": "באיזו מדינה נמצא הר פוג'י?",
-    "answers": [
-      "יפן",
-      "סין",
-      "נפאל",
-      "הודו"
-    ],
-    "correct": 0,
+    "text": "על איזה מהאיים הראשיים של יפן נמצא הר פוג׳י?",
+    "answers": ["הוקאידו", "הונשו", "קיושו", "שיקוקו"],
+    "correct": 1,
     "difficulty": 3
   },
   {
     "locale": "he",
     "id": 90006,
     "category": "עולם וטבע",
-    "text": "באיזו מדינה נמצאת העיר ונציה?",
-    "answers": [
-      "צרפת",
-      "ספרד",
-      "פורטוגל",
-      "איטליה"
-    ],
-    "correct": 3,
+    "text": "מהו הגשר העתיק ביותר החוצה את התעלה הגדולה בוונציה?",
+    "answers": ["גשר ריאלטו", "גשר האקדמיה", "גשר האנחות", "גשר הסקאלצי"],
+    "correct": 0,
     "difficulty": 1
   },
   {
@@ -146,14 +131,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90010,
     "category": "מדע וטבע",
-    "text": "מה שמו של תהליך הפיכת זחל לפרפר?",
-    "answers": [
-      "התאדות",
-      "נביטה",
-      "האבקה",
-      "גלגול"
-    ],
-    "correct": 3,
+    "text": "איך נקרא שלב הביניים בין הזחל לפרפר הבוגר?",
+    "answers": ["נימפה", "גולם", "רימה", "ביצה"],
+    "correct": 1,
     "difficulty": 2
   },
   {
@@ -216,14 +196,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90015,
     "category": "מדע וטבע",
-    "text": "איך נקראת שכבת הקרח הגדולה שמכסה חלקים מיבשות?",
-    "answers": [
-      "דיונה",
-      "שונית",
-      "קרחון יבשתי",
-      "סוואנה"
-    ],
-    "correct": 2,
+    "text": "איזה אי מכוסה ברובו (כ-80% משטחו) במעטה קרח?",
+    "answers": ["איסלנד", "גרינלנד", "ספיצברגן", "ניופאונדלנד"],
+    "correct": 1,
     "difficulty": 1
   },
   {
@@ -244,14 +219,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90017,
     "category": "היסטוריה ותרבות",
-    "text": "באיזו מדינה פעלו לוחמי הסמוראים?",
-    "answers": [
-      "יפן",
-      "איטליה",
-      "אינדונזיה",
-      "מקסיקו"
-    ],
-    "correct": 0,
+    "text": "איך נקרא קוד ההתנהגות והכבוד של הסמוראים?",
+    "answers": ["איקיגאי", "בושידו", "קאיזן", "וואבי-סאבי"],
+    "correct": 1,
     "difficulty": 3
   },
   {
@@ -300,14 +270,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90021,
     "category": "היסטוריה ותרבות",
-    "text": "איזו ציוויליזציה עתיקה בנתה את הקולוסיאום?",
-    "answers": [
-      "הרומאים",
-      "הפרסים",
-      "האצטקים",
-      "המצרים"
-    ],
-    "correct": 0,
+    "text": "כמה צופים בערך הכיל הקולוסיאום ברומא?",
+    "answers": ["כ-5,000", "כ-50,000", "כ-250,000", "כ-500,000"],
+    "correct": 1,
     "difficulty": 1
   },
   {
@@ -342,9 +307,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90024,
     "category": "קולנוע",
-    "text": "מה שמו של הפנדה בסדרת הסרטים 'קונג פו פנדה'?",
-    "answers": ["פו", "שיפו", "טאי לונג", "מאסטר אוגווי"],
-    "correct": 0,
+    "text": "בסרט \"קונג פו פנדה\", איזה בעל חיים הוא מר פינג, אביו המאמץ של פו?",
+    "answers": ["ברווז", "אווז", "תרנגול", "אנפה"],
+    "correct": 1,
     "difficulty": 1
   },
   {
@@ -593,27 +558,17 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90043,
     "category": "ספורט",
-    "text": "באיזה ספורט מתחרים בווימבלדון?",
-    "answers": [
-      "גולף",
-      "קריקט",
-      "טניס",
-      "רוגבי"
-    ],
-    "correct": 2,
+    "text": "על איזה משטח משחקים בטורניר ווימבלדון?",
+    "answers": ["חימר", "דשא", "משטח קשה", "שטיח"],
+    "correct": 1,
     "difficulty": 2
   },
   {
     "locale": "he",
     "id": 90044,
     "category": "אוכל ותרבות",
-    "text": "איזה פרי הוא המרכיב העיקרי בגוואקמולי?",
-    "answers": [
-      "מנגו",
-      "אבוקדו",
-      "אננס",
-      "תפוח"
-    ],
+    "text": "שם המאכל \"גוואקמולי\" מקורו בשפתו של איזה עם?",
+    "answers": ["המאיה", "האצטקים", "האינקה", "הטאינו"],
     "correct": 1,
     "difficulty": 3
   },
@@ -621,42 +576,27 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90045,
     "category": "אוכל ותרבות",
-    "text": "איזה סוג קטנייה משמש להכנת פלאפל מסורתי בישראל?",
-    "answers": [
-      "חומוס",
-      "אפונה ירוקה",
-      "שעועית אדומה",
-      "פול סויה"
-    ],
-    "correct": 0,
+    "text": "מאיזו קטנייה מכינים במצרים את הפלאפל המסורתי (טעמייה)?",
+    "answers": ["חומוס", "פול", "עדשים", "אפונה"],
+    "correct": 1,
     "difficulty": 1
   },
   {
     "locale": "he",
     "id": 90046,
     "category": "אוכל ותרבות",
-    "text": "עם איזו מדינה מזוהה המאכל פאייה?",
-    "answers": [
-      "איטליה",
-      "גרמניה",
-      "יפן",
-      "ספרד"
-    ],
-    "correct": 3,
+    "text": "מאיזה אזור בספרד מגיעה הפאייה במקור?",
+    "answers": ["אנדלוסיה", "ולנסיה", "קטלוניה", "גליסיה"],
+    "correct": 1,
     "difficulty": 2
   },
   {
     "locale": "he",
     "id": 90047,
     "category": "אוכל ותרבות",
-    "text": "איזה משקה מיוצר בדרך כלל מעלי צמח הקמיליה הסינית?",
-    "answers": [
-      "קקאו",
-      "מיץ ענבים",
-      "תה",
-      "חלב שיבולת שועל"
-    ],
-    "correct": 2,
+    "text": "מאיזה סוג תה מכינים את אבקת המאצ׳ה היפנית?",
+    "answers": ["תה שחור", "תה ירוק", "תה אולונג", "תה לבן"],
+    "correct": 1,
     "difficulty": 3
   },
   {
@@ -691,28 +631,18 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90050,
     "category": "ישראל",
-    "text": "איזו ימה בצפון ישראל היא מקור מים מתוקים?",
-    "answers": [
-      "ים המלח",
-      "הים התיכון",
-      "ים סוף",
-      "הכנרת"
-    ],
-    "correct": 3,
+    "text": "באיזה קיבוץ על חוף הכנרת מוצגת \"סירת ישו\" בת כאלפיים השנים?",
+    "answers": ["עין גב", "גינוסר", "דגניה א׳", "האון"],
+    "correct": 1,
     "difficulty": 3
   },
   {
     "locale": "he",
     "id": 90051,
     "category": "ישראל",
-    "text": "איזה חג יהודי מציין את יציאת מצרים?",
-    "answers": [
-      "סוכות",
-      "חנוכה",
-      "פסח",
-      "שבועות"
-    ],
-    "correct": 2,
+    "text": "מה מסמלת החרוסת שבקערת ליל הסדר?",
+    "answers": ["את דמעות העבדים", "את הטיט שבו עבדו בני ישראל", "את מרירות השעבוד", "את קורבן הפסח"],
+    "correct": 1,
     "difficulty": 1
   },
   {
@@ -1413,14 +1343,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "en",
     "id": 90103,
     "category": "Technology",
-    "text": "What is the name of the open web platform created by Tim Berners-Lee?",
-    "answers": [
-      "Bluetooth",
-      "GPS",
-      "World Wide Web",
-      "Wi-Fi"
-    ],
-    "correct": 2,
+    "text": "In which year did Tim Berners-Lee first propose the World Wide Web at CERN?",
+    "answers": ["1979", "1989", "1995", "2001"],
+    "correct": 1,
     "difficulty": 1
   },
   {
