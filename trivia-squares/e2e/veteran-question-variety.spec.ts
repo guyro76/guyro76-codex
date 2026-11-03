@@ -21,6 +21,7 @@ test('veteran with only city questions left gets one city, then is asked to sugg
  test.skip(info.project.name!=='chromium-desktop','Selection logic is device independent');
  test.setTimeout(60_000);
  await page.route('**/rest/v1/rpc/trivia_local_culture_batch**',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'[]'}));
+ await page.route('**/rest/v1/rpc/trivia_check_local_answer**',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"found":false}'}));
  await page.route('**/rest/v1/rpc/trivia_local_question_batch**',async r=>{
   const body=JSON.parse(r.request().postData()||'{}');
   const rows=Number(body.p_after_id)>0?[]:cities;

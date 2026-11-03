@@ -877,14 +877,9 @@ export const englishCuratedQuestions:EnglishQuestion[]=[
   {
     "id": 1067,
     "category": "Sports and games",
-    "text": "Which sport is played on ice with a puck?",
-    "answers": [
-      "Field hockey",
-      "Lacrosse",
-      "Ice hockey",
-      "Handball"
-    ],
-    "correct": 2,
+    "text": "How many players from each team are on the ice in ice hockey, including the goalie?",
+    "answers": ["5", "6", "7", "11"],
+    "correct": 1,
     "difficulty": 2
   },
   {
