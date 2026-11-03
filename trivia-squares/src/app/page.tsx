@@ -1,9 +1,21 @@
 'use client';
 import {useEffect,useState} from 'react';
-import TriviaGame from './game';
+import dynamic from 'next/dynamic';
 import WelcomeScreen from '../components/WelcomeScreen';
 
-type Entry='loading'|'welcome'|'game';
+/* The game (board, question banks in six languages, mini-games) is the heavy part of the app.
+ * It loads as its own chunk, so first-time visitors see the welcome screen from the server HTML
+ * without waiting for it. Returning players skip the welcome screen: an inline script in the
+ * layout marks <html> before the first paint, CSS hides the welcome markup, and the game chunk
+ * starts downloading at once. */
+const loadGame=()=>import('./game');
+const TriviaGame=dynamic(loadGame,{ssr:false,loading:()=><GameLoading/>});
+
+function GameLoading(){
+ return <main role="status" aria-label="Loading Trivia Squares" className="ts-game-loading" style={{minHeight:'100dvh',background:'#111C48'}}/>;
+}
+
+type Entry='first-paint'|'welcome'|'game';
 function hasSavedPlay(){
  try{
   if(localStorage.getItem('trivia-welcome-dismissed-v1')==='1')return true;
@@ -20,12 +32,23 @@ function hasSavedPlay(){
  return false;
 }
 export default function HomePage(){
- const [entry,setEntry]=useState<Entry>('loading');
- useEffect(()=>{setEntry(hasSavedPlay()?'game':'welcome')},[]);
- if(entry==='loading')return <main role="status" aria-label="Loading Trivia Squares" style={{minHeight:'100dvh',background:'#111C48'}}/>;
- if(entry==='welcome')return <WelcomeScreen onStart={()=>{
+ const [entry,setEntry]=useState<Entry>('first-paint');
+ useEffect(()=>{
+  const returning=hasSavedPlay();
+  setEntry(returning?'game':'welcome');
+  if(returning)return;
+  // Warm the game chunk while the visitor reads the welcome screen, so "Start" is instant.
+  const warm=()=>{void loadGame()};
+  const w=window as Window&{requestIdleCallback?:(cb:()=>void,o?:{timeout:number})=>number};
+  if(w.requestIdleCallback)w.requestIdleCallback(warm,{timeout:2500});else window.setTimeout(warm,1200);
+ },[]);
+ if(entry==='game')return <TriviaGame/>;
+ const welcome=<WelcomeScreen onStart={()=>{
   try{localStorage.setItem('trivia-welcome-dismissed-v1','1')}catch{}
   setEntry('game');
  }}/>;
- return <TriviaGame/>;
+ // Same markup on the server and on the first client render (no hydration mismatch);
+ // returning players never see it because of the html.ts-returning rule.
+ if(entry==='first-paint')return <><div className="ts-entry-welcome" style={{display:'contents'}}>{welcome}</div><div className="ts-entry-wait"><GameLoading/></div></>;
+ return welcome;
 }

@@ -24,8 +24,11 @@ export const metadata:Metadata={
 };
 export const viewport:Viewport={width:'device-width',initialScale:1,themeColor:'#0A0E24',colorScheme:'dark'};
 export default function RootLayout({children}:{children:ReactNode}){
- return <html lang='he' dir='rtl'>
+ return <html lang='he' dir='rtl' suppressHydrationWarning>
   <head>
+   {/* Returning players skip the welcome screen; decided before the first paint (see app/page.tsx). */}
+   <script dangerouslySetInnerHTML={{__html:"(function(){try{var l=localStorage,r=l.getItem('trivia-welcome-dismissed-v1')==='1'||l.getItem('trivia-stage-started-v1')==='true'||Number(l.getItem('trivia-stage-id-v1')||'1')>1;if(!r){var g=JSON.parse(l.getItem('trivia-local-game-v1')||'null');r=!!(g&&typeof g==='object'&&(Object.keys(g.edges||{}).length||Object.keys(g.owners||{}).length))}if(r)document.documentElement.classList.add('ts-returning')}catch(e){}})()"}}/>
+   <style dangerouslySetInnerHTML={{__html:'.ts-entry-wait{display:none}html.ts-returning .ts-entry-welcome{display:none!important}html.ts-returning .ts-entry-wait{display:contents}'}}/>
    <link rel='preload' href='/fonts/rubik-hebrew.woff2' as='font' type='font/woff2' crossOrigin=''/>
    <link rel='preload' href='/fonts/rubik-latin.woff2' as='font' type='font/woff2' crossOrigin=''/>
    <link rel='preload' href='/art/fox.webp' as='image' type='image/webp' fetchPriority='high'/>
