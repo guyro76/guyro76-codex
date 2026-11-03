@@ -27,6 +27,10 @@ import { findLocalQuestion,isBundledQuestion } from '../lib/localQuestionLookup'
 import {applyQuestionCorrections,loadCachedQuestionCorrections,setQuestionCorrections,type CorrectionRow} from '../lib/questionCorrections';
 import {submitAppeal,fetchAppealStatuses,claimAppealCompensation,storedAppeals,saveAppeals,appealText,APPEAL_CREDITS,type AppealSource} from '../lib/answerAppeals';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
+import { RUSSIAN_STAGE_NAMES } from '../lib/russianStageNames';
+import { FRENCH_STAGE_NAMES } from '../lib/frenchStageNames';
+import { ARABIC_STAGE_NAMES } from '../lib/arabicStageNames';
+const LOCAL_STAGE_NAMES={es:SPANISH_STAGE_NAMES,ru:RUSSIAN_STAGE_NAMES,fr:FRENCH_STAGE_NAMES,ar:ARABIC_STAGE_NAMES} as const;
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
 import {selectVariedQuestion,readRecentQuestionTopics,RECENT_TOPIC_MEMORY,GEOGRAPHY_GAP,isGeographyQuestion} from '../lib/questionMix';
@@ -156,6 +160,7 @@ export default function TriviaGame() {
   const tr = useCallback((value: string) => stripPictographs(translate(locale,value)),[locale]);
   /** Inline text in all six languages (for strings that are not dictionary keys). */
   const L6=(m:Record<ActiveLocale,string>)=>m[locale]||m.en;
+  const stageName=(s:{id:number;nameHe:string;nameEn:string})=>locale==='he'?s.nameHe:locale==='en'?s.nameEn:(LOCAL_STAGE_NAMES[locale][s.id]||s.nameEn);
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [policiesAcknowledged, setPoliciesAcknowledged] = useState(false);
@@ -1498,7 +1503,7 @@ export default function TriviaGame() {
   };
   const themeIndex = Math.max(0, worlds.findIndex(w => w.size === world.size));
   const displayWorld={
-    name:locale==='es'?(SPANISH_STAGE_NAMES[stageId]||selectedStage.nameEn):locale==='he'?selectedStage.nameHe:selectedStage.nameEn,
+    name:stageName(selectedStage),
     subtitle:locale==='es'?'Conecta puntos, responde y conquista todas las casillas del nivel.':locale==='he'?selectedStage.subtitleHe:selectedStage.subtitleEn
   };
   return <main data-preview-viewport={previewViewport} className={'trivia-app theme-' + world.slug + ' skin-' + skin + (stageStarted?' playing-layout':' setup-layout')} style={css.main} dir={localeDirection(locale)} lang={locale} onPointerDownCapture={()=>unlockGameAudio()} onKeyDownCapture={event=>{if(event.key==='Enter'||event.key===' ')unlockGameAudio()}}>
@@ -2024,7 +2029,7 @@ export default function TriviaGame() {
              onClick={()=>{chooseStage(stage.id);menuRef.current?.close()}}>
             <span className='campaign-stage-number'>{String(stage.id).padStart(2,'0')}</span>
             <strong className='campaign-stage-icon' aria-hidden='true'><GameImage name={WORLD_ART[stage.theme]||'apple'} size={34}/></strong>
-            <span className='campaign-stage-title'>{locale==='he'?stage.nameHe:locale==='es'?(SPANISH_STAGE_NAMES[stage.id]||'Nivel '+stage.id):locale==='en'?stage.nameEn:locale==='ru'?'Этап '+stage.id:locale==='fr'?'Défi '+stage.id:'التحدي '+stage.id}</span>
+            <span className='campaign-stage-title'>{stageName(stage)}</span>
             <small>{unlocked?(locale==='he'?'לוח ':locale==='es'?'Tablero ':locale==='ru'?'Поле ':locale==='fr'?'Grille ':locale==='ar'?'لوحة ':'Board ')+stage.size+'×'+stage.size:(locale==='he'?'נעול':locale==='es'?'Bloqueado':locale==='ru'?'Закрыто':locale==='fr'?'Verrouillé':locale==='ar'?'مغلق':'Locked')}</small>
           </button>
         })}
