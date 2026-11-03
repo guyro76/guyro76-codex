@@ -26,6 +26,7 @@ import { languageForPronunciation, speakLanguageAnswer } from '../lib/languageSp
 import { findLocalQuestion,isBundledQuestion } from '../lib/localQuestionLookup';
 import {ANSWER_IMAGES} from '../lib/answerImages';
 import AnswerImage from '../components/AnswerImage';
+import {withoutAnswerLeaks} from '../lib/answerGuard';
 import {applyQuestionCorrections,loadCachedQuestionCorrections,setQuestionCorrections,type CorrectionRow} from '../lib/questionCorrections';
 import {submitAppeal,fetchAppealStatuses,claimAppealCompensation,storedAppeals,saveAppeals,appealText,APPEAL_CREDITS,type AppealSource} from '../lib/answerAppeals';
 import { SPANISH_STAGE_NAMES } from '../lib/spanishStageNames';
@@ -493,7 +494,7 @@ export default function TriviaGame() {
       ...freshLocalQuestions(locale,countLocalReserve(locale))
     ]
     : locale==='es'?spanishQuestions:internationalQuestions.filter(q=>q.locale===locale));
-  const effectiveQuestionBank=[...questionBank,...applyQuestionCorrections(languageQuestions.filter(q=>q.locale===locale)),...remoteQuestionCache.current[locale]];
+  const effectiveQuestionBank=withoutAnswerLeaks([...questionBank,...applyQuestionCorrections(languageQuestions.filter(q=>q.locale===locale)),...remoteQuestionCache.current[locale]]);
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
 

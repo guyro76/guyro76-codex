@@ -65,8 +65,14 @@ export const BUNDLED_DUPLICATES:ReadonlyMap<number,number>=new Map([
   [44241,44219]    // Morocco at Eurovision
 ]);
 
+/** Bundled questions withdrawn because they name their own answer (owner rule 2026-11-03). */
+export const BUNDLED_RETIRED:ReadonlySet<number>=new Set([
+  300036,  // "gigabyte or megabyte?" names both options
+  4048     // "What kind of creature is Pikachu in Pokémon?" -> "an Electric-type Pokémon"
+]);
+
 export function applyQuestionCorrections<T extends {id:number;text:string;answers:readonly string[];correct:number}>(bank:readonly T[]):T[]{
-  const playable=bank.filter(q=>!BUNDLED_DUPLICATES.has(q.id));
+  const playable=bank.filter(q=>!BUNDLED_DUPLICATES.has(q.id)&&!BUNDLED_RETIRED.has(q.id));
   if(!fixes.size&&!retired.size)return playable;
   return playable.filter(q=>!retired.has(q.id)).map(correctedQuestion);
 }
