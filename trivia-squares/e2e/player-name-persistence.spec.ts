@@ -5,6 +5,7 @@ import {drawAdjacentForQA} from './gestureQA';
 test('the same canonical site remembers player name, answered questions and credits across reloads and link parameters',async({page})=>{
  await useOfflineQuestionFixtures(page);
  await page.goto('/');
+ await page.locator('svg.board').waitFor();
  const tutorial=page.getByRole('dialog',{name:'הסבר משחק'});
  if(await tutorial.isVisible())await tutorial.getByRole('button',{name:'דלג או סיים'}).click();
  const name=page.getByLabel('שם שחקן (חובה)');
@@ -31,8 +32,10 @@ test('the same canonical site remembers player name, answered questions and cred
  const historyBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
  const creditsBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}').credits?.host);
  await page.reload();
+ await page.locator('svg.board').waitFor();
  await expect(page.getByLabel('שם שחקן (חובה)')).toHaveValue('גיא בודק שמירה');
  await page.goto('/?source=same-website-link');
+ await page.locator('svg.board').waitFor();
  await expect(page.getByLabel('שם שחקן (חובה)')).toHaveValue('גיא בודק שמירה');
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-text-history-v1')||'[]'));
  expect(saved).toEqual(historyBefore);

@@ -508,12 +508,12 @@ test('legacy solo game restores Player 2 captures to Player 1 on refresh without
   await expect(page.locator('.level-pill')).toContainText('7');
   await expect(page.locator('.scoreboard .player-tile.other')).toHaveCount(0);
   await page.reload();
-  const persisted=await page.evaluate(()=>{
+  // The init script re-seeds the legacy save on reload; the game repairs it once its chunk has loaded.
+  await expect.poll(()=>page.evaluate(()=>{
     const b=JSON.parse(localStorage.getItem('trivia-local-game-v1')||'{}');
     const r=JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}');
     return {owner:b.owners?.['0-0'],host:b.scores?.host,guest:b.scores?.guest,credits:r.credits?.host,charms:r.charms?.host};
-  });
-  expect(persisted).toEqual({owner:'host',host:2,guest:0,credits:30,charms:3});
+  })).toEqual({owner:'host',host:2,guest:0,credits:30,charms:3});
 });
 
 test('a real local Player 2 keeps their colored captured squares and score across refresh',async({page})=>{
