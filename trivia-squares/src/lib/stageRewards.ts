@@ -1,4 +1,6 @@
-export type StageCardKind = 'portrait'|'song'|'letter';
+import {CAMPAIGN_STAGES,STAGE_COUNT} from './campaignStages';
+
+export type StageCardKind = 'portrait'|'song'|'letter'|'stage';
 export type StageCard = {
   id: string;
   title: string;
@@ -49,7 +51,18 @@ export const stageCards: StageCard[] = ([3,4,5,6] as const).flatMap(world=>
     } satisfies StageCard;
   })
 );
+/** Every one of the 200 stages has its own collectible card, so a card never repeats.
+ *  (The 12 legacy cards above stay valid for albums saved before 2026-11-03.) */
+export function stageCollectible(stage:number):StageCard{
+  const s=CAMPAIGN_STAGES.find(x=>x.id===stage)||CAMPAIGN_STAGES[0];
+  return {id:'stage-'+s.id,title:s.nameHe,subtitle:s.subtitleHe,kind:'stage',world:s.size,glyph:'',
+    artistCredit:'איור מקורי שנוצר עבור טריוויה ריבועים',
+    rarity:s.id%10===0?'אגדי':s.id%5===0?'נדיר':'מיוחד',clue:'קלף חדש לאוסף היצירות שלך.'};
+}
+export const STAGE_CARD_TOTAL=STAGE_COUNT;
 export function cardById(id: string): StageCard | undefined {
+  const m=/^stage-(\d{1,3})$/.exec(id);
+  if(m){const n=Number(m[1]);return n>=1&&n<=STAGE_COUNT?stageCollectible(n):undefined;}
   return stageCards.find(c=>c.id===id);
 }
 export function localStageCard(world:number,runId:string):StageCard {

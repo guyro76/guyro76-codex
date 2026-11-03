@@ -1832,10 +1832,14 @@ export default function TriviaGame() {
             {locale==='en'?(nameSyncedToAccount?'Name saved on device and account':'Name saved automatically on this device'):(nameSyncedToAccount?'השם נשמר במכשיר ובחשבון':'השם נשמר אוטומטית במכשיר')}
           </span>}
         </div>
-        {finished && !stageRewardOpen && <button className='stage-reward-reopen'
+        {finished && !stageRewardOpen && <div className='stage-finished-actions'>
+          <button className='stage-reward-reopen'
           type='button' onClick={()=>setStageRewardOpen(true)}>
           {locale==='he'?'פתח שוב את משחק הביניים והפרסים':locale==='es'?'Abrir premios y minijuego':locale==='fr'?'Ouvrir les récompenses et le mini-jeu':locale==='ru'?'Открыть награды и мини-игру':locale==='ar'?'فتح المكافآت واللعبة المصغرة':'Open stage rewards and minigame'}
-        </button>}
+          </button>
+          {stageId<STAGE_COUNT && !remote && <button className='gold-button stage-next-button' type='button' data-testid='board-next-stage' onClick={advanceStage}>
+            {L6({he:'לשלב הבא',en:'Next stage',ru:'Следующий этап',fr:'Niveau suivant',ar:'المرحلة التالية',es:'Siguiente nivel'})}</button>}
+        </div>}
         {finished && stageRewardReady && stageRewardOpen && typeof document !== 'undefined' && document.querySelector('main.trivia-app') && createPortal(<div className='stage-reward-modal-layer'
           role='dialog' aria-modal='true' aria-label={locale==='he'?'משחק הביניים ופרסי השלב':locale==='es'?'Minijuego y recompensas del nivel':locale==='fr'?'Mini-jeu et récompenses du niveau':locale==='ru'?'Мини-игра и награды этапа':locale==='ar'?'اللعبة المصغرة ومكافآت المرحلة':'Stage minigame and rewards'}
           onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();setStageRewardOpen(false);}}}>
