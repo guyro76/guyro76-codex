@@ -17,3 +17,8 @@ revoke all on function public.trivia_check_local_answer(bigint, integer) from pu
 grant execute on function public.trivia_check_local_answer(bigint, integer) to anon, authenticated;
 -- Stage 2 (after the client that uses the check is live): remove 'correct' from
 -- trivia_local_culture_batch and trivia_local_question_batch.
+
+-- Stage 2 (applied 2026-11-03 after #103 was live and verified): `correct` removed from
+-- trivia_local_culture_batch and trivia_local_question_batch (same signatures, grants kept).
+-- Verified: both batches return only id/text/answers/category/difficulty/locale; live play
+-- checks answers through trivia_check_local_answer.

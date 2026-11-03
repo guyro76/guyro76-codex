@@ -1,6 +1,6 @@
 # Trivia Squares — project status (real state, evidence-based)
 
-Last update: 2026-11-03, Claude (session https://claude.ai/code/session_01WbPQBLHLn4kBk7ma4Pe7j3).
+Last update: 2026-11-03 (night), Claude (session https://claude.ai/code/session_01WbPQBLHLn4kBk7ma4Pe7j3).
 Statuses: TODO · IN_PROGRESS · CODE_COMPLETE · TESTED · DEPLOYED · VERIFIED · BLOCKED. Only VERIFIED is done.
 
 ## Shipped
@@ -17,15 +17,15 @@ Statuses: TODO · IN_PROGRESS · CODE_COMPLETE · TESTED · DEPLOYED · VERIFIED
 | Answer-appeal server side (`trivia_answer_appeals` migration) | VERIFIED | Tables RLS-locked (anon/auth cannot select or insert); 4 SECURITY DEFINER RPCs executable by anon/auth only |
 | Hourly review engine (scheduled task, runs at :19) | DEPLOYED | Created 2026-11-03; checks pending appeals with two independent sources, logs every change; stops immediately when the queue is empty |
 
-## In review — branch `claude/launch-readiness`
-| Item | Status | Notes |
+## Shipped 2026-11-03 (continued)
+| Item | Status | Evidence |
 |---|---|---|
-| Appeal button after a wrong answer; guest reports reach review; approved appeal = line back + 25 credits; bundled-question corrections applied on device | TESTED | `e2e/answer-appeal.spec.ts`; fixtures never write to the live queue |
-| 35 local questions that gave away their answer rewritten, 4 removed; `tests/answerLeak.test.mjs` blocks new ones | TESTED | Owner rule 2026-11-03 |
-| No emoji in the UI (central display cleanup; artwork for stages, wallet, timer, welcome) | TESTED | DOM scan of every menu section and the question window: only ✕ and ✓ remain |
-| Launch basics: self-hosted font, LCP preload, share image, robots, sitemap, service worker, manifest colours, 12px minimum text | TESTED | Lighthouse before: mobile 75/96/96/100, desktop 94/100/100/100 |
-| Six languages: menu strings that showed Hebrew in ru/fr/ar/es | TESTED | DOM scan: 0 Hebrew strings outside Hebrew in all menus |
-| Stage names in ru/fr/ar (200 each) | IN_PROGRESS | Hebrew, English and Spanish already exist |
+| Appeals + hourly review engine, no-leak rule, no emoji, launch basics, six-language fixes — PR #100 | VERIFIED | Live files/tags checked; Lighthouse mobile 78/100/100/100, desktop 99/100/100/100 |
+| Mini-games open in view, next-stage button, unique premium card per stage — PR #101 | VERIFIED | Live iPhone emulation: wheel → prize → next stage |
+| Photos next to correct answers with photographer credit (12 Wikimedia images) — PR #102 | DEPLOYED | E2E verified; not yet hand-checked on a real phone |
+| Question quality: 87 trivial Hebrew questions replaced (+50 server rows) — PR #103 | VERIFIED | Independent review with sources; leak test green |
+| Security: answer index no longer sent to the browser (server-side check) — PR #103 + server stage 2 | VERIFIED | REST shows no `correct` in batches; live play scores correctly |
+| Ultra QA (independent, live site) | VERIFIED | Verdict "ready with fixes"; all high/medium findings fixed, low items listed below |
 
 ## Decisions waiting for the owner
 1. Publishing on Google Play: $25 developer fee, then a 12-tester × 14-day closed test (`docs/ANDROID_PLAY_RELEASE_HE.md`).
@@ -34,7 +34,7 @@ Statuses: TODO · IN_PROGRESS · CODE_COMPLETE · TESTED · DEPLOYED · VERIFIED
 
 ## Open items (next)
 1. Robot (computer opponent) still shows a fallback symbol — needs one Gemini image (owner's Chrome must be connected).
-2. Images from free sources next to correct answers, with photographer credit — blocked: Wikimedia rate-limits this environment; needs the owner's Chrome.
+2a. Ultra QA low items left: duplicate question pairs across banks (Central Perk, Simba's father, Weizmann, Morocco 1980…), time-sensitive questions without an expiry, mobile LCP 3.8s (main JS bundle), Arabic chapter nav wraps at 390px, dev-only settings (device preview) visible.
 3. Question bank: most server rows are one generated "which country/city" template; more verified non-geography content needed (no invented facts).
 4. Older skins (urban, vintage, retro, pop, future) still carry legacy styling.
 5. CSS debt: ~950 `!important` in legacy files.
