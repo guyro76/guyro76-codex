@@ -8,7 +8,7 @@ for(const game of [
  {kind:'scissors',open:'מספרי המזל',action:'סימון'}
 ] as const){
  test('intermission '+game.kind+' grants exactly one local reward and survives reload',async({page})=>{
-  await page.addInitScript(()=>{
+  await page.addInitScript((kind)=>{
    if(localStorage.getItem('trivia-minigame-test-seeded'))return;
    localStorage.setItem('trivia-minigame-test-seeded','true');
    localStorage.setItem('trivia-tutorial-seen-v1','true');
@@ -17,15 +17,17 @@ for(const game of [
    localStorage.setItem('trivia-stage-started-v1','true');
    localStorage.setItem('trivia-mode-v2','solo');
    localStorage.setItem('trivia-stage-run-id','local-mini-qa');
+   localStorage.setItem('trivia-intermission-pick-v1',JSON.stringify({next:kind}));
    const owners=Object.fromEntries(Array.from({length:9},(_,i)=>[Math.floor(i/3)+'-'+i%3,'host']));
    localStorage.setItem('trivia-local-game-v1',JSON.stringify({
     rows:3,cols:3,mode:'solo',turn:'host',edges:{},owners,scores:{host:9,guest:0,bot:0}
    }));
-  });
+  },game.kind);
   await page.goto('/');
   const reward=page.getByRole('dialog',{name:'משחק הביניים ופרסי השלב'}).locator('.lumen-stage-reveal');
   await expect(reward).toBeVisible();
-  await reward.getByRole('button',{name:new RegExp(game.open)}).click();
+  // The game is drawn at random and opens by itself; QA queues this one.
+  await expect(reward.getByTestId('selected-intermission')).toContainText(game.open);
   if(game.action==='סימון'){
    const count=game.kind==='scratch'?6:3;
    for(let i=1;i<=count;i++){

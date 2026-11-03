@@ -12,6 +12,7 @@ test('fifth stage draws guaranteed loot then automatically opens a new localized
    localStorage.setItem('trivia-stage-completed-v1','4');
    localStorage.setItem('trivia-stage-started-v1','true');
    localStorage.setItem('trivia-stage-run-id','local-bonus-stage-qa');
+   localStorage.setItem('trivia-intermission-pick-v1',JSON.stringify({next:'quiz'}));
    localStorage.setItem('trivia-mode-v2','solo');
    const owners=Object.fromEntries(Array.from({length:16},(_,i)=>[Math.floor(i/4)+'-'+i%4,'host']));
    localStorage.setItem('trivia-local-game-v1',JSON.stringify({
@@ -27,7 +28,7 @@ test('fifth stage draws guaranteed loot then automatically opens a new localized
  await expect(dialog).toBeVisible({timeout:12000});
  await expect(dialog.getByTestId('stage-guaranteed-gifts')).toContainText('+25');
  await expect(dialog.getByTestId('bonus-question')).toBeVisible({timeout:8000});
- await expect(dialog.getByTestId('bonus-question')).toContainText('כוכב הלכת האדום');
+ await expect(dialog.getByTestId('bonus-question')).toContainText('אולימפוס מונס');
  await dialog.getByTestId('bonus-question').getByRole('button',{name:/מאדים/}).click();
  await expect(dialog.locator('.lumen-prize-won')).toContainText('30 קרדיטים');
  const read=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}'));

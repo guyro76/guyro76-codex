@@ -13,6 +13,7 @@ test('stage completion automatically offers a minigame, earns credits and persis
     localStorage.setItem('trivia-mode-v2','solo');
     localStorage.setItem('trivia-stage-id-v1','1');
     localStorage.setItem('trivia-stage-completed-v1','0');
+    localStorage.setItem('trivia-intermission-pick-v1',JSON.stringify({next:'word'}));
     const edges:Record<string,string>={};
     const owners:Record<string,string>={};
     for(let row=0;row<=3;row++)for(let col=0;col<3;col++)edges['h-'+row+'-'+col]='host';
@@ -30,11 +31,11 @@ test('stage completion automatically offers a minigame, earns credits and persis
   await page.goto('/');
   const reward=page.getByRole('dialog',{name:'משחק הביניים ופרסי השלב'});
   await expect(reward).toBeVisible({timeout:8000});
-  await expect(reward.getByRole('heading',{name:/מה בא לך לעשות עם האוצר/})).toBeVisible();
-  await expect(reward.getByTestId('stage-celebration')).toBeVisible();
   await expect(reward.getByTestId('stage-guaranteed-gifts')).toContainText('+25');
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-local-rewards')||'{}').credits?.host)).toBe(25);
-  await reward.getByRole('button',{name:/נחש את המילה/}).click();
+  // The mini-game opens by itself after the celebration (drawn at random; QA queues the word game).
+  await expect(reward.getByTestId('selected-intermission')).toContainText('נחש את המילה',{timeout:8000});
+  await expect(reward.getByTestId('stage-guaranteed-gifts')).toHaveCount(0);
   await reward.getByRole('textbox',{name:'מה המילה?'}).fill('תפוח');
   await reward.getByRole('button',{name:/בדוק מילה/}).click();
   await expect(reward.getByText(/15 קרדיטים/)).toBeVisible();

@@ -5,6 +5,9 @@ import type {StageCard} from './stageRewards';
 type GameCopy = Record<string,string>;
 const copy: Record<'ru'|'fr'|'ar'|'es',GameCopy> = {
  ru:{
+  "משחק ביניים":"Мини-игра между этапами",
+  "מגרילים משחק ביניים...":"Выбираем мини-игру...",
+  "דלג על משחק הביניים":"Пропустить мини-игру",
   "השלב הושלם":"ЭТАП ПРОЙДЕН",
   "חגיגת סיום השלב":"Праздник завершения этапа",
   "🎇 חגיגת הניצחון!":"🎇 Победа!",
@@ -34,6 +37,9 @@ const copy: Record<'ru'|'fr'|'ar'|'es',GameCopy> = {
   'יהלום אחד':'1 алмаз','קמע זמן אחד':'1 талисман времени','אותיות':'букв'
  },
  fr:{
+  "משחק ביניים":"Mini-jeu entre les niveaux",
+  "מגרילים משחק ביניים...":"Tirage du mini-jeu...",
+  "דלג על משחק הביניים":"Passer le mini-jeu",
   "השלב הושלם":"NIVEAU TERMINÉ",
   "חגיגת סיום השלב":"Célébration de fin de niveau",
   "🎇 חגיגת הניצחון!":"🎇 Victoire !",
@@ -63,6 +69,9 @@ const copy: Record<'ru'|'fr'|'ar'|'es',GameCopy> = {
   'יהלום אחד':'1 diamant','קמע זמן אחד':'1 talisman temporel','אותיות':'lettres'
  },
  ar:{
+  "משחק ביניים":"لعبة بين المراحل",
+  "מגרילים משחק ביניים...":"نختار لعبة عشوائية...",
+  "דלג על משחק הביניים":"تخطَّ اللعبة",
   "השלב הושלם":"اكتمل المستوى",
   "חגיגת סיום השלב":"احتفال إكمال المستوى",
   "🎇 חגיגת הניצחון!":"🎇 احتفال النصر!",
@@ -92,6 +101,9 @@ const copy: Record<'ru'|'fr'|'ar'|'es',GameCopy> = {
   'יהלום אחד':'ماسة واحدة','קמע זמן אחד':'تعويذة وقت واحدة','אותיות':'حروف'
  },
  es:{
+  "משחק ביניים":"Minijuego entre niveles",
+  "מגרילים משחק ביניים...":"Sorteando un minijuego...",
+  "דלג על משחק הביניים":"Saltar el minijuego",
   "השלב הושלם":"NIVEL COMPLETADO",
   "חגיגת סיום השלב":"Celebración de nivel completado",
   "🎇 חגיגת הניצחון!":"🎇 ¡Celebración de victoria!",

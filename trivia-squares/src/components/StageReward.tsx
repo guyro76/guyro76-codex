@@ -18,6 +18,7 @@ import TicTacToeIntermission from './TicTacToeIntermission';
 import SequenceIntermission from './SequenceIntermission';
 import PairsIntermission from './PairsIntermission';
 import {gestureCopy,gestureGames,type GestureGame} from '../lib/gestureIntermissions';
+import {chooseIntermission} from '../lib/intermissionPick';
 import {intermissionBonusQuestion} from '../lib/intermissionBonus';
 
 type RewardProps={
@@ -70,6 +71,9 @@ function Illustration({card}:{card:StageCard}){
   </svg>;
 }
 
+const PAIRS:Record<ActiveLocale,string>={he:'זיכרון זוגות',en:'Memory pairs',ru:'Парная память',fr:'Paires mémoire',ar:'ذاكرة الأزواج',es:'Parejas de memoria'};
+const SEQUENCE:Record<ActiveLocale,string>={he:'זיכרון רצפים',en:'Sequence memory',ru:'Память последовательностей',fr:'Mémoire des séquences',ar:'ذاكرة التسلسل',es:'Memoria de secuencias'};
+const TICTACTOE:Record<ActiveLocale,string>={he:'איקס עיגול מול המחשב',en:'Tic-tac-toe',ru:'Крестики-нолики',fr:'Morpion',ar:'إكس أو',es:'Tres en raya'};
 export default function StageReward({stageKey,worldSize,stageNumber,locale,remoteMatchId,client,onAdvance,onLocalPrize,onStageClear,onRemotePrize,onSound}:RewardProps){
   const [card,setCard]=useState<StageCard|null>(null);
   const [playing,setPlaying]=useState(false);
@@ -92,14 +96,13 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
   // A tapped challenge opens right under the card and scrolls into view (on phones it used to open
   // below twelve option cards, so it looked like nothing happened).
   const challengeRef=useRef<HTMLDivElement>(null);
-  const pickedRef=useRef(false);
-  const pick=(next:NonNullable<typeof game>)=>{pickedRef.current=true;setGame(next)};
+  const sectionRef=useRef<HTMLElement>(null);
+  // The mini-game takes over the reward screen as soon as it opens, so it is always in view.
+  const focus=!celebrating&&!played&&!skippedChallenge&&Boolean(game);
   useEffect(()=>{
-    if(!pickedRef.current||!game||celebrating)return;
-    pickedRef.current=false;
-    const reduce=typeof matchMedia!=='undefined'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-    requestAnimationFrame(()=>challengeRef.current?.scrollIntoView({block:'start',behavior:reduce?'auto':'smooth'}));
-  },[game,celebrating]);
+    if(!focus)return;
+    requestAnimationFrame(()=>sectionRef.current?.scrollIntoView({block:'start',behavior:'auto'}));
+  },[focus,game]);
   useEffect(()=>{
     let alive=true;
     setPlaying(false);setGuess('');setCard(null);setPlayed(false);setPrize('');setGame(null);setSkippedChallenge(false);setNotice('');setBurstBalloon(null);setCakeCut(false);setBonusPicked(null);setCelebrating(true);claimRef.current=false;cakeTriggered.current=false;
@@ -138,11 +141,7 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     if(!card)return;
     const t=window.setTimeout(()=>{
       setCelebrating(false);
-      if(!played&&!skippedChallenge)setGame(current=>current||(
-        !remoteMatchId && stageNumber%5===0?'quiz':
-        !remoteMatchId && stageNumber%4===0?(['pairs','sequence','tictactoe'] as const)[(Math.floor(stageNumber/4)-1)%3]:
-        (['word','wheel','balloons','cake','scratch','sword','scissors'] as const)[((stageNumber-1)-Math.floor((stageNumber-1)/5))%7]
-      ));
+      if(!played&&!skippedChallenge)setGame(current=>current||chooseIntermission(stageKey,Boolean(remoteMatchId)));
     },1800);
     return()=>window.clearTimeout(t);
   },[card,played,skippedChallenge,stageNumber,remoteMatchId,stageKey]);
@@ -197,7 +196,8 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     cakeTriggered.current=true;setCakeCut(true);onSound('slice');void finish('cake');
   };
   if(!card)return <section className='lumen-stage-reveal' role='status' aria-live='polite'><h2>{translate('✨ אוסף הסודות נפתח','✨ Secret collection unlocked')}</h2><p>{notice||translate('מכינים את קלף הבונוס...','Preparing your collectible card...')}</p></section>;
-  return <section className='lumen-stage-reveal' aria-labelledby='stage-reward-title'>
+  return <section ref={sectionRef} className={'lumen-stage-reveal'+(focus?' intermission-focus':'')} aria-labelledby='stage-reward-title'>
+    {!focus&&<>
     <div className='lumen-stage-topline'><span>{translate('השלב הושלם','STAGE COMPLETE')}</span><span>{translate('✦ קלף אספנות חדש ✦','✦ New collectible card ✦')}</span></div>
     <div className='stage-celebration' data-testid='stage-celebration' aria-label={translate('חגיגת סיום השלב','Stage completion celebration')}>
       <div className='stage-gift-sparks' aria-hidden='true'>{Array.from({length:18},(_,i)=><span key={i} style={{'--spark-index':i} as CSSProperties}>{''}</span>)}</div>
@@ -209,8 +209,9 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
     </div>
     <h2 id='stage-reward-title'>{translate('פתחת את כל הריבועים. גילית אוצר!','You closed every square. A treasure is yours!')}</h2>
     <p className='lumen-stage-subtitle'>{translate('הרווחת קלף ייחודי לשלב הזה. הוא נכנס לאלבום שלך ואינו נעלם.','You earned a unique card for this stage. It stays in your collection.')}</p>
+    </>}
     <div className='lumen-reveal-layout'>
-      {card.kind==='stage'
+      {focus?null:card.kind==='stage'
         ? (()=>{const n=Number(card.id.slice(6))||stageNumber;const st=CAMPAIGN_STAGES.find(x=>x.id===n);
             return <StageCollectibleCard stage={n} total={STAGE_CARD_TOTAL} title={stageDisplayName(n,locale)}
               subtitle={locale==='he'?(st?.subtitleHe||''):locale==='en'?(st?.subtitleEn||''):''} world={card.world} rarity={card.rarity} locale={locale}/>})()
@@ -221,11 +222,10 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
         <div className='lumen-card-bottom'>LUMEN COLLECTION</div>
       </article>}
       <div className='lumen-reward-options'>
-        <span className='lumen-kicker'>{translate('האתגר שבין העולמות','Between-world challenge')}</span>
-        <h3>{translate('מה בא לך לעשות עם האוצר?','What will you do with your treasure?')}</h3>
-        <p>{translate('בכל שלב מוגרל אתגר ביניים. אפשר לבחור אתגר אחר או להמשיך לשלב הבא.','One between-stage challenge is selected automatically. You may switch challenges or continue.')}</p>
+        <span className='lumen-kicker'>{translate('משחק ביניים','Between-stage mini-game')}</span>
+        {celebrating&&<p className='intermission-drawing' role='status'>{translate('מגרילים משחק ביניים...','Drawing a mini-game...')}</p>}
         <div ref={challengeRef} className='stage-challenge-anchor'>
-        {!played && !celebrating && game && <p className='stage-challenge-selected' data-testid='selected-intermission'>{translate('האתגר שלך:','Your challenge:')} {stripPictographs(gestureGames.includes(game as GestureGame)?gestureCopy[locale][game as GestureGame]:game==='quiz'?translate('🧠 שאלת בונוס','🧠 Bonus trivia'):game==='word'?translate('🔠 נחש את המילה','🔠 Guess the word'):game==='wheel'?translate('🎡 גלגל ההפתעות','🎡 Prize wheel'):game==='cake'?'🎂 '+mini('cakeTitle'):'🎈 '+mini('balloonsTitle'))}</p>}
+        {!played && !celebrating && game && <p className='stage-challenge-selected' data-testid='selected-intermission'>{stripPictographs(gestureGames.includes(game as GestureGame)?gestureCopy[locale][game as GestureGame]:game==='quiz'?translate('🧠 שאלת בונוס','🧠 Bonus trivia'):game==='word'?translate('🔠 נחש את המילה','🔠 Guess the word'):game==='wheel'?translate('🎡 גלגל ההפתעות','🎡 Prize wheel'):game==='cake'?'🎂 '+mini('cakeTitle'):game==='pairs'?PAIRS[locale]:game==='sequence'?SEQUENCE[locale]:game==='tictactoe'?TICTACTOE[locale]:'🎈 '+mini('balloonsTitle'))}</p>}
         {game && gestureGames.includes(game as GestureGame) && !played && !celebrating && <GestureIntermission key={stageKey+game} kind={game as GestureGame} locale={locale} disabled={playing} onComplete={()=>{onSound('slice');void finish(game);}}/>}
         {game==='pairs'&&!played&&!celebrating&&!remoteMatchId&&<PairsIntermission key={stageKey+'-pairs'} locale={locale} onWin={()=>void finish('pairs')} onSkip={()=>{setSkippedChallenge(true);setGame(null)}}/>}
         {game==='sequence'&&!played&&!celebrating&&!remoteMatchId&&<SequenceIntermission key={stageKey+'-sequence'} locale={locale} onWin={()=>void finish('sequence')} onSkip={()=>{setSkippedChallenge(true);setGame(null)}} onTone={()=>onSound('pop')}/>}
@@ -278,20 +278,11 @@ export default function StageReward({stageKey,worldSize,stageNumber,locale,remot
         {played && <div className='lumen-prize-won' role='status' aria-live='polite'><strong>{translate('🎉 הפרס שלך:','🎉 Your prize:')} {showPrize(prize)}</strong><span>{translate('נשמר באוסף המשחק שלך.','Saved to your game collection.')}</span></div>}
         {notice&&<p role='alert'>{notice}</p>}
         </div>
-        {!played && !celebrating && <div className='lumen-intermission-choices'>
-          <button type='button' onClick={()=>pick('word')}><strong>{translate('🔠 נחש את המילה','🔠 Guess the word')}</strong><span>{translate('רמז ואותיות לאוצר הבא','A clue to your next treasure')}</span></button>
-          <button type='button' onClick={()=>pick('wheel')}><strong>{translate('🎡 גלגל ההפתעות','🎡 Prize wheel')}</strong><span>{translate('פרס וירטואלי, ללא תשלום','A free virtual prize')}</span></button>
-          <button type='button' onClick={()=>pick('balloons')}><strong>{mini('balloonsTitle')}</strong><span>{mini('balloonsSubtitle')}</span></button>
-          <button type='button' onClick={()=>pick('cake')}><strong>{mini('cakeTitle')}</strong><span>{mini('cakeSubtitle')}</span></button>
-          {gestureGames.map(kind=><button key={kind} type='button' data-testid={'choose-'+kind} onClick={()=>pick(kind)}><strong>{stripPictographs(gestureCopy[locale][kind])}</strong></button>)}
-          {!remoteMatchId && <button type='button' onClick={()=>pick('pairs')}><strong>{locale==='he'?'זיכרון זוגות':locale==='es'?'Parejas de memoria':locale==='fr'?'Paires mémoire':locale==='ru'?'Парная память':locale==='ar'?'ذاكرة الأزواج':'Memory pairs'}</strong></button>}
-          {!remoteMatchId && <button type='button' onClick={()=>pick('sequence')}><strong>{locale==='he'?'זיכרון רצפים':locale==='es'?'Memoria de secuencias':locale==='fr'?'Mémoire des séquences':locale==='ru'?'Память последовательностей':locale==='ar'?'ذاكرة التسلسل':'Sequence memory'}</strong></button>}
-          {!remoteMatchId && <button type='button' onClick={()=>pick('tictactoe')}><strong>{locale==='he'?'איקס עיגול מול המחשב':locale==='es'?'Tres en raya':locale==='fr'?'Morpion':locale==='ru'?'Крестики-нолики':locale==='ar'?'إكس أو':'Tic-tac-toe'}</strong></button>}
-          {!remoteMatchId && <button type='button' onClick={()=>pick('quiz')}><strong>{translate('שאלת בונוס','Bonus trivia question')}</strong><span>{translate('שאלה נוספת ופרס גדול','One more question for a bigger prize')}</span></button>}
-        </div>}
-        {stageNumber<STAGE_COUNT ? <button type='button' className='lumen-next-button' onClick={onAdvance}>{translate('המשך לשלב הבא ←','Continue to next stage →')}</button>
+        {focus&&game!=='pairs'&&game!=='sequence'&&game!=='tictactoe'&&<button type='button' className='intermission-skip' data-testid='intermission-skip'
+          onClick={()=>{setSkippedChallenge(true);setGame(null)}}>{translate('דלג על משחק הביניים','Skip the mini-game')}</button>}
+        {focus||celebrating?null:stageNumber<STAGE_COUNT ? <button type='button' className='lumen-next-button' onClick={onAdvance}>{translate('המשך לשלב הבא ←','Continue to next stage →')}</button>
          : <p className='lumen-campaign-complete'>{translate('🏆 השלמת את כל 200 השלבים — אלוף הטריוויה!','🏆 You completed all 200 stages — Trivia Champion!')}</p>}
-        <button type='button' className='lumen-album-trigger' onClick={()=>setAlbumExpanded(v=>!v)} aria-expanded={albumExpanded}>{translate('📚 האלבום שלי ·','📚 My album ·')} {album.length} {translate('קלפים','cards')}</button>
+        {!focus&&<button type='button' className='lumen-album-trigger' onClick={()=>setAlbumExpanded(v=>!v)} aria-expanded={albumExpanded}>{translate('📚 האלבום שלי ·','📚 My album ·')} {album.length} {translate('קלפים','cards')}</button>}
         {albumExpanded&&<div className='lumen-album-grid'>{[...album].reverse().slice(0,12).map(item=>{
           const found=cardById(item.cardId);
           return found?<div key={item.matchId} title={found.subtitle}><GameImage name={WORLD_ART[found.world]||'apple'} size={28}/><strong>{found.kind==='stage'?stageDisplayName(Number(found.id.slice(6)),locale):displayCard(found).title}</strong><small>{item.played?translate('★ אתגר הושלם','★ Challenge completed'):translate('קלף נאסף','Card collected')}</small></div>:null;
