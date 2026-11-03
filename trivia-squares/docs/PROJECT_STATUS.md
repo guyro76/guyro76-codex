@@ -29,6 +29,7 @@ Statuses: TODO · IN_PROGRESS · CODE_COMPLETE · TESTED · DEPLOYED · VERIFIED
 | Robot artwork for the computer opponent (Gemini, transparent WebP) — PR #105 | DEPLOYED | Live: /art/robot.webp 384px, mapping in the production bundle; bot mode needs a signed-in account, so not hand-played |
 | Ultra QA low items: 16 duplicate questions no longer dealt, device preview behind ?devtools=1, menu subtitle in 6 languages — PR #106 | VERIFIED | CI 14/14; live: preview hidden by default and shown with ?devtools=1, Arabic menu title translated, duplicate list in production bundle |
 | Faster first screen: welcome screen in the server HTML, game loads as its own chunk; returning players skip the welcome before first paint — PR #108 | VERIFIED | Home first-load JS 358 → 115 kB; live Lighthouse mobile perf 0.86–0.93 (was 0.78–0.80), LCP 1.8–2.4 s (was 3.8 s), a11y/BP/SEO 1.0, desktop perf 1.0; live at 390/768/1366/1920: welcome → board, board 340/679/587/876 px, no horizontal scroll, no page errors, returning players see no welcome flash; full E2E 182/182 locally, CI 14/14 |
+| 105 new Hebrew questions (13 topics), each checked by an independent reviewer against two sources; runtime guard never deals a question that names one of its options — PR #110 | DEPLOYED | CI 14/14, unit 133/133; live bundle contains the new questions; guard removes 3 bundled items, server row 1514 retired with audit entry. Sources: docs/CURATED_QUESTIONS_QA_HE.md |
 
 ## Decisions waiting for the owner
 1. Publishing on Google Play: $25 developer fee, then a 12-tester × 14-day closed test (`docs/ANDROID_PLAY_RELEASE_HE.md`).
@@ -38,7 +39,7 @@ Statuses: TODO · IN_PROGRESS · CODE_COMPLETE · TESTED · DEPLOYED · VERIFIED
 ## Open items (next)
 1. Game chunk is 184 kB gzip (all six question banks inside). Splitting banks per locale would save roughly 25 kB gzip for Hebrew players; low priority after #108.
 2. Checked and closed: Arabic chapter navigation fits one row at 390px; time-sensitive questions are all date-anchored ("until 2026", "October 2026 chart"), so they stay true.
-3. Question bank: most server rows are one generated "which country/city" template; more verified non-geography content needed (no invented facts).
+3. Question bank: server rows are still mostly the "which country/city" template; Hebrew now has 201 curated verified questions. Next: the same for the other five languages.
 4. Older skins (urban, vintage, retro, pop, future) still carry legacy styling.
 5. CSS debt: ~950 `!important` in legacy files.
 6. Real-device checks (iPhone Safari, Android Chrome) for touch — Android sound confirmed by the owner; the rest emulated.
