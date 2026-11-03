@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {CAMPAIGN_STAGES,STAGE_COUNT,stageFor,canOpenStage,nextUnlockedStage} from '../src/lib/campaignStages.ts';
 
@@ -44,4 +45,16 @@ test('existing stage 9 remains unchanged, all new chapters consist of five stage
  }
  assert.equal(canOpenStage(10,8,9,false),false);
  assert.equal(canOpenStage(10,9,9,true),true);
+});
+
+// Regression: after stage 100 the reward screen must still offer the next stage.
+// A previous hard-coded <100 condition showed the 200-stage completion message too early.
+test('stage reward advances through 199 and ends only at STAGE_COUNT',()=>{
+ const reward=readFileSync(new URL('../src/components/StageReward.tsx',import.meta.url),'utf8');
+ assert.equal(STAGE_COUNT,200);
+ assert.equal(nextUnlockedStage(100,100),101);
+ assert.equal(nextUnlockedStage(199,199),200);
+ assert.equal(nextUnlockedStage(200,200),null);
+ assert.match(reward,/stageNumber\s*<\s*STAGE_COUNT\s*\?/);
+ assert.doesNotMatch(reward,/stageNumber\s*<\s*100\b/);
 });
