@@ -1,6 +1,6 @@
 # Trivia Squares — project status (real state, evidence-based)
 
-Last update: 2026-11-03 (night), Claude (session https://claude.ai/code/session_01WbPQBLHLn4kBk7ma4Pe7j3).
+Last update: 2026-11-03 (morning), Claude (session https://claude.ai/code/session_01WbPQBLHLn4kBk7ma4Pe7j3).
 Statuses: TODO · IN_PROGRESS · CODE_COMPLETE · TESTED · DEPLOYED · VERIFIED · BLOCKED. Only VERIFIED is done.
 
 ## Shipped
@@ -26,6 +26,8 @@ Statuses: TODO · IN_PROGRESS · CODE_COMPLETE · TESTED · DEPLOYED · VERIFIED
 | Question quality: 87 trivial Hebrew questions replaced (+50 server rows) — PR #103 | VERIFIED | Independent review with sources; leak test green |
 | Security: answer index no longer sent to the browser (server-side check) — PR #103 + server stage 2 | VERIFIED | REST shows no `correct` in batches; live play scores correctly |
 | Ultra QA (independent, live site) | VERIFIED | Verdict "ready with fixes"; all high/medium findings fixed, low items listed below |
+| Robot artwork for the computer opponent (Gemini, transparent WebP) — PR #105 | DEPLOYED | Live: /art/robot.webp 384px, mapping in the production bundle; bot mode needs a signed-in account, so not hand-played |
+| Ultra QA low items: 16 duplicate questions no longer dealt, device preview behind ?devtools=1, menu subtitle in 6 languages — PR #106 | VERIFIED | CI 14/14; live: preview hidden by default and shown with ?devtools=1, Arabic menu title translated, duplicate list in production bundle |
 
 ## Decisions waiting for the owner
 1. Publishing on Google Play: $25 developer fee, then a 12-tester × 14-day closed test (`docs/ANDROID_PLAY_RELEASE_HE.md`).
@@ -33,8 +35,8 @@ Statuses: TODO · IN_PROGRESS · CODE_COMPLETE · TESTED · DEPLOYED · VERIFIED
 3. Legal launch blockers in `docs/ISRAEL_LEGAL_COMPLIANCE_HE.md`: operator identity and contact address in the privacy policy, external legal review, minors policy.
 
 ## Open items (next)
-1. Robot (computer opponent) still shows a fallback symbol — needs one Gemini image (owner's Chrome must be connected).
-2a. Ultra QA low items left: duplicate question pairs across banks (Central Perk, Simba's father, Weizmann, Morocco 1980…), time-sensitive questions without an expiry, mobile LCP 3.8s (main JS bundle), Arabic chapter nav wraps at 390px, dev-only settings (device preview) visible.
+1. Mobile LCP ~3.8s: the home page ships 358 kB of first-load JS because every language's question bank is bundled; split banks per locale (needs care: the answer lookup imports all banks).
+2. Checked and closed: Arabic chapter navigation fits one row at 390px; time-sensitive questions are all date-anchored ("until 2026", "October 2026 chart"), so they stay true.
 3. Question bank: most server rows are one generated "which country/city" template; more verified non-geography content needed (no invented facts).
 4. Older skins (urban, vintage, retro, pop, future) still carry legacy styling.
 5. CSS debt: ~950 `!important` in legacy files.
