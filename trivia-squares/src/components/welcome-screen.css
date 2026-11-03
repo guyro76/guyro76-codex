@@ -124,10 +124,10 @@
  .trivia-welcome .welcome-game-art{max-width:390px}
  .trivia-welcome .welcome-board-visual{max-height:260px}
  .trivia-welcome .welcome-features{gap:6px}
- .trivia-welcome .welcome-features>div{padding:9px 5px;flex-direction:column;gap:2px;font-size:10px}
+ .trivia-welcome .welcome-features>div{padding:9px 5px;flex-direction:column;gap:2px;font-size:12px;line-height:1.25}
  .trivia-welcome .welcome-features span{font-size:19px}
- .trivia-welcome .welcome-promise{margin:7px 0;font-size:10px}
- .trivia-welcome .welcome-language-select label{display:none}
+ .trivia-welcome .welcome-promise{margin:7px 0;font-size:12px}
+ .trivia-welcome .welcome-language-select label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
 @media(max-height:640px) and (min-width:761px){
  .trivia-welcome .welcome-copy h1{font-size:clamp(33px,4vw,59px);margin:9px 0}

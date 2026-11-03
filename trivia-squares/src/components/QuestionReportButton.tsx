@@ -2,6 +2,7 @@
 import {useState} from 'react';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import type {ActiveLocale} from '../lib/i18n';
+import {submitAppeal,type AppealSource} from '../lib/answerAppeals';
 
 const reasons=['wrong_answer','unclear','translation','duplicate','outdated'] as const;
 type Reason=typeof reasons[number];
@@ -20,8 +21,9 @@ const translations:Record<ActiveLocale,Words>={
  es:{open:'Informar de un problema',reason:'¿Qué problema tiene la pregunta?',submit:'Enviar informe',close:'Cancelar',sent:'Informe enviado a revisión. ¡Gracias!',local:'Guardado solo en este dispositivo. Inicia sesión para enviarlo al equipo.',error:'No se pudo enviar. Guardado en este dispositivo.',
   options:{wrong_answer:'Respuesta marcada incorrecta',unclear:'Pregunta ambigua',translation:'Error de traducción',duplicate:'Pregunta repetida',outdated:'Información desactualizada'}}
 };
-export default function QuestionReportButton({client,userId,legalAccepted,questionId,locale}:{
- client:SupabaseClient|null;userId:string|null;legalAccepted:boolean;questionId:number;locale:ActiveLocale
+export default function QuestionReportButton({client,userId,legalAccepted,questionId,locale,questionText,answers,source}:{
+ client:SupabaseClient|null;userId:string|null;legalAccepted:boolean;questionId:number;locale:ActiveLocale;
+ questionText?:string;answers?:readonly string[];source?:AppealSource
 }){
  const t=translations[locale], [expanded,setExpanded]=useState(false),[reason,setReason]=useState<Reason>('wrong_answer');
  const [saving,setSaving]=useState(false),[message,setMessage]=useState('');
@@ -42,6 +44,12 @@ export default function QuestionReportButton({client,userId,legalAccepted,questi
     const {data,error}=await client.rpc('trivia_report_question',{p_question_id:questionId,p_reason:reason});
     if(!error&&data===true){setMessage(t.sent);setSaving(false);setExpanded(false);return;}
    }catch{}
+  }
+  // Guests (and anyone the account route failed for) still reach the hourly review engine.
+  if(client&&questionText&&answers&&answers.length>=2&&Number.isSafeInteger(questionId)&&questionId>0){
+   const sent=await submitAppeal(client,{kind:'report',source:source||'bundled',questionId,locale,text:questionText,
+    answers,chosen:null,shownCorrect:null,reason:t.options[reason]});
+   if(sent.ok){setMessage(t.sent);setSaving(false);setExpanded(false);return;}
   }
   setMessage(savedOnDevice?t.local:t.error);setSaving(false);setExpanded(false);
  };

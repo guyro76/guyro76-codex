@@ -5,6 +5,7 @@
 import type {ActiveLocale} from './i18n';
 export const uiCompleteness:Record<Exclude<ActiveLocale,'he'>,Readonly<Record<string,string>>>={
   "en": {
+    "כוכבים": "Stars",
     "עיצוב המשחק": "Game appearance",
     "בחר סקין למשחק": "Choose a game theme",
     "6 סקינים לבחירה · ההתקדמות נשמרת": "Six skins to choose from · Your progress is saved",
@@ -23,6 +24,9 @@ export const uiCompleteness:Record<Exclude<ActiveLocale,'he'>,Readonly<Record<st
     "שאלת פרימיום · תשובה נכונה תפתח בונוס": "Premium question · Answer correctly to unlock a bonus"
   },
   "ru": {
+    "בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח": "Выберите две соседние точки и проведите между ними линию маркером в любом месте поля",
+    "בחר ריבוע פנוי לכיבוש בזהב": "Выберите свободную клетку для золотого захвата",
+    "כוכבים": "Звёзды",
     "המחשב": "Компьютер",
     "עיצוב המשחק": "Оформление игры",
     "בחר סקין למשחק": "Выбрать тему оформления",
@@ -84,6 +88,9 @@ export const uiCompleteness:Record<Exclude<ActiveLocale,'he'>,Readonly<Record<st
     "עוגיות ואחסון": "Файлы cookie и хранилище"
   },
   "fr": {
+    "בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח": "Choisissez deux points voisins et tracez un trait entre eux, n’importe où sur le plateau",
+    "בחר ריבוע פנוי לכיבוש בזהב": "Choisissez une case libre pour la conquête dorée",
+    "כוכבים": "Étoiles",
     "המחשב": "Ordinateur",
     "עיצוב המשחק": "Apparence du jeu",
     "בחר סקין למשחק": "Choisir un thème",
@@ -145,6 +152,9 @@ export const uiCompleteness:Record<Exclude<ActiveLocale,'he'>,Readonly<Record<st
     "עוגיות ואחסון": "Cookies et stockage"
   },
   "ar": {
+    "בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח": "اختر أي نقطتين متجاورتين وارسم بينهما خطًا بالقلم في أي مكان على اللوحة",
+    "בחר ריבוע פנוי לכיבוש בזהב": "اختر مربعًا فارغًا للاستيلاء الذهبي",
+    "כוכבים": "نجوم",
     "המחשב": "الكمبيوتر",
     "עיצוב המשחק": "مظهر اللعبة",
     "בחר סקין למשחק": "اختر تصميم اللعبة",
@@ -206,6 +216,9 @@ export const uiCompleteness:Record<Exclude<ActiveLocale,'he'>,Readonly<Record<st
     "עוגיות ואחסון": "ملفات تعريف الارتباط والتخزين"
   },
   "es": {
+    "בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח": "Elige dos puntos vecinos y traza una línea entre ellos, en cualquier lugar del tablero",
+    "בחר ריבוע פנוי לכיבוש בזהב": "Elige una casilla libre para la conquista dorada",
+    "כוכבים": "Estrellas",
     " ריבועים": " cuadrados",
     "🧭 הדרך לכיבוש מתחילה כאן": "🧭 El camino hacia la victoria empieza aquí"
   }

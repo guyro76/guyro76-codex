@@ -1085,14 +1085,9 @@ export const englishCuratedQuestions:EnglishQuestion[]=[
   {
     "id": 1083,
     "category": "Technology",
-    "text": "Which device is mainly used to route network traffic between networks?",
-    "answers": [
-      "Monitor",
-      "Keyboard",
-      "Router",
-      "Scanner"
-    ],
-    "correct": 2,
+    "text": "Which device converts a digital signal for transmission over telephone or cable lines?",
+    "answers": ["Modem", "Monitor", "Keyboard", "Scanner"],
+    "correct": 0,
     "difficulty": 3
   },
   {
@@ -1176,14 +1171,9 @@ export const englishCuratedQuestions:EnglishQuestion[]=[
   {
     "id": 1102,
     "category": "Nature and wildlife",
-    "text": "Which animal produces honey?",
-    "answers": [
-      "Ant",
-      "Butterfly",
-      "Dragonfly",
-      "Honey bee"
-    ],
-    "correct": 3,
+    "text": "What is the female bee that lays the eggs in a hive called?",
+    "answers": ["The worker", "The drone", "The queen", "The forager"],
+    "correct": 2,
     "difficulty": 1
   },
   {

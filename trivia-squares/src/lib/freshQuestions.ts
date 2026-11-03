@@ -342,14 +342,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90024,
     "category": "קולנוע",
-    "text": "איזה יצור מופיע במרכז סדרת סרטי קונג פו פנדה?",
-    "answers": [
-      "נמר",
-      "פנדה",
-      "דוב קוטב",
-      "קואלה"
-    ],
-    "correct": 1,
+    "text": "מה שמו של הפנדה בסדרת הסרטים 'קונג פו פנדה'?",
+    "answers": ["פו", "שיפו", "טאי לונג", "מאסטר אוגווי"],
+    "correct": 0,
     "difficulty": 1
   },
   {
@@ -426,28 +421,18 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "he",
     "id": 90030,
     "category": "סדרות",
-    "text": "באיזו סדרה מצוירת מופיע הומר סימפסון?",
-    "answers": [
-      "גריפין",
-      "סאות' פארק",
-      "ריק ומורטי",
-      "משפחת סימפסון"
-    ],
-    "correct": 3,
+    "text": "מה שמה של אשתו של הומר סימפסון?",
+    "answers": ["מארג'", "לויס", "ליסה", "פטי"],
+    "correct": 0,
     "difficulty": 1
   },
   {
     "locale": "he",
     "id": 90031,
     "category": "סדרות",
-    "text": "מהו שם המשפחה של הדמויות ברידג'רטון?",
-    "answers": [
-      "ביירס",
-      "סופראנו",
-      "ברידג'רטון",
-      "אדמס"
-    ],
-    "correct": 2,
+    "text": "בסדרה 'ברידג'רטון', באיזה שם עט חותמת כותבת הרכילות האנונימית?",
+    "answers": ["ליידי ויסלדאון", "ליידי דנברי", "ליידי פת'רינגטון", "ליידי ג'רסי"],
+    "correct": 0,
     "difficulty": 2
   },
   {
@@ -1070,14 +1055,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "en",
     "id": 90076,
     "category": "Movies",
-    "text": "Which animal stars in the Kung Fu Panda movies?",
-    "answers": [
-      "Tiger",
-      "Panda",
-      "Polar bear",
-      "Koala"
-    ],
-    "correct": 1,
+    "text": "What is the name of the panda in the Kung Fu Panda movies?",
+    "answers": ["Po", "Shifu", "Tai Lung", "Oogway"],
+    "correct": 0,
     "difficulty": 1
   },
   {
@@ -1154,28 +1134,18 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "en",
     "id": 90082,
     "category": "Television",
-    "text": "Which animated TV series features Homer Simpson?",
-    "answers": [
-      "Family Guy",
-      "South Park",
-      "Rick and Morty",
-      "The Simpsons"
-    ],
-    "correct": 3,
+    "text": "What is the name of Homer Simpson's wife?",
+    "answers": ["Marge", "Lois", "Lisa", "Patty"],
+    "correct": 0,
     "difficulty": 1
   },
   {
     "locale": "en",
     "id": 90083,
     "category": "Television",
-    "text": "What is the family name at the centre of Bridgerton?",
-    "answers": [
-      "Byers",
-      "Soprano",
-      "Bridgerton",
-      "Addams"
-    ],
-    "correct": 2,
+    "text": "In Bridgerton, what pen name does the anonymous gossip writer use?",
+    "answers": ["Lady Whistledown", "Lady Danbury", "Lady Featherington", "Lady Jersey"],
+    "correct": 0,
     "difficulty": 2
   },
   {
@@ -1406,14 +1376,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "en",
     "id": 90100,
     "category": "Technology",
-    "text": "Which device turns digital documents into printed pages?",
-    "answers": [
-      "Router",
-      "Printer",
-      "Monitor",
-      "Microphone"
-    ],
-    "correct": 1,
+    "text": "Which computer component is often called the 'brain' of the computer?",
+    "answers": ["CPU", "Monitor", "Mouse", "Speaker"],
+    "correct": 0,
     "difficulty": 1
   },
   {
@@ -1476,14 +1441,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "en",
     "id": 90105,
     "category": "Art and literature",
-    "text": "Which painting by Vincent van Gogh features a swirling night sky?",
-    "answers": [
-      "The Starry Night",
-      "Water Lilies",
-      "The Scream",
-      "Guernica"
-    ],
-    "correct": 0,
+    "text": "In which country was Vincent van Gogh born?",
+    "answers": ["France", "Netherlands", "Belgium", "Germany"],
+    "correct": 1,
     "difficulty": 3
   },
   {
@@ -1504,14 +1464,9 @@ export const freshLocalQuestionReserve:SeedQuestion[]=[
     "locale": "en",
     "id": 90107,
     "category": "Art and literature",
-    "text": "Which children's book features a boy named Charlie and a chocolate factory?",
-    "answers": [
-      "Peter Pan",
-      "Matilda",
-      "Charlie and the Chocolate Factory",
-      "The BFG"
-    ],
-    "correct": 2,
+    "text": "Who wrote 'Charlie and the Chocolate Factory'?",
+    "answers": ["Roald Dahl", "J. K. Rowling", "C. S. Lewis", "Dr. Seuss"],
+    "correct": 0,
     "difficulty": 2
   }
 ];

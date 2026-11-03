@@ -164,7 +164,8 @@ test('one-minute spinning hourglass appears during a drawn-line question',async(
   const quiz=page.getByRole('dialog',{name:'שאלת טריוויה'});
   await expect(quiz).toBeVisible();
   await expect(quiz.getByRole('timer')).toContainText(/0[0-1]:[0-5][0-9]/);
-  await expect(quiz.locator('.hourglass-spin')).toContainText('⌛');
+  // Owner rule: no emoji in the UI; the timer shows the realistic stopwatch artwork.
+  await expect(quiz.locator('.question-timer-art img.game-image-stopwatch')).toBeVisible();
   await expect(quiz.getByRole('button',{name:/30 שניות/})).toBeDisabled();
 });
 
@@ -548,7 +549,8 @@ test('guest reports a bad question without giving up the line or exposing a prof
  await quiz.getByRole('button',{name:'דווח על בעיה בשאלה'}).click();
  await quiz.getByRole('combobox',{name:'מה לא תקין בשאלה?'}).selectOption('wrong_answer');
  await quiz.getByRole('button',{name:'שלח דיווח'}).click();
- await expect(quiz.getByRole('status')).toContainText('נשמר במכשיר בלבד');
+ // Guests now reach the hourly review engine (stubbed in tests), and the report is still kept on the device.
+ await expect(quiz.getByRole('status')).toContainText('הדיווח נשלח לבדיקה');
  const reports=await page.evaluate(()=>JSON.parse(localStorage.getItem('trivia-question-reports-v1')||'[]'));
  expect(reports).toEqual(expect.arrayContaining([expect.objectContaining({locale:'he',reason:'wrong_answer'})]));
  await expect(quiz).toBeVisible();

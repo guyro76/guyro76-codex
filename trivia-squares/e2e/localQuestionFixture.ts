@@ -20,6 +20,14 @@ export async function useOfflineQuestionFixtures(page:Page):Promise<void>{
       body:'[]'
     });
   });
+  // Appeals and reports reach the live review queue in production. Tests must never write there:
+  // the submit call is answered locally, and the read-only calls return an empty, deterministic state.
+  const stub=(body:string)=>async(route:import('@playwright/test').Route)=>route.fulfill({status:200,contentType:'application/json',
+    headers:{'access-control-allow-origin':'*','access-control-allow-methods':'POST, OPTIONS',
+      'access-control-allow-headers':'apikey, authorization, content-type, x-client-info, accept-profile, prefer'},body});
+  await page.route('**/rest/v1/rpc/trivia_submit_answer_appeal**',stub('9001'));
+  await page.route('**/rest/v1/rpc/trivia_my_appeals**',stub('[]'));
+  await page.route('**/rest/v1/rpc/trivia_bundled_question_corrections**',stub('[]'));
 }
 
 const bank=[...offlineQuestions,...freshLocalQuestionReserve,...languageQuestions,...curatedHebrewQuestions];

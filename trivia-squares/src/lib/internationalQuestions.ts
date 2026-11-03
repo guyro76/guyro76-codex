@@ -751,13 +751,8 @@ export const internationalQuestions:InternationalQuestion[]=[
     "id": 302017,
     "locale": "ar",
     "category": "العلوم",
-    "text": "أي جهاز يقيس درجة الحرارة؟",
-    "answers": [
-      "المجهر",
-      "مقياس الحرارة",
-      "مقياس الضغط",
-      "البوصلة"
-    ],
+    "text": "أي جهاز يقيس الضغط الجوي؟",
+    "answers": ["المجهر", "البارومتر", "الترمومتر", "البوصلة"],
     "correct": 1,
     "difficulty": 3
   },
@@ -1451,14 +1446,9 @@ export const internationalQuestions:InternationalQuestion[]=[
     "id": 301034,
     "locale": "fr",
     "category": "Sport",
-    "text": "Dans quel sport dribble-t-on un ballon pour marquer dans un panier ?",
-    "answers": [
-      "Hockey",
-      "Rugby",
-      "Basket-ball",
-      "Tennis"
-    ],
-    "correct": 2,
+    "text": "Combien de joueurs de chaque équipe sont sur le terrain au basket-ball ?",
+    "answers": ["5", "6", "7", "11"],
+    "correct": 0,
     "difficulty": 2
   },
   {
