@@ -160,6 +160,9 @@ export default function TriviaGame() {
   const [user, setUser] = useState<User | null>(null);
   const [locale, setLocale] = useState<ActiveLocale>('he');
   const [previewViewport,setPreviewViewport]=useState<'auto'|'desktop'|'tablet'|'mobile'>('auto');
+  /** Device preview is a developer tool: shown only with ?devtools=1 in the address. */
+  const [devTools,setDevTools]=useState(false);
+  useEffect(()=>{try{setDevTools(new URLSearchParams(window.location.search).get('devtools')==='1')}catch{}},[]);
   const [languageLoaded, setLanguageLoaded] = useState(false);
   const tr = useCallback((value: string) => stripPictographs(translate(locale,value)),[locale]);
   /** Inline text in all six languages (for strings that are not dictionary keys). */
@@ -1899,7 +1902,7 @@ export default function TriviaGame() {
           onClick={event=>{if(event.target===event.currentTarget)event.currentTarget.close()}}>
           <div className='app-menu-shell' dir={localeDirection(locale)}>
             <div className='app-menu-heading'>
-              <div className='app-menu-brand'><TriviaMark label={locale==='he'?'סמל טריוויה ריבועים':'Trivia Squares'} size={40}/><div><strong>{tr('טריוויה ריבועים')}</strong><small>{locale==='he'?'תפריט המשחק':locale==='es'?'Menú del juego':locale==='en'?'Game navigation':'Game menu'}</small></div></div>
+              <div className='app-menu-brand'><TriviaMark label={locale==='he'?'סמל טריוויה ריבועים':'Trivia Squares'} size={40}/><div><strong>{tr('טריוויה ריבועים')}</strong><small>{L6({he:'תפריט המשחק',en:'Game menu',ru:'Меню игры',fr:'Menu du jeu',ar:'قائمة اللعبة',es:'Menú del juego'})}</small></div></div>
               <button type='button' className='app-menu-close' aria-label={locale==='he'?'סגור תפריט':locale==='es'?'Cerrar menú':'Close menu'} onClick={()=>menuRef.current?.close()}>✕</button>
             </div>
             <nav className='app-menu-tabs' aria-label={L6({he:'ניווט במשחק',en:'Game navigation',ru:'Навигация по игре',fr:'Navigation du jeu',ar:'التنقل في اللعبة',es:'Navegación del juego'})}>
@@ -2022,12 +2025,12 @@ export default function TriviaGame() {
                   </button>
                   </div>
                 </div>
-                <div className='settings-group'>
+                {devTools&&<div className='settings-group'>
                   <h3>{L6({he:'תצוגה מקדימה למכשיר',en:'Device preview',ru:'Предпросмотр устройства',fr:'Aperçu de l’appareil',ar:'معاينة الجهاز',es:'Vista previa del dispositivo'})}</h3>
                 <nav className='viewport-preview-switch' aria-label={viewportPreviewLabel(locale)}>
                   {(['auto','desktop','tablet','mobile'] as const).map(mode=><button key={mode} type='button' aria-pressed={previewViewport===mode} onClick={()=>setPreviewViewport(mode)}>{viewportModeLabel(locale,mode)}</button>)}
                 </nav>
-                </div>
+                </div>}
                 <div className='settings-group settings-info' onClick={event=>{if((event.target as HTMLElement).closest('a[href^="#"]'))menuRef.current?.close()}}>
                   <GameTimeBar locale={locale}/>
                 </div>

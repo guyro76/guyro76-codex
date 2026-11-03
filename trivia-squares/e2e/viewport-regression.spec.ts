@@ -45,7 +45,7 @@ test('viewport preview switches automatically, desktop, tablet and mobile withou
   localStorage.setItem('trivia-tutorial-seen-v1','1');
   localStorage.setItem('trivia-player-name','טסטר');
  });
- await page.goto('/');
+ await page.goto('/?devtools=1');
  await openGameSettings(page);
  const previews=page.getByRole('navigation',{name:'בדיקת תצוגה במכשירים'});
  await expect(previews).toBeVisible();
