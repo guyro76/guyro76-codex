@@ -43,7 +43,30 @@ export function correctedQuestion<T extends {id:number;text:string;answers:reado
   return fix?{...q,text:fix.text,answers:fix.answers,correct:fix.correct}:q;
 }
 
+/** Bundled questions that ask the same fact as another bundled question (Ultra QA, 2026-11-03).
+ *  The better-worded twin stays playable; these stay in the bundle only so saved games and
+ *  appeals can still resolve them by id. Key = hidden id, value = the id that stays. */
+export const BUNDLED_DUPLICATES:ReadonlyMap<number,number>=new Map([
+  [90049,30],      // Weizmann Institute city
+  [90014,22],      // blue whale (largest mammal)
+  [8025,990069],   // Central Perk
+  [8069,990052],   // Like a Prayer
+  [8075,990057],   // "Ani ve'ata"
+  [8083,990055],   // Jerusalem of Gold
+  [8084,990058],   // "HaPerah BeGani"
+  [90039,990049],  // Abbey Road
+  [90055,1003],    // Indian Ocean
+  [90096,1070],    // guacamole
+  [90098,1076],    // paella
+  [90066,1105],    // blue whale (largest animal)
+  [90084,4047],    // Aang
+  [44154,44158],   // Eurovision 2026 winner
+  [44213,44158],   // Eurovision 2026 winner
+  [44241,44219]    // Morocco at Eurovision
+]);
+
 export function applyQuestionCorrections<T extends {id:number;text:string;answers:readonly string[];correct:number}>(bank:readonly T[]):T[]{
-  if(!fixes.size&&!retired.size)return bank as T[];
-  return bank.filter(q=>!retired.has(q.id)).map(correctedQuestion);
+  const playable=bank.filter(q=>!BUNDLED_DUPLICATES.has(q.id));
+  if(!fixes.size&&!retired.size)return playable;
+  return playable.filter(q=>!retired.has(q.id)).map(correctedQuestion);
 }
