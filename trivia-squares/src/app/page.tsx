@@ -9,6 +9,9 @@ import WelcomeScreen from '../components/WelcomeScreen';
  * layout marks <html> before the first paint, CSS hides the welcome markup, and the game chunk
  * starts downloading at once. */
 const loadGame=()=>import('./game');
+// Returning players (marked by the inline script in layout.tsx) need the game at once:
+// start the download while React is still hydrating instead of after it.
+if(typeof document!=='undefined'&&document.documentElement.classList.contains('ts-returning'))void loadGame();
 const TriviaGame=dynamic(loadGame,{ssr:false,loading:()=><GameLoading/>});
 
 function GameLoading(){

@@ -13,6 +13,7 @@ test.beforeEach(async({page})=>{
 
 test('default in-game screen uses the night arcade glass design with high-contrast labels',async({page})=>{
  await page.goto('/');
+ await page.locator('svg.board').waitFor();
  const root=page.locator('main.trivia-app.skin-regular');
  await expect(root).toBeVisible();
  await expect(page.locator('.arena-panel .arena-inner svg.board')).toBeVisible();
@@ -43,6 +44,7 @@ test('default in-game screen uses the night arcade glass design with high-contra
 
 test('changing to AI future preserves distinct selectable skin and usable board',async({page})=>{
  await page.goto('/');
+ await page.locator('svg.board').waitFor();
  const picker=page.getByRole('button',{name:'עיצוב המשחק'});
  await picker.click();
  const futuristic=page.locator('.skin-picker-item').filter({hasText:/עתידני AI/});
@@ -56,6 +58,7 @@ test('tablet and phone keep the board on screen after visual parity styling',asy
  test.skip(testInfo.project.name!=='chromium-mobile','Mobile viewport regression only');
  await page.setViewportSize({width:390,height:844});
  await page.goto('/');
+ await page.locator('svg.board').waitFor();
  const geometry=await page.evaluate(()=>{
    const board=document.querySelector('svg.board')!.getBoundingClientRect();
    return {width:board.width,documentWidth:document.documentElement.scrollWidth,windowWidth:window.innerWidth};
