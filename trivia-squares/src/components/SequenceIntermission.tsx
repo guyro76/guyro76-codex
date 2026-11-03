@@ -1,8 +1,10 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import type {ActiveLocale} from '../lib/i18n';
+import {GameImage,type ObjectArt} from './GameImage';
 
-const symbols=['★','◆','●','▲'] as const;
+// Realistic artwork instead of symbol glyphs (owner rule: no emoji or icon glyphs).
+const symbols:readonly ObjectArt[]=['apple','gem','coin','planet'];
 const colors=['#be185d','#1d4ed8','#15803d','#92400e'];
 const text:Record<ActiveLocale,{title:string,round:string,watch:string,repeat:string,win:string,wrong:string,start:string,skip:string}>={
  he:{title:'אתגר זיכרון רצפים',round:'סבב',watch:'זכור את הרצף המואר',repeat:'חזור על הרצף',win:'הצלחת בשלושת הסבבים!',wrong:'טעות ברצף, נסה שוב',start:'התחל',skip:'דלג ללא קנס'},
@@ -49,8 +51,8 @@ export default function SequenceIntermission({locale,onWin,onSkip,onTone}:{local
   <h4>{t.title}</h4><p aria-live='polite'>{phase==='won'?t.win:phase==='watch'?t.watch:phase==='repeat'?t.repeat:t.start} {round>0?'· '+t.round+' '+round+'/3':''}</p>
   <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:12,maxWidth:290,margin:'16px auto'}}>
    {symbols.map((symbol,i)=><button key={i} type='button' disabled={phase!=='repeat'} onClick={()=>press(i)}
-    aria-label={String(i+1)+' '+symbol} aria-pressed={lit===i}
-    style={{height:112,borderRadius:22,border:'4px solid #fff',background:colors[i],color:'#fff',fontSize:38,fontWeight:900,opacity:phase==='watch'&&lit!==i?.35:1,transform:lit===i?'scale(1.08)':'scale(1)',boxShadow:lit===i?'0 0 24px #fff':'0 5px 14px #0003'}}>{symbol}</button>)}
+    aria-label={String(i+1)} aria-pressed={lit===i}
+    style={{height:112,borderRadius:22,border:'4px solid #fff',background:colors[i],color:'#fff',fontSize:38,fontWeight:900,opacity:phase==='watch'&&lit!==i?.35:1,transform:lit===i?'scale(1.08)':'scale(1)',boxShadow:lit===i?'0 0 24px #fff':'0 5px 14px #0003'}}><GameImage name={symbol} size={62}/></button>)}
   </div>
   {error&&<p role='alert'>{t.wrong}</p>}
   {phase==='idle'&&<button type='button' onClick={error?retry:start}>{error?t.repeat:t.start}</button>}

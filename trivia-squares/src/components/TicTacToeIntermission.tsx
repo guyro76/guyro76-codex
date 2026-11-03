@@ -52,7 +52,7 @@ export default function TicTacToeIntermission({locale,onWin,onSkip}:{locale:Acti
     style={{aspectRatio:'1',fontSize:38,fontWeight:900,borderRadius:15,border:'2px solid #6a4aff',background:'#f5efff',color:'#28174e',minHeight:64}}>
     {value||'·'}</button>)}
   </div>
-  {finalWinner==='X'&&!done?<button type='button' onClick={()=>{setDone(true);onWin();}}>{copy.win} ★</button>:null}
+  {finalWinner==='X'&&!done?<button type='button' onClick={()=>{setDone(true);onWin();}}>{copy.win}</button>:null}
   {ended&&finalWinner!=='X'?<button type='button' onClick={()=>{setBoard(Array(9).fill(null));setDone(false)}}>{copy.retry}</button>:null}
   <button type='button' onClick={onSkip}>{copy.skip}</button>
  </section>;

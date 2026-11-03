@@ -38,7 +38,7 @@ function TargetChallenge({kind,locale,disabled,onComplete}:{kind:GestureGame;loc
    {Array.from({length:total},(_,i)=><button key={i} type='button' data-gesture-target={i}
     className={marks.includes(i)?'revealed':''} aria-label={`${copy.target} ${i+1}`} aria-pressed={marks.includes(i)}
     disabled={disabled||marks.includes(i)} onClick={()=>mark(i)}>
-    <span aria-hidden='true'>{marks.includes(i)?'✦':kind==='scratch'?'◆':kind==='sword'?'?':'✂'}</span>
+    <span aria-hidden='true'>{marks.includes(i)?'✓':kind==='sword'?'?':''}</span>
    </button>)}
   </div>
   <p role='status' aria-live='polite'>{copy.progress}: {marks.length} / {needed}</p>

@@ -1,8 +1,10 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import type {ActiveLocale} from '../lib/i18n';
+import {GameImage,type ObjectArt} from './GameImage';
 
-const symbols=['★','♥','◆','☀','♣','✿'];
+// Realistic artwork instead of symbol glyphs (owner rule: no emoji or icon glyphs).
+const symbols:readonly ObjectArt[]=['apple','gem','coin','planet','trophy','bulb'];
 const copy:Record<ActiveLocale,{title:string,help:string,matched:string,won:string,skip:string}>={
  he:{title:'זיכרון זוגות',help:'חשוף שני קלפים ומצא זוגות זהים',matched:'זוגות שנמצאו',won:'כל הזוגות נמצאו!',skip:'דלג ללא קנס'},
  en:{title:'Memory pairs',help:'Flip two cards to find matching pairs',matched:'Pairs matched',won:'All pairs found!',skip:'Skip without penalty'},
@@ -45,10 +47,10 @@ export default function PairsIntermission({locale,onWin,onSkip}:{locale:ActiveLo
    {deck.map((symbol,i)=>{
     const visible=found.includes(symbol)||open.includes(i);
     return <button key={i} type='button' disabled={complete||found.includes(symbol)}
-     aria-label={String(i+1)+': '+(visible?symbols[symbol]:'?')}
+     aria-label={String(i+1)+': '+(visible?String(symbol+1):'?')}
      onClick={()=>pick(i)}
      style={{aspectRatio:'1',minHeight:62,borderRadius:13,border:'2px solid #6547c9',background:visible?'#fff1bf':'#4f35a8',color:visible?'#28204b':'#fff',fontSize:30,fontWeight:900}}>
-     {visible?symbols[symbol]:'?'}
+     {visible?<GameImage name={symbols[symbol]} size={46}/>:'?'}
     </button>;
    })}
   </div>
