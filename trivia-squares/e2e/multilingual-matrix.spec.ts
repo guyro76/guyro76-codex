@@ -17,6 +17,7 @@ async function prepare(page:Page,completed=false,game='wheel'){
    localStorage.setItem('trivia-mode-v2','solo');
    localStorage.setItem('trivia-stage-id-v1','1');
    localStorage.setItem('trivia-stage-run-id','local-qa-'+code+'-'+kind);
+   localStorage.setItem('trivia-intermission-pick-v1',JSON.stringify({next:kind==='word'?'word':'wheel'}));
    if(finished){
      const owners:Record<string,string>={};
      for(let row=0;row<3;row++)for(let col=0;col<3;col++)owners[row+'-'+col]='host';
@@ -78,7 +79,6 @@ if(profile==='visual'){
    await prepare(page,true,'wheel');
    const reveal=page.locator('.lumen-stage-reveal');
    await expect(reveal).toBeVisible();
-   await reveal.locator('.lumen-intermission-choices button').nth(1).click();
    await expect(reveal.locator('.lumen-wheel-game')).toBeVisible();
    await reveal.locator('.lumen-wheel-game .lumen-cta').click();
    await expect(reveal.locator('.lumen-prize-won')).toBeVisible();
@@ -89,7 +89,6 @@ if(profile==='visual'){
    await prepare(page,true,'word');
    const reveal=page.locator('.lumen-stage-reveal');
    await expect(reveal).toBeVisible();
-   await reveal.locator('.lumen-intermission-choices button').first().click();
    await expect(reveal.locator('#lumen-word-guess')).toBeVisible();
    await reveal.locator('#lumen-word-guess').fill(localeWords[locale][3].answer);
    await reveal.locator('.lumen-word-game .lumen-cta').click();
@@ -104,6 +103,7 @@ if(profile==='visual'){
    await prepare(page,true,'advance');
    await expect(page.locator('svg.board')).toBeVisible();
    await expect(page.locator('svg.board circle[role="button"]')).toHaveCount(16);
+   await page.getByTestId('intermission-skip').click();
    await expect(page.locator('.lumen-stage-reveal .lumen-next-button')).toBeVisible();
    const switched=await page.locator('.locale-switch').getAttribute('aria-label');
    expect(switched).toBeTruthy();

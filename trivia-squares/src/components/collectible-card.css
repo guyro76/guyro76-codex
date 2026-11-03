@@ -90,3 +90,15 @@ main.trivia-app .stage-challenge-anchor{scroll-margin-top:92px}
   main.trivia-app .collectible-card,main.trivia-app .collectible-card *{animation:none!important;transition:none!important}
   main.trivia-app .collectible-card{transform:none}
 }
+
+/* Random between-stage mini-game: it takes over the reward screen while it is played. */
+main.trivia-app .lumen-stage-reveal.intermission-focus .lumen-reveal-layout{grid-template-columns:minmax(0,1fr)!important;max-width:640px;margin-inline:auto}
+main.trivia-app .intermission-focus .lumen-reward-options{text-align:center}
+main.trivia-app .intermission-focus .lumen-kicker{display:block;font-size:13px;letter-spacing:.06em;color:#FFE7A4}
+main.trivia-app .intermission-focus .stage-challenge-selected{margin:6px 0 14px;font-size:clamp(22px,6vw,30px);font-weight:900;line-height:1.15;color:#FFFFFF}
+main.trivia-app .intermission-drawing{margin:8px 0 0;font-size:15px;color:rgba(244,246,255,.8);animation:collectibleBreath 1.2s ease-in-out infinite}
+main.trivia-app .intermission-skip{display:block;margin:18px auto 0;min-height:44px;padding:8px 18px;border-radius:12px;
+  background:transparent;color:rgba(244,246,255,.78);border:1px solid rgba(255,255,255,.28);font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+main.trivia-app .intermission-skip:hover{color:#FFFFFF;border-color:rgba(255,255,255,.6)}
+@media (prefers-reduced-motion:reduce){main.trivia-app .intermission-drawing{animation:none}}
+main.trivia-app .lumen-stage-reveal.intermission-focus{scroll-margin-top:76px}
