@@ -332,3 +332,19 @@ html body main.trivia-app .answer-appeal-status{margin:10px 0 0;text-align:cente
 /* Finished board: reopen the prizes or go straight to the next stage — never a dead end. */
 html body main.trivia-app .stage-finished-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin:12px 0}
 html body main.trivia-app .stage-finished-actions .stage-next-button{min-height:48px;padding:12px 26px;border-radius:999px;font-size:16px}
+
+/* Free-licensed photo next to the correct answer, credit underneath. */
+html body main.trivia-app .answer-image{margin:12px auto 4px;max-width:420px;border-radius:18px;overflow:hidden;
+  background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 12px 28px rgba(0,0,0,.35)}
+html body main.trivia-app .answer-image img{display:block;width:100%;height:auto;max-height:240px;object-fit:cover}
+html body main.trivia-app .answer-image figcaption{padding:7px 12px 9px;font-size:11.5px;font-weight:600;line-height:1.5;color:rgba(244,246,255,.72);text-align:start}
+html body main.trivia-app .answer-image figcaption a{color:#FFE7A4;text-decoration:underline;text-underline-offset:2px}
+html body main.trivia-app .answer-image.compact img{max-height:150px}
+html body main.trivia-app .answer-reveal{position:fixed;inset-inline:12px;bottom:max(14px,env(safe-area-inset-bottom));z-index:29;margin:0 auto;max-width:440px;
+  padding:12px 14px 8px;border-radius:22px;background:rgba(14,22,64,.86);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 24px 50px rgba(0,0,0,.5);animation:answerRevealIn .35s cubic-bezier(.2,.9,.2,1.1) both}
+html body main.trivia-app .answer-reveal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:800}
+html body main.trivia-app .answer-reveal-head strong{color:#2EE6B8}
+html body main.trivia-app .answer-reveal-head button{min-width:36px;min-height:36px;border-radius:999px;border:0;background:rgba(255,255,255,.12);color:#fff;font:inherit}
+@keyframes answerRevealIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){html body main.trivia-app .answer-reveal{animation:none}}
