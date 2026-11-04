@@ -52,6 +52,7 @@ import {GameImage,AvatarArt,type ObjectArt} from '../components/GameImage';
 import CaptureTile, {type CaptureStyle} from '../components/CaptureTile';
 import { readFishPreference, saveFishPreference } from '../components/CapturedSquareFish';
 import {readHapticsPreference,saveHapticsPreference,vibrateFor} from '../lib/haptics';
+import {topicLinesFor,TOPIC_LINE_COLORS,type TopicLines} from '../lib/topicLines';
 import {reassignCapture,type LocalOwner,type LocalOwnerMode} from '../lib/captureOwnership';
 import TutorialPreview from '../components/TutorialPreview';
 import LocalQuestionBackup from '../components/LocalQuestionBackup';
@@ -213,6 +214,8 @@ export default function TriviaGame() {
   const [hapticsOn,setHapticsOn]=useState(true);
   useEffect(()=>{setHapticsOn(readHapticsPreference())},[]);
   const [selectedTopics,setSelectedTopics]=useState<QuestionTopic[]>([...ALL_QUESTION_TOPICS]);
+  const [topicLines,setTopicLines]=useState<TopicLines>({});
+  const bankRef=useRef<{category:string;text:string;id:number}[]>([]);
   const toggleTopic=(id:QuestionTopic)=>setSelectedTopics(previous=>{
     const next=previous.includes(id)?previous.filter(t=>t!==id):[...previous,id];
     return next.length?next:previous;
@@ -345,7 +348,7 @@ export default function TriviaGame() {
     playGameSound('fireworks',{muted,volume:volume/100},1.28);
     playGameSound('coin',{muted,volume:volume/100},1.65);
   },[muted,volume,hapticsOn]);
-  const [captureToast,setCaptureToast]=useState<{id:number;amount:number}|null>(null);
+  const [captureToast,setCaptureToast]=useState<{id:number;amount:number;note?:string}|null>(null);
   useEffect(()=>{
     if(!captureToast)return;
     const id=window.setTimeout(()=>setCaptureToast(null),2700);
@@ -502,6 +505,19 @@ export default function TriviaGame() {
     ]
     : locale==='es'?spanishQuestions:internationalQuestions.filter(q=>q.locale===locale));
   const effectiveQuestionBank=withoutAnswerLeaks([...questionBank,...applyQuestionCorrections(languageQuestions.filter(q=>q.locale===locale)),...remoteQuestionCache.current[locale]]);
+  bankRef.current=effectiveQuestionBank;
+  // Only 2–3 lines per board carry a topic (owner request 2026-11-04); the rest stay a surprise.
+  useEffect(()=>{
+    if(remote){setTopicLines({});return;}
+    const counts=new Map<QuestionTopic,number>();
+    for(const q of bankRef.current){
+      if(usedLocalQuestionIds.current.has(q.id))continue;
+      const t=topicForQuestion(q.category,q.text);counts.set(t,(counts.get(t)||0)+1);
+    }
+    const topics=selectedTopics.filter(t=>t!=='capitals'&&t!=='languages'&&(counts.get(t)||0)>=2);
+    setTopicLines(topicLinesFor(stageRunId,state.rows,state.cols,topics,state.edges));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[stageRunId,state.rows,state.cols,locale,remote?.id,selectedTopics.join(',')]);
   const completed = Object.keys(state.owners).length;
   const percent = Math.round(completed / (state.rows * state.cols) * 100);
 
@@ -985,6 +1001,9 @@ export default function TriviaGame() {
       }
       let unseen=[...effectiveQuestionBank,...cultureQuestions].filter(q=>
         !usedLocalQuestionIds.current.has(q.id)&&!seenQuestionTexts.current.has(canonicalQuestion(q.text)));
+      // A topic line deals a question from its topic (falls back to any topic if none is left).
+      const lineTopic=topicLines[key];
+      if(lineTopic){const onTopic=unseen.filter(q=>topicForQuestion(q.category,q.text)===lineTopic);if(onTopic.length)unseen=onTopic;}
       // A line must always be earned with an actual trivia question.
       if(!unseen.length&&client&&navigator.onLine){
         setBusy(true);
@@ -1175,7 +1194,13 @@ export default function TriviaGame() {
       }
       const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
       const gained = newSquares.length;
-      if(gained){celebrateCapture(gained);setCaptureToast({id:Date.now(),amount:5+gained*10});}
+      // Chain bonus: one line that closes two squares, and captures made on a streak of correct answers.
+      const doubleBonus=correct&&gained>=2?15:0;
+      const streakBonus=correct&&gained>0?(after>=5?10:after>=3?5:0):0;
+      const chainBonus=doubleBonus+streakBonus;
+      const chainNote=doubleBonus?L6({he:'קו כפול! סגרת שני ריבועים',en:'Double line! Two squares',ru:'Двойная линия! Две клетки',fr:'Ligne double ! Deux cases',ar:'خط مزدوج! مربعان',es:'¡Línea doble! Dos casillas'})
+        :streakBonus?L6({he:'בונוס רצף +'+streakBonus,en:'Streak bonus +'+streakBonus,ru:'Бонус серии +'+streakBonus,fr:'Bonus de série +'+streakBonus,ar:'مكافأة السلسلة +'+streakBonus,es:'Bonus de racha +'+streakBonus}):undefined;
+      if(gained){celebrateCapture(gained);setCaptureToast({id:Date.now(),amount:5+gained*10+chainBonus,note:chainNote});}
       if(gained && local.mode==='local' && ownerMode==='manual')setCapturePending({keys:newSquares,from:'new'});
       if (Object.keys(next.owners).length===next.rows*next.cols) play('win');
       else if (gained) play('capture');
@@ -1184,7 +1209,7 @@ export default function TriviaGame() {
       if(correct){
         const rewardSide=local.mode==='solo'?'host':local.turn==='guest'?'guest':'host';
          setLocalWallet(prev=>({...prev,stars:prev.stars+1,fruits:prev.fruits+gained,knowledge_points:{...prev.knowledge_points,[rewardSide]:prev.knowledge_points[rewardSide]+10}}));
-         setLocalCredits(prev=>({...prev,[rewardSide]:prev[rewardSide]+5+(10*gained)}));
+         setLocalCredits(prev=>({...prev,[rewardSide]:prev[rewardSide]+5+(10*gained)+chainBonus}));
          playGameSound('coin',{muted,volume:volume/100},.40);
         playGameSound('star',{muted,volume:volume/100},.25);
         if(gained)playGameSound('fruit',{muted,volume:volume/100},.48);
@@ -1502,6 +1527,12 @@ export default function TriviaGame() {
       {owner && <line x1={x1} y1={y1+1.6} x2={x2} y2={y2+1.6} stroke='#02061A' strokeOpacity='.45' strokeWidth='10' strokeLinecap='round' />}
       <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={owner ? lineColors[owner] : '#C9D8FF'} strokeOpacity={owner ? 1 : .16} strokeWidth={owner ? 10 : 2.5} strokeLinecap='round' strokeDasharray={owner ? undefined : '1 10'}/>
       {owner && <line x1={x1} y1={y1-1.7} x2={x2} y2={y2-1.7} stroke='#FFFFFF' strokeOpacity='.5' strokeWidth='2.4' strokeLinecap='round' />}
+      {!owner && topicLines[key] && (()=>{const color=TOPIC_LINE_COLORS[Object.keys(topicLines).indexOf(key)%TOPIC_LINE_COLORS.length];
+        return <g className='topic-line' data-topic={topicLines[key]} data-testid={'topic-line-'+key}>
+          <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeOpacity='.28' strokeWidth='9' strokeLinecap='round'/>
+          <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth='3' strokeLinecap='round' strokeDasharray='5 6'/>
+          <circle cx={(x1+x2)/2} cy={(y1+y2)/2} r='7.5' fill={color} stroke='#0A0E24' strokeWidth='2.5'/>
+        </g>;})()}
     </g>;
   };
   const step = 288 / state.cols;
@@ -1735,6 +1766,7 @@ export default function TriviaGame() {
              {captureToast && <div key={captureToast.id} className='capture-win-toast' role='status' aria-live='polite'>
                <strong>{locale==='he'?'ריבוע נכבש!':locale==='es'?'¡Casilla conquistada!':locale==='fr'?'Case conquise !':locale==='ru'?'Клетка захвачена!':locale==='ar'?'تم الاستيلاء على المربع!':'Square captured!'}</strong>
                <span><GameImage name='coin' size={20}/> +{captureToast.amount}</span>
+               {captureToast.note&&<em className='capture-toast-note' data-testid='chain-bonus'>{captureToast.note}</em>}
              </div>}
              <div className='arena-quick-wallet' aria-label={locale==='he'?'פרסים וקרדיטים זמינים':locale==='es'?'Premios, créditos y puntos':locale==='fr'?'Récompenses et crédits':locale==='ru'?'Награды и монеты':locale==='ar'?'المكافآت والعملات':'Available game credits and charms'}>
                <span title={locale==='he'?'קרדיטים זמינים':locale==='es'?'Créditos disponibles':locale==='fr'?'Crédits disponibles':locale==='ru'?'Доступные монеты':locale==='ar'?'العملات المتاحة':'Available credits'}><GameImage name='coin' size={24}/><span className='wallet-value' data-testid='wallet-credits'>{currentCredits}</span></span>
@@ -1829,7 +1861,12 @@ export default function TriviaGame() {
             placeholder={L6({he:'שם השחקן',en:'Player name',ru:'Имя игрока',fr:'Nom du joueur',ar:'اسم اللاعب',es:'Nombre del jugador'})} onChange={e=>updatePlayerName(e.target.value)} />
         </div>}
         {!remote && state.mode==='local' && ownerMode!=='auto' && <p className='capture-tip'>{locale==='en'?'Tap any captured square to correct its owner.':'ניתן ללחוץ על ריבוע שנכבש כדי לשנות למי הוא שייך.'}</p>}
-        <div className='gesture-hint'><span className='draw-icon'><GameArt name='marker' size={22}/></span>{bonusSelect?tr('בחר ריבוע פנוי לכיבוש בזהב'):stageId<=3?tr('בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח'):L6({he:'תורך לצייר קו',en:'Your turn to draw',ru:'Ваш ход',fr:'À vous de tracer',ar:'دورك للرسم',es:'Tu turno de trazar'})}</div>
+        <div className='gesture-hint'><span className='draw-icon'><GameArt name='marker' size={22}/></span>{bonusSelect?tr('בחר ריבוע פנוי לכיבוש בזהב'):stageId<=3?L6({he:'צייר קו בין שתי נקודות סמוכות',en:'Draw a line between two neighbouring dots',ru:'Проведите линию между соседними точками',fr:'Tracez une ligne entre deux points voisins',ar:'ارسم خطًا بين نقطتين متجاورتين',es:'Traza una línea entre dos puntos vecinos'}):L6({he:'תורך לצייר קו',en:'Your turn to draw',ru:'Ваш ход',fr:'À vous de tracer',ar:'دورك للرسم',es:'Tu turno de trazar'})}{Object.keys(topicLines).length>0 && !finished && <span className='topic-line-legend' data-testid='topic-line-legend' role='note'>
+          <span>{L6({he:'קווי נושא:',en:'Topic lines:',ru:'Темы линий:',fr:'Lignes à thème :',ar:'خطوط الموضوع:',es:'Líneas con tema:'})}</span>
+          {Object.entries(topicLines).map(([edgeKey,topic],index)=>{const label=questionTopics.find(t=>t.id===topic);
+            return <span key={edgeKey} className={'topic-line-chip'+(state.edges[edgeKey]?' used':'')}>
+              <i aria-hidden='true' style={{background:TOPIC_LINE_COLORS[index%TOPIC_LINE_COLORS.length]}}/>{label?label[locale]:topic}</span>;})}
+</span>}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>{tr("שטחים שנכבשו")}</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
         {!online && <div role='alert' style={{background:'#D94C37',color:'#FFFFFF',padding:10,borderRadius:12,textAlign:'center',marginTop:12}}>
