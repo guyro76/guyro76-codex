@@ -1,0 +1,25 @@
+/* 2026-11-04 polish: colours, weight and grouping only (geometry stays in game-layout.css). */
+
+/* The wallet reads as one pill instead of three separate chips. */
+html body main.trivia-app.trivia-app .arena-quick-wallet{gap:0!important;flex-wrap:nowrap!important;
+  background:rgba(14,22,62,.78);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:2px 4px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+html body main.trivia-app.trivia-app .arena-quick-wallet > span{background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important}
+html body main.trivia-app.trivia-app .arena-quick-wallet > span + span{border-inline-start:1px solid rgba(255,255,255,.16)!important}
+
+/* Type hierarchy: headings stay heavy; supporting text is bold (700) but lighter than headings,
+   so the eye finds the title first. Owner rule: never below 700. */
+html body main.trivia-app.trivia-app :is(.smalltxt,.gesture-hint,.status-line,.campaign-rule,.capture-tip,.lumen-stage-subtitle,
+  .stage-bonus-quiz small,.lumen-reward-options p,.settings-group p,.tutorial-preview p){font-weight:700!important}
+
+/* Question difficulty (1–3) next to the timer. */
+html body main.trivia-app .question-difficulty{display:inline-flex;align-items:center;gap:5px;margin:0 0 6px;font-size:13px;font-weight:800;color:rgba(244,246,255,.82)}
+html body main.trivia-app .question-difficulty i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.22)}
+html body main.trivia-app .question-difficulty i.on{background:#F5A524;box-shadow:0 0 0 1px rgba(160,100,0,.35)}
+/* "Learn more" link to the verified source after a wrong answer. */
+html body main.trivia-app .answer-source-link{display:inline-block;margin:10px 0 2px;font-weight:800;font-size:15px;color:#9CC8FF;text-decoration:underline;text-underline-offset:3px}
+html body main.trivia-app.trivia-app .arena-quick-wallet > span{padding:3px 8px!important;gap:4px!important}
+@media (max-width:440px){
+  html body main.trivia-app.trivia-app .arena-quick-wallet > span{padding:2px 5px!important;gap:3px!important}
+  html body main.trivia-app.trivia-app .arena-quick-wallet img{width:20px!important;height:20px!important}
+}

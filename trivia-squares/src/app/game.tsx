@@ -22,6 +22,8 @@ import { internationalQuestions } from '../lib/internationalQuestions';
 import { spanishQuestions } from '../lib/spanishQuestions';
 import { languageQuestions } from '../lib/languageQuestions';
 import { curatedHebrewQuestions } from '../lib/curatedHebrewQuestions';
+/** Verified source page per curated question, shown as "learn more" after an answer. */
+const CURATED_SOURCES=new Map(curatedHebrewQuestions.map(q=>[q.id,q.sourceUrl] as const));
 import { languageForPronunciation, speakLanguageAnswer } from '../lib/languageSpeech';
 import { findLocalQuestion,isBundledQuestion } from '../lib/localQuestionLookup';
 import {ANSWER_IMAGES} from '../lib/answerImages';
@@ -38,7 +40,7 @@ const SERVER_QUESTION_ID_OFFSET=1_000_000_000;
 const LOCAL_STAGE_NAMES={es:SPANISH_STAGE_NAMES,ru:RUSSIAN_STAGE_NAMES,fr:FRENCH_STAGE_NAMES,ar:ARABIC_STAGE_NAMES} as const;
 import {freshLocalQuestionReserve,freshLocalQuestions,countLocalReserve,LOCAL_QUESTION_RELEASE_BATCH} from '../lib/freshQuestions';
 import {questionTopics,ALL_QUESTION_TOPICS,parseTopicPreferences,topicForQuestion,type QuestionTopic} from '../lib/questionTopics';
-import {selectVariedQuestion,readRecentQuestionTopics,RECENT_TOPIC_MEMORY,GEOGRAPHY_GAP,isGeographyQuestion} from '../lib/questionMix';
+import {selectVariedQuestion,stageDifficulties,readRecentQuestionTopics,RECENT_TOPIC_MEMORY,GEOGRAPHY_GAP,isGeographyQuestion} from '../lib/questionMix';
 import SuggestQuestionPrompt,{type QuestionSuggestion} from '../components/SuggestQuestionPrompt';
 import { translate,translatedWorlds,localeDirection,isActiveLocale,type ActiveLocale } from '../lib/i18n';
 import {stripPictographs} from '../lib/displayText';
@@ -49,6 +51,7 @@ import GameArt from '../components/GameArt';
 import {GameImage,AvatarArt,type ObjectArt} from '../components/GameImage';
 import CaptureTile, {type CaptureStyle} from '../components/CaptureTile';
 import { readFishPreference, saveFishPreference } from '../components/CapturedSquareFish';
+import {readHapticsPreference,saveHapticsPreference,vibrateFor} from '../lib/haptics';
 import {reassignCapture,type LocalOwner,type LocalOwnerMode} from '../lib/captureOwnership';
 import TutorialPreview from '../components/TutorialPreview';
 import LocalQuestionBackup from '../components/LocalQuestionBackup';
@@ -64,6 +67,7 @@ import './capture-experience.css';
 import './arcade-polish.css';
 import './game-layout.css';
 import './game-visual.css';
+import './polish.css';
 
 function hasActualOpponent(guest:unknown,host=''):boolean{
  if(typeof guest!=='string')return false;
@@ -76,7 +80,7 @@ function canonicalQuestion(text:string):string {
 }
 type Side = 'host' | 'guest' | 'bot';
 type Mode = 'bot' | 'online' | 'local' | 'solo';
-type Question = { text: string; answers: string[]; edge?: string; id?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus' | 'premium_bonus'; premium?: boolean; premiumOwner?: Side; deadline_at?: string | null; extensions?: number };
+type Question = { text: string; answers: string[]; edge?: string; id?: number; difficulty?: number; locale?: ActiveLocale; kind?: 'edge' | 'bonus' | 'premium_bonus'; premium?: boolean; premiumOwner?: Side; deadline_at?: string | null; extensions?: number };
 type WrongAnswerFeedback = { text:string; answers:string[]; selectedIndex:number; correctIndex:number | null;
   questionId?:number; source?:AppealSource; edge?:string|null; board?:string|null };
 type LocalSourceQuestion={id:number;text:string;answers:string[];correct:number;category:string;difficulty:number;locale:ActiveLocale};
@@ -206,6 +210,8 @@ export default function TriviaGame() {
   const [skin,setSkin]=useState<SkinId>('regular');
   const [skinPickerOpen,setSkinPickerOpen]=useState(false);
   const [fishEnabled,setFishEnabled]=useState(false);
+  const [hapticsOn,setHapticsOn]=useState(true);
+  useEffect(()=>{setHapticsOn(readHapticsPreference())},[]);
   const [selectedTopics,setSelectedTopics]=useState<QuestionTopic[]>([...ALL_QUESTION_TOPICS]);
   const toggleTopic=(id:QuestionTopic)=>setSelectedTopics(previous=>{
     const next=previous.includes(id)?previous.filter(t=>t!==id):[...previous,id];
@@ -330,14 +336,15 @@ export default function TriviaGame() {
     };
   },[]);
   const [liquidPreviewRun,setLiquidPreviewRun]=useState(0);
-  const play = useCallback((cue: SoundCue) => playGameSound(cue, { muted, volume: volume / 100 }), [muted, volume]);
+  const play = useCallback((cue: SoundCue) => {vibrateFor(cue,hapticsOn);playGameSound(cue, { muted, volume: volume / 100 });}, [muted, volume, hapticsOn]);
   const rewardSound=useCallback((cue:'bonus'|'win'|'pop'|'slice')=>playGameSound(cue,{muted,volume:volume/100}),[muted,volume]);
   const celebrateCapture=useCallback((count:number)=>{
     if(count<=0)return;
+    vibrateFor('capture',hapticsOn);
     playGameSound('liquid',{muted,volume:volume/100});
     playGameSound('fireworks',{muted,volume:volume/100},1.28);
     playGameSound('coin',{muted,volume:volume/100},1.65);
-  },[muted,volume]);
+  },[muted,volume,hapticsOn]);
   const [captureToast,setCaptureToast]=useState<{id:number;amount:number}|null>(null);
   useEffect(()=>{
     if(!captureToast)return;
@@ -1037,13 +1044,14 @@ export default function TriviaGame() {
       }
       // Enforce rotating broad topics rather than only raw category labels.
       // Fresh entropy per draw. A new game must not replay a fixed deck order.
+      const wantedDifficulty=stageDifficulties(stageId);
       const chosen=selectVariedQuestion(remaining,recentQuestionTopics.current,()=>{
         try{
           const value=new Uint32Array(1);
           crypto.getRandomValues(value);
           return value[0]/4294967296;
         }catch{return Math.random();}
-      });
+      },item=>wantedDifficulty.includes(Number((item as {difficulty?:number}).difficulty)||2));
       if(!chosen){setEdge(null);return;}
       // Respect the player's selected topics from the first question onwards.
       // Never override balanced rotation with a hard-coded geography question.
@@ -1068,7 +1076,7 @@ export default function TriviaGame() {
       usedLocalQuestionIds.current.add(q.id);
       rememberShownQuestion(q.text);
       try{localStorage.setItem('trivia-used-question-ids',JSON.stringify([...usedLocalQuestionIds.current]))}catch{}
-      setQuestion({id:q.id,text:q.text,answers:q.answers,locale,edge:key,premium:q.id%11===0,deadline_at:new Date(Date.now()+60_000).toISOString(),extensions:0});
+      setQuestion({id:q.id,text:q.text,answers:q.answers,difficulty:Number((q as {difficulty?:number}).difficulty)||2,locale,edge:key,premium:q.id%11===0,deadline_at:new Date(Date.now()+60_000).toISOString(),extensions:0});
     }
   }
   async function answer(i: number) {
@@ -1821,7 +1829,7 @@ export default function TriviaGame() {
             placeholder={L6({he:'שם השחקן',en:'Player name',ru:'Имя игрока',fr:'Nom du joueur',ar:'اسم اللاعب',es:'Nombre del jugador'})} onChange={e=>updatePlayerName(e.target.value)} />
         </div>}
         {!remote && state.mode==='local' && ownerMode!=='auto' && <p className='capture-tip'>{locale==='en'?'Tap any captured square to correct its owner.':'ניתן ללחוץ על ריבוע שנכבש כדי לשנות למי הוא שייך.'}</p>}
-        <div className='gesture-hint'><span className='draw-icon'><GameArt name='marker' size={22}/></span>{tr(bonusSelect?'בחר ריבוע פנוי לכיבוש בזהב':'בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח')}</div>
+        <div className='gesture-hint'><span className='draw-icon'><GameArt name='marker' size={22}/></span>{bonusSelect?tr('בחר ריבוע פנוי לכיבוש בזהב'):stageId<=3?tr('בחר כל שתי נקודות סמוכות ופשוט צייר ביניהן בטוש, בכל מקום בלוח'):L6({he:'תורך לצייר קו',en:'Your turn to draw',ru:'Ваш ход',fr:'À vous de tracer',ar:'دورك للرسم',es:'Tu turno de trazar'})}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span className='smalltxt'>{tr("שטחים שנכבשו")}</span><span className='smalltxt'>{completed} / {state.rows * state.cols} · {percent}%</span></div>
         <div className='level-progress'><div className='level-progress-fill' style={{ width: percent + '%' }} /></div>
         {!online && <div role='alert' style={{background:'#D94C37',color:'#FFFFFF',padding:10,borderRadius:12,textAlign:'center',marginTop:12}}>
@@ -2023,6 +2031,10 @@ export default function TriviaGame() {
                     aria-label={locale==='he'?'דגים בריבועים':locale==='ar'?'أسماك في المربعات':locale==='ru'?'Рыбки в клетках':locale==='fr'?'Poissons dans les cases':locale==='es'?'Peces en las casillas':'Fish in squares'}
                     onClick={()=>setFishEnabled(previous=>{const next=!previous;saveFishPreference(next);return next;})}>
                     {fishEnabled?'✓ ':'○ '}{locale==='he'?'דגים בריבועים':locale==='ar'?'أسماك في المربعات':locale==='ru'?'Рыбки в клетках':locale==='fr'?'Poissons dans les cases':locale==='es'?'Peces en las casillas':'Fish in squares'}
+                  </button>
+                  <button type='button' className='trivia-fish-toggle' data-testid='haptics-toggle' aria-pressed={hapticsOn}
+                    onClick={()=>setHapticsOn(previous=>{const next=!previous;saveHapticsPreference(next);if(next)vibrateFor('correct',true);return next;})}>
+                    {hapticsOn?'✓ ':'○ '}{L6({he:'רטט בטלפון',en:'Phone vibration',ru:'Вибрация',fr:'Vibration',ar:'الاهتزاز',es:'Vibración'})}
                   </button>
                   </div>
                 </div>
@@ -2324,6 +2336,9 @@ export default function TriviaGame() {
         {typeof wrongAnswerFeedback.questionId==='number'&&ANSWER_IMAGES[wrongAnswerFeedback.questionId]&&wrongAnswerFeedback.correctIndex!==null&&
           <AnswerImage image={ANSWER_IMAGES[wrongAnswerFeedback.questionId]} locale={locale}
             alt={wrongAnswerFeedback.answers[wrongAnswerFeedback.correctIndex]}/>}
+        {typeof wrongAnswerFeedback.questionId==='number'&&CURATED_SOURCES.get(wrongAnswerFeedback.questionId)&&
+          <a className='answer-source-link' data-testid='answer-source-link' href={CURATED_SOURCES.get(wrongAnswerFeedback.questionId)} target='_blank' rel='noopener noreferrer'>
+            {L6({he:'למידע נוסף על התשובה',en:'Learn more about this answer',ru:'Подробнее об ответе',fr:'En savoir plus sur la réponse',ar:'اعرف المزيد عن الإجابة',es:'Más información sobre la respuesta'})}</a>}
         {wrongAnswerFeedback.correctIndex===null&&<p className='smalltxt' role='status'>{tr('לא ניתן לאמת כרגע את התשובה הנכונה. אפשר להמשיך במשחק.')}</p>}
         <div className='answer-feedback-actions'>
           <button className='gold-button answer-feedback-continue' type='button' autoFocus
@@ -2346,6 +2361,8 @@ export default function TriviaGame() {
             ? <span>∞ <span className='clock-label'>{tr("קמע זמן פעיל עד סוף השלב")}</span></span>
             : <span>{timerText} <span className='clock-label'>{tr("נותרו לענות")}</span></span>}
         </div>
+        {question.difficulty&&<span className='question-difficulty' data-testid='question-difficulty' aria-label={L6({he:'רמת קושי',en:'Difficulty',ru:'Сложность',fr:'Difficulté',ar:'الصعوبة',es:'Dificultad'})+' '+question.difficulty+'/3'}>
+          {L6({he:'קושי',en:'Difficulty',ru:'Сложность',fr:'Difficulté',ar:'الصعوبة',es:'Dificultad'})}{' '}{[1,2,3].map(n=><i key={n} aria-hidden='true' className={n<=question.difficulty!?'on':''}/>)}</span>}
         <h2>{question.text}</h2>
         <div className='control-row' style={{marginBottom:13}}>
           {showTimer && <button className='glass-button' disabled={busy || currentCredits<25 || (question.extensions||0)>=1 || (secondsLeft??0)<=0}

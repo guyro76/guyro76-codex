@@ -13,7 +13,8 @@ const LOCATION_PATTERN=/\b(?:which city|where (?:is|are)|in which city|dans quel
  * must not dominate the quiz merely because it has thousands of question rows.
  * Does not alter scores, question IDs or the saved board. */
 export function selectVariedQuestion<T extends QuestionForMix>(
- questions:readonly T[],recentTopics:readonly QuestionTopic[],random:()=>number=Math.random
+ questions:readonly T[],recentTopics:readonly QuestionTopic[],random:()=>number=Math.random,
+ prefer?:(q:T)=>boolean
 ):{question:T;topic:QuestionTopic}|null{
  if(!questions.length)return null;
  const buckets=new Map<QuestionTopic,T[]>();
@@ -42,7 +43,10 @@ export function selectVariedQuestion<T extends QuestionForMix>(
  const topic=topics[Math.min(topics.length-1,Math.floor(random()*topics.length))];
  const options=buckets.get(topic)!;
  const nonLocation=options.filter(q=>!LOCATION_PATTERN.test(q.text));
- const within=topic===GEOGRAPHY&&nonLocation.length?nonLocation:options;
+ const pool=topic===GEOGRAPHY&&nonLocation.length?nonLocation:options;
+ // Difficulty ramp: inside the chosen topic, prefer the stage's difficulty when such questions exist.
+ const preferred=prefer?pool.filter(prefer):[];
+ const within=preferred.length?preferred:pool;
  const question=within[Math.min(within.length-1,Math.floor(random()*within.length))];
  return {question,topic};
 }
@@ -57,4 +61,12 @@ export function readRecentQuestionTopics(raw:unknown):QuestionTopic[]{
 
 export function isGeographyQuestion(q:QuestionForMix):boolean{
  return topicForQuestion(q.category,q.text)===GEOGRAPHY;
+}
+
+/** Difficulty the stage asks for (1 easy · 2 medium · 3 hard): easier early, harder late. */
+export function stageDifficulties(stage:number):readonly number[]{
+ if(stage<=30)return [1,2];
+ if(stage<=100)return [2];
+ if(stage<=150)return [2,3];
+ return [3];
 }
