@@ -53,6 +53,8 @@ import CaptureTile, {type CaptureStyle} from '../components/CaptureTile';
 import { readFishPreference, saveFishPreference } from '../components/CapturedSquareFish';
 import {readHapticsPreference,saveHapticsPreference,vibrateFor} from '../lib/haptics';
 import {topicLinesFor,TOPIC_LINE_COLORS,type TopicLines} from '../lib/topicLines';
+import {recordAnswer} from '../lib/playerStats';
+import PlayerStatsPanel from '../components/PlayerStatsPanel';
 import {reassignCapture,type LocalOwner,type LocalOwnerMode} from '../lib/captureOwnership';
 import TutorialPreview from '../components/TutorialPreview';
 import LocalQuestionBackup from '../components/LocalQuestionBackup';
@@ -215,6 +217,7 @@ export default function TriviaGame() {
   useEffect(()=>{setHapticsOn(readHapticsPreference())},[]);
   const [selectedTopics,setSelectedTopics]=useState<QuestionTopic[]>([...ALL_QUESTION_TOPICS]);
   const [topicLines,setTopicLines]=useState<TopicLines>({});
+  const [statsVersion,setStatsVersion]=useState(0);
   const bankRef=useRef<{category:string;text:string;id:number}[]>([]);
   const toggleTopic=(id:QuestionTopic)=>setSelectedTopics(previous=>{
     const next=previous.includes(id)?previous.filter(t=>t!==id):[...previous,id];
@@ -467,7 +470,9 @@ export default function TriviaGame() {
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
   };
-  const canPlay = validName && localReady && !showTutorial && !capturePending && !wrongAnswerFeedback && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
+  // Solo play starts without a name (owner request 2026-11-04); the name is asked after the first stage.
+  const soloWithoutName = !remote && local.mode==='solo' && name.trim()==='';
+  const canPlay = (validName || soloWithoutName) && localReady && !showTutorial && !capturePending && !wrongAnswerFeedback && (remote ? Boolean(user) && legalAccepted && remote.status === 'playing' && onlineTurn && !busy : !busy);
   const finished = !capturePending && !question && !wrongAnswerFeedback && Object.keys(state.owners).length === state.rows * state.cols;
   // Do not cover the last liquid-fill capture. Show the stage minigame prominently
   // after the capture completes; use the same flow on iOS, Android and desktop.
@@ -891,8 +896,8 @@ export default function TriviaGame() {
   async function start() {
     // Restarting this same stage is allowed, but unlocking another stage requires completion.
     if(stageId>stageUnlocked){setMessage(locale==='en'?'Finish the earlier stages to unlock this one.':'יש לסיים את השלבים הקודמים כדי לפתוח את השלב הזה.');return;}
-    if (!validName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
-    try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
+    if (!validName && !soloWithoutName) { setMessage('כדי להתחיל יש להזין שם שחקן של 2–32 תווים ולשמור אותו.'); return; }
+    if (validName) try { localStorage.setItem('trivia-player-name',name.trim()); } catch {}
     setStageRewardOpen(true);
     setBusy(true); setQuestion(null); setWrongAnswerFeedback(null); setEdge(null); setBonusSelect(false); setCapturePending(null);
     if(mode==='local' && !hasActualOpponent(guestName,name)){
@@ -1194,6 +1199,8 @@ export default function TriviaGame() {
       }
       const newSquares=Object.keys(next.owners).filter(key=>!local.owners[key]);
       const gained = newSquares.length;
+      {const shown=[...effectiveQuestionBank].find(item=>item.id===question.id);
+       if(shown){recordAnswer(topicForQuestion(shown.category,shown.text),correct,after,correct?gained:0);setStatsVersion(v=>v+1);}}
       // Chain bonus: one line that closes two squares, and captures made on a streak of correct answers.
       const doubleBonus=correct&&gained>=2?15:0;
       const streakBonus=correct&&gained>0?(after>=5?10:after>=3?5:0):0;
@@ -1440,7 +1447,7 @@ export default function TriviaGame() {
 
   function onBoardPointerDown(event: ReactPointerEvent<SVGSVGElement>) {
     if (!canPlay || finished || !!question || bonusSelect || (event.pointerType === 'mouse' && event.button !== 0)) {
-      if(!validName && !showTutorial){setMessage(locale==='en'?'Enter a player name to draw your first line.':'כדי לצייר קו, הזן קודם שם שחקן.');document.getElementById('quick-player-name')?.focus();}
+      if(!validName && !soloWithoutName && !showTutorial){setMessage(locale==='en'?'Enter a player name to draw your first line.':'כדי לצייר קו, הזן קודם שם שחקן.');document.getElementById('quick-player-name')?.focus();}
       return;
     }
     const start = nearestDot(boardPoint(event), state.rows, state.cols);
@@ -1817,7 +1824,7 @@ export default function TriviaGame() {
                 const h = 288 / state.rows;
                 const x = 20 + c * w + 5;
                 const y = 20 + r * h + 5;
-                const ownerName=state.mode==='solo'?(name||'Player 1'):owner==='host'?(remote?.players?.host?.name||name||'Player 1'):owner==='guest'?(state.mode==='local'?guestName:remote?.players?.guest?.name||'Player 2'):'Computer';
+                const ownerName=state.mode==='solo'?(name||L6({he:'שחקן',en:'Player',ru:'Игрок',fr:'Joueur',ar:'لاعب',es:'Jugador'})):owner==='host'?(remote?.players?.host?.name||name||'Player 1'):owner==='guest'?(state.mode==='local'?guestName:remote?.players?.guest?.name||'Player 2'):'Computer';
                 const ownerIcon=state.mode==='solo'?avatar:owner==='host'?(remote?.players?.host?.avatar||avatar):owner==='guest'?(state.mode==='local'?guestAvatar:remote?.players?.guest?.avatar||'👑'):'🤖';
                 const editable=Boolean(owner && !remote && state.mode==='local' && ownerMode!=='auto' && !bonusSelect && !question);
                 return <g key={'cell-' + r + '-' + c} pointerEvents={bonusSelect || editable ? undefined : 'none'}>
@@ -1855,8 +1862,8 @@ export default function TriviaGame() {
             </svg>
           </div>
         </div>
-        {!validName && <div className='board-start-hint' role='status'>
-          <label htmlFor='board-start-name'>{locale==='en'?'Enter your name to unlock marker drawing':locale==='ru'?'Введите имя игрока, чтобы нарисовать первую линию':locale==='fr'?'Entrez votre nom pour tracer le premier trait':locale==='ar'?'أدخل اسم اللاعب لرسم الخط الأول':locale==='es'?'Escribe tu nombre para trazar la primera línea':'כדי לצייר קו ראשון, הכנס שם שחקן'}</label>
+        {!validName && (!soloWithoutName || finished) && <div className='board-start-hint' role='status'>
+          <label htmlFor='board-start-name'>{soloWithoutName?L6({he:'איך לקרוא לך? השם יופיע על הריבועים שלך',en:'What should we call you? Your name goes on your squares',ru:'Как вас зовут? Имя появится на ваших клетках',fr:'Comment vous appeler ? Votre nom ira sur vos cases',ar:'ما اسمك؟ سيظهر على مربعاتك',es:'¿Cómo te llamas? Tu nombre irá en tus casillas'}):locale==='en'?'Enter your name to unlock marker drawing':locale==='ru'?'Введите имя игрока, чтобы нарисовать первую линию':locale==='fr'?'Entrez votre nom pour tracer le premier trait':locale==='ar'?'أدخل اسم اللاعب لرسم الخط الأول':locale==='es'?'Escribe tu nombre para trazar la primera línea':'כדי לצייר קו ראשון, הכנס שם שחקן'}</label>
           <input id='board-start-name' type='text' minLength={2} maxLength={32} value={name}
             placeholder={L6({he:'שם השחקן',en:'Player name',ru:'Имя игрока',fr:'Nom du joueur',ar:'اسم اللاعب',es:'Nombre del jugador'})} onChange={e=>updatePlayerName(e.target.value)} />
         </div>}
@@ -1893,7 +1900,7 @@ export default function TriviaGame() {
         </div>
         {remote?.status === 'waiting' && <p style={{ textAlign: 'center', color: '#FFE48A' }}>{tr("ממתינים שהחבר ייכנס לחדר...")}</p>}
         <div className='control-row'>
-          <button className='gold-button' disabled={busy || !validName} onClick={() => void start()}><GameArt name='play' size={22}/> {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>
+          <button className='gold-button' disabled={busy || (!validName && !soloWithoutName)} onClick={() => void start()}><GameArt name='play' size={22}/> {tr(remote ? 'משחק חדש' : 'התחל משחק')}</button>
           <button className='glass-button' onClick={()=>{setTutorialPage(0);setShowTutorial(true)}}><GameArt name='help' size={22}/> {tr("איך משחקים")}</button>
           {earnedBonus && canPlay && <button className='gold-button' onClick={()=>void startGoldQuestion()} disabled={busy||!!question}>{tr("⭐ שאלת זהב!")}</button>}
           {availableBonus>0 && state.mode!=='online' && <button className='gold-button' disabled={busy||!!question} onClick={()=>setBonusSelect(v=>!v)}>
@@ -2125,6 +2132,8 @@ export default function TriviaGame() {
               <div className='settings-drawer-content'>
         <section className='glass-panel app-menu-pane' hidden={menuSection!=='modes'}>
           <h2 className='panel-title'>{tr("🎯 חדר המשחק")}</h2>
+          <a href='/daily' className='gold-button daily-challenge-link' data-testid='daily-challenge-link'>
+            {L6({he:'האתגר היומי · 10 שאלות לכולם',en:'Daily challenge · 10 questions for everyone',ru:'Ежедневный вызов · 10 вопросов',fr:'Défi du jour · 10 questions',ar:'التحدي اليومي · 10 أسئلة',es:'Reto diario · 10 preguntas'})}</a>
           <div className='mode-row'>
             {([['solo','👤 משחק עצמאי','👤 Solo'],['bot','🤖 נגד מחשב','🤖 Computer'],['online','🌐 נגד חבר','🌐 Online friend'],['local','👥 שניים במכשיר','👥 Local two players'] ] as const).map(([value, he, en]) =>
               <button key={value} className='choice' disabled={stageStarted&&!finished} aria-pressed={mode===value}
@@ -2216,6 +2225,7 @@ export default function TriviaGame() {
         </section>
         <section className='glass-panel app-menu-pane' hidden={menuSection!=='rewards'}>
           <h2 className='panel-title'>{tr("💎 אוצרות והישגים")}</h2>
+          <PlayerStatsPanel locale={locale} refreshKey={statsVersion+(menuSection==='rewards'?1000:0)}/>
            <a href="/suggest" className="glass-button" style={{display:'inline-flex',alignItems:'center',margin:'8px 0 12px',
              fontWeight:900,textDecoration:'none',color:'#FFFFFF',background:'#294D84',border:'2px solid #FDE4A5'}}>
              {locale==='he'?'הצע שאלה חדשה וקבל קרדיטים':locale==='en'?'Suggest a question for credits':

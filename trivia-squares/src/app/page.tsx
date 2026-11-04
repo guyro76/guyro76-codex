@@ -47,7 +47,9 @@ export default function HomePage(){
  },[]);
  if(entry==='game')return <TriviaGame/>;
  const welcome=<WelcomeScreen onStart={()=>{
-  try{localStorage.setItem('trivia-welcome-dismissed-v1','1')}catch{}
+  // The welcome screen already explains the rules; go straight to the board (the animated
+  // tutorial stays one tap away under "how to play").
+  try{localStorage.setItem('trivia-welcome-dismissed-v1','1');localStorage.setItem('trivia-tutorial-seen-v1','1')}catch{}
   setEntry('game');
  }}/>;
  // Same markup on the server and on the first client render (no hydration mismatch);
