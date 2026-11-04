@@ -30,3 +30,19 @@ html body main.trivia-app .topic-line-chip{display:inline-flex;align-items:cente
 html body main.trivia-app .topic-line-chip i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 2px rgba(10,14,36,.8)}
 html body main.trivia-app .topic-line-chip.used{opacity:.45;text-decoration:line-through}
 html body main.trivia-app .capture-toast-note{display:block;font-style:normal;font-size:13px;font-weight:800;color:#FFE7A4}
+
+/* Personal statistics (menu → achievements). */
+html body main.trivia-app .player-stats{margin:8px 0 16px;padding:14px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+html body main.trivia-app .player-stats h3{margin:0 0 10px;font-size:19px;font-weight:900}
+html body main.trivia-app .player-stats-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+html body main.trivia-app .player-stats-tiles div{padding:10px 6px;border-radius:12px;background:rgba(10,14,36,.45);text-align:center}
+html body main.trivia-app .player-stats-tiles strong{display:block;font-size:22px;font-weight:900;color:#FFE7A4}
+html body main.trivia-app .player-stats-tiles span{font-size:13px;font-weight:700;color:rgba(244,246,255,.78)}
+html body main.trivia-app .player-stats-line{margin:10px 0 0;font-weight:700}
+html body main.trivia-app .player-stats-topics{list-style:none;margin:10px 0 6px;padding:0;display:grid;gap:6px}
+html body main.trivia-app .player-stats-topics li{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:8px;align-items:center;font-size:14px;font-weight:700}
+html body main.trivia-app .player-stats-topics i{height:8px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+html body main.trivia-app .player-stats-topics i b{display:block;height:100%;background:linear-gradient(90deg,#FFC23D,#2EE6B8)}
+html body main.trivia-app .player-stats-topics em{font-style:normal;font-variant-numeric:tabular-nums;color:rgba(244,246,255,.8)}
+@media (max-width:440px){html body main.trivia-app .player-stats-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+html body main.trivia-app .daily-challenge-link{display:flex!important;justify-content:center;align-items:center;min-height:50px;margin:4px 0 14px;text-decoration:none;font-weight:900}

@@ -41,12 +41,29 @@ test('captured tile is premium and its owner can be corrected and persisted',asy
   await expect(page.locator('svg.board .capture-tile[data-square="0-0"]')).toHaveAttribute('data-owner','דנה');
 });
 
-test('drawing lock explains the missing player name next to the board',async({page})=>{
-  await page.addInitScript(()=>{localStorage.setItem('trivia-tutorial-seen-v1','true');localStorage.removeItem('trivia-player-name');});
+test('solo play starts without a name; the name is asked once the first stage is done',async({page})=>{
+  await page.addInitScript(()=>{
+    if(sessionStorage.getItem('no-name-seeded'))return;sessionStorage.setItem('no-name-seeded','1');
+    localStorage.setItem('trivia-tutorial-seen-v1','true');localStorage.removeItem('trivia-player-name');
+    localStorage.setItem('trivia-mode-v2','solo');
+  });
   await page.goto('/');
-  await expect(page.getByLabel('כדי לצייר קו ראשון, הכנס שם שחקן')).toBeVisible();
-  await page.getByLabel('כדי לצייר קו ראשון, הכנס שם שחקן').fill('אורח');
+  await page.locator('svg.board').waitFor();
+  // No name gate before the first line in solo play.
   await expect(page.getByLabel('כדי לצייר קו ראשון, הכנס שם שחקן')).toHaveCount(0);
+  await expect(page.locator('svg.board circle[role="button"]').first()).toHaveAttribute('tabindex','0');
+  // After the first stage, the board asks for a name.
+  await page.evaluate(()=>{
+    const owners=Object.fromEntries(Array.from({length:9},(_,i)=>[Math.floor(i/3)+'-'+i%3,'host']));
+    localStorage.setItem('trivia-local-game-v1',JSON.stringify({rows:3,cols:3,mode:'solo',turn:'host',edges:{},owners,scores:{host:9,guest:0,bot:0}}));
+  });
+  await page.reload();
+  const dialog=page.getByRole('dialog',{name:'משחק הביניים ופרסי השלב'});
+  if(await dialog.isVisible({timeout:6000}).catch(()=>false))await dialog.getByRole('button',{name:/סגור וחזור ללוח/}).click();
+  const field=page.getByLabel('איך לקרוא לך? השם יופיע על הריבועים שלך');
+  await expect(field).toBeVisible();
+  await field.fill('אורח');
+  await expect(field).toHaveCount(0);
 });
 
 test('legacy solo player Adi keeps all her squares, points and credits after reload',async({page})=>{

@@ -204,7 +204,8 @@ test('required player name persists after reload and the board tray remains tran
   const guide=page.getByRole('dialog',{name:'הסבר משחק'});
   await expect(guide).toBeVisible();
   await guide.getByRole('button',{name:'דלג או סיים'}).click();
-  await expect(page.getByRole('button',{name:/התחל משחק/})).toBeDisabled();
+  // Owner request 2026-11-04: solo play starts without a name (asked after the first stage).
+  await expect(page.getByRole('button',{name:/התחל משחק/})).toBeEnabled();
   await page.getByRole('button',{name:'פתח תפריט משחק'}).click();
   let nav=page.getByRole('dialog',{name:'תפריט המשחק'});
   await nav.getByRole('button',{name:/התאמה אישית/}).click();
