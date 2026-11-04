@@ -23,3 +23,10 @@ html body main.trivia-app.trivia-app .arena-quick-wallet > span{padding:3px 8px!
   html body main.trivia-app.trivia-app .arena-quick-wallet > span{padding:2px 5px!important;gap:3px!important}
   html body main.trivia-app.trivia-app .arena-quick-wallet img{width:20px!important;height:20px!important}
 }
+
+/* Topic lines legend (2–3 lines per board carry a topic). */
+html body main.trivia-app .topic-line-legend{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin:0;margin-inline-start:8px;font-size:13px;font-weight:700;color:rgba(244,246,255,.86)}
+html body main.trivia-app .topic-line-chip{display:inline-flex;align-items:center;gap:6px;padding:1px 8px;border-radius:999px;font-size:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);font-weight:800;color:#FFFFFF}
+html body main.trivia-app .topic-line-chip i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 2px rgba(10,14,36,.8)}
+html body main.trivia-app .topic-line-chip.used{opacity:.45;text-decoration:line-through}
+html body main.trivia-app .capture-toast-note{display:block;font-style:normal;font-size:13px;font-weight:800;color:#FFE7A4}
