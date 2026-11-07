@@ -24,7 +24,9 @@ const fmt=(s:number)=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
 export default function DailyChallengePage(){
  const client=useMemo(()=>createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY),[]);
  const [locale,setLocale]=useState<ActiveLocale>('he');
- const [day]=useState(()=>dailyKey());
+ // The day is read in the browser after mount: the page is pre-rendered at build time, so a
+ // date computed during rendering would not match the visitor's day (React hydration error).
+ const [day,setDay]=useState('');
  const [phase,setPhase]=useState<'intro'|'play'|'done'>('intro');
  const [index,setIndex]=useState(0);
  const [picked,setPicked]=useState<number|null>(null);
@@ -40,15 +42,16 @@ export default function DailyChallengePage(){
    const l=localStorage.getItem('trivia-language');if(LOCALES.includes(l as ActiveLocale))setLocale(l as ActiveLocale);
    setName((localStorage.getItem('trivia-player-name')||'').slice(0,32));
   }catch{}
+  setDay(dailyKey());
  },[]);
  const t=T[locale];const rtl=locale==='he'||locale==='ar';
- const questions=useMemo(()=>dailyQuestions(locale,day),[locale,day]);
+ const questions=useMemo(()=>day?dailyQuestions(locale,day):[],[locale,day]);
  const loadTop=useCallback(async()=>{
   const {data,error}=await client.rpc('trivia_daily_top',{p_day:day,p_locale:locale});
   if(!error&&Array.isArray(data))setTop(data.map((r:Record<string,unknown>)=>({place:Number(r.place),name:String(r.name),correct:Number(r.correct),seconds:Number(r.seconds),score:Number(r.score)})));
   else setTop([]);
  },[client,day,locale]);
- useEffect(()=>{const saved=readDailyResult(day,locale);setResult(saved);if(saved){setPhase('done');void loadTop();}else setPhase('intro');},[day,locale,loadTop]);
+ useEffect(()=>{if(!day)return;const saved=readDailyResult(day,locale);setResult(saved);if(saved){setPhase('done');void loadTop();}else setPhase('intro');},[day,locale,loadTop]);
  useEffect(()=>{if(phase!=='play')return;const id=window.setInterval(()=>setElapsed(Math.round((Date.now()-started.current)/1000)),500);return()=>window.clearInterval(id);},[phase]);
  const start=()=>{started.current=Date.now();setElapsed(0);setIndex(0);setAnswers([]);setPicked(null);setPhase('play');};
  const choose=(i:number)=>{if(picked!==null)return;setPicked(i);setAnswers(a=>[...a,i]);
@@ -81,13 +84,13 @@ export default function DailyChallengePage(){
  return <main className='daily-page' dir={rtl?'rtl':'ltr'} lang={locale}>
   <header className='daily-head'>
    <Link className='daily-back' href='/'>{t.back}</Link>
-   <span className='daily-date' dir='ltr'>{day.split('-').reverse().join('.')}</span>
+   <span className='daily-date' dir='ltr'>{day?day.split('-').reverse().join('.'):''}</span>
   </header>
   <section className='daily-card' aria-labelledby='daily-title'>
    <h1 id='daily-title'><GameImage name='trophy' size={40}/> {t.title}</h1>
    {phase==='intro'&&<>
     <p className='daily-sub'>{t.sub}</p>
-    <button type='button' className='daily-primary' data-testid='daily-start' onClick={start}>{t.start}</button>
+    <button type='button' className='daily-primary' data-testid='daily-start' disabled={!day} onClick={start}>{t.start}</button>
    </>}
    {phase==='play'&&q&&<div className='daily-play'>
     <div className='daily-progress'><span>{t.q} {index+1} {t.of} {questions.length}</span><span dir='ltr'>{fmt(elapsed)}</span></div>
