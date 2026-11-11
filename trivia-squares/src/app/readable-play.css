@@ -12,24 +12,24 @@
  main.trivia-app.playing-layout .status-line,
  main.trivia-app.playing-layout .control-row :is(.gold-button,.glass-button),
  main.trivia-app.playing-layout .arena-title p {
-   font-size:clamp(14px,1.1vw,16px)!important;
+   font-size:clamp(18px,1.25vw,20px)!important;
    font-weight:900!important;
    line-height:1.3!important;
  }
  main.trivia-app.playing-layout .score-name {
-   font-size:16px!important;
+   font-size:18px!important;
  }
  main.trivia-app.playing-layout .arena-title h2,
  main.trivia-app.playing-layout .campaign-heading h2 {
-   font-size:clamp(17px,1.6vw,23px)!important;
+   font-size:clamp(22px,2vw,28px)!important;
    font-weight:900!important;
  }
  main.trivia-app.playing-layout .app-menu-trigger,
  main.trivia-app.playing-layout .hero .hero-name label,
  main.trivia-app.playing-layout .hero .hero-name input {
-   font-size:14px!important;font-weight:900!important;
+   font-size:18px!important;font-weight:900!important;
  }
- main.trivia-app.playing-layout .game-timebar time{font-size:16px!important;font-weight:900!important}
+ main.trivia-app.playing-layout .game-timebar time{font-size:18px!important;font-weight:900!important}
  main.trivia-app.playing-layout .control-row :is(.gold-button,.glass-button) {
    min-height:40px!important;
  }
@@ -37,16 +37,158 @@
     input hit targets when a stage is restarted or when a line is drawn. */
  main.trivia-app.playing-layout .footer,
  main.trivia-app.playing-layout #app-footer .game-author-credit-copy{
-   font-size:14px!important;font-weight:900!important;line-height:1.3!important;
+   font-size:18px!important;font-weight:900!important;line-height:1.3!important;
  }
 }
 @media (min-width:650px) and (max-width:819px) and (min-height:800px) {
  main.trivia-app.playing-layout :is(.score-name,.gesture-hint,.status-line,.campaign-heading span,.control-row .gold-button,.control-row .glass-button){
-   font-size:14px!important;font-weight:900!important;line-height:1.3!important;
+   font-size:18px!important;font-weight:900!important;line-height:1.3!important;
  }
 }
 @media(max-width:649px) {
  main.trivia-app.playing-layout :is(.score-name,.gesture-hint,.status-line,.campaign-heading span,.control-row .gold-button,.control-row .glass-button){
-   font-size:clamp(14px,3.5vw,16px)!important;font-weight:900!important;line-height:1.3!important;
+   font-size:clamp(18px,4vw,20px)!important;font-weight:900!important;line-height:1.3!important;
  }
+}
+
+/* P0 legibility baseline across all form factors and skins. */
+main.trivia-app {
+  font-weight: 700;
+}
+main.trivia-app :is(button, input, select, textarea, label, p, span, a, li, h1, h2, h3, h4, strong, small, time) {
+  font-weight: 700;
+}
+main.trivia-app :is(button, input, select, textarea) {
+  font-size: max(16px, 1rem);
+}
+main.trivia-app :is(.skin-picker-item, .skin-palette-trigger, .locale-option) {
+  font-weight: 800 !important;
+  min-height: 44px;
+}
+main.trivia-app :is(.skin-picker-panel, .skin-picker-item) {
+  isolation: isolate;
+}
+@media (prefers-reduced-motion: reduce) {
+  main.trivia-app :is(.skin-picker-panel, .skin-picker-item, .skin-palette-trigger) {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* P0 contrast tokens: solid text surfaces remain legible over translucent skins. */
+main.trivia-app {
+  --trivia-text-on-light: #14213d;
+  --trivia-text-on-dark: #ffffff;
+  --trivia-readable-light: #ffffff;
+  --trivia-readable-dark: #15223c;
+}
+main.trivia-app :is(.skin-picker-panel, .skin-picker-item) {
+  background-color: var(--trivia-readable-light);
+  color: var(--trivia-text-on-light);
+}
+main.trivia-app .skin-picker-item:focus-visible,
+main.trivia-app .skin-palette-trigger:focus-visible,
+main.trivia-app .locale-option:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 3px;
+}
+main.trivia-app :is(.skin-picker-item, .locale-option) {
+  text-shadow: none;
+}
+/* Preserve readable picker text when themes have vivid swatches. */
+main.trivia-app .skin-picker-item :is(span, strong, small) {
+  color: var(--trivia-text-on-light);
+  font-weight: 800;
+}
+
+/* Keep interactive question and answer text legible over animated themes. */
+main.trivia-app :is(.question-text, .answer-option) {
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+/* P0: stable reading surface for live question and answer controls. */
+main.trivia-app .question-text {
+  background-color: #ffffff;
+  color: #14213d;
+  text-shadow: none;
+  border-radius: 12px;
+  padding: 0.65em 0.8em;
+}
+main.trivia-app .answer-option {
+  background-color: #ffffff;
+  color: #14213d;
+  text-shadow: none;
+  border: 2px solid #324a70;
+  border-radius: 12px;
+}
+/* P0 active quiz heading actually rendered as .quiz-card > h2, not .question-text.
+   Limit the light surface to the question dialog so tutorial and feedback retain their styling. */
+main.trivia-app .quiz-card:has(> .question-timer) > h2 {
+  background-color: #ffffff !important;
+  /* premium.css sets .quiz-card h2 color: white !important; override only the active question. */
+  color: #14213d !important;
+  text-shadow: none;
+  border-radius: 12px;
+  padding: 0.65em 0.8em;
+  overflow-wrap: anywhere;
+}
+
+/* Existing premium.css sets !important on generic .answer-option surfaces.
+   Restore semantic correct/wrong feedback contrast at higher specificity. */
+main.trivia-app .answer-option.feedback-answer.feedback-correct {
+  background: #d8ffe8 !important;
+  color: #0c5232 !important;
+  border-color: #19a65a !important;
+}
+main.trivia-app .answer-option.feedback-answer.feedback-wrong {
+  background: #ffe3e0 !important;
+  color: #80212c !important;
+  border-color: #dc3c4a !important;
+}
+
+main.trivia-app .answer-option:focus-visible {
+  outline: 3px solid #b45309;
+  outline-offset: 3px;
+}
+
+/* Six-language type system: explicit glyph coverage, bold-only hierarchy. */
+main.trivia-app {
+  font-family: 'Heebo', 'Noto Sans Hebrew', 'Arial', sans-serif;
+  font-synthesis: weight;
+}
+main.trivia-app:lang(he) {
+  font-family: 'Heebo', 'Noto Sans Hebrew', 'Arial', sans-serif;
+}
+main.trivia-app:lang(ar) {
+  font-family: 'Noto Sans Arabic', 'Tahoma', 'Arial', sans-serif;
+  line-height: 1.55;
+}
+main.trivia-app:is(:lang(en), :lang(fr), :lang(es), :lang(ru)) {
+  font-family: 'Inter', 'Noto Sans', 'Arial', sans-serif;
+}
+main.trivia-app :is(button, input, select, textarea) {
+  font-family: inherit;
+}
+main.trivia-app :is(.question-text, .answer-option, .locale-option, .skin-picker-item) {
+  font-weight: 800 !important;
+  overflow-wrap: anywhere;
+}
+
+/* Multilingual long strings and punctuation: prevent clipped answer choices. */
+main.trivia-app :is(.question-text, .answer-option, .locale-option, .skin-picker-item) {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+main.trivia-app:lang(ar) :is(.question-text, .answer-option) {
+  letter-spacing: normal;
+  line-height: 1.65;
+}
+main.trivia-app :is(.question-text, .answer-option) :is(bdi, [dir='auto']) {
+  unicode-bidi: isolate;
 }
