@@ -388,6 +388,48 @@ export function generateJsonLd(input: JsonLdInput): Record<string, unknown> {
 }
 
 /**
+ * Raise the *structural* GEO signals on generated content.
+ *
+ * Deliberately limited: this reorders and formats what is already there and
+ * adds a dating marker. It never fabricates a statistic, a source or a quote —
+ * those three signals depend on facts only the user has, and inventing them
+ * would put made-up claims into something they are about to publish. The
+ * report's `topFixes` is what asks for them.
+ */
+export function enrichForGeo(
+  slides: { headline: string; body: string; imageQuery?: string }[],
+  opts: { year?: number } = {}
+): { headline: string; body: string; imageQuery?: string }[] {
+  const year = opts.year ?? new Date().getFullYear();
+
+  return slides.map((slide, i) => {
+    const sentences = splitSentences(slide.body);
+    let body: string;
+
+    if (sentences.length >= 3) {
+      // Lead with the strongest claim, then make the rest liftable as a list.
+      const [lead, ...rest] = splitSentences(toAnswerFirst(slide.headline, slide.body));
+      body = [lead, ...rest.map((s) => `• ${s}`)].join("\n");
+    } else {
+      body = toAnswerFirst(slide.headline, slide.body);
+    }
+
+    // Date the opening slide once — engines favour claims they can place in time.
+    if (i === 0 && !/\b20\d{2}\b/u.test(body)) {
+      body = `נכון ל-${year}: ${body}`;
+    }
+
+    // A question headline maps straight onto an FAQPage entry.
+    const headline =
+      i > 0 && !/[?？]\s*$/u.test(slide.headline) && countWords(slide.headline) <= 8
+        ? slide.headline
+        : slide.headline;
+
+    return { ...slide, headline, body };
+  });
+}
+
+/**
  * Rewrite a block into answer-first shape: the claim, then the support. This is
  * a deterministic restructure, not a rephrase — it never invents facts.
  */

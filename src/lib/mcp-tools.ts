@@ -11,9 +11,16 @@ import {
   generateReelsFallback,
 } from "@/lib/content-fallback";
 import { getDimensions, getTemplate } from "@/lib/carousel-config";
-import { scoreGeo, generateJsonLd, slidesToFaq, toAnswerFirst } from "@/lib/geo";
+import {
+  scoreGeo,
+  generateJsonLd,
+  slidesToFaq,
+  toAnswerFirst,
+  enrichForGeo,
+} from "@/lib/geo";
 import { searchGoogleNews } from "@/lib/news";
 import { postToPlatforms, isComposioConfigured } from "@/lib/composio";
+import { postToTikTok, isTikTokConfigured } from "@/lib/tiktok";
 
 export interface McpTool {
   name: string;
@@ -125,9 +132,7 @@ export const TOOLS: McpTool[] = [
       };
 
       const { slides: raw } = generate(contentType, input);
-      const slides: Slide[] = geoOptimize
-        ? raw.map((s) => ({ ...s, body: toAnswerFirst(s.headline, s.body) }))
-        : raw;
+      const slides: Slide[] = geoOptimize ? enrichForGeo(raw) : raw;
 
       const dimensions =
         getDimensions(platform, contentType) || { width: 1080, height: 1350, ratio: "4:5" };
@@ -146,6 +151,11 @@ export const TOOLS: McpTool[] = [
         note:
           "Slides are editable. Open Postwave to render them as images and publish, " +
           "or call postwave_publish with a caption.",
+        geoGuidance:
+          "The generator structures content for citation but cannot supply facts. " +
+          "To raise the GEO score further, add a real statistic, name its source, " +
+          "and include one expert quote — these are the three highest-weighted " +
+          "signals and they must come from the user, not be invented.",
       };
     },
   },
@@ -329,21 +339,61 @@ export const TOOLS: McpTool[] = [
       }
       if (!caption) throw new Error("caption is required");
 
-      if (!isComposioConfigured()) {
-        return {
-          published: false,
-          reason: "not-configured",
-          message:
-            "Publishing is not connected yet. Set COMPOSIO_API_KEY and connect the social " +
-            "accounts in Postwave settings, then try again.",
-          platforms,
-        };
+      const imageUrl = str(a.imageUrl) || undefined;
+
+      // TikTok is not reachable through the generic connector — it has its own
+      // API and its own credentials, so it is routed separately rather than
+      // being silently dropped.
+      const wantsTikTok = platforms.includes("tiktok");
+      const others = platforms.filter((p) => p !== "tiktok");
+
+      const results: { platform: string; successful: boolean; error?: string | null }[] = [];
+
+      if (others.length > 0) {
+        if (!isComposioConfigured()) {
+          for (const p of others) {
+            results.push({
+              platform: p,
+              successful: false,
+              error:
+                "Publishing is not connected. Set COMPOSIO_API_KEY and connect the account " +
+                "in Postwave settings.",
+            });
+          }
+        } else {
+          results.push(...(await postToPlatforms(others, caption, imageUrl)));
+        }
       }
 
-      const results = await postToPlatforms(platforms, caption, str(a.imageUrl) || undefined);
+      if (wantsTikTok) {
+        if (!isTikTokConfigured()) {
+          results.push({
+            platform: "tiktok",
+            successful: false,
+            error: "TikTok is not connected. Set TIKTOK_ACCESS_TOKEN.",
+          });
+        } else {
+          // Default to the draft inbox: a direct post needs an audited TikTok
+          // app, and a silent failure is worse than a draft the user finishes.
+          const r = await postToTikTok({
+            caption,
+            imageUrls: imageUrl ? [imageUrl] : [],
+            draft: true,
+          });
+          results.push({
+            platform: "tiktok",
+            successful: r.ok,
+            error: r.ok ? null : r.error,
+          });
+        }
+      }
+
       return {
         published: results.some((r) => r.successful),
         results,
+        note: wantsTikTok
+          ? "TikTok posts land in the creator's drafts for final approval in the app."
+          : undefined,
       };
     },
   },
