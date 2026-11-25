@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, use } from "react";
 import { toast } from "sonner";
-import { getContent, saveContent } from "@/lib/content-store";
+import { fetchContent, saveContent } from "@/lib/content-store";
 
 interface Slide {
   headline: string;
@@ -159,12 +159,22 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
   }, [status, router]);
 
   useEffect(() => {
-    const stored = getContent(params.id);
-    if (stored) {
-      setData(stored as unknown as CarouselData);
-      setEditedSlides(JSON.parse(JSON.stringify((stored as unknown as CarouselData).slides)));
-    }
-    setLoading(false);
+    let alive = true;
+    (async () => {
+      // Looks in the local cache first, then the server — which is what lets
+      // a link to a piece open on a device that never created it.
+      const stored = await fetchContent(params.id);
+      if (!alive) return;
+      if (stored) {
+        const content = stored as unknown as CarouselData;
+        setData(content);
+        setEditedSlides(JSON.parse(JSON.stringify(content.slides)));
+      }
+      setLoading(false);
+    })();
+    return () => {
+      alive = false;
+    };
   }, [params.id]);
 
   const gradient = useMemo(() => {

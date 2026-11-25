@@ -10,6 +10,32 @@ export default function LoginPage() {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
+  const [codeLoading, setCodeLoading] = useState(false);
+
+  const handleCodeLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = accessCode.trim();
+    if (!code) return;
+
+    setCodeLoading(true);
+    try {
+      const result = await signIn("access-code", { code, redirect: false });
+      if (result?.error) {
+        toast.error(
+          result.error === "CredentialsSignin" ? "קוד כניסה שגוי" : result.error
+        );
+        return;
+      }
+      toast.success("נכנסת כמנהל");
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      toast.error("הכניסה נכשלה. נסה שוב.");
+    } finally {
+      setCodeLoading(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     email: "",
@@ -184,6 +210,36 @@ export default function LoginPage() {
               <span className="px-2 surface ink rounded-full text-xs font-semibold">או</span>
             </div>
           </div>
+
+          {/* Owner access code — one code, no password, stays signed in */}
+          <form onSubmit={handleCodeLogin} className="space-y-2">
+            <label htmlFor="access-code" className="block text-sm font-semibold ink">
+              כניסה עם קוד
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="access-code"
+                type="password"
+                value={accessCode}
+                onChange={(e) => setAccessCode(e.target.value)}
+                placeholder="הדבק את קוד הכניסה שלך..."
+                autoComplete="one-time-code"
+                spellCheck={false}
+                disabled={codeLoading}
+                className="flex-1 py-2.5 px-4 rounded-xl surface-solid ink disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={codeLoading || !accessCode.trim()}
+                className="rounded-xl accent-surface px-5 py-2.5 font-bold disabled:opacity-50"
+              >
+                {codeLoading ? "נכנס..." : "כניסה"}
+              </button>
+            </div>
+            <p className="text-xs ink-muted">
+              כניסה עם הקוד מחברת אותך כמנהל ונשארת מחוברת לשנה.
+            </p>
+          </form>
 
           {/* OAuth Buttons */}
           <div className="space-y-2">

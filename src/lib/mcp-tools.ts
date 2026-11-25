@@ -21,6 +21,12 @@ import {
 import { searchGoogleNews } from "@/lib/news";
 import { postToPlatforms, isComposioConfigured } from "@/lib/composio";
 import { postToTikTok, isTikTokConfigured } from "@/lib/tiktok";
+import {
+  listContent as listLibrary,
+  getContent as getLibraryItem,
+  saveContent as saveLibraryItem,
+  isContentDbConfigured,
+} from "@/lib/content-repo";
 
 export interface McpTool {
   name: string;
@@ -62,6 +68,17 @@ function generate(contentType: string, input: {
       // carousel and story share the multi-slide shape
       return generateCarouselFallback(input);
   }
+}
+
+/**
+ * The owner whose library an MCP caller sees.
+ *
+ * MCP callers authenticate with a shared API key, not a user session, so the
+ * library they read is the one configured here. Set POSTWAVE_OWNER_EMAIL to
+ * the account whose content the key should reach.
+ */
+function owner(): string {
+  return (process.env.POSTWAVE_OWNER_EMAIL || "").trim();
 }
 
 export const TOOLS: McpTool[] = [
@@ -139,7 +156,35 @@ export const TOOLS: McpTool[] = [
       const template = getTemplate("modern");
       const geo = scoreGeo(slides.map((s) => `${s.headline}\n${s.body}`).join("\n\n"));
 
+      // Persist so a piece made from a chat shows up in the web library, and
+      // can be fetched again by id instead of regenerated.
+      const id = `gen_${Date.now()}`;
+      let saved = false;
+      if (isContentDbConfigured() && owner()) {
+        try {
+          await saveLibraryItem(owner(), {
+            id,
+            topic,
+            contentType,
+            platform,
+            design: "modern",
+            slides,
+            images: [],
+            dimensions,
+            template,
+            geoScore: geo.score,
+            status: "draft",
+            aiGenerated: false,
+          });
+          saved = true;
+        } catch {
+          // Saving is a convenience; never fail generation because of it.
+        }
+      }
+
       return {
+        id,
+        saved,
         topic,
         contentType,
         platform,
@@ -156,6 +201,124 @@ export const TOOLS: McpTool[] = [
           "To raise the GEO score further, add a real statistic, name its source, " +
           "and include one expert quote — these are the three highest-weighted " +
           "signals and they must come from the user, not be invented.",
+      };
+    },
+  },
+
+  {
+    name: "postwave_list_library",
+    title: "List saved Postwave content",
+    description:
+      "List the pieces saved in the Postwave library, newest first — topic, type, platform, " +
+      "status and when it was created. Use this to find an existing piece before creating a " +
+      "new one, or to answer what the user has already made.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "number",
+          description: "How many to return (1–100). Defaults to 20.",
+        },
+        contentType: {
+          type: "string",
+          enum: [...CONTENT_TYPES],
+          description: "Only return this type.",
+        },
+      },
+    },
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      if (!isContentDbConfigured()) {
+        return {
+          available: false,
+          reason: "not-configured",
+          message:
+            "The content library is not connected. Set SUPABASE_SERVICE_ROLE_KEY on the " +
+            "Postwave server so saved content is readable here.",
+          items: [],
+        };
+      }
+      if (!owner()) {
+        return {
+          available: false,
+          reason: "no-owner",
+          message:
+            "Set POSTWAVE_OWNER_EMAIL on the server so the key knows whose library to read.",
+          items: [],
+        };
+      }
+
+      const rawLimit = typeof a.limit === "number" ? a.limit : 20;
+      const limit = Math.max(1, Math.min(100, Math.round(rawLimit)));
+      const wanted = str(a.contentType);
+
+      const all = await listLibrary(owner(), limit);
+      const items = wanted ? all.filter((i) => i.contentType === wanted) : all;
+
+      return {
+        available: true,
+        count: items.length,
+        items: items.map((i) => ({
+          id: i.id,
+          topic: i.topic,
+          contentType: i.contentType,
+          platform: i.platform,
+          slideCount: i.slides.length,
+          geoScore: i.geoScore,
+          status: i.status,
+          createdAt: i.createdAt,
+        })),
+      };
+    },
+  },
+
+  {
+    name: "postwave_get_content",
+    title: "Read one saved piece",
+    description:
+      "Fetch a saved piece by id, with every slide's headline and body, its images and its " +
+      "GEO score. Use it to review, revise or publish something already made, rather than " +
+      "regenerating it from scratch.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The piece's id, from postwave_list_library." },
+      },
+      required: ["id"],
+    },
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      const id = str(a.id);
+      if (!id) throw new Error("id is required");
+
+      if (!isContentDbConfigured() || !owner()) {
+        return {
+          available: false,
+          message:
+            "The content library is not connected. Set SUPABASE_SERVICE_ROLE_KEY and " +
+            "POSTWAVE_OWNER_EMAIL on the Postwave server.",
+        };
+      }
+
+      const item = await getLibraryItem(owner(), id);
+      if (!item) return { available: true, found: false, id };
+
+      const geo = scoreGeo(
+        item.slides.map((s) => `${s.headline}\n${s.body}`).join("\n\n")
+      );
+      return {
+        available: true,
+        found: true,
+        id: item.id,
+        topic: item.topic,
+        contentType: item.contentType,
+        platform: item.platform,
+        slides: item.slides.map((s) => ({ headline: s.headline, body: s.body })),
+        images: item.images,
+        dimensions: item.dimensions,
+        status: item.status,
+        createdAt: item.createdAt,
+        geo: { score: geo.score, grade: geo.grade, topFixes: geo.topFixes },
       };
     },
   },

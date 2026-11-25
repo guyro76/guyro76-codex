@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use } from "react";
 import { toast } from "sonner";
-import { getContent } from "@/lib/content-store";
+import { fetchContent } from "@/lib/content-store";
 
 // Only networks the user has actually connected in Composio.
 const PLATFORMS = [
@@ -52,7 +52,10 @@ export default function PostToSocialPage({
   // Pull the saved content (survives refresh via the local store) to build a
   // caption and grab a real public image URL for the post.
   useEffect(() => {
-    const data = getContent(params.id) as CarouselData | null;
+    let alive = true;
+    (async () => {
+    const data = (await fetchContent(params.id)) as CarouselData | null;
+    if (!alive) return;
     if (data) {
       setCarousel(data);
       const first = data.slides?.[0];
@@ -63,6 +66,10 @@ export default function PostToSocialPage({
     } else {
       setCaption("תוכן חדש מ-Postwave");
     }
+    })();
+    return () => {
+      alive = false;
+    };
   }, [params.id]);
 
   const togglePlatform = (id: string) => {

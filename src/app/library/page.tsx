@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import {
   listContent,
   removeContent,
+  fetchLibrary,
+  migrateLocalToServer,
   type ContentIndexEntry,
 } from "@/lib/content-store";
 
@@ -41,14 +43,33 @@ export default function LibraryPage() {
     if (status === "unauthenticated") router.push("/");
   }, [status, router]);
 
+  const [source, setSource] = useState<"server" | "local">("local");
+
   useEffect(() => {
-    setItems(listContent());
-    setLoaded(true);
+    let alive = true;
+    (async () => {
+      // Show the local cache immediately so the page is never blank, then
+      // replace it with the server's copy once it arrives.
+      setItems(listContent());
+      setLoaded(true);
+
+      // Carry anything created before the server store existed.
+      const imported = await migrateLocalToServer();
+      if (imported > 0) toast.success(`${imported} פריטים הועלו לשרת`);
+
+      const { items: fresh, source: src } = await fetchLibrary();
+      if (!alive) return;
+      setItems(fresh);
+      setSource(src);
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  const handleRemove = (id: string) => {
-    removeContent(id);
-    setItems(listContent());
+  const handleRemove = async (id: string) => {
+    setItems((list) => list.filter((e) => e.id !== id));
+    await removeContent(id);
     toast.success("נמחק מהספרייה");
   };
 
