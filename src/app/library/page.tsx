@@ -53,7 +53,7 @@ export default function LibraryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 py-12 px-4 text-white">
+    <div className="min-h-screen surface py-12 px-4 ink">
       <div className="max-w-3xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <button
@@ -64,24 +64,24 @@ export default function LibraryPage() {
           </button>
           <div className="text-right">
             <h1 className="text-4xl font-bold">הספרייה שלי</h1>
-            <p className="text-slate-400 text-sm">
+            <p className="ink-muted text-sm">
               כל התוכן שיצרת — נשמר במכשיר שלך
             </p>
           </div>
         </div>
 
         {!loaded ? (
-          <div className="animate-pulse text-center text-slate-500">טוען...</div>
+          <div className="animate-pulse text-center ink-muted">טוען...</div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-white/10 bg-white/[0.03] py-20 text-center">
+          <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border edge surface-solid/[0.03] py-20 text-center">
             <div className="text-5xl">🗂️</div>
             <h2 className="text-2xl font-bold">עדיין אין תוכן שמור</h2>
-            <p className="max-w-sm text-slate-400">
+            <p className="max-w-sm ink-muted">
               צור קרוסלה, פוסט, מצגת או רילס — והם יופיעו כאן אוטומטית.
             </p>
             <button
               onClick={() => router.push("/content-factory")}
-              className="mt-2 rounded-lg bg-cyan-600 px-6 py-2 font-semibold transition-colors hover:bg-cyan-500"
+              className="mt-2 rounded-lg accent-surface px-6 py-2 font-semibold transition-colors hover:accent-surface text-white"
             >
               ← התחל ליצור
             </button>
@@ -93,19 +93,19 @@ export default function LibraryPage() {
               return (
                 <li
                   key={item.id}
-                  className="group flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl transition-all hover:border-cyan-300/40 hover:bg-white/[0.07]"
+                  className="group flex items-center justify-between gap-4 rounded-2xl border edge surface-solid/[0.04] p-4 backdrop-blur-xl transition-all hover:border-cyan-300/40 hover:surface-solid/[0.07]"
                 >
                   <div className="flex shrink-0 gap-2">
                     <button
                       onClick={() => handleRemove(item.id)}
-                      className="rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
+                      className="rounded-lg surface-solid px-3 py-2 text-xs -muted transition-colors hover:surface hover:accent-ink ink"
                       aria-label="מחק"
                     >
                       🗑️
                     </button>
                     <button
                       onClick={() => router.push(`/carousel/${item.id}`)}
-                      className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold transition-colors hover:bg-cyan-500"
+                      className="rounded-lg accent-surface px-4 py-2 text-sm font-semibold transition-colors hover:accent-surface text-white"
                     >
                       פתח
                     </button>
@@ -116,7 +116,7 @@ export default function LibraryPage() {
                   >
                     <div>
                       <p className="font-bold leading-tight">{item.topic}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs ink-muted">
                         {meta.label} · {formatDate(item.createdAt)}
                       </p>
                     </div>

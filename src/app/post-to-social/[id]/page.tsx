@@ -124,11 +124,11 @@ export default function PostToSocialPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 py-12 px-4 text-white">
+    <div className="min-h-screen surface py-12 px-4 ink">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8 text-right">
           <h1 className="text-4xl font-bold mb-2">פרסם לרשתות החברתיות</h1>
-          <p className="text-slate-400">
+          <p className="ink-muted">
             {carousel?.topic
               ? `הקרוסלה: ${carousel.topic}`
               : "בחר רשתות והוסף טקסט"}
@@ -137,7 +137,7 @@ export default function PostToSocialPage({
 
         <form onSubmit={handlePost} className="space-y-6">
           {/* Platform Selection */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6">
+          <div className="rounded-2xl border edge surface-solid/[0.04] backdrop-blur-xl p-6">
             <label className="block text-sm font-semibold mb-4">
               בחר רשתות חברתיות
             </label>
@@ -151,7 +151,7 @@ export default function PostToSocialPage({
                   className={`p-4 rounded-lg border transition-all disabled:opacity-50 ${
                     selected.includes(platform.id)
                       ? "border-cyan-400/70 bg-cyan-400/10 ring-1 ring-cyan-300/40"
-                      : "border-white/10 hover:border-white/20"
+                      : "edge hover:edge"
                   }`}
                 >
                   <div className="text-2xl mb-2">{platform.icon}</div>
@@ -159,13 +159,13 @@ export default function PostToSocialPage({
                 </button>
               ))}
             </div>
-            <p className="mt-3 text-xs text-slate-500">
+            <p className="mt-3 text-xs ink-muted">
               TikTok עדיין לא מחובר ב-Composio — חבר אותו כדי שיופיע כאן.
             </p>
           </div>
 
           {/* Caption */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6">
+          <div className="rounded-2xl border edge surface-solid/[0.04] backdrop-blur-xl p-6">
             <label className="block text-sm font-semibold mb-3">
               טקסט הפוסט (Caption)
             </label>
@@ -174,9 +174,9 @@ export default function PostToSocialPage({
               onChange={(e) => setCaption(e.target.value)}
               placeholder="הוסף טקסט לפוסט..."
               disabled={loading}
-              className="w-full h-32 px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:outline-none text-white placeholder-slate-500"
+              className="w-full h-32 px-4 py-3 rounded-lg surface border edge focus:border-cyan-500 focus:outline-none ink placeholder-slate-500"
             />
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs ink-muted">
               {caption.length} / 2200 תווים
             </p>
           </div>
@@ -193,7 +193,7 @@ export default function PostToSocialPage({
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-full py-2 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold transition-colors"
+            className="w-full py-2 px-4 rounded-lg surface-solid hover:surface-solid ink font-semibold transition-colors"
           >
             חזור
           </button>
@@ -201,18 +201,18 @@ export default function PostToSocialPage({
 
         {/* Not-configured guidance (honest) */}
         {notConfigured && (
-          <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 text-right">
-            <h3 className="font-bold text-amber-200 mb-3">
+          <div className="mt-6 rounded-2xl border border-amber-500/30 surface p-6 text-right ink">
+            <h3 className="font-bold accent-ink mb-3">
               צעד אחרון להפעלת פרסום אוטומטי
             </h3>
-            <ol className="space-y-2 text-sm text-amber-100/90 list-decimal list-inside">
+            <ol className="space-y-2 text-sm accent-ink list-decimal list-inside">
               <li>
                 היכנס ל-
                 <a
                   href="https://app.composio.dev"
                   target="_blank"
                   rel="noreferrer"
-                  className="underline text-cyan-300"
+                  className="underline accent-ink"
                 >
                   app.composio.dev
                 </a>{" "}
@@ -220,7 +220,7 @@ export default function PostToSocialPage({
               </li>
               <li>
                 ב-Vercel: Project → Settings → Environment Variables → הוסף
-                <code className="mx-1 rounded bg-slate-800 px-1">
+                <code className="mx-1 rounded surface-solid px-1">
                   COMPOSIO_API_KEY
                 </code>
               </li>
@@ -231,17 +231,17 @@ export default function PostToSocialPage({
 
         {/* Per-platform results (honest success/error) */}
         {results && results.length > 0 && (
-          <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-right">
+          <div className="mt-6 rounded-2xl border edge surface-solid/[0.04] p-6 text-right">
             <h3 className="font-bold mb-3">תוצאות הפרסום</h3>
             <ul className="space-y-2">
               {results.map((r) => (
                 <li
                   key={r.platform}
-                  className="flex items-center justify-between rounded-lg bg-slate-900/60 px-4 py-2"
+                  className="flex items-center justify-between rounded-lg surface/60 px-4 py-2"
                 >
                   <span
                     className={
-                      r.successful ? "text-emerald-400" : "text-red-400"
+                      r.successful ? "accent-ink" : "text-red-400"
                     }
                   >
                     {r.successful ? "✓ פורסם" : `✗ ${r.error || "נכשל"}`}

@@ -49,10 +49,10 @@ export function AppShell({
           >
             {/* Score card */}
             <div className="glass rounded-3xl p-5">
-              <p className="text-xs font-semibold text-pink-600">ציון סמכות</p>
+              <p className="text-xs font-semibold accent-ink">ציון סמכות</p>
               <p className="mt-2 text-5xl font-black bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
                 {score}
-                <span className="text-lg text-slate-500">/100</span>
+                <span className="text-lg ink-muted">/100</span>
               </p>
             </div>
 
@@ -66,8 +66,8 @@ export function AppShell({
                     href={item.href}
                     className={`flex items-center justify-end gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all ${
                       active
-                        ? "bg-gradient-to-l from-pink-300 to-violet-300 text-slate-950 shadow-md"
-                        : "text-slate-600 hover:bg-white/40 hover:text-slate-800"
+                        ? "accent-surface  shadow-md"
+                        : "-muted hover:surface hover:"
                     }`}
                   >
                     <span>{item.label}</span>
@@ -86,14 +86,14 @@ export function AppShell({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpen(true)}
-                className="glass rounded-xl px-3 py-2 text-sm md:hidden hover:bg-white/40 transition-colors"
+                className="glass rounded-xl px-3 py-2 text-sm md:hidden hover:surface transition-colors"
                 aria-label="תפריט"
               >
                 <Icon name="menu" size={20} />
               </button>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className="glass flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white/40 transition-colors"
+                className="glass flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium ink hover:surface transition-colors"
               >
                 יציאה
                 <Icon name="logout" size={16} />
@@ -105,13 +105,13 @@ export function AppShell({
                 <p className="text-lg font-extrabold leading-tight text-gradient">
                   Postwave
                 </p>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs ink-muted">
                   {name}
                   {isAdmin ? " · מנהל" : ""}
                 </p>
               </div>
-              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-pink-300 to-violet-300 shadow-lg">
-                <Icon name="sparkles" size={24} className="text-violet-700" />
+              <div className="grid h-12 w-12 place-items-center rounded-2xl accent-surface shadow-lg">
+                <Icon name="sparkles" size={24} className="accent-ink" />
               </div>
             </div>
           </header>

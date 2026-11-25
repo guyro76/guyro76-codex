@@ -15,9 +15,9 @@ const PLATFORMS = [
 ];
 
 const METRICS = [
-  { label: "עקביות", value: "91%", color: "text-pink-600" },
-  { label: "מעורבות", value: "6.8%", color: "text-violet-600" },
-  { label: "צמיחת עוקבים", value: "18%+", color: "text-sky-600" },
+  { label: "עקביות", value: "91%", color: "accent-ink" },
+  { label: "מעורבות", value: "6.8%", color: "accent-ink" },
+  { label: "צמיחת עוקבים", value: "18%+", color: "accent-ink" },
 ];
 
 export default function DashboardPage() {
@@ -31,7 +31,7 @@ export default function DashboardPage() {
 
   if (status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#06060b] text-white">
+      <div className="flex min-h-screen items-center justify-center surface-sunken ink">
         <div className="animate-pulse">טוען...</div>
       </div>
     );
@@ -50,7 +50,7 @@ export default function DashboardPage() {
             <h1 className="mt-2 text-5xl font-black leading-none md:text-6xl text-gradient">
               ציון סמכות 87/100
             </h1>
-            <p className="mt-4 max-w-xl text-slate-700 ms-auto">
+            <p className="mt-4 max-w-xl ink ms-auto">
               המערכת הופכת נתוני פרופיל, פעילות, טרנדים ותבניות הצלחה לתוכנית
               צמיחה יומית.
             </p>
@@ -62,18 +62,18 @@ export default function DashboardPage() {
                   className="glass rounded-2xl p-5 text-center"
                 >
                   <p className={`text-3xl font-black ${m.color}`}>{m.value}</p>
-                  <p className="mt-2 text-sm text-slate-600 font-semibold">{m.label}</p>
+                  <p className="mt-2 text-sm ink-muted font-semibold">{m.label}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Left: today's task */}
-          <div className="flex w-full flex-col justify-between rounded-3xl bg-gradient-to-br from-pink-200 to-violet-200 p-6 shadow-lg lg:w-72">
+          <div className="flex w-full flex-col justify-between rounded-3xl accent-surface p-6 shadow-lg lg:w-72">
             <div className="text-right">
-              <Icon name="target" size={28} className="text-pink-600" />
-              <p className="mt-3 text-sm font-semibold text-slate-700">משימת היום</p>
-              <p className="mt-2 text-xl font-extrabold leading-snug text-slate-800">
+              <Icon name="target" size={28} className="accent-ink" />
+              <p className="mt-3 text-sm font-semibold ink">משימת היום</p>
+              <p className="mt-2 text-xl font-extrabold leading-snug ink">
                 פרסם טיפ אחד, הגב ל-10 מומחים והפוך פוסט לקרוסלה.
               </p>
             </div>
@@ -93,12 +93,12 @@ export default function DashboardPage() {
         <div className="mb-4 flex items-center justify-between">
           <Link
             href="/library"
-            className="glass rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white/40 transition-colors"
+            className="glass rounded-lg px-4 py-2 text-sm font-semibold ink hover:surface transition-colors"
           >
             <Icon name="library" size={16} className="inline mr-2" />
             הספרייה שלי
           </Link>
-          <h2 className="text-right text-lg font-bold text-slate-800">
+          <h2 className="text-right text-lg font-bold ink">
             צור תוכן חדש
           </h2>
         </div>
@@ -113,12 +113,12 @@ export default function DashboardPage() {
             <Link
               key={c.type}
               href={`/content-factory?type=${c.type}`}
-              className="group glass rounded-2xl p-5 text-center transition-all hover:bg-white/50 hover:shadow-md"
+              className="group glass rounded-2xl p-5 text-center transition-all hover:surface hover:shadow-md"
             >
               <div className="relative mb-3 flex justify-center">
-                <Icon name={c.icon} size={32} className="text-violet-600" />
+                <Icon name={c.icon} size={32} className="accent-ink" />
               </div>
-              <div className="relative text-sm font-bold text-slate-800">
+              <div className="relative text-sm font-bold ink">
                 {c.label}
               </div>
             </Link>
@@ -136,17 +136,17 @@ export default function DashboardPage() {
         {PLATFORMS.map((p) => (
           <div
             key={p.name}
-            className="glass flex items-center justify-between rounded-3xl p-6 hover:bg-white/50 transition-all"
+            className="glass flex items-center justify-between rounded-3xl p-6 hover:surface transition-all"
           >
             <div className="flex items-center gap-3">
-              <span className="glass rounded-full px-3 py-1 text-sm font-bold text-violet-600">
+              <span className="glass rounded-full px-3 py-1 text-sm font-bold accent-ink">
                 {p.score}/100
               </span>
-              <Icon name={p.icon} size={24} className="text-pink-600" />
+              <Icon name={p.icon} size={24} className="accent-ink" />
             </div>
             <div className="text-right">
-              <h3 className="text-2xl font-black text-slate-800">{p.name}</h3>
-              <p className="mt-1 text-sm text-slate-600">{p.tip}</p>
+              <h3 className="text-2xl font-black ink">{p.name}</h3>
+              <p className="mt-1 text-sm ink-muted">{p.tip}</p>
             </div>
           </div>
         ))}

@@ -79,13 +79,13 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 py-12 px-4">
+    <div className="min-h-screen surface py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-2">
-            ברוכים הבאים ל-<span className="text-cyan-400">Postwave</span>
+            ברוכים הבאים ל-<span className="accent-ink">Postwave</span>
           </h1>
-          <p className="text-slate-400">בואו נגדיר את הפרופיל שלך</p>
+          <p className="ink-muted">בואו נגדיר את הפרופיל שלך</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -101,7 +101,7 @@ export default function OnboardingPage() {
               onChange={(e) =>
                 setFormData({ ...formData, niche: e.target.value })
               }
-              className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:outline-none text-white placeholder-slate-500"
+              className="w-full px-4 py-3 rounded-lg surface border edge focus:border-cyan-500 focus:outline-none ink placeholder-slate-500"
             />
           </div>
 
@@ -117,7 +117,7 @@ export default function OnboardingPage() {
               onChange={(e) =>
                 setFormData({ ...formData, audience: e.target.value })
               }
-              className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:outline-none text-white placeholder-slate-500"
+              className="w-full px-4 py-3 rounded-lg surface border edge focus:border-cyan-500 focus:outline-none ink placeholder-slate-500"
             />
           </div>
 
@@ -131,7 +131,7 @@ export default function OnboardingPage() {
               onChange={(e) =>
                 setFormData({ ...formData, tone: e.target.value })
               }
-              className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:outline-none text-white"
+              className="w-full px-4 py-3 rounded-lg surface border edge focus:border-cyan-500 focus:outline-none ink"
             >
               <option value="">בחר טון כתיבה</option>
               <option value="formal">רשמי ומקצועי</option>
@@ -147,7 +147,7 @@ export default function OnboardingPage() {
             <label className="block text-sm font-semibold mb-4">
               בחר את הפלטפורמות שלך
             </label>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs ink-muted mb-4">
               אתה יכול לבחור בהמשך או להפעיל מצב דמו כדי לבדוק את המערכת
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -159,12 +159,12 @@ export default function OnboardingPage() {
                   className={`p-4 rounded-lg border-2 transition-all text-center ${
                     formData.platforms.includes(platform.id)
                       ? "border-cyan-500 bg-cyan-500/10"
-                      : "border-slate-700 bg-slate-900 hover:border-slate-600"
+                      : "edge surface hover:edge"
                   }`}
                 >
                   <div className="text-2xl mb-2">{platform.icon}</div>
                   <div className="text-sm font-medium">{platform.name}</div>
-                  <div className="text-xs text-slate-400 mt-1">
+                  <div className="text-xs ink-muted mt-1">
                     {formData.platforms.includes(platform.id)
                       ? "מצב דמו"
                       : "לא מחובר"}
@@ -175,8 +175,8 @@ export default function OnboardingPage() {
           </div>
 
           {/* Note */}
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-            <p className="text-sm text-blue-200">
+          <div className="surface border border-blue-500/30 rounded-lg p-4 ink">
+            <p className="text-sm accent-ink">
               ℹ️ <strong>מצב דמו:</strong> אתה יכול להמשיך ללא חיבור לפלטפורמות
               ממשיות. כל התוכן יאוחסן בחשבונך וניתן יהיה לפרסם לאחר מכן.
             </p>
@@ -187,7 +187,7 @@ export default function OnboardingPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 py-3 px-4 rounded-lg accent-surface hover:accent-surface text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? "שומר..." : "התחל עכשיו"}
             </button>

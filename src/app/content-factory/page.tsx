@@ -134,11 +134,11 @@ function ContentFactoryForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 py-12 px-4">
+    <div className="min-h-screen surface py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">מפעל תוכן</h1>
-          <p className="text-slate-400">{copy.subtitle}</p>
+          <p className="ink-muted">{copy.subtitle}</p>
         </div>
 
         <form onSubmit={handleCreateCarousel} className="space-y-6">
@@ -165,12 +165,12 @@ function ContentFactoryForm() {
                     className={`group relative overflow-hidden rounded-2xl border p-4 text-center backdrop-blur-xl transition-all disabled:opacity-50 ${
                       selected
                         ? "border-cyan-300/70 bg-cyan-400/10 shadow-[0_0_30px_-6px_rgba(34,211,238,0.55)] ring-1 ring-cyan-300/40"
-                        : "border-white/10 bg-white/[0.04] hover:border-white/25 hover:bg-white/[0.08]"
+                        : "edge surface-solid/[0.04] hover:edge hover:surface-solid/[0.08]"
                     } ${option.soon ? "opacity-70" : ""}`}
                   >
                     <span className="pointer-events-none absolute inset-x-0 -top-1/2 h-1/2 bg-gradient-to-b from-white/15 to-transparent blur-md" />
                     {option.soon && (
-                      <span className="absolute right-2 top-2 rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                      <span className="absolute right-2 top-2 rounded-full surface px-2 py-0.5 text-[10px] font-bold ink">
                         בקרוב
                       </span>
                     )}
@@ -197,7 +197,7 @@ function ContentFactoryForm() {
                 setFormData({ ...formData, topic: e.target.value })
               }
               disabled={loading}
-              className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:outline-none text-white placeholder-slate-500 disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-lg surface border edge focus:border-cyan-500 focus:outline-none ink placeholder-slate-500 disabled:opacity-50"
             />
           </div>
 
@@ -212,7 +212,7 @@ function ContentFactoryForm() {
                 setFormData({ ...formData, platform: e.target.value })
               }
               disabled={loading}
-              className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:outline-none text-white disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-lg surface border edge focus:border-cyan-500 focus:outline-none ink disabled:opacity-50"
             >
               <option value="instagram">Instagram</option>
               <option value="linkedin">LinkedIn</option>
@@ -232,7 +232,7 @@ function ContentFactoryForm() {
                 setFormData({ ...formData, objective: e.target.value })
               }
               disabled={loading}
-              className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:outline-none text-white disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-lg surface border edge focus:border-cyan-500 focus:outline-none ink disabled:opacity-50"
             >
               <option value="בניית סמכות">בניית סמכות</option>
               <option value="הגדלת מעורבות">הגדלת מעורבות</option>
@@ -277,16 +277,16 @@ function ContentFactoryForm() {
                   className={`group relative overflow-hidden rounded-2xl border p-4 text-right backdrop-blur-xl transition-all disabled:opacity-50 ${
                     formData.design === template.id
                       ? "border-cyan-300/70 ring-2 ring-cyan-400/40 shadow-[0_0_30px_-6px_rgba(34,211,238,0.5)]"
-                      : "border-white/10 bg-white/[0.04] hover:border-white/25 hover:bg-white/[0.08]"
+                      : "edge surface-solid/[0.04] hover:edge hover:surface-solid/[0.08]"
                   }`}
                 >
                   <span className="pointer-events-none absolute inset-x-0 -top-1/2 h-1/2 bg-gradient-to-b from-white/15 to-transparent blur-md" />
                   <div
-                    className={`${template.colors} relative mb-3 flex h-20 items-center justify-center rounded-xl text-sm font-bold text-white shadow-inner`}
+                    className={`${template.colors} relative mb-3 flex h-20 items-center justify-center rounded-xl text-sm font-bold ink shadow-inner`}
                   >
                     {template.name}
                   </div>
-                  <p className="relative text-sm text-slate-300">{template.desc}</p>
+                  <p className="relative text-sm ink-muted">{template.desc}</p>
                 </button>
               ))}
             </div>
@@ -303,7 +303,7 @@ function ContentFactoryForm() {
                 setFormData({ ...formData, theme: e.target.value })
               }
               disabled={loading}
-              className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:outline-none text-white disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-lg surface border edge focus:border-cyan-500 focus:outline-none ink disabled:opacity-50"
             >
               <option value="midnight">Midnight Authority</option>
               <option value="editorial">Claude Editorial</option>
@@ -320,13 +320,13 @@ function ContentFactoryForm() {
                 <span>{copy.loading}</span>
                 <span>{progress}%</span>
               </div>
-              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-2 surface-solid rounded-full overflow-hidden">
                 <div
                   className="h-full bg-cyan-500 transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="text-xs text-slate-500 mt-2">
+              <p className="text-xs ink-muted mt-2">
                 {progress < 50 &&
                   "🔍 מחפש ומנתח תוכן..."}
                 {progress >= 50 && progress < 80 &&
@@ -341,7 +341,7 @@ function ContentFactoryForm() {
           <button
             type="submit"
             disabled={loading}
-            className="group relative w-full overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-l from-cyan-500/90 to-sky-500/90 py-3.5 px-4 font-bold text-white shadow-[0_8px_30px_-8px_rgba(34,211,238,0.6)] backdrop-blur-xl transition-all hover:from-cyan-400 hover:to-sky-400 hover:shadow-[0_10px_44px_-6px_rgba(34,211,238,0.85)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="group relative w-full overflow-hidden rounded-2xl border edge bg-gradient-to-l from-cyan-500/90 to-sky-500/90 py-3.5 px-4 font-bold text-white shadow-[0_8px_30px_-8px_rgba(34,211,238,0.6)] backdrop-blur-xl transition-all hover:from-cyan-400 hover:to-sky-400 hover:shadow-[0_10px_44px_-6px_rgba(34,211,238,0.85)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span className="pointer-events-none absolute inset-x-0 -top-1/2 h-1/2 bg-gradient-to-b from-white/25 to-transparent blur-md" />
             <span className="relative">
@@ -352,8 +352,8 @@ function ContentFactoryForm() {
 
         {/* Info Box */}
         <div className="mt-8 space-y-4">
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-            <p className="text-sm text-blue-200">
+          <div className="surface border border-blue-500/30 rounded-lg p-4 ink">
+            <p className="text-sm accent-ink">
               ℹ️ <strong>כיצד זה עובד:</strong>{" "}
               {formData.contentType === "carousel" &&
                 "המערכת כותבת 7 שקפים, מחפשת תמונות רלוונטיות, ובונה קרוסלה מוכנה להורדה ולפרסום."}
@@ -368,8 +368,8 @@ function ContentFactoryForm() {
             </p>
           </div>
 
-          <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-            <p className="text-sm text-purple-200">
+          <div className="surface border border-purple-500/30 rounded-lg p-4 ink">
+            <p className="text-sm accent-ink">
               📐 <strong>גדלים אוטומטיים לפי הרשת:</strong>
               <br />
               <span className="text-xs">

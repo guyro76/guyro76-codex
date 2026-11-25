@@ -18,7 +18,7 @@ export default function Home() {
     return (
       <div className="flex flex-col flex-1 items-center justify-center">
         <div className="animate-pulse">
-          <div className="h-12 w-48 bg-slate-700 rounded-lg" />
+          <div className="h-12 w-48 surface-solid rounded-lg" />
         </div>
       </div>
     );
@@ -31,15 +31,15 @@ export default function Home() {
         <div className="space-y-2">
           <h1 className="text-4xl font-bold tracking-tight">
             Post
-            <span className="text-cyan-400">wave</span>
+            <span className="accent-ink">wave</span>
           </h1>
-          <p className="text-lg text-slate-300">
+          <p className="text-lg ink-muted">
             צור, נהל ופרסם תוכן סושיאל שמייצר תוצאות
           </p>
         </div>
 
         {/* Description */}
-        <div className="space-y-4 text-slate-400">
+        <div className="space-y-4 ink-muted">
           <p className="text-sm leading-relaxed">
             בנה נוכחות דיגיטלית חזקה, בנה סמכות מקצועית, וגדל ברשתות החברתיות
             עם עזרת בינה מלאכותית.
@@ -49,7 +49,7 @@ export default function Home() {
         {/* Login Button */}
         <button
           onClick={() => signIn("google", { callbackUrl: "/onboarding" })}
-          className="w-full py-3 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3 px-4 rounded-lg accent-surface hover:accent-surface text-white font-semibold transition-colors flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -61,7 +61,7 @@ export default function Home() {
         </button>
 
         {/* Footer */}
-        <p className="text-xs text-slate-500 pt-6">
+        <p className="text-xs ink-muted pt-6">
           © תוכנן על ידי גיא רוזנברג 2026 – כל הזכויות שמורות
         </p>
       </div>

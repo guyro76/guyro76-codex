@@ -141,21 +141,21 @@ export default function ContentCalendarPage() {
 
   return (
     <AppShell>
-      <section className="rounded-3xl border border-white/5 bg-[#0e0e16] p-6 md:p-8">
-        <p className="text-sm font-bold uppercase tracking-wide text-sky-300">
+      <section className="rounded-3xl border edge surface p-6 md:p-8">
+        <p className="text-sm font-bold uppercase tracking-wide accent-ink">
           Content Calendar
         </p>
         <h1 className="mt-2 text-4xl font-black">יומן תוכן 🗓️</h1>
-        <p className="mt-3 max-w-2xl text-slate-400">
+        <p className="mt-3 max-w-2xl ink-muted">
           תכנן קדימה: שבץ פוסטים בכל יום, עם חגים ואירועי שיווק טעונים מראש.
           חודשי · שבועי · יומי.
         </p>
       </section>
 
       {/* Toolbar */}
-      <section className="flex flex-col gap-4 rounded-3xl border border-white/5 bg-[#0e0e16] p-4 md:flex-row md:items-center md:justify-between">
+      <section className="flex flex-col gap-4 rounded-3xl border edge surface p-4 md:flex-row md:items-center md:justify-between">
         {/* View toggle */}
-        <div className="flex gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1">
+        <div className="flex gap-1 rounded-2xl border edge surface-solid/[0.03] p-1">
           {([
             ["month", "חודשי"],
             ["week", "שבועי"],
@@ -166,8 +166,8 @@ export default function ContentCalendarPage() {
               onClick={() => setView(v)}
               className={`rounded-xl px-4 py-1.5 text-sm font-bold transition-all ${
                 view === v
-                  ? "bg-sky-400 text-slate-950"
-                  : "text-slate-300 hover:bg-white/5"
+                  ? "bg-sky-400 ink"
+                  : "ink-muted hover:surface"
               }`}
             >
               {label}
@@ -179,7 +179,7 @@ export default function ContentCalendarPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => shift(-1)}
-            className="rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+            className="rounded-xl border edge px-3 py-1.5 text-sm hover:surface"
           >
             →
           </button>
@@ -188,13 +188,13 @@ export default function ContentCalendarPage() {
           </span>
           <button
             onClick={() => shift(1)}
-            className="rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+            className="rounded-xl border edge px-3 py-1.5 text-sm hover:surface"
           >
             ←
           </button>
           <button
             onClick={() => setCursor(new Date(today))}
-            className="rounded-xl bg-sky-400/10 px-3 py-1.5 text-sm font-bold text-sky-300 hover:bg-sky-400/20"
+            className="rounded-xl surface px-3 py-1.5 text-sm font-bold hover:surface ink"
           >
             היום
           </button>
@@ -203,12 +203,12 @@ export default function ContentCalendarPage() {
 
       {/* Month view */}
       {view === "month" && (
-        <section className="rounded-3xl border border-white/5 bg-[#0e0e16] p-4">
+        <section className="rounded-3xl border edge surface p-4">
           <div className="grid grid-cols-7 gap-2">
             {HE_DAYS.map((d) => (
               <p
                 key={d}
-                className="pb-2 text-center text-xs font-bold text-slate-500"
+                className="pb-2 text-center text-xs font-bold ink-muted"
               >
                 {d}
               </p>
@@ -225,13 +225,13 @@ export default function ContentCalendarPage() {
                   onClick={() => setPicked(iso)}
                   className={`min-h-[92px] rounded-2xl border p-2 text-right transition-all ${
                     inMonth
-                      ? "border-white/10 bg-[#06060b] hover:border-sky-400/40"
+                      ? "edge surface-sunken hover:border-[color:var(--accent-1)]"
                       : "border-transparent bg-transparent opacity-40"
                   } ${isToday ? "ring-2 ring-sky-400/60" : ""}`}
                 >
                   <span
                     className={`text-xs font-bold ${
-                      isToday ? "text-sky-300" : "text-slate-400"
+                      isToday ? "accent-ink" : "ink-muted"
                     }`}
                   >
                     {d.getDate()}
@@ -240,8 +240,8 @@ export default function ContentCalendarPage() {
                     <span
                       className={`mt-1 block truncate rounded-md px-1 py-0.5 text-[10px] font-bold ${
                         ev.kind === "holiday"
-                          ? "bg-amber-400/15 text-amber-300"
-                          : "bg-fuchsia-400/15 text-fuchsia-300"
+                          ? "bg-amber-400/15 accent-ink"
+                          : "bg-fuchsia-400/15 accent-ink"
                       }`}
                     >
                       {ev.emoji} {ev.title}
@@ -274,15 +274,15 @@ export default function ContentCalendarPage() {
             return (
               <div
                 key={iso}
-                className={`flex min-h-[180px] flex-col rounded-3xl border bg-[#0e0e16] p-3 ${
-                  isToday ? "border-sky-400/60" : "border-white/5"
+                className={`flex min-h-[180px] flex-col rounded-3xl border surface p-3 ${
+                  isToday ? "border-sky-400/60" : "edge"
                 }`}
               >
-                <p className="text-center text-xs font-bold text-slate-300">
+                <p className="text-center text-xs font-bold ink-muted">
                   {HE_DAYS[d.getDay()]} {d.getDate()}
                 </p>
                 {ev && (
-                  <span className="mt-2 truncate rounded-md bg-amber-400/15 px-1 py-0.5 text-center text-[10px] font-bold text-amber-300">
+                  <span className="mt-2 truncate rounded-md surface px-1 py-0.5 text-center text-[10px] font-bold ink">
                     {ev.emoji} {ev.title}
                   </span>
                 )}
@@ -290,14 +290,14 @@ export default function ContentCalendarPage() {
                   {posts.map((p) => (
                     <div
                       key={p.id}
-                      className="rounded-2xl bg-[#06060b] p-2 text-right"
+                      className="rounded-2xl surface-sunken p-2 text-right"
                     >
                       <div className={`mb-1 h-1.5 w-8 rounded-full ${p.color}`} />
                       <p className="text-sm font-bold">{p.type}</p>
-                      <p className="text-xs text-slate-400">{p.platform}</p>
+                      <p className="text-xs ink-muted">{p.platform}</p>
                       <button
                         onClick={() => removePost(iso, p.id)}
-                        className="mt-1 text-[10px] text-rose-400 hover:underline"
+                        className="mt-1 text-[10px] accent-ink hover:underline"
                       >
                         הסר
                       </button>
@@ -305,7 +305,7 @@ export default function ContentCalendarPage() {
                   ))}
                   <button
                     onClick={() => setPicked(iso)}
-                    className="mt-auto rounded-xl border border-dashed border-white/15 py-1.5 text-xs text-slate-400 hover:border-sky-400/40 hover:text-sky-300"
+                    className="mt-auto rounded-xl border border-dashed edge py-1.5 text-xs ink-muted hover:border-sky-400/40 hover:accent-ink"
                   >
                     + שבץ
                   </button>
@@ -318,7 +318,7 @@ export default function ContentCalendarPage() {
 
       {/* Day view */}
       {view === "day" && (
-        <section className="rounded-3xl border border-white/5 bg-[#0e0e16] p-6">
+        <section className="rounded-3xl border edge surface p-6">
           {(() => {
             const iso = toISO(cursor);
             const ev = getEventForDate(iso);
@@ -330,28 +330,28 @@ export default function ContentCalendarPage() {
                   {HE_MONTHS[cursor.getMonth()]}
                 </h2>
                 {ev && (
-                  <p className="mt-2 inline-block rounded-lg bg-amber-400/15 px-3 py-1 text-sm font-bold text-amber-300">
+                  <p className="mt-2 inline-block rounded-lg surface px-3 py-1 text-sm font-bold ink">
                     {ev.emoji} {ev.title}
                   </p>
                 )}
                 <div className="mt-5 flex flex-col gap-3">
                   {posts.length === 0 && (
-                    <p className="text-slate-500">אין פוסטים מתוכננים ליום זה.</p>
+                    <p className="ink-muted">אין פוסטים מתוכננים ליום זה.</p>
                   )}
                   {posts.map((p) => (
                     <div
                       key={p.id}
-                      className="flex items-center justify-between rounded-2xl bg-[#06060b] p-4"
+                      className="flex items-center justify-between rounded-2xl surface-sunken p-4"
                     >
                       <button
                         onClick={() => removePost(iso, p.id)}
-                        className="text-xs text-rose-400 hover:underline"
+                        className="text-xs accent-ink hover:underline"
                       >
                         הסר
                       </button>
                       <span className="flex items-center gap-3 font-bold">
                         {p.type}
-                        <span className="text-sm font-normal text-slate-400">
+                        <span className="text-sm font-normal ink-muted">
                           {p.platform}
                         </span>
                         <span className={`h-2.5 w-2.5 rounded-full ${p.color}`} />
@@ -361,7 +361,7 @@ export default function ContentCalendarPage() {
                 </div>
                 <button
                   onClick={() => setPicked(iso)}
-                  className="mt-5 rounded-xl bg-sky-400/10 px-5 py-2 text-sm font-bold text-sky-300 hover:bg-sky-400/20"
+                  className="mt-5 rounded-xl surface px-5 py-2 text-sm font-bold hover:surface ink"
                 >
                   + שבץ פוסט
                 </button>
@@ -378,18 +378,18 @@ export default function ContentCalendarPage() {
           onClick={() => setPicked(null)}
         >
           <div
-            className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#0e0e16] p-6 text-right"
+            className="w-full max-w-sm rounded-3xl border edge surface p-6 text-right"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-black">שיבוץ פוסט · {picked}</h3>
             {getEventForDate(picked) && (
-              <p className="mt-1 text-xs text-amber-300">
+              <p className="mt-1 text-xs accent-ink">
                 {getEventForDate(picked)!.emoji}{" "}
                 {getEventForDate(picked)!.title}
               </p>
             )}
 
-            <label className="mt-4 block text-xs font-bold text-slate-400">
+            <label className="mt-4 block text-xs font-bold ink-muted">
               סוג תוכן
             </label>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -399,8 +399,8 @@ export default function ContentCalendarPage() {
                   onClick={() => setDraft({ ...draft, type: t.value })}
                   className={`rounded-xl px-3 py-1.5 text-sm font-bold transition-all ${
                     draft.type === t.value
-                      ? "bg-sky-400 text-slate-950"
-                      : "bg-white/5 text-slate-300 hover:bg-white/10"
+                      ? "bg-sky-400 ink"
+                      : "surface ink-muted hover:surface"
                   }`}
                 >
                   {t.value}
@@ -408,7 +408,7 @@ export default function ContentCalendarPage() {
               ))}
             </div>
 
-            <label className="mt-4 block text-xs font-bold text-slate-400">
+            <label className="mt-4 block text-xs font-bold ink-muted">
               פלטפורמה
             </label>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -418,8 +418,8 @@ export default function ContentCalendarPage() {
                   onClick={() => setDraft({ ...draft, platform: p })}
                   className={`rounded-xl px-3 py-1.5 text-sm font-bold transition-all ${
                     draft.platform === p
-                      ? "bg-sky-400 text-slate-950"
-                      : "bg-white/5 text-slate-300 hover:bg-white/10"
+                      ? "bg-sky-400 ink"
+                      : "surface ink-muted hover:surface"
                   }`}
                 >
                   {p}
@@ -430,7 +430,7 @@ export default function ContentCalendarPage() {
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setPicked(null)}
-                className="flex-1 rounded-xl bg-white/5 py-2 text-sm font-bold hover:bg-white/10"
+                className="flex-1 rounded-xl surface py-2 text-sm font-bold hover:surface"
               >
                 סגור
               </button>

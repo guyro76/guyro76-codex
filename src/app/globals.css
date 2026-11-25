@@ -1,126 +1,327 @@
 @import "tailwindcss";
 
-:root {
-  /* Bright, cheerful base — a sunrise/candy palette for a joyful content app */
-  --foreground: #1e1b4b; /* deep indigo ink, reads great on light glass */
-  --muted: #64748b;
+/* ============================================================
+   POSTWAVE 2027 — dynamic glassmorphism
+   ------------------------------------------------------------
+   The whole interface is generated from ONE number: --hue.
+   Every accent, glow, border and gradient is derived from it in
+   OKLCH, which is perceptually uniform — so shifting the hue keeps
+   contrast and vividness constant instead of making some colours
+   muddy and others neon. That is what makes the palette genuinely
+   dynamic rather than a set of hard-coded swatches:
 
-  /* Happy accent gradients */
-  --grad-coral: linear-gradient(135deg, #fb7185 0%, #f472b6 100%);
-  --grad-sky: linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%);
-  --grad-violet: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%);
-  --grad-mint: linear-gradient(135deg, #34d399 0%, #2dd4bf 100%);
-  --grad-sunny: linear-gradient(135deg, #fbbf24 0%, #fb923c 100%);
+     • it drifts slowly on its own (motion-safe only)
+     • the Brand Kit can pin it to the user's own brand colour
+     • each route can offset it so sections feel distinct
+   ============================================================ */
+
+/* Registered so the browser can interpolate it — a plain custom
+   property would snap between values instead of animating. */
+@property --hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 282;
+}
+
+@property --glass-sheen {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+
+:root {
+  color-scheme: light dark;
+
+  --chroma: 0.17;
+
+  /* Derived accent ramp: analogous neighbours plus one complement. */
+  --accent-1: oklch(0.70 var(--chroma) var(--hue));
+  --accent-2: oklch(0.74 calc(var(--chroma) * 0.95) calc(var(--hue) + 55));
+  --accent-3: oklch(0.78 calc(var(--chroma) * 0.85) calc(var(--hue) - 65));
+  --accent-4: oklch(0.80 calc(var(--chroma) * 0.9) calc(var(--hue) + 160));
+
+  /* Filled buttons carry white ink, and the vivid accents above are far too
+     light for that (they measure ~2:1 against white). These darker siblings
+     are tuned to clear 4.5:1 while keeping the same hue. */
+  --accent-fill-1: oklch(0.47 calc(var(--chroma) * 0.95) var(--hue));
+  --accent-fill-2: oklch(0.50 calc(var(--chroma) * 0.9) calc(var(--hue) + 55));
+
+  /* Readable text tints that still carry the active hue. */
+  --accent-ink: light-dark(
+    oklch(0.42 calc(var(--chroma) * 0.9) var(--hue)),
+    oklch(0.86 calc(var(--chroma) * 0.6) var(--hue))
+  );
+
+  --foreground: light-dark(
+    oklch(0.26 0.04 calc(var(--hue) + 10)),
+    oklch(0.95 0.015 calc(var(--hue) + 10))
+  );
+  --muted: light-dark(
+    oklch(0.52 0.03 calc(var(--hue) + 10)),
+    oklch(0.70 0.02 calc(var(--hue) + 10))
+  );
+
+  --canvas: light-dark(
+    oklch(0.985 0.012 calc(var(--hue) + 20)),
+    oklch(0.17 0.028 calc(var(--hue) + 20))
+  );
+
+  /* Glass tiers. Dark mode needs a lighter film, not a darker one,
+     or the panel reads as a hole rather than a pane. */
+  --glass-bg: light-dark(oklch(1 0 0 / 0.55), oklch(0.72 0.05 var(--hue) / 0.12));
+  --glass-bg-strong: light-dark(oklch(1 0 0 / 0.74), oklch(0.75 0.05 var(--hue) / 0.19));
+  --glass-edge: light-dark(oklch(1 0 0 / 0.75), oklch(0.9 0.04 var(--hue) / 0.26));
+  --glass-shadow: light-dark(
+    oklch(0.45 0.12 var(--hue) / 0.20),
+    oklch(0.06 0.04 var(--hue) / 0.55)
+  );
+
+  --radius: 1.25rem;
+
+  /* The signature move: a slow, continuous hue rotation driven from the root
+     so every descendant inherits the live value. 120s is below the threshold
+     where it reads as "moving" — it feels like changing daylight. */
+  animation: hue-drift 120s linear infinite;
+}
+
+@keyframes hue-drift {
+  from { --hue: 282; }
+  to   { --hue: 642; } /* 282 + 360 — a full wheel, landing where it began */
 }
 
 @theme inline {
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent-1: var(--accent-1);
+  --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
+  --color-accent-4: var(--accent-4);
   --font-sans: var(--font-rubik), var(--font-heebo), var(--font-assistant);
   --font-display: var(--font-rubik);
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
 }
 
-/* RTL Support */
+/* ---------- RTL ---------- */
 html[dir="rtl"] {
   direction: rtl;
   text-align: right;
 }
-
 html[dir="rtl"] input,
 html[dir="rtl"] textarea {
   direction: rtl;
   text-align: right;
 }
 
-/* Bright animated mesh-gradient background — the whole app sits on this */
+/* ---------- Canvas ---------- */
 body {
   color: var(--foreground);
   font-family: var(--font-sans);
   min-height: 100vh;
-  background-color: #fef6fb;
+  background-color: var(--canvas);
+  /* Four hue-derived light sources. Because the stops reference --hue,
+     the entire field re-tints the moment the hue changes. */
   background-image:
-    radial-gradient(at 12% 18%, rgba(251, 113, 133, 0.45) 0px, transparent 45%),
-    radial-gradient(at 85% 12%, rgba(56, 189, 248, 0.42) 0px, transparent 45%),
-    radial-gradient(at 78% 82%, rgba(167, 139, 250, 0.45) 0px, transparent 45%),
-    radial-gradient(at 18% 88%, rgba(52, 211, 153, 0.40) 0px, transparent 45%),
-    radial-gradient(at 50% 50%, rgba(251, 191, 36, 0.28) 0px, transparent 50%);
+    radial-gradient(at 12% 18%, oklch(0.75 var(--chroma) var(--hue) / 0.30) 0px, transparent 46%),
+    radial-gradient(at 86% 12%, oklch(0.78 var(--chroma) calc(var(--hue) + 55) / 0.28) 0px, transparent 46%),
+    radial-gradient(at 78% 84%, oklch(0.76 var(--chroma) calc(var(--hue) - 65) / 0.30) 0px, transparent 46%),
+    radial-gradient(at 16% 86%, oklch(0.80 var(--chroma) calc(var(--hue) + 160) / 0.24) 0px, transparent 48%);
   background-attachment: fixed;
 }
 
-/* Glass surfaces — frosted, bright, friendly */
-.glass {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 8px 32px -8px rgba(76, 29, 149, 0.18);
+/* ---------- Glass ---------- */
+/* Layered, not a flat translucent box:
+   1. a blurred, saturated backdrop
+   2. a top-edge specular highlight (the "lit rim")
+   3. a hue-tinted outer shadow for depth */
+.glass,
+.glass-strong {
+  position: relative;
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius);
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(165%);
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
+  box-shadow:
+    0 8px 32px -8px var(--glass-shadow),
+    inset 0 1px 0 0 light-dark(oklch(1 0 0 / 0.65), oklch(1 0 0 / 0.10));
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 12px 40px -10px rgba(76, 29, 149, 0.22);
+  background-color: var(--glass-bg-strong);
+  backdrop-filter: blur(30px) saturate(185%);
+  -webkit-backdrop-filter: blur(30px) saturate(185%);
+  box-shadow:
+    0 14px 44px -10px var(--glass-shadow),
+    inset 0 1px 0 0 light-dark(oklch(1 0 0 / 0.8), oklch(1 0 0 / 0.14));
 }
 
-/* Happy gradient text helper */
+/* Specular sweep across the top edge — the detail that separates real
+   glass from a grey rectangle. Decorative, so hidden from assistive tech. */
+.glass::before,
+.glass-strong::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    145deg,
+    oklch(1 0 0 / 0.22) 0%,
+    transparent 38%,
+    transparent 100%
+  );
+}
+
+/* A raised tier for things that should float above the page. */
+.glass-raised {
+  box-shadow:
+    0 24px 60px -16px var(--glass-shadow),
+    inset 0 1px 0 0 light-dark(oklch(1 0 0 / 0.8), oklch(1 0 0 / 0.14));
+}
+
+/* ---------- Semantic surfaces ----------
+   Pages use these instead of hardcoded whites and slates, so a single hue
+   change re-skins the app and dark mode never ends up dark-on-light. */
+
+/* A panel that sits on the canvas: translucent, picks up the hue. */
+.surface {
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+}
+
+/* An opaque field — inputs and buttons, where text must stay legible. */
+.surface-solid {
+  background-color: light-dark(
+    oklch(1 0 0 / 0.88),
+    oklch(0.27 0.025 var(--hue))
+  );
+  border: 1px solid var(--glass-edge);
+  color: var(--foreground);
+}
+
+.surface-sunken {
+  background-color: light-dark(
+    oklch(0.96 0.012 var(--hue)),
+    oklch(0.22 0.025 var(--hue))
+  );
+  color: var(--foreground);
+}
+
+.ink { color: var(--foreground); }
+.ink-muted { color: var(--muted); }
+.edge { border-color: var(--glass-edge); }
+
+/* ---------- Accent helpers ---------- */
 .text-gradient {
-  background: linear-gradient(120deg, #f43f5e 0%, #a855f7 50%, #0ea5e9 100%);
+  background: linear-gradient(
+    120deg,
+    var(--accent-1) 0%,
+    var(--accent-2) 50%,
+    var(--accent-3) 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* Custom Scrollbar — light + colorful */
-::-webkit-scrollbar {
-  width: 10px;
+.accent-ink { color: var(--accent-ink); }
+
+/* A saturated fill. It redefines the ink tokens rather than setting `color`,
+   so every descendant using .ink / .ink-muted / .accent-ink resolves to white
+   automatically — no specificity fight with the utility classes. */
+.accent-surface {
+  background: linear-gradient(135deg, var(--accent-fill-1), var(--accent-fill-2));
+  --foreground: oklch(0.99 0 0);
+  --muted: oklch(0.99 0 0 / 0.85);
+  --accent-ink: oklch(0.99 0 0);
+  color: var(--foreground);
 }
 
+/* A hue-tinted ring for selected / active state. */
+.accent-ring {
+  box-shadow: 0 0 0 1px var(--accent-1), 0 0 24px -6px var(--accent-1);
+}
+
+/* ---------- Typography ---------- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+p { text-wrap: pretty; }
+
+/* Numeric columns line up and stop jittering as values change. */
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* ---------- Controls ---------- */
+button, input, textarea, select {
+  font-family: var(--font-sans);
+}
+
+/* Named properties only — `transition: all` forces the browser to watch
+   every property and is the guideline's flagged anti-pattern. */
+button, a {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+/* Native selects inherit the page colours instead of the OS defaults,
+   which otherwise render dark-on-dark. */
+select {
+  background-color: light-dark(oklch(1 0 0 / 0.8), oklch(0.24 0.03 var(--hue)));
+  color: var(--foreground);
+}
+select option {
+  background-color: light-dark(oklch(1 0 0), oklch(0.22 0.03 var(--hue)));
+  color: var(--foreground);
+}
+
+/* Keyboard users get a clear ring; mouse users do not get a stray outline. */
+:focus-visible {
+  outline: 2px solid var(--accent-1);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Headings land below any sticky chrome when linked to directly. */
+:target { scroll-margin-top: 6rem; }
+
+/* Removes the 300ms double-tap delay without disabling pinch-zoom. */
+button, a, [role="button"] { touch-action: manipulation; }
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.4);
+  background: light-dark(oklch(1 0 0 / 0.35), oklch(0.2 0.02 var(--hue) / 0.5));
 }
-
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #f472b6, #a78bfa);
+  background: linear-gradient(180deg, var(--accent-1), var(--accent-2));
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #ec4899, #8b5cf6);
-  background-clip: padding-box;
-}
-
-/* Smooth Transitions */
-* {
-  @apply transition-colors duration-200;
-}
-
-/* Headings */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
-  font-weight: 700;
-}
-
-/* Buttons */
-button {
-  font-family: var(--font-sans);
-  transition-property: all;
-  transition-duration: 200ms;
-}
-
-/* Forms */
-input, textarea, select {
-  font-family: var(--font-sans);
-}
-
-/* Float animation for playful accents */
+/* ---------- Motion ---------- */
 @keyframes floaty {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50%      { transform: translateY(-6px); }
 }
-.animate-floaty {
-  animation: floaty 4s ease-in-out infinite;
+.animate-floaty { animation: floaty 4s ease-in-out infinite; }
+
+/* Honour the OS setting: stop the drift, freeze decorative motion, and
+   pin the hue so the palette stays put. */
+@media (prefers-reduced-motion: reduce) {
+  :root { animation: none; }
+  .animate-floaty { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

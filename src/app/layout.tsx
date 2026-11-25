@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Rubik, Heebo, Assistant } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -47,6 +47,16 @@ export const metadata: Metadata = {
   },
 };
 
+/* theme-color is matched to the canvas in each scheme so the browser chrome
+   blends into the page instead of showing a seam at the top edge. */
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbf8fe" },
+    { media: "(prefers-color-scheme: dark)", color: "#16131f" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -59,13 +69,18 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${rubik.variable} ${heebo.variable} ${assistant.variable} h-full antialiased scroll-smooth`}
     >
-      <body className="min-h-full flex flex-col bg-slate-950 text-white">
-        <header className="border-b border-slate-800 bg-slate-900/50 px-4 py-3">
+      {/* No background/colour utilities here — the canvas, ink and glass all
+          come from the dynamic hue system in globals.css. */}
+      <body className="min-h-full flex flex-col">
+        <header className="glass sticky top-0 z-50 !rounded-none border-x-0 border-t-0 px-4 py-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-lg font-bold hover:text-cyan-400 transition-colors"
+            className="inline-flex items-center gap-2 text-lg font-bold"
           >
-            🌊 <span>Post<span className="text-cyan-400">wave</span></span>
+            <span aria-hidden="true">🌊</span>
+            <span>
+              Post<span className="text-gradient">wave</span>
+            </span>
           </Link>
         </header>
         <Providers>{children}</Providers>

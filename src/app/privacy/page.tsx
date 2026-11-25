@@ -3,9 +3,9 @@ export default function PrivacyPage() {
     <div className="max-w-4xl mx-auto py-12 px-4">
       <h1 className="text-4xl font-bold mb-6">מדיניות הפרטיות</h1>
 
-      <div className="space-y-6 text-slate-300">
+      <div className="space-y-6 ink-muted">
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             1. אודות אתר זה
           </h2>
           <p>
@@ -15,7 +15,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             2. אופן איסוף המידע
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             3. שימוש בנתונים
           </h2>
           <p>המידע משמש ל:</p>
@@ -41,7 +41,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             4. הגנה על המידע
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -53,7 +53,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             5. זכויות המשתמש
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -65,13 +65,13 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             6. צור קשר
           </h2>
           <p>לשאלות בנוגע לפרטיות: guyro76@gmail.com</p>
         </section>
 
-        <p className="text-xs text-slate-500 pt-6">
+        <p className="text-xs ink-muted pt-6">
           עדכון אחרון: 2026-06-13
         </p>
       </div>

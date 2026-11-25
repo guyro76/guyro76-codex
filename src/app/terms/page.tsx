@@ -3,9 +3,9 @@ export default function TermsPage() {
     <div className="max-w-4xl mx-auto py-12 px-4">
       <h1 className="text-4xl font-bold mb-6">תנאי השירות</h1>
 
-      <div className="space-y-6 text-slate-300">
+      <div className="space-y-6 ink-muted">
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             1. הסכמה לתנאים
           </h2>
           <p>
@@ -15,7 +15,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             2. רישיון השימוש
           </h2>
           <p>
@@ -24,7 +24,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             3. אחריות המשתמש
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -36,7 +36,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             4. הגבלת אחריות
           </h2>
           <p>
@@ -46,7 +46,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             5. שינויים בתנאים
           </h2>
           <p>
@@ -56,13 +56,13 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <h2 className="text-2xl font-bold ink mb-3">
             6. צור קשר
           </h2>
           <p>לשאלות: guyro76@gmail.com</p>
         </section>
 
-        <p className="text-xs text-slate-500 pt-6">
+        <p className="text-xs ink-muted pt-6">
           עדכון אחרון: 2026-06-13
         </p>
       </div>

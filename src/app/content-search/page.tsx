@@ -37,19 +37,19 @@ export default function ContentSearchPage() {
 
   return (
     <AppShell>
-      <section className="rounded-3xl border border-white/5 bg-[#0e0e16] p-6 md:p-8">
-        <p className="text-sm font-bold uppercase tracking-wide text-sky-300">
+      <section className="rounded-3xl border edge surface p-6 md:p-8">
+        <p className="text-sm font-bold uppercase tracking-wide accent-ink">
           Content Discovery
         </p>
         <h1 className="mt-2 text-4xl font-black">חיפוש תוכן 🔎</h1>
-        <p className="mt-3 max-w-2xl text-slate-400">
+        <p className="mt-3 max-w-2xl ink-muted">
           מצא מקורות אמינים, חדשות וטרנדים רלוונטיים והפוך אותם לתוכן מקורי.
         </p>
 
         <form onSubmit={handleSearch} className="mt-6 flex gap-3">
           <button
             type="submit"
-            className="rounded-2xl bg-sky-300 px-6 py-3 font-bold text-slate-900 transition-colors hover:bg-sky-200"
+            className="rounded-2xl accent-surface px-6 py-3 font-bold transition-colors hover:accent-surface text-white"
           >
             חפש
           </button>
@@ -57,7 +57,7 @@ export default function ContentSearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="לדוגמה: בניית סמכות ב-LinkedIn"
-            className="flex-1 rounded-2xl border border-white/10 bg-[#06060b] px-4 py-3 text-right text-white placeholder-slate-500 focus:border-sky-300 focus:outline-none"
+            className="flex-1 rounded-2xl border edge surface-sunken px-4 py-3 text-right ink placeholder-slate-500 focus:border-sky-300 focus:outline-none"
           />
         </form>
       </section>
@@ -67,22 +67,22 @@ export default function ContentSearchPage() {
           {results.map((r) => (
             <div
               key={r.title}
-              className="flex items-center justify-between rounded-3xl border border-white/5 bg-[#0e0e16] p-5"
+              className="flex items-center justify-between rounded-3xl border edge surface p-5"
             >
               <Link
                 href="/content-factory?type=carousel"
-                className="rounded-2xl border border-white/10 px-4 py-2 text-sm font-bold transition-colors hover:bg-white/5"
+                className="rounded-2xl border edge px-4 py-2 text-sm font-bold transition-colors hover:surface"
               >
                 הפוך לקרוסלה
               </Link>
               <div className="text-right">
                 <div className="flex items-center justify-end gap-2">
-                  <span className="rounded-full bg-[#06060b] px-2 py-0.5 text-xs text-sky-300">
+                  <span className="rounded-full surface-sunken px-2 py-0.5 text-xs accent-ink">
                     {r.source}
                   </span>
                   <h3 className="text-lg font-black">{r.title}</h3>
                 </div>
-                <p className="mt-1 text-sm text-slate-400">{r.snippet}</p>
+                <p className="mt-1 text-sm ink-muted">{r.snippet}</p>
               </div>
             </div>
           ))}

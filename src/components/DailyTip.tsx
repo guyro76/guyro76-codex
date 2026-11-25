@@ -39,14 +39,14 @@ export function DailyTip() {
         <div className="text-3xl flex-shrink-0">{tip.icon}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="text-sm font-semibold text-cyan-300">{tip.title}</h3>
+            <h3 className="text-sm font-semibold accent-ink">{tip.title}</h3>
             <span
               className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
                 tip.impact === "very-high"
-                  ? "bg-red-500/20 text-red-300"
+                  ? "bg-red-500/20 accent-ink"
                   : tip.impact === "high"
-                  ? "bg-cyan-500/20 text-cyan-300"
-                  : "bg-blue-500/20 text-blue-300"
+                  ? "bg-cyan-500/20 accent-ink"
+                  : "bg-blue-500/20 accent-ink"
               }`}
             >
               {tip.impact === "very-high"
@@ -56,7 +56,7 @@ export function DailyTip() {
                 : "📊 בינוני"}
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">{tip.description}</p>
+          <p className="text-xs ink-muted mt-1">{tip.description}</p>
         </div>
       </div>
     </div>

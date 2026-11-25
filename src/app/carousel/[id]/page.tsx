@@ -174,7 +174,7 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
+      <div className="flex items-center justify-center min-h-screen surface ink">
         <div className="animate-pulse">טוען קרוסלה...</div>
       </div>
     );
@@ -182,22 +182,22 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
 
   if (!data) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white gap-4 px-4 text-center">
+      <div className="flex flex-col items-center justify-center min-h-screen surface ink gap-4 px-4 text-center">
         <div className="text-5xl">🗂️</div>
         <h1 className="text-2xl font-bold">התוכן לא נמצא</h1>
-        <p className="text-slate-400">
+        <p className="ink-muted">
           ייתכן שנוצר במכשיר אחר. בדוק בספרייה שלך או צור תוכן חדש.
         </p>
         <div className="mt-2 flex gap-3">
           <button
             onClick={() => router.push("/library")}
-            className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 font-semibold transition-colors"
+            className="px-6 py-2 rounded-lg surface-solid hover:surface-solid font-semibold transition-colors"
           >
             📚 הספרייה שלי
           </button>
           <button
             onClick={() => router.push("/content-factory")}
-            className="px-6 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold transition-colors"
+            className="px-6 py-2 rounded-lg accent-surface hover:accent-surface font-semibold transition-colors text-white"
           >
             ← צור תוכן
           </button>
@@ -261,15 +261,15 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 py-10 px-4 text-white">
+    <div className="min-h-screen surface py-10 px-4 ink">
       <div className="max-w-2xl mx-auto">
         <div className="mb-6 flex items-start justify-between gap-4">
           <button
             onClick={() => (isEditing ? discardEdits() : setIsEditing(true))}
             className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
               isEditing
-                ? "bg-slate-700 hover:bg-slate-600"
-                : "bg-slate-800 hover:bg-slate-700"
+                ? "surface-solid hover:bg-slate-600"
+                : "surface-solid hover:surface-solid"
             }`}
           >
             {isEditing ? "❌ בטל" : "✏️ ערוך"}
@@ -278,7 +278,7 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
             <h1 className="text-3xl font-bold mb-1">
               {isSingle ? `ה${typeLabel} שלך` : `צפה ב${typeLabel} שלך`}
             </h1>
-            <p className="text-slate-400 text-sm">
+            <p className="ink-muted text-sm">
               {data.template?.name} · {data.topic}
               {isSingle ? "" : ` · שקף ${current + 1} מתוך ${total}`}
               {data.aiGenerated ? "" : " · נוצר במנוע החינמי"}
@@ -317,14 +317,14 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
                   <textarea
                     value={slide.headline}
                     onChange={(e) => updateEditedSlide("headline", e.target.value)}
-                    className="w-full rounded-lg bg-black/50 p-3 text-2xl font-extrabold text-white placeholder-slate-400 border border-cyan-500/50 focus:border-cyan-400 focus:outline-none resize-none"
+                    className="w-full rounded-lg bg-black/50 p-3 text-2xl font-extrabold ink placeholder-slate-400 border border-cyan-500/50 focus:border-cyan-400 focus:outline-none resize-none"
                     rows={3}
                     placeholder="כתוב כותרת..."
                   />
                   <textarea
                     value={slide.body}
                     onChange={(e) => updateEditedSlide("body", e.target.value)}
-                    className="w-full rounded-lg bg-black/50 p-3 text-lg text-white placeholder-slate-400 border border-cyan-500/50 focus:border-cyan-400 focus:outline-none resize-none"
+                    className="w-full rounded-lg bg-black/50 p-3 text-lg ink placeholder-slate-400 border border-cyan-500/50 focus:border-cyan-400 focus:outline-none resize-none"
                     rows={4}
                     placeholder="כתוב טקסט..."
                   />
@@ -334,7 +334,7 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
                   <h2 className="mb-4 text-3xl font-extrabold leading-tight drop-shadow-lg md:text-4xl">
                     {slide.headline}
                   </h2>
-                  <p className="text-base leading-relaxed text-white/95 drop-shadow md:text-lg">
+                  <p className="text-base leading-relaxed ink/95 drop-shadow md:text-lg">
                     {slide.body}
                   </p>
                 </>
@@ -368,7 +368,7 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
             <button
               onClick={() => setCurrent(Math.max(0, current - 1))}
               disabled={current === 0}
-              className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors"
+              className="px-6 py-2 rounded-lg surface-solid hover:surface-solid disabled:opacity-40 transition-colors"
             >
               → הקודם
             </button>
@@ -376,7 +376,7 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
 
           <button
             onClick={() => downloadOne(current)}
-            className="flex-1 px-6 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold transition-colors"
+            className="flex-1 px-6 py-2 rounded-lg accent-surface hover:accent-surface font-semibold transition-colors text-white"
           >
             ⬇️ {isSingle ? "הורד את התמונה" : "הורד שקף"}
           </button>
@@ -385,7 +385,7 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
             <button
               onClick={() => setCurrent(Math.min(total - 1, current + 1))}
               disabled={current === total - 1}
-              className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors"
+              className="px-6 py-2 rounded-lg surface-solid hover:surface-solid disabled:opacity-40 transition-colors"
             >
               הבא ←
             </button>
@@ -401,7 +401,7 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
             >
               ⬇️ הורד את כל ה{typeLabel} ({total} תמונות)
             </button>
-            <p className="mt-2 text-center text-xs text-slate-500">
+            <p className="mt-2 text-center text-xs ink-muted">
               התמונות נשמרות במכשיר שלך — מוכנות להעלאה לכל רשת חברתית.
             </p>
           </>
@@ -427,13 +427,13 @@ export default function CarouselPage({ params: paramsPromise }: { params: Promis
               <div className="flex gap-3">
                 <button
                   onClick={() => router.push("/content-factory")}
-                  className="flex-1 py-2 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+                  className="flex-1 py-2 px-4 rounded-lg surface-solid hover:surface-solid transition-colors"
                 >
                   צור אחרת
                 </button>
                 <button
                   onClick={() => router.push("/dashboard")}
-                  className="flex-1 py-2 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 transition-colors"
+                  className="flex-1 py-2 px-4 rounded-lg accent-surface hover:accent-surface transition-colors text-white"
                 >
                   חזרה לדשבורד
                 </button>

@@ -63,43 +63,43 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 py-12 px-4">
+    <div className="min-h-screen surface py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">🔐 ניהול מערכת</h1>
-          <p className="text-slate-400">
+          <p className="ink-muted">
             מנהל אוגר: {(session?.user as any)?.email}
           </p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-            <p className="text-slate-400 mb-2">משתמשים רשומים</p>
+          <div className="surface border edge rounded-lg p-6">
+            <p className="ink-muted mb-2">משתמשים רשומים</p>
             <p className="text-3xl font-bold">{stats.total_users}</p>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-            <p className="text-slate-400 mb-2">פרויקטים כוללים</p>
+          <div className="surface border edge rounded-lg p-6">
+            <p className="ink-muted mb-2">פרויקטים כוללים</p>
             <p className="text-3xl font-bold">{stats.total_projects}</p>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-            <p className="text-slate-400 mb-2">סטטוס מערכת</p>
-            <p className="text-green-400 font-bold">✅ פעיל</p>
+          <div className="surface border edge rounded-lg p-6">
+            <p className="ink-muted mb-2">סטטוס מערכת</p>
+            <p className="accent-ink font-bold">✅ פעיל</p>
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
-          <div className="p-6 border-b border-slate-800">
+        <div className="surface border edge rounded-lg overflow-hidden">
+          <div className="p-6 border-b edge">
             <h2 className="text-xl font-bold">משתמשים</h2>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-800/50">
+                <tr className="border-b edge surface-solid/50">
                   <th className="px-6 py-3 text-right">דואר אלקטרוני</th>
                   <th className="px-6 py-3 text-right">שם</th>
                   <th className="px-6 py-3 text-right">תפקיד</th>
@@ -110,7 +110,7 @@ export default function AdminPage() {
                 {users.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-slate-800 hover:bg-slate-800/30"
+                    className="border-b edge hover:surface-solid/30"
                   >
                     <td className="px-6 py-4">{user.email}</td>
                     <td className="px-6 py-4">{user.name}</td>
@@ -118,8 +118,8 @@ export default function AdminPage() {
                       <span
                         className={`px-3 py-1 rounded text-xs font-medium ${
                           user.role === "admin"
-                            ? "bg-red-500/20 text-red-300"
-                            : "bg-blue-500/20 text-blue-300"
+                            ? "bg-red-500/20 accent-ink"
+                            : "bg-blue-500/20 accent-ink"
                         }`}
                       >
                         {user.role === "admin" ? "מנהל" : "משתמש"}
@@ -136,9 +136,9 @@ export default function AdminPage() {
         </div>
 
         {/* Settings Section */}
-        <div className="mt-8 bg-slate-900 border border-slate-800 rounded-lg p-6">
+        <div className="mt-8 surface border edge rounded-lg p-6">
           <h2 className="text-xl font-bold mb-4">הגדרות API</h2>
-          <div className="space-y-2 text-sm text-slate-400">
+          <div className="space-y-2 text-sm ink-muted">
             <p>✅ Google OAuth: מוגדר</p>
             <p>✅ Claude API: מוגדר</p>
             <p>✅ Image Search: פעיל</p>
