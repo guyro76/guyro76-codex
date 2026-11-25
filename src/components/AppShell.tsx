@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icon, type IconName } from "./Icons";
+import { NewsTicker } from "./NewsTicker";
 
 export const NAV_ITEMS: Array<{ href: string; label: string; icon: IconName }> = [
   { href: "/dashboard", label: "דשבורד סמכות", icon: "dashboard" },
@@ -82,8 +83,8 @@ export function AppShell({
         {/* Main column */}
         <div className="flex min-w-0 flex-1 flex-col gap-5">
           {/* Header */}
-          <header className="glass flex items-center justify-between rounded-3xl px-5 py-4">
-            <div className="flex items-center gap-3">
+          <header className="glass flex items-center justify-between gap-4 rounded-3xl px-5 py-4">
+            <div className="flex flex-shrink-0 items-center gap-3">
               <button
                 onClick={() => setOpen(true)}
                 className="glass rounded-xl px-3 py-2 text-sm md:hidden hover:surface transition-colors"
@@ -99,6 +100,9 @@ export function AppShell({
                 <Icon name="logout" size={16} />
               </button>
             </div>
+
+            {/* Live marketing + AI news, centre of the header */}
+            <NewsTicker />
 
             <div className="flex items-center gap-4 text-right">
               <div>

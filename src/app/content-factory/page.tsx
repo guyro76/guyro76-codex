@@ -2,7 +2,8 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getBrand, OBJECTIVES } from "@/lib/brand-store";
 import { toast } from "sonner";
 import { saveContent } from "@/lib/content-store";
 
@@ -77,7 +78,32 @@ function ContentFactoryForm() {
     theme: "midnight",
     design: "modern",
     contentType: type,
+    // Filled from the Brand Kit on mount so the user's identity shapes the
+    // output without retyping it every time.
+    audience: "",
+    tone: "",
   });
+  const [brandApplied, setBrandApplied] = useState(false);
+
+  // A topic can arrive from Trends or Search ("צור תוכן" on a headline).
+  useEffect(() => {
+    const preset = searchParams.get("topic");
+    if (preset) setFormData((f) => (f.topic ? f : { ...f, topic: preset }));
+  }, [searchParams]);
+
+  // Brand Kit defaults. localStorage is only readable on the client, so this
+  // runs after mount rather than in the initial state.
+  useEffect(() => {
+    const brand = getBrand();
+    setFormData((f) => ({
+      ...f,
+      audience: f.audience || brand.audience,
+      tone: f.tone || brand.tone,
+      objective:
+        OBJECTIVES.find((o) => o.value === brand.objective)?.label || f.objective,
+    }));
+    setBrandApplied(Boolean(brand.name || brand.audience));
+  }, []);
 
   const copy = TYPE_COPY[formData.contentType] || TYPE_COPY.carousel;
 
@@ -220,6 +246,44 @@ function ContentFactoryForm() {
               <option value="facebook">Facebook</option>
             </select>
           </div>
+
+          {/* Brand Kit identity, editable per piece */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label htmlFor="audience" className="block text-sm font-semibold mb-2">
+                קהל יעד
+              </label>
+              <input
+                id="audience"
+                value={formData.audience}
+                onChange={(e) =>
+                  setFormData({ ...formData, audience: e.target.value })
+                }
+                disabled={loading}
+                placeholder="לדוגמה: בעלי עסקים קטנים"
+                className="w-full px-4 py-3 rounded-lg surface-solid ink disabled:opacity-50"
+              />
+            </div>
+            <div>
+              <label htmlFor="tone" className="block text-sm font-semibold mb-2">
+                טון
+              </label>
+              <input
+                id="tone"
+                value={formData.tone}
+                onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
+                disabled={loading}
+                placeholder="לדוגמה: ידידותי"
+                className="w-full px-4 py-3 rounded-lg surface-solid ink disabled:opacity-50"
+              />
+            </div>
+          </div>
+
+          {brandApplied && (
+            <p className="text-xs ink-muted text-right">
+              הערכים מולאו מ-Brand Kit. אפשר לשנות אותם רק לתוכן הזה.
+            </p>
+          )}
 
           {/* Objective */}
           <div>
