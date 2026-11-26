@@ -68,6 +68,12 @@ const OLYMPICS = 'https://www.topendsports.com/events/winter/medal-tally/2026.ht
 const TOY_STORY = 'https://www.screendaily.com/news/toy-story-5-scores-biggest-north-american-box-office-bow-of-2026-on-160m/5217859.article';
 const ZOOTOPIA = 'https://thewaltdisneycompany.com/news/zootopia-2-highest-grossing-animated-film/';
 
+const UCL = 'https://euronews.com/my-europe/2026/05/30/paris-saint-germain-wins-the-champions-league-after-penalty-shootout-victory-against-arsen';
+const BALLON = 'https://www.si.com/soccer/ballon-dor-2025-winners-full-list';
+const LEAGUE = 'https://rsssf.org/tablesi/isra2026.html';
+const EUROBASKET = 'https://www.euronews.com/2025/09/15/germany-crowned-eurobasket-champions-beating-turkey-83-88';
+const WIMBLEDON = 'https://en.wikipedia.org/wiki/2026_Wimbledon_Championships';
+
 /** אירועים עדכניים, מאומתים מול המקור הרשום לצד כל שאלה. */
 const RECENT: TriviaQuestion[] = [
   T(
@@ -137,6 +143,45 @@ const RECENT: TriviaQuestion[] = [
     'איזה סרט הנפשה של דיסני, עם הארנבת ג׳ודי והשועל ניק, יצא בסוף 2025 ושבר שיאי קופות?',
     ['זוטרופוליס 2', 'זוטופיה 2', 'זוטרופוליס', 'זוטופיה', 'zootopia 2'],
     { recent: true, source: ZOOTOPIA }
+  ),
+  T(
+    'sport-champions-league-2026',
+    'sport',
+    'איזו קבוצה זכתה בליגת האלופות 2026 אחרי הכרעה בפנדלים מול ארסנל?',
+    ['פריז סן ז׳רמן', 'פריז סן ג׳רמן', 'פריז סן זרמן', 'פריז סן גרמן', 'פסז׳', 'פריז', 'psg'],
+    { recent: true, source: UCL }
+  ),
+  T(
+    'sport-ballon-dor-2025',
+    'sport',
+    'מי קיבל את הכדור הזהב של 2025, פרס שחקן הכדורגל הטוב בעולם?',
+    ['עוסמאן דמבלה', 'אוסמאן דמבלה', 'אוסמן דמבלה', 'דמבלה', 'דמבלא', 'dembele'],
+    { recent: true, source: BALLON }
+  ),
+  T(
+    'sport-israel-league-2026',
+    'sport',
+    'איזו קבוצה זכתה באליפות ישראל בכדורגל בעונת 2025/26?',
+    ['הפועל באר שבע', 'באר שבע', 'הפועל ב״ש'],
+    { recent: true, source: LEAGUE }
+  ),
+  T('sport-eurobasket-2025', 'sport', 'איזו נבחרת זכתה באליפות אירופה בכדורסל 2025, אחרי ניצחון על טורקיה בגמר?', ['גרמניה'], {
+    recent: true,
+    source: EUROBASKET
+  }),
+  T(
+    'sport-wimbledon-2026-men',
+    'sport',
+    'מי זכה בטורניר הטניס של וימבלדון 2026 בקטגוריית הגברים?',
+    ['יאניק סינר', 'ינניק סינר', 'סינר', 'sinner'],
+    { recent: true, source: WIMBLEDON }
+  ),
+  T(
+    'sport-wimbledon-2026-women',
+    'sport',
+    'מי זכתה בטורניר הטניס של וימבלדון 2026 בקטגוריית הנשים, בגמר צ׳כי נגד צ׳כי?',
+    ['לינדה נוסקובה', 'לינדה נושקובה', 'נוסקובה', 'נושקובה'],
+    { recent: true, source: WIMBLEDON }
   )
 ];
 
@@ -156,7 +201,14 @@ const EVERGREEN: TriviaQuestion[] = [
   T('israel-eilat-sea', 'israel', 'על שפת איזה ים נמצאת העיר אילת?', ['ים סוף']),
   T('israel-matzot', 'israel', 'באיזה חג אוכלים מצות?', ['פסח']),
   T('sport-football-players', 'sport', 'כמה שחקנים יש בכל קבוצה על מגרש הכדורגל?', ['11', 'אחד עשר', 'אחת עשרה']),
-  T('movies-harry-potter', 'movies', 'מי כתבה את ספרי הארי פוטר?', ['ג׳יי קיי רולינג', 'רולינג', 'ג׳ק רולינג'])
+  T('movies-harry-potter', 'movies', 'מי כתבה את ספרי הארי פוטר?', ['ג׳יי קיי רולינג', 'רולינג', 'ג׳ק רולינג']),
+  T('israel-kinneret', 'israel', 'איך נקרא האגם הגדול ביותר בישראל, שנקרא גם ים כנרת?', ['הכנרת', 'כנרת', 'ים כנרת']),
+  T('geo-giza', 'geography', 'באיזו מדינה נמצאות הפירמידות של גיזה?', ['מצרים']),
+  T('geo-everest', 'geography', 'מהו ההר הגבוה ביותר בעולם?', ['האוורסט', 'הר האוורסט', 'אוורסט']),
+  T('nature-bee', 'nature', 'איזה חרק מייצר דבש?', ['דבורה', 'דבורים']),
+  T('nature-spider-legs', 'nature', 'כמה רגליים יש לעכביש?', ['8', 'שמונה']),
+  T('science-ice', 'science', 'בכמה מעלות צלזיוס מים קופאים והופכים לקרח?', ['0', 'אפס']),
+  T('space-sun', 'space', 'השמש היא כוכב לכת או כוכב? ענו במילה אחת.', ['כוכב'])
 ];
 
 /**
@@ -183,7 +235,10 @@ const ANSWER_IMAGES: Record<string, { label: string; category: string }> = {
   'israel-matzot': { label: 'מצה', category: 'food' },
   'nature-blue-whale': { label: 'לוויתן כחול', category: 'animal' },
   'nature-cheetah': { label: 'ברדלס', category: 'animal' },
-  'nature-chameleon': { label: 'זיקית', category: 'animal' }
+  'nature-chameleon': { label: 'זיקית', category: 'animal' },
+  'israel-kinneret': { label: 'כנרת', category: 'israelplace' },
+  'geo-giza': { label: 'מצרים', category: 'country' },
+  'nature-bee': { label: 'דבורה', category: 'insect' }
 };
 
 /**
