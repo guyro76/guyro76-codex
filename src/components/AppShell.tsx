@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icon, type IconName } from "./Icons";
 import { NewsTicker } from "./NewsTicker";
+import { ClockWeather } from "./ClockWeather";
 
 export const NAV_ITEMS: Array<{ href: string; label: string; icon: IconName }> = [
   { href: "/dashboard", label: "דשבורד סמכות", icon: "dashboard" },
@@ -103,6 +104,9 @@ export function AppShell({
 
             {/* Live marketing + AI news, centre of the header */}
             <NewsTicker />
+
+            {/* Clock, date and current conditions */}
+            <ClockWeather />
 
             <div className="flex items-center gap-4 text-right">
               <div>
