@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RIDDLES, isRiddleAnswerCorrect, pickRiddle, questionPool } from '../src/data/riddles';
+import { photosAllowed } from '../src/lib/imagePolicy';
 import { RECENT_TTL_DAYS, TRIVIA, TRIVIA_WORLDS, activeTrivia, isTriviaActive } from '../src/data/trivia';
 
 const DAY = 86_400_000;
@@ -85,5 +86,31 @@ describe('בטיחות ילדים', () => {
       const text = `${q.question} ${q.answers.join(' ')}`;
       expect(text, q.id).not.toMatch(banned);
     }
+  });
+});
+
+describe('תמונה אחרי תשובה נכונה', () => {
+  const withImage = TRIVIA.filter((q) => q.image);
+
+  it('יש שאלות עם תמונה, ולכולן קטגוריה שמותר להביא לה תמונה', () => {
+    expect(withImage.length).toBeGreaterThan(5);
+    for (const q of withImage) {
+      expect(photosAllowed(q.image!.category), `${q.id}: ${q.image!.category}`).toBe(true);
+      expect(q.image!.label.trim(), q.id).not.toBe('');
+    }
+  });
+
+  /** צילום אדם אמיתי אסור, ותמונות יח״צ אינן רישיון חופשי — ראו trivia.ts */
+  it('שאלות על אנשים, תוכניות, שירים וסרטים אינן מקבלות תמונה', () => {
+    // היוצא מן הכלל: "איזו מדינה זכתה באירוויזיון" — התשובה מדינה, לא אדם
+    const placeAnswers = new Set(['music-eurovision-2026']);
+    for (const q of TRIVIA.filter((t) => ['tv', 'music', 'movies'].includes(t.world))) {
+      if (placeAnswers.has(q.id)) continue;
+      expect(q.image, q.id).toBeUndefined();
+    }
+  });
+
+  it('שאלת העגבנייה, שעוסקת באדם אמיתי, נשארת בלי תמונה', () => {
+    expect(TRIVIA.find((q) => q.id === 'tv-masked-tomato')!.image).toBeUndefined();
   });
 });

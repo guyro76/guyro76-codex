@@ -15,6 +15,12 @@ export interface Riddle {
   question: string;
   /** התשובה הראשונה היא זו שמוצגת אם מוותרים */
   answers: string[];
+  /**
+   * מה להראות אחרי תשובה נכונה: שם הנושא וקטגוריית התמונה, בדיוק כמו
+   * בכל תמונת תשובה אחרת במשחק (`AnswerImage`). רק מקום, בעל חיים או
+   * חפץ — **אף פעם לא אדם**; `tests/trivia.test.ts` אוכף את זה.
+   */
+  image?: { label: string; category: string };
 }
 
 export const RIDDLES: Riddle[] = [

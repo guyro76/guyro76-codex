@@ -159,7 +159,36 @@ const EVERGREEN: TriviaQuestion[] = [
   T('movies-harry-potter', 'movies', 'מי כתבה את ספרי הארי פוטר?', ['ג׳יי קיי רולינג', 'רולינג', 'ג׳ק רולינג'])
 ];
 
-export const TRIVIA: TriviaQuestion[] = [...RECENT, ...EVERGREEN];
+/**
+ * תמונה אחרי תשובה נכונה — רק לשאלות שהתשובה שלהן מקום או בעל חיים.
+ *
+ * **שאלות על אנשים, תוכניות, שירים וסרטים אינן כאן, בכוונה.** צילום
+ * של אדם אמיתי נאסר במשחק (`imagePolicy.ts`: רישיון הצילום אינו מתיר
+ * שימוש בדמותו), ו"תמונות יח״צ" אינן רישיון חופשי — הן מותרות לעיתונאי
+ * שמסקר, לא לאפליקציה מסחרית. כרזת סרט היא יצירה מוגנת.
+ *
+ * התמונה נשלפת דרך אותו צינור של כל תשובה אחרת: ויקישיתוף ואז
+ * Openverse, שער אימות, קרדיט מלא ליד התמונה, ובלי תמונה אם אין קרדיט.
+ * "אם קיימות" פירושו כאן שהיעדר תמונה אינו שגיאה.
+ */
+const ANSWER_IMAGES: Record<string, { label: string; category: string }> = {
+  'sport-worldcup-2026': { label: 'ספרד', category: 'country' },
+  'music-eurovision-2026': { label: 'בולגריה', category: 'country' },
+  'sport-winter-2026': { label: 'איטליה', category: 'country' },
+  'sport-winter-2026-medals': { label: 'נורווגיה', category: 'country' },
+  'geo-dead-sea': { label: 'ים המלח', category: 'israelplace' },
+  'geo-tokyo': { label: 'טוקיו', category: 'city' },
+  'geo-pisa': { label: 'פיזה', category: 'city' },
+  'israel-eilat-sea': { label: 'אילת', category: 'israelplace' },
+  'israel-matzot': { label: 'מצה', category: 'food' },
+  'nature-blue-whale': { label: 'לוויתן כחול', category: 'animal' },
+  'nature-cheetah': { label: 'ברדלס', category: 'animal' },
+  'nature-chameleon': { label: 'זיקית', category: 'animal' }
+};
+
+export const TRIVIA: TriviaQuestion[] = [...RECENT, ...EVERGREEN].map((q) =>
+  ANSWER_IMAGES[q.id] ? { ...q, image: ANSWER_IMAGES[q.id] } : q
+);
 
 const DAY_MS = 86_400_000;
 

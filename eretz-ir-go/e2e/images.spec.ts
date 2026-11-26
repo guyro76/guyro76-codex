@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { questionPool } from '../src/data/riddles';
 
 /**
  * תמונות אחרי שהמילה נחשפה ואושרה.
@@ -339,4 +340,65 @@ test('⛔ רישיון NC או ND נדחה גם כשהוא מגיע עם קרד�
 
   // אין תמונה — וזו התוצאה התקינה
   await expect(page.locator('figure')).toHaveCount(0);
+});
+
+test('🖼️ חידה שנפתרה מציגה תמונה עם קרדיט, ורק ב"המשך" מוגרלת אות חדשה', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (msg) => msg.type() === 'error' && errors.push(msg.text()));
+  page.on('pageerror', (err) => errors.push(String(err)));
+
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await page.getByRole('button', { name: /משחק חדש/ }).click();
+  await page.locator('select').first().selectOption('1');
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
+  await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
+  await page.getByRole('button', { name: /להגרלת האות/ }).click();
+  await page.locator('.letter-wheel').click();
+  await expect(page.getByRole('button', { name: /מתחילים/ })).toBeVisible({ timeout: 20_000 });
+
+  // ההחלפה החינמית ראשונה, ואחריה זו שדורשת קרדיט או חידה
+  await page.getByRole('button', { name: /החלפת אות — חינם/ }).click();
+  await expect(page.getByRole('button', { name: /מתחילים/ })).toBeVisible({ timeout: 20_000 });
+
+  /*
+    השאלה נבחרת ב-Math.random, ולכן מקבעים אותו רק לרגע הפתיחה כדי
+    לקבל את שאלת הברדלס — שאלה שיש לה תמונה — ומחזירים מיד אחר כך:
+    גלגל האותיות משתמש באותו Math.random.
+  */
+  const pool = questionPool();
+  const at = pool.findIndex((q) => q.id === 'nature-cheetah');
+  expect(at).toBeGreaterThan(-1);
+  await page.evaluate((v) => {
+    (window as unknown as { __rand: () => number }).__rand = Math.random;
+    Math.random = () => v;
+  }, (at + 0.5) / pool.length);
+  await page.getByRole('button', { name: /החלפת אות נוספת/ }).click();
+  await page.getByRole('button', { name: /לפתור חידה/ }).click();
+  await page.evaluate(() => {
+    Math.random = (window as unknown as { __rand: () => number }).__rand;
+  });
+
+  await expect(page.getByText('איזו חיה היא המהירה ביותר ביבשה?')).toBeVisible();
+  await page.getByRole('textbox', { name: 'התשובה לחידה' }).fill('ברדלס');
+  await page.getByRole('button', { name: 'זו התשובה!' }).click();
+
+  const dialog = page.getByRole('dialog', { name: /נכון/ });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('img', { name: 'ברדלס' }).first()).toBeVisible();
+  // הקרדיט שהרישיון דורש, ליד התמונה
+  await expect(dialog.getByText(/Test Photographer/)).toBeVisible();
+  await expect(dialog.getByText(/CC BY-SA 4\.0/)).toBeVisible();
+
+  // ההחלפה כבר נרשמה, אבל הגלגל עוד לא הוגרל מחדש
+  await expect(page.getByText(/ניצלתם את שתי החלפות האות/)).toBeHidden();
+  const next = dialog.getByRole('button', { name: /המשך/ });
+  await expect(next).toBeFocused();
+  await next.click();
+
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('button', { name: /מתחילים/ })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/ניצלתם את שתי החלפות האות/)).toBeVisible();
+
+  expect(errors, `שגיאות קונסול: ${errors.join(' | ')}`).toEqual([]);
 });

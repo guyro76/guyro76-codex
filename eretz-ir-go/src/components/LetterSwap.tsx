@@ -6,7 +6,8 @@ import { sfx } from '../lib/sound';
 import { announce } from '../lib/announce';
 import { getWallet, saveWallet, type PayMethod, type Wallet } from '../lib/wallet';
 import { SWAP_PRICE, canAffordSwap, payForSwap, swapOption, swapsLeft } from '../lib/letterSwap';
-import { isRiddleAnswerCorrect, pickRiddle } from '../data/riddles';
+import AnswerImage from './AnswerImage';
+import { isRiddleAnswerCorrect, pickRiddle, type Riddle } from '../data/riddles';
 
 /**
  * כפתור החלפת האות, על שלושת המסלולים שלו.
@@ -27,12 +28,19 @@ export default function LetterSwap({ onSwap }: { onSwap: () => void }) {
   const [riddleMode, setRiddleMode] = useState(false);
   const [guess, setGuess] = useState('');
   const [wrong, setWrong] = useState(false);
+  /** חידה שנפתרה ויש לה תמונה להראות — ההחלפה כבר נרשמה, ממתינים ל"המשך" */
+  const [solved, setSolved] = useState<Riddle | null>(null);
 
   const riddle = useMemo(() => pickRiddle(usedRiddleIds), [usedRiddleIds, open]);
   const option = swapOption(used);
   const left = swapsLeft(used);
 
-  if (option === 'none') {
+  /*
+    כשההחלפה האחרונה נרשמה בפתרון חידה עם תמונה, `option` כבר 'none' —
+    ובכל זאת החלון חייב להישאר פתוח עד "המשך", אחרת התמונה לא תוצג
+    והאות לא תוגרל מחדש. לכן ההודעה "ניצלתם" מחכה לסגירת החלון.
+  */
+  if (option === 'none' && !solved) {
     return (
       <p className="dim" style={{ marginTop: 10, fontSize: '0.86rem' }}>
         ניצלתם את שתי החלפות האות במשחק הזה
@@ -47,6 +55,7 @@ export default function LetterSwap({ onSwap }: { onSwap: () => void }) {
     setOpen(false);
     setRiddleMode(false);
     setGuess('');
+    setSolved(null);
     onSwap();
   };
 
@@ -88,6 +97,19 @@ export default function LetterSwap({ onSwap }: { onSwap: () => void }) {
 
   const trySolve = () => {
     if (isRiddleAnswerCorrect(riddle, guess)) {
+      if (riddle.image) {
+        /*
+          יש תמונה להראות: ההחלפה נרשמת עכשיו (כדי שסגירת החלון בדרך לא
+          תאבד אותה), אבל האות מוגרלת מחדש רק ב"המשך" — אחרת החלון
+          נסגר באותה שנייה והתמונה לא הייתה נראית.
+        */
+        if (!consumeLetterSwap()) return;
+        markRiddleUsed(riddle.id);
+        sfx.success();
+        announce(`נכון! התשובה: ${riddle.answers[0]}`);
+        setSolved(riddle);
+        return;
+      }
       // החידה נשרפת רק אם ההחלפה באמת נרשמה
       if (!doSwap()) return;
       markRiddleUsed(riddle.id);
@@ -109,7 +131,7 @@ export default function LetterSwap({ onSwap }: { onSwap: () => void }) {
         >
           🔄 האות לא מוצאת חן? החלפה חינם
         </button>
-      ) : (
+      ) : option === 'paid' ? (
         <button
           className="btn-ghost btn-small"
           style={{ marginTop: 10 }}
@@ -118,14 +140,30 @@ export default function LetterSwap({ onSwap }: { onSwap: () => void }) {
         >
           🔄 להחליף שוב ({left} נותרה)
         </button>
-      )}
+      ) : null}
 
       {open && (
-        <Modal onClose={() => setOpen(false)}>
+        <Modal label="החלפת אות" onClose={() => (solved ? finishSwap() : setOpen(false))}>
           <div className="center">
-            <h2 style={{ marginTop: 0 }}>🔄 החלפת אות נוספת</h2>
+            {/* כותרת אחת קבועה: Modal מצמיד אליה את השם הנגיש של החלון בפתיחה */}
+            <h2 style={{ marginTop: 0 }}>{solved ? '✅ נכון!' : '🔄 החלפת אות נוספת'}</h2>
 
-            {!riddleMode ? (
+            {solved?.image && (
+              <>
+                <p style={{ fontSize: '1.05rem', fontWeight: 700 }}>התשובה: {solved.answers[0]}</p>
+                <AnswerImage label={solved.image.label} categoryId={solved.image.category} size="large" discover />
+                <button
+                  className="btn-primary"
+                  ref={(el) => el?.focus()}
+                  style={{ marginTop: 12 }}
+                  onClick={finishSwap}
+                >
+                  המשך — מגרילים אות חדשה
+                </button>
+              </>
+            )}
+
+            {solved ? null : !riddleMode ? (
               <>
                 <p className="dim">את ההחלפה החינמית כבר ניצלתם. אפשר לשלם מהקרדיט — או לפתור חידה.</p>
 
