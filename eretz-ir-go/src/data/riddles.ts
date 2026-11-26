@@ -21,6 +21,12 @@ export interface Riddle {
    * חפץ — **אף פעם לא אדם**; `tests/trivia.test.ts` אוכף את זה.
    */
   image?: { label: string; category: string };
+  /**
+   * איור מקורי של המשחק (`public/illustrations/`), לשאלות שאין להן תמונה
+   * אמיתית — כי התשובה אדם, תוכנית או סרט. איור כללי שאינו מתאר אדם
+   * מסוים ואינו דמות מוגנת, ומסומן במשחק כ"איור". לעולם לא ביחד עם `image`.
+   */
+  illustration?: { file: string; alt: string };
 }
 
 export const RIDDLES: Riddle[] = [

@@ -186,9 +186,26 @@ const ANSWER_IMAGES: Record<string, { label: string; category: string }> = {
   'nature-chameleon': { label: 'זיקית', category: 'animal' }
 };
 
-export const TRIVIA: TriviaQuestion[] = [...RECENT, ...EVERGREEN].map((q) =>
-  ANSWER_IMAGES[q.id] ? { ...q, image: ANSWER_IMAGES[q.id] } : q
-);
+/**
+ * איור במקום צילום — לשאלות שאסור להן תמונה אמיתית (ראו ההערה למעלה).
+ * הקבצים מצוירים בקוד ל-SVG, בלי טקסט ובלי דמות אמיתית או מוגנת:
+ * עגבנייה כללית עם מיקרופון, ולא התחפושת של התוכנית.
+ */
+const ILLUSTRATIONS: Record<string, { file: string; alt: string }> = {
+  'tv-masked-tomato': { file: 'tomato.svg', alt: 'איור: עגבנייה מצוירת שרה למיקרופון' },
+  'music-eurovision-israel-2026': { file: 'stage.svg', alt: 'איור: במה עם אורות ומיקרופון' },
+  'music-eurovision-israel-song-2026': { file: 'stage.svg', alt: 'איור: במה עם אורות ומיקרופון' },
+  'sport-worldcup-2026-goal': { file: 'trophy.svg', alt: 'איור: גביע זהב וכדורגל על דשא' },
+  'space-artemis-2': { file: 'spaceship.svg', alt: 'איור: חללית ליד הירח' },
+  'movies-toy-story-5': { file: 'toys.svg', alt: 'איור: צעצועים על רצפה' },
+  'movies-zootopia-2': { file: 'animals.svg', alt: 'איור: ארנבון ושועל בעיר' }
+};
+
+export const TRIVIA: TriviaQuestion[] = [...RECENT, ...EVERGREEN].map((q) => ({
+  ...q,
+  ...(ANSWER_IMAGES[q.id] ? { image: ANSWER_IMAGES[q.id] } : {}),
+  ...(ILLUSTRATIONS[q.id] ? { illustration: ILLUSTRATIONS[q.id] } : {})
+}));
 
 const DAY_MS = 86_400_000;
 

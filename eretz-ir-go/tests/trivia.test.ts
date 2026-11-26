@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { RIDDLES, isRiddleAnswerCorrect, pickRiddle, questionPool } from '../src/data/riddles';
 import { photosAllowed } from '../src/lib/imagePolicy';
@@ -112,5 +114,37 @@ describe('תמונה אחרי תשובה נכונה', () => {
 
   it('שאלת העגבנייה, שעוסקת באדם אמיתי, נשארת בלי תמונה', () => {
     expect(TRIVIA.find((q) => q.id === 'tv-masked-tomato')!.image).toBeUndefined();
+  });
+});
+
+describe('איורים במקום צילום', () => {
+  const illustrated = TRIVIA.filter((q) => q.illustration);
+  const dir = resolve(__dirname, '..', 'public', 'illustrations');
+
+  it('שאלה עם איור אינה מקבלת גם תמונה אמיתית', () => {
+    expect(illustrated.length).toBeGreaterThan(4);
+    for (const q of illustrated) expect(q.image, q.id).toBeUndefined();
+  });
+
+  it('כל קובץ איור קיים, עם תיאור נגיש שמציין שזה איור', () => {
+    for (const q of illustrated) {
+      expect(existsSync(resolve(dir, q.illustration!.file)), `${q.id}: ${q.illustration!.file}`).toBe(true);
+      expect(q.illustration!.alt, q.id).toMatch(/^איור/);
+    }
+  });
+
+  /** טקסט בתמונה משובש במיוחד בעברית, וקישור חיצוני יחסם ב-CSP */
+  it('קבצי האיור בלי טקסט, בלי סקריפט ובלי משאב חיצוני', () => {
+    for (const file of new Set(illustrated.map((q) => q.illustration!.file))) {
+      const svg = readFileSync(resolve(dir, file), 'utf8');
+      expect(svg, file).not.toMatch(/<text\b|<script\b|<image\b|\bhref=|https?:\/\/(?!www\.w3\.org)/i);
+      expect(svg, file).toContain('viewBox');
+    }
+  });
+
+  it('כל שאלה על אדם או תוכנית שנשארה בלי תמונה אמיתית קיבלה איור', () => {
+    for (const id of ['tv-masked-tomato', 'music-eurovision-israel-2026', 'movies-toy-story-5']) {
+      expect(TRIVIA.find((q) => q.id === id)!.illustration, id).toBeDefined();
+    }
   });
 });

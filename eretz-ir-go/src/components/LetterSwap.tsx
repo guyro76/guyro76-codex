@@ -97,7 +97,7 @@ export default function LetterSwap({ onSwap }: { onSwap: () => void }) {
 
   const trySolve = () => {
     if (isRiddleAnswerCorrect(riddle, guess)) {
-      if (riddle.image) {
+      if (riddle.image || riddle.illustration) {
         /*
           יש תמונה להראות: ההחלפה נרשמת עכשיו (כדי שסגירת החלון בדרך לא
           תאבד אותה), אבל האות מוגרלת מחדש רק ב"המשך" — אחרת החלון
@@ -148,10 +148,24 @@ export default function LetterSwap({ onSwap }: { onSwap: () => void }) {
             {/* כותרת אחת קבועה: Modal מצמיד אליה את השם הנגיש של החלון בפתיחה */}
             <h2 style={{ marginTop: 0 }}>{solved ? '✅ נכון!' : '🔄 החלפת אות נוספת'}</h2>
 
-            {solved?.image && (
+            {(solved?.image || solved?.illustration) && (
               <>
                 <p style={{ fontSize: '1.05rem', fontWeight: 700 }}>התשובה: {solved.answers[0]}</p>
-                <AnswerImage label={solved.image.label} categoryId={solved.image.category} size="large" discover />
+                {solved.image && (
+                  <AnswerImage label={solved.image.label} categoryId={solved.image.category} size="large" discover />
+                )}
+                {solved.illustration && (
+                  <figure style={{ margin: '8px 0 0' }}>
+                    <img
+                      src={`${import.meta.env.BASE_URL}illustrations/${solved.illustration.file}`}
+                      alt={solved.illustration.alt}
+                      width={200}
+                      height={200}
+                      style={{ maxWidth: '100%', height: 'auto', borderRadius: 14, border: '1px solid var(--border-glass)' }}
+                    />
+                    <figcaption className="image-credit">🎨 איור מקורי של המשחק</figcaption>
+                  </figure>
+                )}
                 <button
                   className="btn-primary"
                   ref={(el) => el?.focus()}

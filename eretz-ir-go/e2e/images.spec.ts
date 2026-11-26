@@ -402,3 +402,49 @@ test('🖼️ חידה שנפתרה מציגה תמונה עם קרדיט, ור�
 
   expect(errors, `שגיאות קונסול: ${errors.join(' | ')}`).toEqual([]);
 });
+
+test('🎨 שאלה על אדם מציגה איור מקורי מסומן, ולא צילום', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (msg) => msg.type() === 'error' && errors.push(msg.text()));
+  page.on('pageerror', (err) => errors.push(String(err)));
+
+  await page.goto('./');
+  await page.getByRole('button', { name: /בואו נשחק/ }).click();
+  await page.getByRole('button', { name: /משחק חדש/ }).click();
+  await page.locator('select').first().selectOption('1');
+  await page.getByRole('button', { name: /משחק יחיד/ }).click();
+  await page.getByRole('button', { name: /מהיר \(5\)/ }).click();
+  await page.getByRole('button', { name: /להגרלת האות/ }).click();
+  await page.locator('.letter-wheel').click();
+  await expect(page.getByRole('button', { name: /מתחילים/ })).toBeVisible({ timeout: 20_000 });
+  await page.getByRole('button', { name: /החלפת אות — חינם/ }).click();
+  await expect(page.getByRole('button', { name: /מתחילים/ })).toBeVisible({ timeout: 20_000 });
+
+  const pool = questionPool();
+  const at = pool.findIndex((q) => q.id === 'tv-masked-tomato');
+  expect(at).toBeGreaterThan(-1);
+  await page.evaluate((v) => {
+    (window as unknown as { __rand: () => number }).__rand = Math.random;
+    Math.random = () => v;
+  }, (at + 0.5) / pool.length);
+  await page.getByRole('button', { name: /החלפת אות נוספת/ }).click();
+  await page.getByRole('button', { name: /לפתור חידה/ }).click();
+  await page.evaluate(() => {
+    Math.random = (window as unknown as { __rand: () => number }).__rand;
+  });
+
+  await expect(page.getByText(/מסכת העגבנייה/)).toBeVisible();
+  await page.getByRole('textbox', { name: 'התשובה לחידה' }).fill('ליאם');
+  await page.getByRole('button', { name: 'זו התשובה!' }).click();
+
+  const dialog = page.getByRole('dialog', { name: /נכון/ });
+  const art = dialog.getByRole('img', { name: /^איור/ });
+  await expect(art).toBeVisible();
+  // הקובץ באמת נטען (לא תמונה שבורה)
+  await expect.poll(() => art.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  await expect(dialog.getByText('איור מקורי של המשחק')).toBeVisible();
+
+  await dialog.getByRole('button', { name: /המשך/ }).click();
+  await expect(dialog).toBeHidden();
+  expect(errors, `שגיאות קונסול: ${errors.join(' | ')}`).toEqual([]);
+});
