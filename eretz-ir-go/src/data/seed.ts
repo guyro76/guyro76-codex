@@ -1333,7 +1333,7 @@ const CULTURE: SeedEntry[] = [
   e('הארי פוטר', ['movie', 'book', 'character'], 80, 'הקוסם עם הצלקת', 'הספר הראשון נדחה על ידי 12 הוצאות'),
   e('שרק', ['movie', 'cartoon', 'character'], 68),
   e('טרולים', ['movie'], 50),
-  e('צעצוע של סיפור', ['movie'], 65, undefined, undefined, ['טוי סטורי']),
+  e('צעצוע של סיפור', ['movie'], 65, 'סרטי פיקסאר על צעצועים שמדברים', 'החלק החמישי יצא ביוני 2026', ['טוי סטורי']),
   e('נמו', ['movie', 'cartoon', 'character'], 62, undefined, undefined, ['מוצאים את נמו']),
   e('רטטוי', ['movie'], 52, 'סרט על עכברוש שהוא שף'),
   e('קוקו', ['movie'], 50),
@@ -1670,6 +1670,15 @@ const MORE_PROFESSIONS: SeedEntry[] = [
   e('יועצת חינוכית', ['profession'], 55)
 ];
 
+/* ===================== מהחדשות: נובמבר 2026 =====================
+ * רק מה שאומת מול דיווח (המקורות רשומים ב-`trivia.ts`) ומתאים לילדים.
+ */
+const RECENT_2026: SeedEntry[] = [
+  e('ליאם גולן', ['celebrity', 'singer'], 45, 'זמר צעיר שהסתתר מתחת לעגבנייה', 'נחשף כעגבנייה בעונה החמישית של "הזמר במסכה"'),
+  e('נועם בתן', ['celebrity', 'singer'], 55, 'זמר שייצג את ישראל באירוויזיון 2026', 'סיים במקום השני בווינה עם השיר "מישל"'),
+  e('הזמר במסכה', ['series'], 60, 'תוכנית שבה זמרים מפורסמים שרים מאחורי תחפושת', 'הזמר מתגלה רק כשמודחים', ['הזמר במסיכה'])
+];
+
 export const SEED_ENTRIES: SeedEntry[] = [
   ...COUNTRIES,
   ...CITIES,
@@ -1691,5 +1700,6 @@ export const SEED_ENTRIES: SeedEntry[] = [
   ...VERBS_PRESENT,
   ...MORE_CONTENT,
   ...PROPER_NAMES,
-  ...MORE_COMMON
+  ...MORE_COMMON,
+  ...RECENT_2026
 ].filter((entry) => entry.c.length > 0 && !entry.n.includes('?'));

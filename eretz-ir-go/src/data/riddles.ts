@@ -8,6 +8,8 @@
  * מקבלת כמה ניסוחים תקינים של התשובה, כי ילד כותב "שמש" ולא
  * "השמש", ולפעמים עם שגיאת כתיב קטנה.
  */
+import { activeTrivia } from './trivia';
+
 export interface Riddle {
   id: string;
   question: string;
@@ -55,9 +57,18 @@ export function isRiddleAnswerCorrect(riddle: Riddle, guess: string): boolean {
   });
 }
 
-/** חידה אקראית שאינה אחת מאלה שכבר הוצגו במשחק הזה */
-export function pickRiddle(usedIds: string[]): Riddle {
-  const fresh = RIDDLES.filter((r) => !usedIds.includes(r.id));
-  const pool = fresh.length > 0 ? fresh : RIDDLES;
-  return pool[Math.floor(Math.random() * pool.length)];
+/**
+ * כל מה שאפשר לשאול כרגע: החידות הקלאסיות, ומאגר הידע (`trivia.ts`)
+ * בלי השאלות העדכניות שפג תוקפן.
+ */
+export function questionPool(now: Date = new Date()): Riddle[] {
+  return [...RIDDLES, ...activeTrivia(now)];
+}
+
+/** שאלה אקראית שאינה אחת מאלה שכבר הוצגו במשחק הזה */
+export function pickRiddle(usedIds: string[], now: Date = new Date(), random: () => number = Math.random): Riddle {
+  const all = questionPool(now);
+  const fresh = all.filter((r) => !usedIds.includes(r.id));
+  const pool = fresh.length > 0 ? fresh : all;
+  return pool[Math.floor(random() * pool.length)];
 }

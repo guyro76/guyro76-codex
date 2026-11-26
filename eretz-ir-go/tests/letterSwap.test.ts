@@ -9,7 +9,7 @@ import {
   swapOption,
   swapsLeft
 } from '../src/lib/letterSwap';
-import { RIDDLES, isRiddleAnswerCorrect, pickRiddle } from '../src/data/riddles';
+import { RIDDLES, isRiddleAnswerCorrect, pickRiddle, questionPool } from '../src/data/riddles';
 
 describe('החלפת אות', () => {
   it('הראשונה חינם, השנייה בתשלום, ואין שלישית', () => {
@@ -86,12 +86,13 @@ describe('חידות ההחלפה', () => {
   });
 
   it('לא חוזרים על חידה שכבר הוצגה', () => {
-    const usedIds = RIDDLES.slice(0, RIDDLES.length - 1).map((r) => r.id);
-    expect(pickRiddle(usedIds).id).toBe(RIDDLES[RIDDLES.length - 1].id);
+    const pool = questionPool();
+    const usedIds = pool.slice(0, pool.length - 1).map((r) => r.id);
+    expect(pickRiddle(usedIds).id).toBe(pool[pool.length - 1].id);
   });
 
   it('כשכל החידות נוצלו עדיין מוחזרת חידה — לא קורסים', () => {
-    const all = RIDDLES.map((r) => r.id);
-    expect(RIDDLES).toContainEqual(pickRiddle(all));
+    const pool = questionPool();
+    expect(pool).toContainEqual(pickRiddle(pool.map((r) => r.id)));
   });
 });
