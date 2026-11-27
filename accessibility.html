@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>הצהרת נגישות — ארץ-עיר GO!</title>
+    <meta
+      name="description"
+      content="הצהרת הנגישות של ארץ-עיר GO! — מה נבדק, אילו התאמות קיימות, מה ידוע שעדיין חסר, ואיך פונים אלינו."
+    />
+    <link rel="icon" href="/icons/logo.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        --bg: #1b1035;
+        --bg-mid: #2b1b5a;
+        --card: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.18);
+        --text: #f4f2ff;
+        --dim: rgba(244, 242, 255, 0.72);
+        --turquoise: #33d6c3;
+        --gold: #ffd75c;
+        --eggplant: #c07bd8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 24px 16px 60px;
+        font-family: 'Heebo', 'Segoe UI', 'Arial Hebrew', system-ui, sans-serif;
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--text);
+        background: linear-gradient(160deg, var(--bg), var(--bg-mid) 60%, #101d3d);
+        background-attachment: fixed;
+        min-height: 100vh;
+      }
+      main { max-width: 760px; margin: 0 auto; }
+      h1 { font-size: 1.9rem; margin: 0 0 4px; }
+      h2 { font-size: 1.25rem; margin: 28px 0 8px; color: var(--turquoise); }
+      a { color: var(--turquoise); }
+      a:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+      .updated { color: var(--dim); font-size: 0.92rem; margin: 0 0 22px; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 16px 20px;
+        margin: 16px 0;
+      }
+      .card.good { border-color: rgba(61, 220, 132, 0.5); }
+      .card.note { border-color: rgba(255, 215, 92, 0.5); }
+      ul { padding-inline-start: 22px; }
+      li { margin: 6px 0; }
+      table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+      th, td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--gold); font-size: 0.95rem; }
+      code { background: rgba(255,255,255,0.12); padding: 1px 6px; border-radius: 6px; font-size: 0.92em; }
+      footer {
+        margin-top: 36px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        color: var(--eggplant);
+        font-weight: 700;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+      .back { display: inline-block; margin-bottom: 18px; }
+      @media (max-width: 520px) {
+        body { font-size: 16px; }
+        h1 { font-size: 1.55rem; }
+      }
+    </style>
+  <body>
+    <main>
+      <a class="back" href="/">← חזרה למשחק</a>
+
+      <h1>הצהרת נגישות — ארץ-עיר GO!</h1>
+      <p class="updated">עודכן לאחרונה: 27 באוקטובר 2026 · גרסה 1.0</p>
+
+      <div class="card note">
+        <p style="margin: 0">
+          אנחנו רוצים שכל ילד וכל בן משפחה יוכלו לשחק. המשחק נבנה במטרה לעמוד בדרישות הנגישות של
+          <strong>תקן ישראלי 5568</strong> (המבוסס על הנחיות WCAG של W3C) ברמה AA.
+          <strong>אנחנו לא טוענים שהוא עומד בכל הדרישות.</strong> ההצהרה הזו אומרת מה נבדק, אילו התאמות קיימות,
+          ומה ידוע לנו שעדיין חסר.
+        </p>
+      </div>
+
+      <h2>1. התאמות שקיימות</h2>
+      <ul>
+        <li><strong>עברית וכיוון מימין לשמאל</strong> בכל העמודים והמסכים.</li>
+        <li>
+          <strong>ניגודיות וקריאות:</strong> הטקסט והרקע נבדקים אוטומטית, בכל שש ערכות הצבעים, מול יחס ניגודיות של
+          4.5:1 לפחות. טקסט פונקציונלי מודגש. אפשר להחליף ערכת צבעים בהגדרות.
+        </li>
+        <li>
+          <strong>טקסט מוגדל</strong> והפחתת תנועה ואנימציות בהגדרות. המשחק מכבד גם את הגדרת &quot;הפחתת תנועה&quot; של
+          מערכת ההפעלה.
+        </li>
+        <li>
+          <strong>מקלדת:</strong> כל הכפתורים, הקישורים והשדות הם רכיבי דפדפן רגילים שאפשר להגיע אליהם ולהפעיל במקלדת,
+          עם מסגרת פוקוס בולטת. בראש כל מסך יש קישור &quot;דלגו לתוכן הראשי&quot;. חלון קופץ מעביר אליו את הפוקוס, לא
+          מאפשר ל-Tab לצאת ממנו, נסגר ב-Escape ומחזיר את הפוקוס למי שפתח אותו.
+        </li>
+        <li>
+          <strong>קוראי מסך:</strong> לכפתורים ולשדות יש שם נגיש, למסכים כותרות ואזור תוכן ראשי, ואירועי המשחק
+          המרכזיים מוכרזים בקול: האות שהוגרלה, החלפת האות, השניות שנותרו בסיבוב על זמן, תוצאות הסיבוב וקבלת חלק פאזל.
+          לחלונות קופצים יש שם נגיש.
+        </li>
+        <li>
+          <strong>הקראה בקול</strong> של האות והקטגוריה (כבויה כברירת מחדל, ונועדה גם לילדים שעוד לא קוראים).
+          תשובות שהילד כותב לא מוקראות.
+        </li>
+        <li>
+          <strong>זמן:</strong> אפשר לשחק על זמן וגם בלי ספירת זמן, ולעבור בין שני המצבים באמצע הסיבוב.
+        </li>
+        <li>
+          <strong>אזורי מגע:</strong> כפתורים במסכי המשחק נבדקים שיהיו גדולים מספיק לאצבע של ילד.
+        </li>
+        <li>
+          <strong>מסכים קטנים והגדלה:</strong> נבדק על רוחבי מסך מ-320 פיקסלים ועד מחשב נייד, בלי תוכן שנחתך.
+          אפשר להגדיל את התצוגה.
+        </li>
+      </ul>
+
+      <h2>2. איך זה נבדק</h2>
+      <p>
+        בכל שינוי בקוד רצות בדיקות אוטומטיות: סריקת <strong>axe-core</strong> מול WCAG 2.1 ברמות A ו-AA על כל מסכי
+        התפריט ועל מסלול המשחק (כולל מסך עם חלון פתוח), בדיקת ניגודיות מחושבת לכל ערכת צבעים, בדיקת גודל אזורי מגע,
+        ובדיקות מקלדת לחלונות ולדילוג לתוכן.
+      </p>
+
+      <h2>3. מגבלות ידועות</h2>
+      <div class="card">
+        <ul style="margin: 0">
+          <li>
+            <strong>לא נעשתה בדיקה ידנית עם קורא מסך</strong> (NVDA, JAWS, VoiceOver או TalkBack), ולא עם טכנולוגיות
+            מסייעות אחרות. בדיקות אוטומטיות מוצאות רק חלק מהבעיות, ולכן ייתכנו קשיים שלא גילינו.
+          </li>
+          <li>
+            <strong>משחקי הביניים:</strong> &quot;נינג'ה פירות&quot; מבוסס על החלקת אצבע ואין בו חלופה למקלדת או לקורא מסך.
+            משחקי ביניים אחרים לא נבדקו במקלדת באופן יסודי. <strong>אפשר לדלג על כל משחק ביניים, בלי עונש</strong>,
+            והמשחק ממשיך כרגיל.
+          </li>
+          <li>
+            <strong>שער הורים:</strong> לפני מחירון ולפני קישור החוצה מופיע תרגיל כפל, כנדרש במדיניות הילדים של
+            Google Play. הוא עלול להיות קשה למי שמתקשה בחשבון.
+          </li>
+          <li>
+            <strong>תמונות:</strong> לתמונות מצורף טקסט חלופי קצר (שם המילה) ולא תיאור מלא.
+          </li>
+          <li>
+            <strong>דפדפנים ומכשירים:</strong> הבדיקות האוטומטיות רצות בדפדפן Chromium. לא נבדקנו באופן שיטתי ב-Safari,
+            ב-Firefox או על מכשירי אנדרואיד ו-iOS אמיתיים.
+          </li>
+        </ul>
+      </div>
+
+      <h2>4. נתקלתם בקושי? ספרו לנו</h2>
+      <p>
+        רכז הנגישות הוא מפתח המשחק, <strong>גיא רוזנברג</strong>. אפשר לפנות בכל עניין של נגישות — קושי בשימוש, בקשה
+        להתאמה, או הצעה לשיפור — בכתובת
+        <a href="mailto:guyro76@gmail.com">guyro76@gmail.com</a>. כדאי לציין באיזה מסך הייתה הבעיה, באיזה דפדפן או מכשיר,
+        ובאיזו טכנולוגיה מסייעת אתם משתמשים. נתייחס לכל פנייה ונעדכן את ההצהרה הזו כשנתקן.
+      </p>
+      <p>
+        עוד בנושאים קשורים: <a href="/privacy.html">מדיניות פרטיות</a> · <a href="/terms.html">תנאי שימוש</a> ·
+        <a href="/support.html">תמיכה</a>.
+      </p>
+
+      <footer>תוכנן ונבנה על ידי גיא רוזנברג 2026 - כל הזכויות שמורות</footer>
+    </main>
+  </body>
+</html>
