@@ -25,7 +25,7 @@ import type { Riddle } from './riddles';
  * 4. **המזהה לעולם לא משתנה.** `usedRiddleIds` נשמר בין משחקים.
  */
 
-export type TriviaWorld = 'tv' | 'sport' | 'music' | 'movies' | 'space' | 'israel' | 'science' | 'nature' | 'geography';
+export type TriviaWorld = 'tv' | 'computers' | 'sport' | 'music' | 'movies' | 'space' | 'israel' | 'science' | 'nature' | 'geography';
 
 export interface TriviaQuestion extends Riddle {
   world: TriviaWorld;
@@ -39,6 +39,7 @@ export interface TriviaQuestion extends Riddle {
 
 export const TRIVIA_WORLDS: Record<TriviaWorld, { name: string; icon: string }> = {
   tv: { name: 'טלוויזיה', icon: '📺' },
+  computers: { name: 'מחשבים', icon: '💻' },
   sport: { name: 'ספורט', icon: '⚽' },
   music: { name: 'מוזיקה', icon: '🎤' },
   movies: { name: 'סרטים', icon: '🎬' },
@@ -66,13 +67,11 @@ const EUROVISION = 'https://www.maariv.co.il/culture/music/article-1322171';
 const ARTEMIS = 'https://www.opb.org/article/2026/04/10/artemis-ii-astronauts-return-from-moon-with-a-splashdown-to-close-out-a-record-breaking-lunar-voyage';
 const OLYMPICS = 'https://www.topendsports.com/events/winter/medal-tally/2026.htm';
 const TOY_STORY = 'https://www.screendaily.com/news/toy-story-5-scores-biggest-north-american-box-office-bow-of-2026-on-160m/5217859.article';
+const MINECRAFT_MOVIE = 'https://fortune.com/2025/04/14/box-office-a-minecraft-movie-hollywoods-biggest-film-2025/';
+const SWITCH_2 = 'https://www.gamesradar.com/hardware/switch-2-beats-the-gamecube-in-lifetime-sales-as-nintendos-fastest-selling-console-ever-officially-shifts-23-68-million-units/';
+const ROBLOX = 'https://www.statista.com/statistics/1220905/roblox-most-visited-games';
 const ZOOTOPIA = 'https://thewaltdisneycompany.com/news/zootopia-2-highest-grossing-animated-film/';
 
-const UCL = 'https://euronews.com/my-europe/2026/05/30/paris-saint-germain-wins-the-champions-league-after-penalty-shootout-victory-against-arsen';
-const BALLON = 'https://www.si.com/soccer/ballon-dor-2025-winners-full-list';
-const LEAGUE = 'https://rsssf.org/tablesi/isra2026.html';
-const EUROBASKET = 'https://www.euronews.com/2025/09/15/germany-crowned-eurobasket-champions-beating-turkey-83-88';
-const WIMBLEDON = 'https://en.wikipedia.org/wiki/2026_Wimbledon_Championships';
 
 /** אירועים עדכניים, מאומתים מול המקור הרשום לצד כל שאלה. */
 const RECENT: TriviaQuestion[] = [
@@ -87,13 +86,6 @@ const RECENT: TriviaQuestion[] = [
     recent: true,
     source: FIFA_FINAL
   }),
-  T(
-    'sport-worldcup-2026-goal',
-    'sport',
-    'מי הבקיע את שער הניצחון היחיד של ספרד בגמר המונדיאל 2026?',
-    ['פראן טורס', 'פרן טורס', 'פראן טוריס', 'טורס'],
-    { recent: true, source: FIFA_FINAL }
-  ),
   T('music-eurovision-2026', 'music', 'איזו מדינה זכתה באירוויזיון 2026 שנערך בווינה?', ['בולגריה'], {
     recent: true,
     source: EUROVISION
@@ -124,13 +116,6 @@ const RECENT: TriviaQuestion[] = [
     source: OLYMPICS
   }),
   T(
-    'sport-winter-2026-medals',
-    'sport',
-    'איזו מדינה סיימה במקום הראשון בטבלת המדליות של אולימפיאדת החורף 2026?',
-    ['נורווגיה', 'נורבגיה'],
-    { recent: true, source: OLYMPICS }
-  ),
-  T(
     'movies-toy-story-5',
     'movies',
     'איזה סרט פיקסאר על צעצועים שמדברים יצא ביוני 2026, וזה החלק החמישי בסדרה?',
@@ -145,43 +130,25 @@ const RECENT: TriviaQuestion[] = [
     { recent: true, source: ZOOTOPIA }
   ),
   T(
-    'sport-champions-league-2026',
-    'sport',
-    'איזו קבוצה זכתה בליגת האלופות 2026 אחרי הכרעה בפנדלים מול ארסנל?',
-    ['פריז סן ז׳רמן', 'פריז סן ג׳רמן', 'פריז סן זרמן', 'פריז סן גרמן', 'פסז׳', 'פריז', 'psg'],
-    { recent: true, source: UCL }
+    'computers-minecraft-movie',
+    'computers',
+    'איזה משחק מחשב, שבונים בו מקוביות, הפך ב-2025 לסרט קולנוע עם ג׳ק בלק?',
+    ['מיינקראפט', 'מיינקרפט', 'מיינקראפט', 'minecraft'],
+    { recent: true, source: MINECRAFT_MOVIE }
   ),
   T(
-    'sport-ballon-dor-2025',
-    'sport',
-    'מי קיבל את הכדור הזהב של 2025, פרס שחקן הכדורגל הטוב בעולם?',
-    ['עוסמאן דמבלה', 'אוסמאן דמבלה', 'אוסמן דמבלה', 'דמבלה', 'דמבלא', 'dembele'],
-    { recent: true, source: BALLON }
+    'computers-switch-2',
+    'computers',
+    'איך קוראים לקונסולת המשחקים החדשה של נינטנדו שיצאה ב-2025, היורשת של הסוויץ׳?',
+    ['סוויץ׳ 2', 'סוויץ 2', 'נינטנדו סוויץ׳ 2', 'נינטנדו סוויץ 2', 'switch 2'],
+    { recent: true, source: SWITCH_2 }
   ),
   T(
-    'sport-israel-league-2026',
-    'sport',
-    'איזו קבוצה זכתה באליפות ישראל בכדורגל בעונת 2025/26?',
-    ['הפועל באר שבע', 'באר שבע', 'הפועל ב״ש'],
-    { recent: true, source: LEAGUE }
-  ),
-  T('sport-eurobasket-2025', 'sport', 'איזו נבחרת זכתה באליפות אירופה בכדורסל 2025, אחרי ניצחון על טורקיה בגמר?', ['גרמניה'], {
-    recent: true,
-    source: EUROBASKET
-  }),
-  T(
-    'sport-wimbledon-2026-men',
-    'sport',
-    'מי זכה בטורניר הטניס של וימבלדון 2026 בקטגוריית הגברים?',
-    ['יאניק סינר', 'ינניק סינר', 'סינר', 'sinner'],
-    { recent: true, source: WIMBLEDON }
-  ),
-  T(
-    'sport-wimbledon-2026-women',
-    'sport',
-    'מי זכתה בטורניר הטניס של וימבלדון 2026 בקטגוריית הנשים, בגמר צ׳כי נגד צ׳כי?',
-    ['לינדה נוסקובה', 'לינדה נושקובה', 'נוסקובה', 'נושקובה'],
-    { recent: true, source: WIMBLEDON }
+    'computers-roblox-top',
+    'computers',
+    'איזה משחק ברובלוקס הוא זה שהכי הרבה פעמים נכנסו אליו בכל הזמנים, ובו משחקים משפחה, בית וכיף?',
+    ['ברוקהייבן', 'ברוקהבן', 'ברוקהיבן', 'brookhaven', 'ברוקהייבן אר פי'],
+    { recent: true, source: ROBLOX }
   )
 ];
 
@@ -208,7 +175,18 @@ const EVERGREEN: TriviaQuestion[] = [
   T('nature-bee', 'nature', 'איזה חרק מייצר דבש?', ['דבורה', 'דבורים']),
   T('nature-spider-legs', 'nature', 'כמה רגליים יש לעכביש?', ['8', 'שמונה']),
   T('science-ice', 'science', 'בכמה מעלות צלזיוס מים קופאים והופכים לקרח?', ['0', 'אפס']),
-  T('space-sun', 'space', 'השמש היא כוכב לכת או כוכב? ענו במילה אחת.', ['כוכב'])
+  T('space-sun', 'space', 'השמש היא כוכב לכת או כוכב? ענו במילה אחת.', ['כוכב']),
+  T('music-jerusalem-gold', 'music', 'מי כתבה והלחינה את השיר "ירושלים של זהב"?', ['נעמי שמר', 'שמר']),
+  T('music-hallelujah', 'music', 'איזה שיר ישראלי זכה באירוויזיון בשנת 1979, בביצוע להקת חלב ודבש?', ['הללויה', 'הללויה!']),
+  T('music-netta-toy', 'music', 'איזה שיר שרה נטע ברזילי כשזכתה באירוויזיון 2018?', ['טוי', 'toy']),
+  T('music-noa-kirel-unicorn', 'music', 'איזה שיר שרה נועה קירל כשייצגה את ישראל באירוויזיון 2023?', ['יוניקורן', 'יוניקורן!', 'unicorn']),
+  T('computers-mouse', 'computers', 'איך נקרא המכשיר הקטן שמזיזים בכף היד כדי להזיז את החץ על מסך המחשב?', ['עכבר']),
+  T('computers-cpu', 'computers', 'איך נקרא החלק במחשב שנחשב ל"מוח" שלו וחושב את כל החישובים?', ['מעבד', 'cpu']),
+  T('computers-browser', 'computers', 'איך נקראת התוכנה שבה גולשים באינטרנט, כמו כרום או פיירפוקס?', ['דפדפן']),
+  T('computers-virus', 'computers', 'איך נקראת תוכנה מזיקה שנכנסת למחשב ופוגעת בו?', ['וירוס', 'נוזקה', 'וירוס מחשב']),
+  T('computers-byte', 'computers', 'כמה ביטים יש בבייט אחד?', ['8', 'שמונה']),
+  T('computers-minecraft-creeper', 'computers', 'איזה משחק מחשב יש בו דמות בשם סטיב ויצור ירוק שמתפוצץ שנקרא קריפר?', ['מיינקראפט', 'מיינקרפט', 'minecraft']),
+  T('computers-apple-logo', 'computers', 'איזה פרי מופיע בסמל של חברת אפל?', ['תפוח'])
 ];
 
 /**
@@ -227,7 +205,6 @@ const ANSWER_IMAGES: Record<string, { label: string; category: string }> = {
   'sport-worldcup-2026': { label: 'ספרד', category: 'country' },
   'music-eurovision-2026': { label: 'בולגריה', category: 'country' },
   'sport-winter-2026': { label: 'איטליה', category: 'country' },
-  'sport-winter-2026-medals': { label: 'נורווגיה', category: 'country' },
   'geo-dead-sea': { label: 'ים המלח', category: 'israelplace' },
   'geo-tokyo': { label: 'טוקיו', category: 'city' },
   'geo-pisa': { label: 'פיזה', category: 'city' },
@@ -238,7 +215,8 @@ const ANSWER_IMAGES: Record<string, { label: string; category: string }> = {
   'nature-chameleon': { label: 'זיקית', category: 'animal' },
   'israel-kinneret': { label: 'כנרת', category: 'israelplace' },
   'geo-giza': { label: 'מצרים', category: 'country' },
-  'nature-bee': { label: 'דבורה', category: 'insect' }
+  'nature-bee': { label: 'דבורה', category: 'insect' },
+  'computers-apple-logo': { label: 'תפוח', category: 'fruit' }
 };
 
 /**
@@ -250,7 +228,6 @@ const ILLUSTRATIONS: Record<string, { file: string; alt: string }> = {
   'tv-masked-tomato': { file: 'tomato.svg', alt: 'איור: עגבנייה מצוירת שרה למיקרופון' },
   'music-eurovision-israel-2026': { file: 'stage.svg', alt: 'איור: במה עם אורות ומיקרופון' },
   'music-eurovision-israel-song-2026': { file: 'stage.svg', alt: 'איור: במה עם אורות ומיקרופון' },
-  'sport-worldcup-2026-goal': { file: 'trophy.svg', alt: 'איור: גביע זהב וכדורגל על דשא' },
   'space-artemis-2': { file: 'spaceship.svg', alt: 'איור: חללית ליד הירח' },
   'movies-toy-story-5': { file: 'toys.svg', alt: 'איור: צעצועים על רצפה' },
   'movies-zootopia-2': { file: 'animals.svg', alt: 'איור: ארנבון ושועל בעיר' }

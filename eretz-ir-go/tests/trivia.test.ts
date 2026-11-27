@@ -42,9 +42,9 @@ describe('מאגר שאלות הידע', () => {
     expect(isRiddleAnswerCorrect(q, 'אייל גולן')).toBe(false);
   });
 
-  it('ילד שמתבלבל בכתיב נורווגיה/נורבגיה עדיין צודק', () => {
-    const q = TRIVIA.find((t) => t.id === 'sport-winter-2026-medals')!;
-    for (const guess of ['נורווגיה', 'נורבגיה', 'הנורבגיה']) expect(isRiddleAnswerCorrect(q, guess), guess).toBe(true);
+  it('ילד שמתבלבל בכתיב של שם משחק עדיין צודק', () => {
+    const q = TRIVIA.find((t) => t.id === 'computers-roblox-top')!;
+    for (const guess of ['ברוקהייבן', 'ברוקהבן', 'Brookhaven', ' ברוקהיבן ']) expect(isRiddleAnswerCorrect(q, guess), guess).toBe(true);
   });
 
   it('תשובה לא קשורה נדחית', () => {
@@ -82,7 +82,8 @@ describe('רענון: שאלות עדכניות פוקעות לבד', () => {
 });
 
 describe('בטיחות ילדים', () => {
-  const banned = /מלחמ|פיגוע|רצח|הרג|נרצח|מחבל|בחירות|ממשלה|כנסת|סמים|אלכוהול|מין\b|סרטן/;
+  // "כנסת" ו"ממשלה" רק כמילה (בתוספת אות יחס): "שנכנסת" אינה הכנסת
+  const banned = /מלחמ|פיגוע|רצח|הרג|נרצח|מחבל|סמים|אלכוהול|מין\b|סרטן|(?<![א-ת])[הבלמוש]?(?:כנסת|ממשלה|בחירות)/;
   it('אף שאלה או תשובה אינן נוגעות בפוליטיקה, אלימות או נושאים למבוגרים', () => {
     for (const q of TRIVIA) {
       const text = `${q.question} ${q.answers.join(' ')}`;
